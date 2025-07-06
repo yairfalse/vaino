@@ -1,0 +1,174 @@
+run:
+  go: "1.21"
+  timeout: 5m
+
+output:
+  formats:
+    - format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters-settings:
+  govet:
+    enable-all: true
+  gocyclo:
+    min-complexity: 15
+  dupl:
+    threshold: 100
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+  misspell:
+    locale: US
+  lll:
+    line-length: 120
+    tab-width: 4
+  goimports:
+    local-prefixes: github.com/yairfalse/wgo
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+  funlen:
+    lines: 100
+    statements: 50
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  gosec:
+    excludes:
+      - G204  # Subprocess launched with variable
+    confidence: medium
+  revive:
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unreachable-code
+      - name: redefines-builtin-id
+
+linters:
+  enable:
+    - bodyclose
+    - dogsled
+    - dupl
+    - errcheck
+    - funlen
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - mnd
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - noctx
+    - nolintlint
+    - revive
+    - staticcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
+    - prealloc
+    - predeclared
+    - asciicheck
+    - forbidigo
+    - makezero
+    - sqlclosecheck
+    - rowserrcheck
+    - thelper
+    - nilnil
+    - nilerr
+    - contextcheck
+    - nosprintfhostport
+    - grouper
+    - decorder
+    - errchkjson
+    - maintidx
+
+  disable:
+    - gochecknoglobals
+    - gocognit
+    - godot
+    - godox
+    - err113
+    - nestif
+    - testpackage
+    - wsl
+    - nlreturn
+    - wrapcheck
+    - errorlint
+    - forcetypeassert
+    - tagliatelle
+    - promlinter
+    - ireturn
+    - exhaustive
+    - exhaustruct
+    - varnamelen
+    - cyclop
+    - paralleltest
+    - tparallel
+
+issues:
+  exclude-dirs:
+    - vendor
+    - third_party
+    - testdata
+    - examples
+    - .git
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - mnd
+        - funlen
+        - dupl
+        - goconst
+        - noctx
+        - err113
+        - errcheck
+
+    - path: cmd/
+      linters:
+        - forbidigo
+        - gochecknoinits
+
+    - linters:
+        - stylecheck
+      text: "ST1000:"
+
+  max-same-issues: 0
+  new: false
+  max-issues-per-linter: 0
+
+severity:
+  default-severity: error

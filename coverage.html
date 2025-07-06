@@ -1,0 +1,1501 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>wgo: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/yairfalse/wgo/cmd/wgo/main.go (0.0%)</option>
+				
+				<option value="file1">github.com/yairfalse/wgo/internal/collectors/init/init.go (0.0%)</option>
+				
+				<option value="file2">github.com/yairfalse/wgo/internal/collectors/registry.go (100.0%)</option>
+				
+				<option value="file3">github.com/yairfalse/wgo/internal/collectors/terraform/collector.go (93.3%)</option>
+				
+				<option value="file4">github.com/yairfalse/wgo/internal/collectors/terraform/parser.go (88.1%)</option>
+				
+				<option value="file5">github.com/yairfalse/wgo/pkg/types/drift.go (0.0%)</option>
+				
+				<option value="file6">github.com/yairfalse/wgo/pkg/types/resource.go (0.0%)</option>
+				
+				<option value="file7">github.com/yairfalse/wgo/pkg/types/snapshot.go (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">no coverage</span>
+				<span class="cov1">low coverage</span>
+				<span class="cov2">*</span>
+				<span class="cov3">*</span>
+				<span class="cov4">*</span>
+				<span class="cov5">*</span>
+				<span class="cov6">*</span>
+				<span class="cov7">*</span>
+				<span class="cov8">*</span>
+				<span class="cov9">*</span>
+				<span class="cov10">high coverage</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "fmt"
+        "os"
+        "path/filepath"
+
+        "github.com/spf13/cobra"
+        "github.com/spf13/viper"
+)
+
+var (
+        version   = "dev"
+        commit    = "unknown"
+        buildTime = "unknown"
+        builtBy   = "unknown"
+
+        configFile string
+        verbose    bool
+        debug      bool
+)
+
+var rootCmd = &amp;cobra.Command{
+        Use:   "wgo",
+        Short: "A powerful infrastructure drift detection tool",
+        Long: `wgo is a tool for detecting and managing infrastructure drift.
+It helps you track changes in your infrastructure over time and identify
+discrepancies between expected and actual states.`,
+        Version: version,
+        PersistentPreRun: func(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+                if configFile != "" </span><span class="cov0" title="0">{
+                        viper.SetConfigFile(configFile)
+                }</span> else<span class="cov0" title="0"> {
+                        home, err := os.UserHomeDir()
+                        if err == nil </span><span class="cov0" title="0">{
+                                viper.AddConfigPath(filepath.Join(home, ".wgo"))
+                                viper.SetConfigName("config")
+                                viper.SetConfigType("yaml")
+                        }</span>
+                }
+
+                <span class="cov0" title="0">viper.AutomaticEnv()
+
+                if err := viper.ReadInConfig(); err == nil </span><span class="cov0" title="0">{
+                        if verbose </span><span class="cov0" title="0">{
+                                fmt.Println("Using config file:", viper.ConfigFileUsed())
+                        }</span>
+                }
+        },
+}
+
+var versionCmd = &amp;cobra.Command{
+        Use:   "version",
+        Short: "Print the version number of wgo",
+        Long:  `All software has versions. This is wgo's`,
+        Run: func(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+                fmt.Printf("wgo version %s\n", version)
+                fmt.Printf("  commit: %s\n", commit)
+                fmt.Printf("  built: %s\n", buildTime)
+                fmt.Printf("  built by: %s\n", builtBy)
+        }</span>,
+}
+
+var snapshotCmd = &amp;cobra.Command{
+        Use:   "snapshot",
+        Short: "Manage infrastructure snapshots",
+        Long:  `Create, list, and manage snapshots of your infrastructure state`,
+        Run: func(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+                fmt.Println("Snapshot command - use 'wgo snapshot --help' for subcommands")
+        }</span>,
+}
+
+var driftCmd = &amp;cobra.Command{
+        Use:   "drift",
+        Short: "Detect infrastructure drift",
+        Long:  `Compare snapshots and detect drift in your infrastructure`,
+        Run: func(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+                fmt.Println("Drift command - use 'wgo drift --help' for subcommands")
+        }</span>,
+}
+
+var configCmd = &amp;cobra.Command{
+        Use:   "config",
+        Short: "Manage wgo configuration",
+        Long:  `View and manage wgo configuration settings`,
+        Run: func(cmd *cobra.Command, args []string) <span class="cov0" title="0">{
+                fmt.Println("Config command - use 'wgo config --help' for subcommands")
+        }</span>,
+}
+
+func init() <span class="cov0" title="0">{
+        rootCmd.PersistentFlags().StringVar(&amp;configFile, "config", "", "config file (default is $HOME/.wgo/config.yaml)")
+        rootCmd.PersistentFlags().BoolVarP(&amp;verbose, "verbose", "v", false, "verbose output")
+        rootCmd.PersistentFlags().BoolVar(&amp;debug, "debug", false, "enable debug mode")
+
+        rootCmd.AddCommand(versionCmd)
+        rootCmd.AddCommand(snapshotCmd)
+        rootCmd.AddCommand(driftCmd)
+        rootCmd.AddCommand(configCmd)
+}</span>
+
+func main() <span class="cov0" title="0">{
+        if err := rootCmd.Execute(); err != nil </span><span class="cov0" title="0">{
+                fmt.Fprintln(os.Stderr, err)
+                os.Exit(1)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package init
+
+import (
+        "github.com/yairfalse/wgo/internal/collectors"
+        "github.com/yairfalse/wgo/internal/collectors/terraform"
+)
+
+// RegisterAllCollectors registers all built-in collectors to the default registry
+func RegisterAllCollectors() <span class="cov0" title="0">{
+        // Register terraform collector
+        terraformCollector := terraform.NewCollector()
+        if err := collectors.DefaultRegistry.Register(terraformCollector); err != nil </span><span class="cov0" title="0">{
+                panic("failed to register terraform collector: " + err.Error())</span>
+        }
+}
+
+// init automatically registers collectors when the package is imported
+func init() <span class="cov0" title="0">{
+        RegisterAllCollectors()
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package collectors
+
+import (
+        "errors"
+        "fmt"
+        "sort"
+        "strings"
+        "sync"
+)
+
+// CollectorRegistry manages the registration and retrieval of collectors
+type CollectorRegistry struct {
+        collectors map[string]Collector
+        mu         sync.RWMutex
+}
+
+// NewCollectorRegistry creates a new collector registry
+func NewCollectorRegistry() *CollectorRegistry <span class="cov7" title="9">{
+        registry := &amp;CollectorRegistry{
+                collectors: make(map[string]Collector),
+        }
+
+        return registry
+}</span>
+
+// Register adds a collector to the registry
+func (r *CollectorRegistry) Register(collector Collector) error <span class="cov10" title="21">{
+        if collector == nil </span><span class="cov1" title="1">{
+                return errors.New("collector cannot be nil")
+        }</span>
+
+        <span class="cov9" title="20">name := strings.TrimSpace(collector.Name())
+        if name == "" </span><span class="cov3" title="2">{
+                return errors.New("collector name cannot be empty")
+        }</span>
+
+        <span class="cov9" title="18">r.mu.Lock()
+        defer r.mu.Unlock()
+
+        if _, exists := r.collectors[name]; exists </span><span class="cov3" title="2">{
+                return fmt.Errorf("collector with name '%s' already registered", name)
+        }</span>
+
+        <span class="cov9" title="16">r.collectors[name] = collector
+        return nil</span>
+}
+
+// Get retrieves a collector by name
+func (r *CollectorRegistry) Get(name string) (Collector, error) <span class="cov5" title="4">{
+        name = strings.TrimSpace(name)
+        if name == "" </span><span class="cov3" title="2">{
+                return nil, errors.New("collector name cannot be empty")
+        }</span>
+
+        <span class="cov3" title="2">r.mu.RLock()
+        defer r.mu.RUnlock()
+
+        collector, exists := r.collectors[name]
+        if !exists </span><span class="cov1" title="1">{
+                return nil, fmt.Errorf("collector with name '%s' not found", name)
+        }</span>
+
+        <span class="cov1" title="1">return collector, nil</span>
+}
+
+// List returns a sorted list of all registered collector names
+func (r *CollectorRegistry) List() []string <span class="cov7" title="8">{
+        r.mu.RLock()
+        defer r.mu.RUnlock()
+
+        names := make([]string, 0, len(r.collectors))
+        for name := range r.collectors </span><span class="cov9" title="20">{
+                names = append(names, name)
+        }</span>
+
+        <span class="cov7" title="8">sort.Strings(names)
+        return names</span>
+}
+
+// Count returns the number of registered collectors
+func (r *CollectorRegistry) Count() int <span class="cov7" title="10">{
+        r.mu.RLock()
+        defer r.mu.RUnlock()
+        return len(r.collectors)
+}</span>
+
+// Exists checks if a collector with the given name is registered
+func (r *CollectorRegistry) Exists(name string) bool <span class="cov7" title="10">{
+        name = strings.TrimSpace(name)
+        if name == "" </span><span class="cov3" title="2">{
+                return false
+        }</span>
+
+        <span class="cov7" title="8">r.mu.RLock()
+        defer r.mu.RUnlock()
+
+        _, exists := r.collectors[name]
+        return exists</span>
+}
+
+// Unregister removes a collector from the registry
+func (r *CollectorRegistry) Unregister(name string) error <span class="cov5" title="4">{
+        name = strings.TrimSpace(name)
+        if name == "" </span><span class="cov3" title="2">{
+                return errors.New("collector name cannot be empty")
+        }</span>
+
+        <span class="cov3" title="2">r.mu.Lock()
+        defer r.mu.Unlock()
+
+        if _, exists := r.collectors[name]; !exists </span><span class="cov1" title="1">{
+                return fmt.Errorf("collector with name '%s' not found", name)
+        }</span>
+
+        <span class="cov1" title="1">delete(r.collectors, name)
+        return nil</span>
+}
+
+// DefaultRegistry is the default global collector registry
+var DefaultRegistry = NewCollectorRegistry()
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package terraform
+
+import (
+        "context"
+        "errors"
+        "fmt"
+        "strings"
+        "time"
+
+        "github.com/yairfalse/wgo/internal/collectors"
+        "github.com/yairfalse/wgo/pkg/types"
+)
+
+const (
+        ProviderName = ProviderName
+)
+
+// TerraformCollector implements the Collector interface for Terraform state files
+type TerraformCollector struct {
+        name string
+}
+
+// NewCollector creates a new Terraform collector
+f</span>unc NewCollector() *TerraformCollector {
+        return &amp;TerraformCollector{
+                name: ProviderName,
+        }
+}
+
+</span>// Name returns the name of the collector
+func (c *TerraformCollector) Name() string {
+        return c.name
+}
+
+</span>// Collect gathers resources from Terraform state files and returns a snapshot
+fu</span>nc (c *TerraformCollector) Collect(ctx context.Context, config collectors.Config) (*types.Snapshot, error) {
+        // Validate the configuration
+        if err := c.Validate(config); err != nil {
+        <span class="cov3" title="3">        return nil, fmt.Errorf("invalid configuration: %w", err)
+        }
+</span>
+        /</span>/ Find all state files
+        stateFiles, err := FindStateFiles(config.Paths)
+        <span class="cov3" title="3">if err != nil {
+</span>                return nil, fmt.Errorf("failed to find state files: %w", err)
+        }</span>
+
+        if len(stateFiles) == 0 {
+        <span class="cov1" title="1">        return nil, errors.New("no Terraform state files found in the specified paths")
+        }
+</span>
+</span>        // Collect resource<span class="cov0" title="0">s from all state files
+        var allResources []type</span>s.Resource
+        for _, st<span class="cov1" title="1"></span>ateFile := range stateFiles {
+                select {
+                case &lt;-ctx.Done():
+                <span class="cov1" title="1">        return nil, ctx.Err()
+                default:
+</span>                }
+
+</span>                resources, err := ParseStateFile(stateFile)
+                <span class="cov1" title="1">if err != nil {
+</span>                        return nil, fmt.Errorf("failed to parse state file %s: %w", stateFile, err)
+                }
+
+        <span class="cov1" title="1">        allResources = append(allResources, resources...)
+        }
+
+        // Create snapshot
+        snapshot := &amp;types.Snapshot{
+                ID:        generateSnapshotID(),
+                Timestamp: time.Now(),
+                Provider:  config.Provider,
+                Region:    config.Region,
+                Resources: allResou</span>rces,
+                Metadata:  c.buildMetadata(config, stateFiles),
+        }
+
+        return snapshot, nil
+}
+</span>
+//</span> Validate checks if the provided configuration is valid for this collector
+func (c *TerraformCollector) Validate(config collectors.Config) error {
+        <span class="cov5" title="12">if strings.TrimSpace(config.Provid</span><span class="cov2" title="2">er) == "" {
+                return errors.New("provider is required")
+        }</span>
+
+        <span class="cov5" title="10">if config.Provider != ProviderName {
+</span>                return fmt.Errorf("invalid provider '%s', expected 'terraform'", config.Provider)
+        }</span>
+
+        <span class="cov4" title="8">if strings.TrimSpace(confi</span><span class="cov1" title="1">g.Region) == "" {
+                return errors.New("region is required")
+        }</span>
+
+        if len(config.Paths) == 0 {
+        <span class="cov4" title="7">        return errors.New("at least one p</span><span class="cov5" title="9">ath is required")
+        }
+</span>
+        //</span> Validate paths are not empty
+        for i, path := range config.Paths {
+                if strings.TrimSpace(path) == "" {
+        <span class="cov4" title="5">                return f</span>mt.Errorf("path at index %d cannot be empty", i)
+                }
+        }
+
+        return nil
+}
+
+// buildMetadata creates metadata for the snapshot
+func (c *TerraformCollector) buildMetadata(config collectors.Config, stateFiles []string) map[string]string {
+        metadata := make(map[string]string)
+
+        metadata["collector"] = c.name
+        metadata["state_files_c</span><span class="cov2" title="2">ount"] = fmt.Sprintf("%d", len(stateFiles))
+        metadata["collection_time"] = time.Now().Format(time.RFC3339)
+
+</span>        // Add first few state files to metadata for reference
+        if len(stateFiles) &gt; 0 {
+        <span class="cov2" title="2">        metadata["primary_state_file"] = stateFiles[0]
+</span>        }
+
+</span>        // Add workspace information if available
+        if workspace := c.extractWorkspace(config); workspace != "" {
+        <span class="cov2" title="2">        metadata["workspace"] = workspace
+</span>        }
+</span>
+        //</span> Add any additional options from config
+        for key, value := range config.Options {
+                if valueStr, ok := value.(string); ok {
+        <span class="cov2" title="2">                metadata[fmt.</span>Sprintf("option_%s", key)] = valueStr
+                }
+        }
+
+        return metadata
+}
+</span>
+//</span> extractWorkspace extracts workspace information from config options
+func (c *TerraformCollector) extractWorkspace(config collectors.Config) string {
+        if config.Options == nil {
+        <span class="cov4" title="5">        return ""
+</span>        }
+</span>
+        //</span> Check for workspace in options
+        if workspace, ok := config.Options["workspace"]; ok {
+                if workspaceStr, ok := workspace.(string); ok {
+        <span class="cov2" title="2">                return </span>workspaceStr
+                }
+        }
+
+        return ""
+}
+
+</span>// generateSnapshotID generates a unique snapshot ID
+func generateSnapshotID() string {
+        return fmt.Sprintf("terraform-snapshot-%d", time.Now().Unix())
+}
+
+// CollectFromPaths is a convenience method to collect resources from specific paths
+func (c *TerraformCollector) CollectFromPaths(ctx context.Context, paths []string, region string) (*types.Snapshot, error) {
+        config := collectors.Config{
+                Provider: ProviderName,
+                Region:   region,
+        </span>        Paths:    paths,
+        }
+
+        return c.Collect(ctx, config)
+}
+
+// CollectFromWorkspace collects resources from a Terraform workspace
+func (c *TerraformCollector) CollectFromWorkspace(ctx context.Context, workspacePath string, workspace string, region string) (*types.Snapshot, error) {
+        config := collectors.Config{
+                Provider: ProviderName,
+                Region:   region,
+                Paths:    []string{workspacePath},
+                Options: map[string]interface{}{
+                        "workspace": workspace,
+        </span>        },
+        }
+
+        return c.Collect(ctx, config)
+}
+
+// SupportedResourceTypes returns a list of Terraform resource types that this collector recognizes
+func (c *TerraformCollector) SupportedResourceTypes() []string {
+        return []string{
+                // AWS resources
+                "aws_instance",
+                "aws_security_group",
+                "aws_vpc",
+                "aws_subnet",
+                "aws_internet_gateway",
+                "aws_route_table",
+                "aws_s3_bucket",
+                "aws_rds_instance",
+                "aws_load_balancer",
+                "aws_autoscaling_group",
+                "aws_iam_role",
+                "aws_iam_policy",
+                "aws_lambda_function",
+                "aws_cloudwatch_log_group",
+                "aws_ecs_cluster",
+                "aws_ecs_service",
+                "aws_eks_cluster",
+                "aws_eks_node_group",
+
+                // Azure resources
+                "azurerm_resource_group",
+                "azurerm_virtual_network",
+                "azurerm_subnet",
+                "azurerm_virtual_machine",
+                "azurerm_storage_account",
+                "azurerm_sql_server",
+                "azurerm_kubernetes_cluster",
+
+                // Google Cloud resources
+                "google_compute_instance",
+                "google_compute_network",
+                "google_compute_subnetwork",
+                "google_storage_bucket",
+                "google_sql_database_instance",
+                "google_container_cluster",
+
+                // Generic resources
+                "null_resource",
+                "random_id",
+        </span>        "random_password",
+                "local_file",
+                "template_file",
+        }
+}
+
+</span>// IsResourceTypeSupported checks i</span><span class="cov3" title="3">f a resource type is supported by this collector
+func (c *TerraformCollector) IsResourceTypeSupported(resourceType string) bool {
+        su</span>pportedTypes := c.SupportedResourceTypes()
+        for _, supportedType := range supportedTypes {
+        <span class="cov2" title="2">        if supporte</span>dType == resourceType {
+                        return true
+                }
+        }
+        return false
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package terraform
+
+import (
+        "encoding/json"
+        "errors"
+        "fmt"
+        "io"
+        "os"
+        "path/filepath"
+        "strings"
+        "time"
+
+        "github.com/yairfalse/wgo/pkg/types"
+)
+
+// TerraformState represents the structure of a Terraform state file
+type TerraformState struct {
+        Outputs          map[string]interface{} `json:"outputs,omitempty"`
+        TerraformVersion string                 `json:"terraform_version"`
+        Lineage          string                 `json:"lineage"`
+        Resources        []TerraformResource    `json:"resources,omitempty"`
+        Version          int                    `json:"version"`
+        Serial           int                    `json:"serial"`
+}
+
+// TerraformResource represents a resource in the Terraform state
+type TerraformResource struct {
+        Attributes map[string]interface{} `json:"attributes,omitempty"`
+        Mode       string                 `json:"mode"`
+        Type       string                 `json:"type"`
+        Name       string                 `json:"name"`
+        Provider   string                 `json:"provider"`
+        Each       string                 `json:"each,omitempty"`
+        Module     string                 `json:"module,omitempty"`
+        Instances  []TerraformInstance    `json:"instances"`
+        DependsOn  []string               `json:"depends_on,omitempty"`
+}
+
+// TerraformInstance represents an instance of a resource
+type TerraformInstance struct {
+        Attributes          map[string]interface{} `json:"attributes"`
+        Private             string                 `json:"private,omitempty"`
+        Dependencies        []string               `json:"dependencies,omitempty"`
+        SchemaVersion       int                    `json:"schema_version"`
+        CreateBeforeDestroy bool                   `json:"create_before_destroy,omitempty"`
+}
+
+// ParseStateFile parses a Terraform state file and returns a list of resources
+func ParseStateFile(filePath string) ([]types.Resource, error) <span class="cov2" title="2">{
+        if strings.TrimSpace(filePath) == "" </span><span class="cov0" title="0">{
+                return nil, errors.New("file path cannot be empty")
+        }</span>
+
+        // Check if file exists
+        <span class="cov2" title="2">if _, err := os.Stat(filePath); os.IsNotExist(err) </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("state file does not exist: %s", filePath)
+        }</span>
+
+        // Open and read the file
+        <span class="cov2" title="2">file, err := os.Open(filePath)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to open state file: %w", err)
+        }</span>
+        <span class="cov2" title="2">defer file.Close()
+
+        content, err := io.ReadAll(file)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to read state file: %w", err)
+        }</span>
+
+        // Parse JSON
+        <span class="cov2" title="2">var state TerraformState
+        if err := json.Unmarshal(content, &amp;state); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to parse state file JSON: %w", err)
+        }</span>
+
+        // Convert to our Resource types
+        <span class="cov2" title="2">resources := make([]types.Resource, 0)
+        for _, tfResource := range state.Resources </span><span class="cov2" title="2">{
+                parsedResources, err := parseResource(tfResource, filePath)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("failed to parse resource %s.%s: %w", tfResource.Type, tfResource.Name, err)
+                }</span>
+                <span class="cov2" title="2">resources = append(resources, parsedResources...)</span>
+        }
+
+        <span class="cov2" title="2">return resources, nil</span>
+}
+
+// parseResource converts a Terraform resource to our Resource type
+func parseResource(tfResource TerraformResource, sourceFile string) ([]types.Resource, error) <span class="cov2" title="2">{
+        if tfResource.Mode != "managed" </span><span class="cov0" title="0">{
+                // Skip data sources and other non-managed resources
+                return nil, nil
+        }</span>
+
+        <span class="cov2" title="2">resources := make([]types.Resource, 0, len(tfResource.Instances))
+
+        for i, instance := range tfResource.Instances </span><span class="cov2" title="2">{
+                // Extract resource ID
+                resourceID := extractResourceID(instance.Attributes)
+                if resourceID == "" </span><span class="cov0" title="0">{
+                        resourceID = fmt.Sprintf("%s.%s[%d]", tfResource.Type, tfResource.Name, i)
+                }</span>
+
+                // Extract region
+                <span class="cov2" title="2">region := extractRegion(instance.Attributes)
+                if region == "" </span><span class="cov0" title="0">{
+                        region = "unknown"
+                }</span>
+
+                // Extract provider
+                <span class="cov2" title="2">provider := extractProvider(tfResource.Provider)
+
+                // Extract tags
+                tags := extractTags(instance.Attributes)
+
+                // Extract state
+                state := extractState(instance.Attributes)
+
+                // Create resource
+                resource := types.Resource{
+                        ID:           resourceID,
+                        Type:         tfResource.Type,
+                        Provider:     provider,
+                        Name:         tfResource.Name,
+                        Region:       region,
+                        Config:       instance.Attributes,
+                        Tags:         tags,
+                        State:        state,
+                        LastModified: time.Now(), // Use current time as we don't have last modified in state
+                        Source:       sourceFile,
+                }
+
+                resources = append(resources, resource)</span>
+        }
+
+        <span class="cov2" title="2">return resources, nil</span>
+}
+
+// extractResourceID extracts the resource ID from attributes
+func extractResourceID(attributes map[string]interface{}) string <span class="cov6" title="8">{
+        // Common ID fields in Terraform resources
+        idFields := []string{"id", "arn", "instance_id", "resource_id"}
+
+        for _, field := range idFields </span><span class="cov9" title="20">{
+                if id, ok := attributes[field]; ok </span><span class="cov6" title="6">{
+                        if idStr, ok := id.(string); ok &amp;&amp; idStr != "" </span><span class="cov5" title="5">{
+                                return idStr
+                        }</span>
+                }
+        }
+
+        <span class="cov4" title="3">return ""</span>
+}
+
+// extractRegion extracts the region from attributes
+func extractRegion(attributes map[string]interface{}) string <span class="cov6" title="8">{
+        // Common region fields
+        regionFields := []string{"region", "availability_zone", "zone", "location"}
+
+        for _, field := range regionFields </span><span class="cov9" title="20">{
+                if region, ok := attributes[field]; ok </span><span class="cov6" title="6">{
+                        if regionStr, ok := region.(string); ok &amp;&amp; regionStr != "" </span><span class="cov6" title="6">{
+                                // Extract region from availability zone (e.g., "us-west-2a" -&gt; "us-west-2")
+                                if strings.Contains(field, "zone") &amp;&amp; len(regionStr) &gt; 1 </span><span class="cov2" title="2">{
+                                        // Check for GCP-style zones like "europe-west1-b" first (dash followed by letter)
+                                        if lastDash := strings.LastIndex(regionStr, "-"); lastDash &gt; 0 &amp;&amp; lastDash &lt; len(regionStr)-1 </span><span class="cov2" title="2">{
+                                                suffixAfterDash := regionStr[lastDash+1:]
+                                                // If what follows the dash is a single letter, it's likely a GCP zone
+                                                if len(suffixAfterDash) == 1 &amp;&amp; ((suffixAfterDash[0] &gt;= 'a' &amp;&amp; suffixAfterDash[0] &lt;= 'z') || (suffixAfterDash[0] &gt;= 'A' &amp;&amp; suffixAfterDash[0] &lt;= 'Z')) </span><span class="cov1" title="1">{
+                                                        return regionStr[:lastDash]
+                                                }</span>
+                                        }
+                                        // For AWS-style zones like "us-east-1a", remove the last character if it's a letter
+                                        <span class="cov1" title="1">if len(regionStr) &gt; 0 </span><span class="cov1" title="1">{
+                                                lastChar := regionStr[len(regionStr)-1]
+                                                if (lastChar &gt;= 'a' &amp;&amp; lastChar &lt;= 'z') || (lastChar &gt;= 'A' &amp;&amp; lastChar &lt;= 'Z') </span><span class="cov1" title="1">{
+                                                        return regionStr[:len(regionStr)-1]
+                                                }</span>
+                                        }
+                                }
+                                <span class="cov4" title="4">return regionStr</span>
+                        }
+                }
+        }
+
+        <span class="cov2" title="2">return ""</span>
+}
+
+// extractProvider extracts the provider name from the provider string
+func extractProvider(provider string) string <span class="cov6" title="8">{
+        if provider == "" </span><span class="cov1" title="1">{
+                return "terraform"
+        }</span>
+
+        // Provider strings are usually in format: "provider[\"registry.terraform.io/hashicorp/aws\"]"
+        // or "provider.aws"
+        <span class="cov6" title="7">if strings.Contains(provider, "/") </span><span class="cov5" title="5">{
+                parts := strings.Split(provider, "/")
+                if len(parts) &gt; 0 </span><span class="cov5" title="5">{
+                        return strings.Trim(parts[len(parts)-1], "\"]")
+                }</span>
+        }
+
+        // Handle "provider.aws" format
+        <span class="cov2" title="2">if strings.HasPrefix(provider, "provider.") </span><span class="cov1" title="1">{
+                return strings.TrimPrefix(provider, "provider.")
+        }</span>
+
+        <span class="cov1" title="1">return strings.Trim(provider, "\"[]")</span>
+}
+
+// extractTags extracts tags from attributes
+func extractTags(attributes map[string]interface{}) map[string]string <span class="cov6" title="8">{
+        tags := make(map[string]string)
+
+        // Common tag fields
+        tagFields := []string{"tags", "labels", "metadata"}
+
+        for _, field := range tagFields </span><span class="cov10" title="24">{
+                if tagData, ok := attributes[field]; ok </span><span class="cov5" title="5">{
+                        if tagMap, ok := tagData.(map[string]interface{}); ok </span><span class="cov5" title="5">{
+                                for k, v := range tagMap </span><span class="cov8" title="13">{
+                                        if vStr, ok := v.(string); ok </span><span class="cov7" title="11">{
+                                                tags[k] = vStr
+                                        }</span>
+                                }
+                        }
+                }
+        }
+
+        <span class="cov6" title="8">return tags</span>
+}
+
+// extractState extracts the state from attributes
+func extractState(attributes map[string]interface{}) string <span class="cov6" title="8">{
+        // Common state fields
+        stateFields := []string{"state", "status", "lifecycle_state", "instance_state"}
+
+        for _, field := range stateFields </span><span class="cov9" title="23">{
+                if state, ok := attributes[field]; ok </span><span class="cov5" title="5">{
+                        if stateStr, ok := state.(string); ok &amp;&amp; stateStr != "" </span><span class="cov5" title="5">{
+                                return stateStr
+                        }</span>
+                }
+        }
+
+        // Default to "running" if no state found
+        <span class="cov4" title="3">return "running"</span>
+}
+
+// FindStateFiles finds all Terraform state files in the given paths
+func FindStateFiles(paths []string) ([]string, error) <span class="cov6" title="8">{
+        var stateFiles []string
+
+        for _, path := range paths </span><span class="cov7" title="9">{
+                if strings.TrimSpace(path) == "" </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                // Check if path exists
+                <span class="cov7" title="9">info, err := os.Stat(path)
+                if os.IsNotExist(err) </span><span class="cov4" title="4">{
+                        continue</span>
+                }
+                <span class="cov5" title="5">if err != nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("failed to stat path %s: %w", path, err)
+                }</span>
+
+                <span class="cov5" title="5">if info.IsDir() </span><span class="cov4" title="3">{
+                        // Find state files in directory
+                        files, err := findStateFilesInDir(path)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return nil, err
+                        }</span>
+                        <span class="cov4" title="3">stateFiles = append(stateFiles, files...)</span>
+                } else<span class="cov2" title="2"> {
+                        // Check if it's a state file
+                        if isStateFile(path) </span><span class="cov2" title="2">{
+                                stateFiles = append(stateFiles, path)
+                        }</span>
+                }
+        }
+
+        <span class="cov6" title="8">return stateFiles, nil</span>
+}
+
+// findStateFilesInDir recursively finds state files in a directory
+func findStateFilesInDir(dir string) ([]string, error) <span class="cov4" title="3">{
+        var stateFiles []string
+
+        err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error </span><span class="cov7" title="11">{
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov7" title="11">if !info.IsDir() &amp;&amp; isStateFile(path) </span><span class="cov6" title="6">{
+                        stateFiles = append(stateFiles, path)
+                }</span>
+
+                <span class="cov7" title="11">return nil</span>
+        })
+
+        <span class="cov4" title="3">return stateFiles, err</span>
+}
+
+// isStateFile checks if a file is a Terraform state file
+func isStateFile(filePath string) bool <span class="cov8" title="15">{
+        name := filepath.Base(filePath)
+        return strings.HasSuffix(name, ".tfstate") ||
+                strings.HasSuffix(name, ".tfstate.backup") ||
+                name == "terraform.tfstate"
+}</span>
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package types
+
+import (
+        "errors"
+        "fmt"
+        "strings"
+        "time"
+)
+
+// ChangeType represents the type of change detected in a drift analysis
+type ChangeType string
+
+const (
+        // ChangeTypeCreated indicates a resource was created
+        ChangeTypeCreated ChangeType = "created"
+        // ChangeTypeModified indicates a resource was modified
+        ChangeTypeModified ChangeType = "modified"
+        // ChangeTypeDeleted indicates a resource was deleted
+        ChangeTypeDeleted ChangeType = "deleted"
+)
+
+// IsValid checks if the ChangeType is valid
+func (c ChangeType) IsValid() bool <span class="cov0" title="0">{
+        switch c </span>{
+        case ChangeTypeCreated, ChangeTypeModified, ChangeTypeDeleted:<span class="cov0" title="0">
+                return true</span>
+        default:<span class="cov0" title="0">
+                return false</span>
+        }
+}
+
+// String returns the string representation of the ChangeType
+func (c ChangeType) String() string <span class="cov0" title="0">{
+        return string(c)
+}</span>
+
+// Change represents a single change detected in drift analysis
+type Change struct {
+        ResourceID  string      `json:"resource_id"`
+        Type        ChangeType  `json:"type"`
+        OldValue    interface{} `json:"old_value,omitempty"`
+        NewValue    interface{} `json:"new_value,omitempty"`
+        Description string      `json:"description"`
+}
+
+// Validate checks if the Change has all required fields and valid values
+func (c *Change) Validate() error <span class="cov0" title="0">{
+        if strings.TrimSpace(c.ResourceID) == "" </span><span class="cov0" title="0">{
+                return errors.New("change resource ID is required")
+        }</span>
+        <span class="cov0" title="0">if !c.Type.IsValid() </span><span class="cov0" title="0">{
+                return errors.New("change type is invalid")
+        }</span>
+        <span class="cov0" title="0">if strings.TrimSpace(c.Description) == "" </span><span class="cov0" title="0">{
+                return errors.New("change description is required")
+        }</span>
+
+        // Validate change type specific requirements
+        <span class="cov0" title="0">switch c.Type </span>{
+        case ChangeTypeCreated:<span class="cov0" title="0">
+                if c.NewValue == nil </span><span class="cov0" title="0">{
+                        return errors.New("created change must have a new value")
+                }</span>
+                <span class="cov0" title="0">if c.OldValue != nil </span><span class="cov0" title="0">{
+                        return errors.New("created change should not have an old value")
+                }</span>
+        case ChangeTypeDeleted:<span class="cov0" title="0">
+                if c.OldValue == nil </span><span class="cov0" title="0">{
+                        return errors.New("deleted change must have an old value")
+                }</span>
+                <span class="cov0" title="0">if c.NewValue != nil </span><span class="cov0" title="0">{
+                        return errors.New("deleted change should not have a new value")
+                }</span>
+        case ChangeTypeModified:<span class="cov0" title="0">
+                if c.OldValue == nil || c.NewValue == nil </span><span class="cov0" title="0">{
+                        return errors.New("modified change must have both old and new values")
+                }</span>
+        }
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// IsBreakingChange determines if this change could be considered breaking
+func (c *Change) IsBreakingChange() bool <span class="cov0" title="0">{
+        switch c.Type </span>{
+        case ChangeTypeDeleted:<span class="cov0" title="0">
+                return true</span>
+        case ChangeTypeModified:<span class="cov0" title="0">
+                // This is a simplified check - in reality this would be more sophisticated
+                // based on the specific resource type and field being changed
+                return strings.Contains(strings.ToLower(c.Description), "security") ||
+                        strings.Contains(strings.ToLower(c.Description), "access") ||
+                        strings.Contains(strings.ToLower(c.Description), "network") ||
+                        strings.Contains(strings.ToLower(c.Description), "public")</span>
+        default:<span class="cov0" title="0">
+                return false</span>
+        }
+}
+
+// DriftReport represents a comprehensive drift analysis report
+type DriftReport struct {
+        ID         string    `json:"id"`
+        Timestamp  time.Time `json:"timestamp"`
+        BaselineID string    `json:"baseline_id"`
+        CurrentID  string    `json:"current_id"`
+        Changes    []Change  `json:"changes"`
+}
+
+// Validate checks if the DriftReport has all required fields and valid values
+func (d *DriftReport) Validate() error <span class="cov0" title="0">{
+        if strings.TrimSpace(d.ID) == "" </span><span class="cov0" title="0">{
+                return errors.New("drift report ID is required")
+        }</span>
+        <span class="cov0" title="0">if d.Timestamp.IsZero() </span><span class="cov0" title="0">{
+                return errors.New("drift report timestamp is required")
+        }</span>
+        <span class="cov0" title="0">if strings.TrimSpace(d.BaselineID) == "" </span><span class="cov0" title="0">{
+                return errors.New("drift report baseline ID is required")
+        }</span>
+        <span class="cov0" title="0">if strings.TrimSpace(d.CurrentID) == "" </span><span class="cov0" title="0">{
+                return errors.New("drift report current ID is required")
+        }</span>
+        <span class="cov0" title="0">if d.Changes == nil </span><span class="cov0" title="0">{
+                return errors.New("drift report changes cannot be nil")
+        }</span>
+
+        // Validate each change in the report
+        <span class="cov0" title="0">for i, change := range d.Changes </span><span class="cov0" title="0">{
+                if err := change.Validate(); err != nil </span><span class="cov0" title="0">{
+                        return fmt.Errorf("change at index %d is invalid: %w", i, err)
+                }</span>
+        }
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// HasChanges returns true if the drift report contains any changes
+func (d *DriftReport) HasChanges() bool <span class="cov0" title="0">{
+        return len(d.Changes) &gt; 0
+}</span>
+
+// ChangeCount returns the total number of changes in the report
+func (d *DriftReport) ChangeCount() int <span class="cov0" title="0">{
+        return len(d.Changes)
+}</span>
+
+// GetChangesByType returns all changes of a specific type
+func (d *DriftReport) GetChangesByType(changeType ChangeType) []Change <span class="cov0" title="0">{
+        var changes []Change
+        for _, change := range d.Changes </span><span class="cov0" title="0">{
+                if change.Type == changeType </span><span class="cov0" title="0">{
+                        changes = append(changes, change)
+                }</span>
+        }
+        <span class="cov0" title="0">return changes</span>
+}
+
+// GetChangesByResourceID returns all changes for a specific resource
+func (d *DriftReport) GetChangesByResourceID(resourceID string) []Change <span class="cov0" title="0">{
+        var changes []Change
+        for _, change := range d.Changes </span><span class="cov0" title="0">{
+                if change.ResourceID == resourceID </span><span class="cov0" title="0">{
+                        changes = append(changes, change)
+                }</span>
+        }
+        <span class="cov0" title="0">return changes</span>
+}
+
+// GetBreakingChanges returns all changes that are considered breaking
+func (d *DriftReport) GetBreakingChanges() []Change <span class="cov0" title="0">{
+        var changes []Change
+        for _, change := range d.Changes </span><span class="cov0" title="0">{
+                if change.IsBreakingChange() </span><span class="cov0" title="0">{
+                        changes = append(changes, change)
+                }</span>
+        }
+        <span class="cov0" title="0">return changes</span>
+}
+
+// HasBreakingChanges returns true if the report contains any breaking changes
+func (d *DriftReport) HasBreakingChanges() bool <span class="cov0" title="0">{
+        return len(d.GetBreakingChanges()) &gt; 0
+}</span>
+
+// GetCreatedResourceCount returns the number of resources that were created
+func (d *DriftReport) GetCreatedResourceCount() int <span class="cov0" title="0">{
+        return len(d.GetChangesByType(ChangeTypeCreated))
+}</span>
+
+// GetModifiedResourceCount returns the number of resources that were modified
+func (d *DriftReport) GetModifiedResourceCount() int <span class="cov0" title="0">{
+        return len(d.GetChangesByType(ChangeTypeModified))
+}</span>
+
+// GetDeletedResourceCount returns the number of resources that were deleted
+func (d *DriftReport) GetDeletedResourceCount() int <span class="cov0" title="0">{
+        return len(d.GetChangesByType(ChangeTypeDeleted))
+}</span>
+
+// GetSummary returns a summary of the drift report
+func (d *DriftReport) GetSummary() map[string]int <span class="cov0" title="0">{
+        return map[string]int{
+                "total":    d.ChangeCount(),
+                "created":  d.GetCreatedResourceCount(),
+                "modified": d.GetModifiedResourceCount(),
+                "deleted":  d.GetDeletedResourceCount(),
+                "breaking": len(d.GetBreakingChanges()),
+        }
+}</span>
+
+// AddChange adds a change to the drift report
+func (d *DriftReport) AddChange(change Change) error <span class="cov0" title="0">{
+        if err := change.Validate(); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">d.Changes = append(d.Changes, change)
+        return nil</span>
+}
+
+// String returns a string representation of the drift report
+func (d *DriftReport) String() string <span class="cov0" title="0">{
+        summary := d.GetSummary()
+        return fmt.Sprintf("Drift Report %s - Total: %d, Created: %d, Modified: %d, Deleted: %d, Breaking: %d",
+                d.ID, summary["total"], summary["created"], summary["modified"], summary["deleted"], summary["breaking"])
+}</span>
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package types
+
+import (
+        "encoding/json"
+        "errors"
+        "strings"
+        "time"
+)
+
+// Resource represents a cloud infrastructure resource
+type Resource struct {
+        ID           string            `json:"id"`
+        Type         string            `json:"type"`
+        Provider     string            `json:"provider"`
+        Name         string            `json:"name"`
+        Region       string            `json:"region"`
+        Config       map[string]any    `json:"config"`
+        Tags         map[string]string `json:"tags"`
+        State        string            `json:"state"`
+        LastModified time.Time         `json:"last_modified"`
+        Source       string            `json:"source"`
+}
+
+// Validate checks if the Resource has all required fields and valid values
+func (r *Resource) Validate() error <span class="cov0" title="0">{
+        if strings.TrimSpace(r.ID) == "" </span><span class="cov0" title="0">{
+                return errors.New("resource ID is required")
+        }</span>
+        <span class="cov0" title="0">if strings.TrimSpace(r.Type) == "" </span><span class="cov0" title="0">{
+                return errors.New("resource type is required")
+        }</span>
+        <span class="cov0" title="0">if strings.TrimSpace(r.Provider) == "" </span><span class="cov0" title="0">{
+                return errors.New("resource provider is required")
+        }</span>
+        <span class="cov0" title="0">if strings.TrimSpace(r.Name) == "" </span><span class="cov0" title="0">{
+                return errors.New("resource name is required")
+        }</span>
+        <span class="cov0" title="0">if strings.TrimSpace(r.Region) == "" </span><span class="cov0" title="0">{
+                return errors.New("resource region is required")
+        }</span>
+        <span class="cov0" title="0">if r.LastModified.IsZero() </span><span class="cov0" title="0">{
+                return errors.New("last modified time is required")
+        }</span>
+        <span class="cov0" title="0">if strings.TrimSpace(r.Source) == "" </span><span class="cov0" title="0">{
+                return errors.New("resource source is required")
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+
+// IsActive returns true if the resource is in an active state
+func (r *Resource) IsActive() bool <span class="cov0" title="0">{
+        activeStates := []string{"running", "active", "available", "in-use", "attached"}
+        for _, state := range activeStates </span><span class="cov0" title="0">{
+                if strings.EqualFold(r.State, state) </span><span class="cov0" title="0">{
+                        return true
+                }</span>
+        }
+        <span class="cov0" title="0">return false</span>
+}
+
+// GetTag returns the value of a specific tag, or empty string if not found
+func (r *Resource) GetTag(key string) string <span class="cov0" title="0">{
+        if r.Tags == nil </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+        <span class="cov0" title="0">return r.Tags[key]</span>
+}
+
+// SetTag sets a tag key-value pair
+func (r *Resource) SetTag(key, value string) <span class="cov0" title="0">{
+        if r.Tags == nil </span><span class="cov0" title="0">{
+                r.Tags = make(map[string]string)
+        }</span>
+        <span class="cov0" title="0">r.Tags[key] = value</span>
+}
+
+// GetConfigValue returns a configuration value by key
+func (r *Resource) GetConfigValue(key string) (any, bool) <span class="cov0" title="0">{
+        if r.Config == nil </span><span class="cov0" title="0">{
+                return nil, false
+        }</span>
+        <span class="cov0" title="0">value, exists := r.Config[key]
+        return value, exists</span>
+}
+
+// SetConfigValue sets a configuration key-value pair
+func (r *Resource) SetConfigValue(key string, value any) <span class="cov0" title="0">{
+        if r.Config == nil </span><span class="cov0" title="0">{
+                r.Config = make(map[string]any)
+        }</span>
+        <span class="cov0" title="0">r.Config[key] = value</span>
+}
+
+// Clone creates a deep copy of the resource
+func (r *Resource) Clone() *Resource <span class="cov0" title="0">{
+        clone := &amp;Resource{
+                ID:           r.ID,
+                Type:         r.Type,
+                Provider:     r.Provider,
+                Name:         r.Name,
+                Region:       r.Region,
+                State:        r.State,
+                LastModified: r.LastModified,
+                Source:       r.Source,
+        }
+
+        // Deep copy Tags
+        if r.Tags != nil </span><span class="cov0" title="0">{
+                clone.Tags = make(map[string]string, len(r.Tags))
+                for k, v := range r.Tags </span><span class="cov0" title="0">{
+                        clone.Tags[k] = v
+                }</span>
+        }
+
+        // Deep copy Config
+        <span class="cov0" title="0">if r.Config != nil </span><span class="cov0" title="0">{
+                clone.Config = make(map[string]any, len(r.Config))
+                for k, v := range r.Config </span><span class="cov0" title="0">{
+                        // For simplicity, we'll use JSON marshaling/unmarshaling for deep copy
+                        // This works for JSON-serializable types
+                        data, err := json.Marshal(v)
+                        if err != nil </span><span class="cov0" title="0">{
+                                clone.Config[k] = v // fallback to shallow copy
+                        }</span> else<span class="cov0" title="0"> {
+                                var clonedValue any
+                                if err := json.Unmarshal(data, &amp;clonedValue); err != nil </span><span class="cov0" title="0">{
+                                        clone.Config[k] = v // fallback to shallow copy
+                                }</span> else<span class="cov0" title="0"> {
+                                        clone.Config[k] = clonedValue
+                                }</span>
+                        }
+                }
+        }
+
+        <span class="cov0" title="0">return clone</span>
+}
+
+// String returns a string representation of the resource
+func (r *Resource) String() string <span class="cov0" title="0">{
+        return r.Provider + ":" + r.Type + ":" + r.Name + " (" + r.ID + ")"
+}</span>
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package types
+
+import (
+        "errors"
+        "strings"
+        "time"
+)
+
+// Snapshot represents a point-in-time capture of infrastructure resources
+type Snapshot struct {
+        Timestamp time.Time         `json:"timestamp"`
+        Metadata  map[string]string `json:"metadata"`
+        ID        string            `json:"id"`
+        Provider  string            `json:"provider"`
+        Region    string            `json:"region"`
+        Resources []Resource        `json:"resources"`
+}
+
+// Validate checks if the Snapshot has all required fields and valid values
+func (s *Snapshot) Validate() error <span class="cov0" title="0">{
+        if strings.TrimSpace(s.ID) == "" </span><span class="cov0" title="0">{
+                return errors.New("snapshot ID is required")
+        }</span>
+        <span class="cov0" title="0">if s.Timestamp.IsZero() </span><span class="cov0" title="0">{
+                return errors.New("snapshot timestamp is required")
+        }</span>
+        <span class="cov0" title="0">if strings.TrimSpace(s.Provider) == "" </span><span class="cov0" title="0">{
+                return errors.New("snapshot provider is required")
+        }</span>
+        <span class="cov0" title="0">if strings.TrimSpace(s.Region) == "" </span><span class="cov0" title="0">{
+                return errors.New("snapshot region is required")
+        }</span>
+        <span class="cov0" title="0">if s.Resources == nil </span><span class="cov0" title="0">{
+                return errors.New("snapshot resources cannot be nil")
+        }</span>
+
+        // Validate each resource in the snapshot
+        <span class="cov0" title="0">for i, resource := range s.Resources </span><span class="cov0" title="0">{
+                if err := resource.Validate(); err != nil </span><span class="cov0" title="0">{
+                        return errors.New("resource at index " + string(rune(i)) + " is invalid: " + err.Error())
+                }</span>
+        }
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// ResourceCount returns the number of resources in the snapshot
+func (s *Snapshot) ResourceCount() int <span class="cov0" title="0">{
+        return len(s.Resources)
+}</span>
+
+// GetResourceByID returns a resource by its ID, or nil if not found
+func (s *Snapshot) GetResourceByID(id string) *Resource <span class="cov0" title="0">{
+        for i := range s.Resources </span><span class="cov0" title="0">{
+                if s.Resources[i].ID == id </span><span class="cov0" title="0">{
+                        return &amp;s.Resources[i]
+                }</span>
+        }
+        <span class="cov0" title="0">return nil</span>
+}
+
+// GetResourcesByType returns all resources of a specific type
+func (s *Snapshot) GetResourcesByType(resourceType string) []Resource <span class="cov0" title="0">{
+        var resources []Resource
+        for _, resource := range s.Resources </span><span class="cov0" title="0">{
+                if strings.EqualFold(resource.Type, resourceType) </span><span class="cov0" title="0">{
+                        resources = append(resources, resource)
+                }</span>
+        }
+        <span class="cov0" title="0">return resources</span>
+}
+
+// GetResourcesByProvider returns all resources from a specific provider
+func (s *Snapshot) GetResourcesByProvider(provider string) []Resource <span class="cov0" title="0">{
+        var resources []Resource
+        for _, resource := range s.Resources </span><span class="cov0" title="0">{
+                if strings.EqualFold(resource.Provider, provider) </span><span class="cov0" title="0">{
+                        resources = append(resources, resource)
+                }</span>
+        }
+        <span class="cov0" title="0">return resources</span>
+}
+
+// GetResourcesByTag returns all resources that have a specific tag key-value pair
+func (s *Snapshot) GetResourcesByTag(key, value string) []Resource <span class="cov0" title="0">{
+        var resources []Resource
+        for _, resource := range s.Resources </span><span class="cov0" title="0">{
+                if tagValue := resource.GetTag(key); tagValue == value </span><span class="cov0" title="0">{
+                        resources = append(resources, resource)
+                }</span>
+        }
+        <span class="cov0" title="0">return resources</span>
+}
+
+// GetResourcesByState returns all resources in a specific state
+func (s *Snapshot) GetResourcesByState(state string) []Resource <span class="cov0" title="0">{
+        var resources []Resource
+        for _, resource := range s.Resources </span><span class="cov0" title="0">{
+                if strings.EqualFold(resource.State, state) </span><span class="cov0" title="0">{
+                        resources = append(resources, resource)
+                }</span>
+        }
+        <span class="cov0" title="0">return resources</span>
+}
+
+// GetActiveResources returns all resources that are in an active state
+func (s *Snapshot) GetActiveResources() []Resource <span class="cov0" title="0">{
+        var resources []Resource
+        for _, resource := range s.Resources </span><span class="cov0" title="0">{
+                if resource.IsActive() </span><span class="cov0" title="0">{
+                        resources = append(resources, resource)
+                }</span>
+        }
+        <span class="cov0" title="0">return resources</span>
+}
+
+// AddResource adds a resource to the snapshot
+func (s *Snapshot) AddResource(resource Resource) error <span class="cov0" title="0">{
+        if err := resource.Validate(); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // Check for duplicate resource IDs
+        <span class="cov0" title="0">for _, existing := range s.Resources </span><span class="cov0" title="0">{
+                if existing.ID == resource.ID </span><span class="cov0" title="0">{
+                        return errors.New("resource with ID " + resource.ID + " already exists in snapshot")
+                }</span>
+        }
+
+        <span class="cov0" title="0">s.Resources = append(s.Resources, resource)
+        return nil</span>
+}
+
+// RemoveResource removes a resource from the snapshot by ID
+func (s *Snapshot) RemoveResource(id string) bool <span class="cov0" title="0">{
+        for i, resource := range s.Resources </span><span class="cov0" title="0">{
+                if resource.ID == id </span><span class="cov0" title="0">{
+                        s.Resources = append(s.Resources[:i], s.Resources[i+1:]...)
+                        return true
+                }</span>
+        }
+        <span class="cov0" title="0">return false</span>
+}
+
+// GetMetadata returns the value of a specific metadata key
+func (s *Snapshot) GetMetadata(key string) string <span class="cov0" title="0">{
+        if s.Metadata == nil </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+        <span class="cov0" title="0">return s.Metadata[key]</span>
+}
+
+// SetMetadata sets a metadata key-value pair
+func (s *Snapshot) SetMetadata(key, value string) <span class="cov0" title="0">{
+        if s.Metadata == nil </span><span class="cov0" title="0">{
+                s.Metadata = make(map[string]string)
+        }</span>
+        <span class="cov0" title="0">s.Metadata[key] = value</span>
+}
+
+// Clone creates a deep copy of the snapshot
+func (s *Snapshot) Clone() *Snapshot <span class="cov0" title="0">{
+        clone := &amp;Snapshot{
+                ID:        s.ID,
+                Timestamp: s.Timestamp,
+                Provider:  s.Provider,
+                Region:    s.Region,
+        }
+
+        // Deep copy Resources
+        if s.Resources != nil </span><span class="cov0" title="0">{
+                clone.Resources = make([]Resource, len(s.Resources))
+                for i, resource := range s.Resources </span><span class="cov0" title="0">{
+                        clone.Resources[i] = *resource.Clone()
+                }</span>
+        }
+
+        // Deep copy Metadata
+        <span class="cov0" title="0">if s.Metadata != nil </span><span class="cov0" title="0">{
+                clone.Metadata = make(map[string]string, len(s.Metadata))
+                for k, v := range s.Metadata </span><span class="cov0" title="0">{
+                        clone.Metadata[k] = v
+                }</span>
+        }
+
+        <span class="cov0" title="0">return clone</span>
+}
+
+// String returns a string representation of the snapshot
+func (s *Snapshot) String() string <span class="cov0" title="0">{
+        return s.Provider + ":" + s.Region + " snapshot " + s.ID + " (" + s.Timestamp.Format(time.RFC3339) + ")"
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

@@ -54,7 +54,7 @@ func (c *Change) Validate() error {
 	if strings.TrimSpace(c.Description) == "" {
 		return errors.New("change description is required")
 	}
-	
+
 	// Validate change type specific requirements
 	switch c.Type {
 	case ChangeTypeCreated:
@@ -76,7 +76,7 @@ func (c *Change) Validate() error {
 			return errors.New("modified change must have both old and new values")
 		}
 	}
-	
+
 	return nil
 }
 
@@ -123,14 +123,14 @@ func (d *DriftReport) Validate() error {
 	if d.Changes == nil {
 		return errors.New("drift report changes cannot be nil")
 	}
-	
+
 	// Validate each change in the report
 	for i, change := range d.Changes {
 		if err := change.Validate(); err != nil {
 			return fmt.Errorf("change at index %d is invalid: %w", i, err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -209,11 +209,11 @@ func (d *DriftReport) GetSummary() map[string]int {
 }
 
 // AddChange adds a change to the drift report
-func (d *DriftReport) AddChange(change Change) error {
+func (d *DriftReport) AddChange(change *Change) error {
 	if err := change.Validate(); err != nil {
 		return err
 	}
-	d.Changes = append(d.Changes, change)
+	d.Changes = append(d.Changes, *change)
 	return nil
 }
 

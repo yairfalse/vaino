@@ -8,12 +8,12 @@ import (
 
 // Snapshot represents a point-in-time capture of infrastructure resources
 type Snapshot struct {
-	ID        string            `json:"id"`
 	Timestamp time.Time         `json:"timestamp"`
+	Metadata  map[string]string `json:"metadata"`
+	ID        string            `json:"id"`
 	Provider  string            `json:"provider"`
 	Region    string            `json:"region"`
 	Resources []Resource        `json:"resources"`
-	Metadata  map[string]string `json:"metadata"`
 }
 
 // Validate checks if the Snapshot has all required fields and valid values
@@ -35,8 +35,8 @@ func (s *Snapshot) Validate() error {
 	}
 
 	// Validate each resource in the snapshot
-	for i, resource := range s.Resources {
-		if err := resource.Validate(); err != nil {
+	for i := range s.Resources {
+		if err := s.Resources[i].Validate(); err != nil {
 			return errors.New("resource at index " + string(rune(i)) + " is invalid: " + err.Error())
 		}
 	}
@@ -62,9 +62,9 @@ func (s *Snapshot) GetResourceByID(id string) *Resource {
 // GetResourcesByType returns all resources of a specific type
 func (s *Snapshot) GetResourcesByType(resourceType string) []Resource {
 	var resources []Resource
-	for _, resource := range s.Resources {
-		if strings.EqualFold(resource.Type, resourceType) {
-			resources = append(resources, resource)
+	for i := range s.Resources {
+		if strings.EqualFold(s.Resources[i].Type, resourceType) {
+			resources = append(resources, s.Resources[i])
 		}
 	}
 	return resources
@@ -73,9 +73,9 @@ func (s *Snapshot) GetResourcesByType(resourceType string) []Resource {
 // GetResourcesByProvider returns all resources from a specific provider
 func (s *Snapshot) GetResourcesByProvider(provider string) []Resource {
 	var resources []Resource
-	for _, resource := range s.Resources {
-		if strings.EqualFold(resource.Provider, provider) {
-			resources = append(resources, resource)
+	for i := range s.Resources {
+		if strings.EqualFold(s.Resources[i].Provider, provider) {
+			resources = append(resources, s.Resources[i])
 		}
 	}
 	return resources
@@ -84,9 +84,10 @@ func (s *Snapshot) GetResourcesByProvider(provider string) []Resource {
 // GetResourcesByTag returns all resources that have a specific tag key-value pair
 func (s *Snapshot) GetResourcesByTag(key, value string) []Resource {
 	var resources []Resource
-	for _, resource := range s.Resources {
+	for i := range s.Resources {
+		resource := &s.Resources[i]
 		if tagValue := resource.GetTag(key); tagValue == value {
-			resources = append(resources, resource)
+			resources = append(resources, *resource)
 		}
 	}
 	return resources
@@ -95,9 +96,10 @@ func (s *Snapshot) GetResourcesByTag(key, value string) []Resource {
 // GetResourcesByState returns all resources in a specific state
 func (s *Snapshot) GetResourcesByState(state string) []Resource {
 	var resources []Resource
-	for _, resource := range s.Resources {
+	for i := range s.Resources {
+		resource := &s.Resources[i]
 		if strings.EqualFold(resource.State, state) {
-			resources = append(resources, resource)
+			resources = append(resources, *resource)
 		}
 	}
 	return resources
@@ -106,35 +108,37 @@ func (s *Snapshot) GetResourcesByState(state string) []Resource {
 // GetActiveResources returns all resources that are in an active state
 func (s *Snapshot) GetActiveResources() []Resource {
 	var resources []Resource
-	for _, resource := range s.Resources {
+	for i := range s.Resources {
+		resource := &s.Resources[i]
 		if resource.IsActive() {
-			resources = append(resources, resource)
+			resources = append(resources, *resource)
 		}
 	}
 	return resources
 }
 
 // AddResource adds a resource to the snapshot
-func (s *Snapshot) AddResource(resource Resource) error {
+func (s *Snapshot) AddResource(resource *Resource) error {
 	if err := resource.Validate(); err != nil {
 		return err
 	}
-	
+
 	// Check for duplicate resource IDs
-	for _, existing := range s.Resources {
+	for i := range s.Resources {
+		existing := &s.Resources[i]
 		if existing.ID == resource.ID {
 			return errors.New("resource with ID " + resource.ID + " already exists in snapshot")
 		}
 	}
-	
-	s.Resources = append(s.Resources, resource)
+
+	s.Resources = append(s.Resources, *resource)
 	return nil
 }
 
 // RemoveResource removes a resource from the snapshot by ID
 func (s *Snapshot) RemoveResource(id string) bool {
-	for i, resource := range s.Resources {
-		if resource.ID == id {
+	for i := range s.Resources {
+		if s.Resources[i].ID == id {
 			s.Resources = append(s.Resources[:i], s.Resources[i+1:]...)
 			return true
 		}
@@ -170,8 +174,8 @@ func (s *Snapshot) Clone() *Snapshot {
 	// Deep copy Resources
 	if s.Resources != nil {
 		clone.Resources = make([]Resource, len(s.Resources))
-		for i, resource := range s.Resources {
-			clone.Resources[i] = *resource.Clone()
+		for i := range s.Resources {
+			clone.Resources[i] = *s.Resources[i].Clone()
 		}
 	}
 
