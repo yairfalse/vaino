@@ -30,25 +30,30 @@ tasks:
   deps:
     desc: Download dependencies and tidy modules
     cmds:
+      - echo "📦 Downloading dependencies..."
       - go mod download
       - go mod tidy
       - go mod verify
+      - echo "✅ Dependencies updated successfully"
 
   build:
     desc: Build the CLI binary with version info
     deps: [deps]
     cmds:
+      - echo "🔨 Building {{.APP_NAME}} v{{.VERSION}}..."
       - mkdir -p {{.BUILD_DIR}}
       - |
         go build \
           -ldflags "{{.LDFLAGS}}" \
           -o {{.BUILD_DIR}}/{{.APP_NAME}} \
           {{.MAIN_PACKAGE}}
+      - echo "✅ Build complete: {{.BUILD_DIR}}/{{.APP_NAME}}"
 
   build:all:
     desc: Cross-platform builds (linux, darwin, windows)
     deps: [deps]
     cmds:
+      - echo "🌍 Building for all platforms..."
       - mkdir -p {{.BUILD_DIR}}
       - task: build:platform
         vars: {GOOS: linux, GOARCH: amd64}
@@ -60,6 +65,8 @@ tasks:
         vars: {GOOS: darwin, GOARCH: arm64}
       - task: build:platform
         vars: {GOOS: windows, GOARCH: amd64}
+      - echo "✅ Cross-platform builds complete"
+      - ls -la {{.BUILD_DIR}}/
 
   build:platform:
     desc: Build for specific platform
@@ -67,6 +74,7 @@ tasks:
     vars:
       BINARY_NAME: '{{.APP_NAME}}-{{.GOOS}}-{{.GOARCH}}{{if eq .GOOS "windows"}}.exe{{end}}'
     cmds:
+      - echo "  📦 Building {{.BINARY_NAME}}..."
       - |
         GOOS={{.GOOS}} GOARCH={{.GOARCH}} go build \
           -ldflags "{{.LDFLAGS}}" \
@@ -77,43 +85,248 @@ tasks:
     desc: Run tests with coverage
     deps: [deps]
     cmds:
+      - echo "🧪 Running tests with coverage..."
       - mkdir -p {{.BUILD_DIR}}/coverage
       - |
         go test -v -race -coverprofile={{.BUILD_DIR}}/coverage/coverage.out -covermode=atomic ./...
       - |
         go tool cover -html={{.BUILD_DIR}}/coverage/coverage.out -o {{.BUILD_DIR}}/coverage/coverage.html
+      - |
+        COVERAGE=$(go tool cover -func={{.BUILD_DIR}}/coverage/coverage.out | grep total | awk '{print $3}')
+        echo "📊 Total coverage: $COVERAGE"
 
   lint:
     desc: Run golangci-lint
     deps: [deps]
     cmds:
+      - echo "🔍 Running linting checks..."
       - |
         if ! command -v golangci-lint >/dev/null 2>&1; then
+          echo "📥 Installing golangci-lint..."
           go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
         fi
       - golangci-lint run --timeout=5m
+      - echo "✅ Linting passed"
 
   clean:
     desc: Remove build artifacts
     cmds:
+      - echo "🧹 Cleaning build artifacts..."
       - rm -rf {{.BUILD_DIR}}
       - go clean -cache
       - go clean -testcache
+      - echo "✅ Clean complete"
 
   run:
     desc: Run the application
     deps: [build]
     cmds:
+      - echo "🚀 Running {{.APP_NAME}}..."
       - ./{{.BUILD_DIR}}/{{.APP_NAME}} {{.CLI_ARGS}}
+
+  run:dev:
+    desc: Run in development mode with hot reload
+    cmds:
+      - echo "🔥 Starting development mode..."
+      - |
+        if ! command -v air >/dev/null 2>&1; then
+          echo "📥 Installing air for hot reload..."
+          go install github.com/cosmtrek/air@latest
+        fi
+      - air -c .air.toml || go run {{.MAIN_PACKAGE}} {{.CLI_ARGS}}
 
   install:
     desc: Install binary to system
     deps: [build]
     cmds:
+      - echo "📦 Installing {{.APP_NAME}}..."
       - |
         if [[ "{{OS}}" == "windows" ]]; then
           echo "Please manually copy {{.BUILD_DIR}}/{{.APP_NAME}} to your PATH"
         else
           sudo cp {{.BUILD_DIR}}/{{.APP_NAME}} /usr/local/bin/
-          echo "{{.APP_NAME}} installed to /usr/local/bin/"
+          echo "✅ {{.APP_NAME}} installed to /usr/local/bin/"
         fi
+
+  # Release Management (#2)
+  changelog:
+    desc: Generate changelog from git history
+    cmds:
+      - echo "📝 Generating changelog..."
+      - |
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        if [ -z "$LAST_TAG" ]; then
+          git log --pretty=format:"- %s (%h)" --reverse > CHANGELOG.md
+        else
+          echo "# Changelog" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "## Unreleased" >> CHANGELOG.md
+          git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" >> CHANGELOG.md
+        fi
+      - echo "✅ Changelog generated: CHANGELOG.md"
+
+  tag:
+    desc: Create and push a new version tag
+    cmds:
+      - echo "🏷️ Creating version tag..."
+      - |
+        if [ -z "{{.VERSION_TAG}}" ]; then
+          echo "Usage: task tag VERSION_TAG=v1.0.0"
+          exit 1
+        fi
+      - git tag -a {{.VERSION_TAG}} -m "Release {{.VERSION_TAG}}"
+      - git push origin {{.VERSION_TAG}}
+      - echo "✅ Tagged and pushed {{.VERSION_TAG}}"
+
+  release:
+    desc: Create a release using GoReleaser
+    deps: [changelog]
+    cmds:
+      - echo "🚀 Creating release..."
+      - |
+        if ! command -v goreleaser >/dev/null 2>&1; then
+          echo "📥 Installing GoReleaser..."
+          go install github.com/goreleaser/goreleaser@latest
+        fi
+      - goreleaser release --clean
+      - echo "✅ Release created successfully"
+
+  release:snapshot:
+    desc: Create a snapshot release (no git tags required)
+    cmds:
+      - echo "📸 Creating snapshot release..."
+      - |
+        if ! command -v goreleaser >/dev/null 2>&1; then
+          echo "📥 Installing GoReleaser..."
+          go install github.com/goreleaser/goreleaser@latest
+        fi
+      - goreleaser release --snapshot --clean
+      - echo "✅ Snapshot release created"
+
+  # CI/CD Integration (#4)
+  ci:
+    desc: Run CI pipeline (for GitHub Actions)
+    cmds:
+      - echo "🔄 Running CI pipeline..."
+      - task: deps
+      - task: lint
+      - task: test
+      - task: build:all
+      - echo "✅ CI pipeline completed successfully"
+
+  ci:artifacts:
+    desc: Prepare CI artifacts for upload
+    deps: [ci]
+    cmds:
+      - echo "📦 Preparing CI artifacts..."
+      - mkdir -p {{.BUILD_DIR}}/artifacts
+      - cp {{.BUILD_DIR}}/{{.APP_NAME}}-* {{.BUILD_DIR}}/artifacts/ 2>/dev/null || true
+      - cp {{.BUILD_DIR}}/coverage/* {{.BUILD_DIR}}/artifacts/ 2>/dev/null || true
+      - echo "✅ Artifacts prepared in {{.BUILD_DIR}}/artifacts/"
+
+  ci:publish:
+    desc: Publish release artifacts (for GitHub Actions)
+    cmds:
+      - echo "🚀 Publishing release artifacts..."
+      - task: release
+      - echo "✅ Release artifacts published"
+
+  # Development Experience (#5)
+  dev:
+    desc: Start full development environment
+    cmds:
+      - echo "🛠️ Starting development environment..."
+      - task: deps
+      - task: build
+      - echo "✅ Development environment ready"
+      - echo "💡 Use 'task run:dev' for hot reload"
+      - echo "💡 Use 'task test:watch' for continuous testing"
+
+  test:watch:
+    desc: Run tests in watch mode
+    cmds:
+      - echo "👀 Starting test watcher..."
+      - |
+        if ! command -v gotestsum >/dev/null 2>&1; then
+          echo "📥 Installing gotestsum..."
+          go install gotest.tools/gotestsum@latest
+        fi
+      - gotestsum --watch --format pkgname
+
+  fmt:
+    desc: Format code with enhanced feedback
+    cmds:
+      - echo "🎨 Formatting code..."
+      - |
+        FILES_FORMATTED=$(gofmt -l . | wc -l)
+        if [ $FILES_FORMATTED -gt 0 ]; then
+          echo "📝 Formatting $FILES_FORMATTED files..."
+          gofmt -w .
+        else
+          echo "✅ Code already formatted"
+        fi
+      - |
+        if command -v goimports >/dev/null 2>&1; then
+          goimports -w .
+        else
+          echo "📥 Installing goimports..."
+          go install golang.org/x/tools/cmd/goimports@latest
+          goimports -w .
+        fi
+
+  check:
+    desc: Run all quality checks
+    cmds:
+      - echo "🔍 Running comprehensive quality checks..."
+      - task: fmt
+      - task: lint
+      - task: test
+      - echo "✅ All quality checks passed"
+
+  info:
+    desc: Show build and environment information
+    cmds:
+      - echo "📋 Build Information:"
+      - echo "  App: {{.APP_NAME}}"
+      - echo "  Version: {{.VERSION}}"
+      - echo "  Commit: {{.COMMIT}}"
+      - echo "  Build Time: {{.BUILD_TIME}}"
+      - echo "  Go Version: $(go version)"
+      - echo "  OS/Arch: {{OS}}/{{ARCH}}"
+    silent: true
+
+  help:
+    desc: Show detailed help and usage examples
+    cmds:
+      - |
+        echo "🔧 WGO Build Automation Help"
+        echo "============================"
+        echo ""
+        echo "📦 Development:"
+        echo "  task dev          - Setup development environment"
+        echo "  task run:dev      - Run with hot reload"
+        echo "  task test:watch   - Continuous testing"
+        echo ""
+        echo "🔨 Building:"
+        echo "  task build        - Build single platform"
+        echo "  task build:all    - Build all platforms"
+        echo ""
+        echo "🧪 Testing & Quality:"
+        echo "  task test         - Run tests with coverage"
+        echo "  task lint         - Run linting"
+        echo "  task check        - Run all quality checks"
+        echo ""
+        echo "🚀 Release:"
+        echo "  task changelog    - Generate changelog"
+        echo "  task tag VERSION_TAG=v1.0.0 - Create version tag"
+        echo "  task release      - Create release"
+        echo ""
+        echo "🔄 CI/CD:"
+        echo "  task ci           - Run CI pipeline"
+        echo "  task ci:artifacts - Prepare artifacts"
+        echo ""
+        echo "💡 Examples:"
+        echo "  task run -- --help"
+        echo "  task tag VERSION_TAG=v1.2.3"
+        echo "  task run:dev -- analyze file.json"
+    silent: true
