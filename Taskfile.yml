@@ -1,0 +1,382 @@
+version: '3'
+
+vars:
+  APP_NAME: wgo
+  BUILD_DIR: dist
+  MAIN_PACKAGE: ./cmd/wgo
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo "dev"
+  COMMIT:
+    sh: git rev-parse --short HEAD 2>/dev/null || echo "unknown"
+  BUILD_TIME:
+    sh: date -u +%Y-%m-%dT%H:%M:%SZ
+  LDFLAGS: >-
+    -s -w
+    -X main.version={{.VERSION}}
+    -X main.commit={{.COMMIT}}
+    -X main.buildTime={{.BUILD_TIME}}
+    -X main.builtBy=taskfile
+
+env:
+  CGO_ENABLED: 0
+  GO111MODULE: on
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list-all
+    silent: true
+
+  deps:
+    desc: Download dependencies and tidy modules
+    cmds:
+      - go mod download
+      - go mod tidy
+      - go mod verify
+    sources:
+      - go.mod
+      - go.sum
+    generates:
+      - go.sum
+
+  build:
+    desc: Build the CLI binary with version info
+    deps: [deps]
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - |
+        go build \
+          -ldflags "{{.LDFLAGS}}" \
+          -o {{.BUILD_DIR}}/{{.APP_NAME}} \
+          {{.MAIN_PACKAGE}}
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+    generates:
+      - "{{.BUILD_DIR}}/{{.APP_NAME}}"
+    env:
+      GOOS: "{{OS}}"
+      GOARCH: "{{ARCH}}"
+
+  build:all:
+    desc: Cross-platform builds (linux, darwin, windows)
+    deps: [deps]
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - task: build:platform
+        vars: {GOOS: linux, GOARCH: amd64}
+      - task: build:platform
+        vars: {GOOS: linux, GOARCH: arm64}
+      - task: build:platform
+        vars: {GOOS: darwin, GOARCH: amd64}
+      - task: build:platform
+        vars: {GOOS: darwin, GOARCH: arm64}
+      - task: build:platform
+        vars: {GOOS: windows, GOARCH: amd64}
+      - task: build:platform
+        vars: {GOOS: windows, GOARCH: arm64}
+
+  build:platform:
+    desc: Build for specific platform
+    internal: true
+    vars:
+      BINARY_NAME: '{{.APP_NAME}}-{{.GOOS}}-{{.GOARCH}}{{if eq .GOOS "windows"}}.exe{{end}}'
+    cmds:
+      - |
+        echo "Building {{.BINARY_NAME}}..."
+        GOOS={{.GOOS}} GOARCH={{.GOARCH}} go build \
+          -ldflags "{{.LDFLAGS}}" \
+          -o {{.BUILD_DIR}}/{{.BINARY_NAME}} \
+          {{.MAIN_PACKAGE}}
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+    generates:
+      - "{{.BUILD_DIR}}/{{.BINARY_NAME}}"
+
+  test:
+    desc: Run tests with coverage
+    deps: [deps]
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}/coverage
+      - |
+        go test -v -race -coverprofile={{.BUILD_DIR}}/coverage/coverage.out -covermode=atomic ./...
+      - |
+        go tool cover -html={{.BUILD_DIR}}/coverage/coverage.out -o {{.BUILD_DIR}}/coverage/coverage.html
+      - |
+        go tool cover -func={{.BUILD_DIR}}/coverage/coverage.out | tail -1
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+    generates:
+      - "{{.BUILD_DIR}}/coverage/coverage.out"
+      - "{{.BUILD_DIR}}/coverage/coverage.html"
+
+  test:unit:
+    desc: Run unit tests only
+    deps: [deps]
+    cmds:
+      - go test -v -short ./...
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+
+  test:integration:
+    desc: Run integration tests
+    deps: [deps]
+    cmds:
+      - go test -v -tags=integration ./...
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+
+  lint:
+    desc: Run golangci-lint
+    deps: [deps]
+    cmds:
+      - |
+        if ! command -v golangci-lint >/dev/null 2>&1; then
+          echo "Installing golangci-lint..."
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+        fi
+      - golangci-lint run --timeout=5m
+    sources:
+      - "**/*.go"
+      - .golangci.yml
+      - go.mod
+      - go.sum
+
+  lint:fix:
+    desc: Run golangci-lint with auto-fix
+    deps: [deps]
+    cmds:
+      - |
+        if ! command -v golangci-lint >/dev/null 2>&1; then
+          echo "Installing golangci-lint..."
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+        fi
+      - golangci-lint run --fix --timeout=5m
+    sources:
+      - "**/*.go"
+      - .golangci.yml
+      - go.mod
+      - go.sum
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -rf {{.BUILD_DIR}}
+      - go clean -cache
+      - go clean -testcache
+      - go clean -modcache
+
+  clean:build:
+    desc: Remove only build artifacts (keep caches)
+    cmds:
+      - rm -rf {{.BUILD_DIR}}
+
+  run:
+    desc: Run the application
+    deps: [build]
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.APP_NAME}} {{.CLI_ARGS}}
+
+  run:dev:
+    desc: Run the application in development mode
+    cmds:
+      - go run {{.MAIN_PACKAGE}} {{.CLI_ARGS}}
+
+  install:
+    desc: Install binary to system
+    deps: [build]
+    cmds:
+      - |
+        if [[ "{{OS}}" == "windows" ]]; then
+          echo "Please manually copy {{.BUILD_DIR}}/{{.APP_NAME}} to your PATH"
+        else
+          sudo cp {{.BUILD_DIR}}/{{.APP_NAME}} /usr/local/bin/
+          echo "{{.APP_NAME}} installed to /usr/local/bin/"
+        fi
+
+  install:local:
+    desc: Install binary to user's local bin directory
+    deps: [build]
+    cmds:
+      - |
+        LOCAL_BIN="$HOME/.local/bin"
+        mkdir -p "$LOCAL_BIN"
+        cp {{.BUILD_DIR}}/{{.APP_NAME}} "$LOCAL_BIN/"
+        echo "{{.APP_NAME}} installed to $LOCAL_BIN/"
+        echo "Make sure $LOCAL_BIN is in your PATH"
+
+  fmt:
+    desc: Format Go code
+    cmds:
+      - go fmt ./...
+      - |
+        if command -v goimports >/dev/null 2>&1; then
+          goimports -w .
+        else
+          echo "Installing goimports..."
+          go install golang.org/x/tools/cmd/goimports@latest
+          goimports -w .
+        fi
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+
+  sec:
+    desc: Run security checks
+    deps: [deps]
+    cmds:
+      - |
+        if ! command -v gosec >/dev/null 2>&1; then
+          echo "Installing gosec..."
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+        fi
+      - gosec -fmt json -out {{.BUILD_DIR}}/security-report.json ./...
+      - gosec ./...
+
+  vuln:
+    desc: Run vulnerability checks
+    deps: [deps]
+    cmds:
+      - |
+        if ! command -v govulncheck >/dev/null 2>&1; then
+          echo "Installing govulncheck..."
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+        fi
+      - govulncheck ./...
+
+  check:
+    desc: Run all checks (fmt, vet, lint, test, sec, vuln)
+    cmds:
+      - task: fmt
+      - task: vet
+      - task: lint
+      - task: test
+      - task: sec
+      - task: vuln
+
+  ci:
+    desc: Run CI pipeline (used in GitHub Actions)
+    cmds:
+      - task: deps
+      - task: fmt
+      - task: vet
+      - task: lint
+      - task: test
+      - task: build:all
+      - task: sec
+      - task: vuln
+
+  release:
+    desc: Prepare release build
+    deps: [clean]
+    cmds:
+      - task: ci
+      - |
+        echo "Release build complete!"
+        echo "Version: {{.VERSION}}"
+        echo "Commit: {{.COMMIT}}"
+        echo "Build Time: {{.BUILD_TIME}}"
+        ls -la {{.BUILD_DIR}}/
+
+  version:
+    desc: Show version information
+    cmds:
+      - |
+        echo "Version: {{.VERSION}}"
+        echo "Commit: {{.COMMIT}}"
+        echo "Build Time: {{.BUILD_TIME}}"
+    silent: true
+
+  info:
+    desc: Show build information
+    cmds:
+      - |
+        echo "App Name: {{.APP_NAME}}"
+        echo "Main Package: {{.MAIN_PACKAGE}}"
+        echo "Build Directory: {{.BUILD_DIR}}"
+        echo "Version: {{.VERSION}}"
+        echo "Commit: {{.COMMIT}}"
+        echo "Build Time: {{.BUILD_TIME}}"
+        echo "LDFLAGS: {{.LDFLAGS}}"
+        echo "CGO_ENABLED: {{.CGO_ENABLED}}"
+        echo "GO111MODULE: {{.GO111MODULE}}"
+    silent: true
+
+  docker:build:
+    desc: Build Docker image
+    cmds:
+      - |
+        docker build \
+          --build-arg VERSION={{.VERSION}} \
+          --build-arg COMMIT={{.COMMIT}} \
+          --build-arg BUILD_TIME={{.BUILD_TIME}} \
+          -t {{.APP_NAME}}:{{.VERSION}} \
+          -t {{.APP_NAME}}:latest \
+          .
+
+  docker:run:
+    desc: Run Docker container
+    deps: [docker:build]
+    cmds:
+      - docker run --rm -it {{.APP_NAME}}:latest {{.CLI_ARGS}}
+
+  help:
+    desc: Show detailed help for all tasks
+    cmds:
+      - |
+        echo "WGO Build Automation Tasks"
+        echo "=========================="
+        echo ""
+        echo "Development Tasks:"
+        echo "  deps           - Download dependencies and tidy modules"
+        echo "  build          - Build the CLI binary with version info"
+        echo "  run            - Run the built application"
+        echo "  run:dev        - Run the application in development mode"
+        echo "  test           - Run tests with coverage"
+        echo "  lint           - Run golangci-lint"
+        echo "  fmt            - Format Go code"
+        echo ""
+        echo "Build Tasks:"
+        echo "  build:all      - Cross-platform builds (linux, darwin, windows)"
+        echo "  clean          - Remove build artifacts"
+        echo "  install        - Install binary to system (/usr/local/bin)"
+        echo "  install:local  - Install binary to user's local bin (~/.local/bin)"
+        echo ""
+        echo "Quality Tasks:"
+        echo "  vet            - Run go vet"
+        echo "  sec            - Run security checks"
+        echo "  vuln           - Run vulnerability checks"
+        echo "  check          - Run all checks"
+        echo ""
+        echo "CI/CD Tasks:"
+        echo "  ci             - Run CI pipeline"
+        echo "  release        - Prepare release build"
+        echo ""
+        echo "Docker Tasks:"
+        echo "  docker:build   - Build Docker image"
+        echo "  docker:run     - Run Docker container"
+        echo ""
+        echo "Utility Tasks:"
+        echo "  version        - Show version information"
+        echo "  info           - Show build information"
+        echo "  help           - Show this help"
+        echo ""
+        echo "Examples:"
+        echo "  task build"
+        echo "  task run -- --help"
+        echo "  task test"
+        echo "  task build:all"
+        echo "  task install:local"
+    silent: true
