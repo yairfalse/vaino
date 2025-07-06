@@ -1,57 +1,19 @@
-# Binaries for programs and plugins
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-
-# Test binary, built with `go test -c`
-*.test
-
-# Output of the go coverage tool
-*.out
-
-# Dependency directories (remove the comment below to include it)
-# vendor/
-
-# Go workspace file
-go.work
-go.work.sum
-
-# env file
-.env
-
-# IDE specific files
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-
-# OS specific files
-.DS_Store
-Thumbs.db
-
-# Project binary
-wgo
-/wgo
-/cmd/wgo/wgo
-
-# Build directories
-dist/
-build/
-
+# Edit the .gitignore file to fix the YAML rule
+# Change this section:
 # Configuration files (except examples)
-*.yaml
-*.yml
+# *.yaml
+# *.yml
+# !example*.yaml
+# !example*.yml
+# !.*.yaml
+# !.*.yml
+
+# To something more specific like:
+# Application config files (not examples or workflows)
+config.yaml
+config.yml
+# But keep examples and workflows
 !example*.yaml
 !example*.yml
-!.*.yaml
-!.*.yml
-
-# Log files
-*.log
-
-# Temporary files
-*.tmp
-*.temp
+!.github/**/*.yml
+!.github/**/*.yaml
