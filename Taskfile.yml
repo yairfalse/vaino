@@ -1,0 +1,119 @@
+version: '3'
+
+vars:
+  APP_NAME: wgo
+  BUILD_DIR: dist
+  MAIN_PACKAGE: ./cmd/wgo
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo "dev"
+  COMMIT:
+    sh: git rev-parse --short HEAD 2>/dev/null || echo "unknown"
+  BUILD_TIME:
+    sh: date -u +%Y-%m-%dT%H:%M:%SZ
+  LDFLAGS: >-
+    -s -w
+    -X main.version={{.VERSION}}
+    -X main.commit={{.COMMIT}}
+    -X main.buildTime={{.BUILD_TIME}}
+    -X main.builtBy=taskfile
+
+env:
+  CGO_ENABLED: 0
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list-all
+    silent: true
+
+  deps:
+    desc: Download dependencies and tidy modules
+    cmds:
+      - go mod download
+      - go mod tidy
+      - go mod verify
+
+  build:
+    desc: Build the CLI binary with version info
+    deps: [deps]
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - |
+        go build \
+          -ldflags "{{.LDFLAGS}}" \
+          -o {{.BUILD_DIR}}/{{.APP_NAME}} \
+          {{.MAIN_PACKAGE}}
+
+  build:all:
+    desc: Cross-platform builds (linux, darwin, windows)
+    deps: [deps]
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - task: build:platform
+        vars: {GOOS: linux, GOARCH: amd64}
+      - task: build:platform
+        vars: {GOOS: linux, GOARCH: arm64}
+      - task: build:platform
+        vars: {GOOS: darwin, GOARCH: amd64}
+      - task: build:platform
+        vars: {GOOS: darwin, GOARCH: arm64}
+      - task: build:platform
+        vars: {GOOS: windows, GOARCH: amd64}
+
+  build:platform:
+    desc: Build for specific platform
+    internal: true
+    vars:
+      BINARY_NAME: '{{.APP_NAME}}-{{.GOOS}}-{{.GOARCH}}{{if eq .GOOS "windows"}}.exe{{end}}'
+    cmds:
+      - |
+        GOOS={{.GOOS}} GOARCH={{.GOARCH}} go build \
+          -ldflags "{{.LDFLAGS}}" \
+          -o {{.BUILD_DIR}}/{{.BINARY_NAME}} \
+          {{.MAIN_PACKAGE}}
+
+  test:
+    desc: Run tests with coverage
+    deps: [deps]
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}/coverage
+      - |
+        go test -v -race -coverprofile={{.BUILD_DIR}}/coverage/coverage.out -covermode=atomic ./...
+      - |
+        go tool cover -html={{.BUILD_DIR}}/coverage/coverage.out -o {{.BUILD_DIR}}/coverage/coverage.html
+
+  lint:
+    desc: Run golangci-lint
+    deps: [deps]
+    cmds:
+      - |
+        if ! command -v golangci-lint >/dev/null 2>&1; then
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+        fi
+      - golangci-lint run --timeout=5m
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -rf {{.BUILD_DIR}}
+      - go clean -cache
+      - go clean -testcache
+
+  run:
+    desc: Run the application
+    deps: [build]
+    cmds:
+      - ./{{.BUILD_DIR}}/{{.APP_NAME}} {{.CLI_ARGS}}
+
+  install:
+    desc: Install binary to system
+    deps: [build]
+    cmds:
+      - |
+        if [[ "{{OS}}" == "windows" ]]; then
+          echo "Please manually copy {{.BUILD_DIR}}/{{.APP_NAME}} to your PATH"
+        else
+          sudo cp {{.BUILD_DIR}}/{{.APP_NAME}} /usr/local/bin/
+          echo "{{.APP_NAME}} installed to /usr/local/bin/"
+        fi
