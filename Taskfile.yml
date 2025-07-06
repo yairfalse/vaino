@@ -19,6 +19,7 @@ vars:
 
 env:
   CGO_ENABLED: 0
+  GO111MODULE: on
 
 tasks:
   default:
@@ -35,6 +36,11 @@ tasks:
       - go mod tidy
       - go mod verify
       - echo "✅ Dependencies updated successfully"
+    sources:
+      - go.mod
+      - go.sum
+    generates:
+      - go.sum
 
   build:
     desc: Build the CLI binary with version info
@@ -48,6 +54,15 @@ tasks:
           -o {{.BUILD_DIR}}/{{.APP_NAME}} \
           {{.MAIN_PACKAGE}}
       - echo "✅ Build complete: {{.BUILD_DIR}}/{{.APP_NAME}}"
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+    generates:
+      - "{{.BUILD_DIR}}/{{.APP_NAME}}"
+    env:
+      GOOS: "{{OS}}"
+      GOARCH: "{{ARCH}}"
 
   build:all:
     desc: Cross-platform builds (linux, darwin, windows)
@@ -65,6 +80,8 @@ tasks:
         vars: {GOOS: darwin, GOARCH: arm64}
       - task: build:platform
         vars: {GOOS: windows, GOARCH: amd64}
+      - task: build:platform
+        vars: {GOOS: windows, GOARCH: arm64}
       - echo "✅ Cross-platform builds complete"
       - ls -la {{.BUILD_DIR}}/
 
@@ -80,6 +97,12 @@ tasks:
           -ldflags "{{.LDFLAGS}}" \
           -o {{.BUILD_DIR}}/{{.BINARY_NAME}} \
           {{.MAIN_PACKAGE}}
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+    generates:
+      - "{{.BUILD_DIR}}/{{.BINARY_NAME}}"
 
   test:
     desc: Run tests with coverage
@@ -94,6 +117,44 @@ tasks:
       - |
         COVERAGE=$(go tool cover -func={{.BUILD_DIR}}/coverage/coverage.out | grep total | awk '{print $3}')
         echo "📊 Total coverage: $COVERAGE"
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+    generates:
+      - "{{.BUILD_DIR}}/coverage/coverage.out"
+      - "{{.BUILD_DIR}}/coverage/coverage.html"
+
+  test:unit:
+    desc: Run unit tests only
+    deps: [deps]
+    cmds:
+      - go test -v -short ./...
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+
+  test:integration:
+    desc: Run integration tests
+    deps: [deps]
+    cmds:
+      - go test -v -tags=integration ./...
+    sources:
+      - "**/*.go"
+      - go.mod
+      - go.sum
+
+  test:watch:
+    desc: Run tests in watch mode
+    cmds:
+      - echo "👀 Starting test watcher..."
+      - |
+        if ! command -v gotestsum >/dev/null 2>&1; then
+          echo "📥 Installing gotestsum..."
+          go install gotest.tools/gotestsum@latest
+        fi
+      - gotestsum --watch --format pkgname
 
   lint:
     desc: Run golangci-lint
@@ -107,6 +168,27 @@ tasks:
         fi
       - golangci-lint run --timeout=5m
       - echo "✅ Linting passed"
+    sources:
+      - "**/*.go"
+      - .golangci.yml
+      - go.mod
+      - go.sum
+
+  lint:fix:
+    desc: Run golangci-lint with auto-fix
+    deps: [deps]
+    cmds:
+      - |
+        if ! command -v golangci-lint >/dev/null 2>&1; then
+          echo "📥 Installing golangci-lint..."
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+        fi
+      - golangci-lint run --fix --timeout=5m
+    sources:
+      - "**/*.go"
+      - .golangci.yml
+      - go.mod
+      - go.sum
 
   clean:
     desc: Remove build artifacts
@@ -115,7 +197,13 @@ tasks:
       - rm -rf {{.BUILD_DIR}}
       - go clean -cache
       - go clean -testcache
+      - go clean -modcache
       - echo "✅ Clean complete"
+
+  clean:build:
+    desc: Remove only build artifacts (keep caches)
+    cmds:
+      - rm -rf {{.BUILD_DIR}}
 
   run:
     desc: Run the application
@@ -147,6 +235,78 @@ tasks:
           sudo cp {{.BUILD_DIR}}/{{.APP_NAME}} /usr/local/bin/
           echo "✅ {{.APP_NAME}} installed to /usr/local/bin/"
         fi
+
+  install:local:
+    desc: Install binary to user's local bin directory
+    deps: [build]
+    cmds:
+      - |
+        LOCAL_BIN="$HOME/.local/bin"
+        mkdir -p "$LOCAL_BIN"
+        cp {{.BUILD_DIR}}/{{.APP_NAME}} "$LOCAL_BIN/"
+        echo "✅ {{.APP_NAME}} installed to $LOCAL_BIN/"
+        echo "Make sure $LOCAL_BIN is in your PATH"
+
+  fmt:
+    desc: Format code with enhanced feedback
+    cmds:
+      - echo "🎨 Formatting code..."
+      - |
+        FILES_FORMATTED=$(gofmt -l . | wc -l)
+        if [ $FILES_FORMATTED -gt 0 ]; then
+          echo "📝 Formatting $FILES_FORMATTED files..."
+          gofmt -w .
+        else
+          echo "✅ Code already formatted"
+        fi
+      - |
+        if command -v goimports >/dev/null 2>&1; then
+          goimports -w .
+        else
+          echo "📥 Installing goimports..."
+          go install golang.org/x/tools/cmd/goimports@latest
+          goimports -w .
+        fi
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+
+  sec:
+    desc: Run security checks
+    deps: [deps]
+    cmds:
+      - |
+        if ! command -v gosec >/dev/null 2>&1; then
+          echo "📥 Installing gosec..."
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+        fi
+      - gosec -fmt json -out {{.BUILD_DIR}}/security-report.json ./...
+      - gosec ./...
+
+  vuln:
+    desc: Run vulnerability checks
+    deps: [deps]
+    cmds:
+      - |
+        if ! command -v govulncheck >/dev/null 2>&1; then
+          echo "📥 Installing govulncheck..."
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+        fi
+      - govulncheck ./...
+
+  check:
+    desc: Run all quality checks
+    cmds:
+      - echo "🔍 Running comprehensive quality checks..."
+      - task: fmt
+      - task: vet
+      - task: lint
+      - task: test
+      - task: sec
+      - task: vuln
+      - echo "✅ All quality checks passed"
 
   # Release Management (#2)
   changelog:
@@ -209,9 +369,13 @@ tasks:
     cmds:
       - echo "🔄 Running CI pipeline..."
       - task: deps
+      - task: fmt
+      - task: vet
       - task: lint
       - task: test
       - task: build:all
+      - task: sec
+      - task: vuln
       - echo "✅ CI pipeline completed successfully"
 
   ci:artifacts:
@@ -242,46 +406,14 @@ tasks:
       - echo "💡 Use 'task run:dev' for hot reload"
       - echo "💡 Use 'task test:watch' for continuous testing"
 
-  test:watch:
-    desc: Run tests in watch mode
+  version:
+    desc: Show version information
     cmds:
-      - echo "👀 Starting test watcher..."
       - |
-        if ! command -v gotestsum >/dev/null 2>&1; then
-          echo "📥 Installing gotestsum..."
-          go install gotest.tools/gotestsum@latest
-        fi
-      - gotestsum --watch --format pkgname
-
-  fmt:
-    desc: Format code with enhanced feedback
-    cmds:
-      - echo "🎨 Formatting code..."
-      - |
-        FILES_FORMATTED=$(gofmt -l . | wc -l)
-        if [ $FILES_FORMATTED -gt 0 ]; then
-          echo "📝 Formatting $FILES_FORMATTED files..."
-          gofmt -w .
-        else
-          echo "✅ Code already formatted"
-        fi
-      - |
-        if command -v goimports >/dev/null 2>&1; then
-          goimports -w .
-        else
-          echo "📥 Installing goimports..."
-          go install golang.org/x/tools/cmd/goimports@latest
-          goimports -w .
-        fi
-
-  check:
-    desc: Run all quality checks
-    cmds:
-      - echo "🔍 Running comprehensive quality checks..."
-      - task: fmt
-      - task: lint
-      - task: test
-      - echo "✅ All quality checks passed"
+        echo "Version: {{.VERSION}}"
+        echo "Commit: {{.COMMIT}}"
+        echo "Build Time: {{.BUILD_TIME}}"
+    silent: true
 
   info:
     desc: Show build and environment information
@@ -293,7 +425,28 @@ tasks:
       - echo "  Build Time: {{.BUILD_TIME}}"
       - echo "  Go Version: $(go version)"
       - echo "  OS/Arch: {{OS}}/{{ARCH}}"
+      - echo "  LDFLAGS: {{.LDFLAGS}}"
+      - echo "  CGO_ENABLED: {{.CGO_ENABLED}}"
+      - echo "  GO111MODULE: {{.GO111MODULE}}"
     silent: true
+
+  docker:build:
+    desc: Build Docker image
+    cmds:
+      - |
+        docker build \
+          --build-arg VERSION={{.VERSION}} \
+          --build-arg COMMIT={{.COMMIT}} \
+          --build-arg BUILD_TIME={{.BUILD_TIME}} \
+          -t {{.APP_NAME}}:{{.VERSION}} \
+          -t {{.APP_NAME}}:latest \
+          .
+
+  docker:run:
+    desc: Run Docker container
+    deps: [docker:build]
+    cmds:
+      - docker run --rm -it {{.APP_NAME}}:latest {{.CLI_ARGS}}
 
   help:
     desc: Show detailed help and usage examples
@@ -313,6 +466,8 @@ tasks:
         echo ""
         echo "🧪 Testing & Quality:"
         echo "  task test         - Run tests with coverage"
+        echo "  task test:unit    - Run unit tests only"
+        echo "  task test:integration - Run integration tests"
         echo "  task lint         - Run linting"
         echo "  task check        - Run all quality checks"
         echo ""
@@ -324,6 +479,10 @@ tasks:
         echo "🔄 CI/CD:"
         echo "  task ci           - Run CI pipeline"
         echo "  task ci:artifacts - Prepare artifacts"
+        echo ""
+        echo "🐳 Docker:"
+        echo "  task docker:build - Build Docker image"
+        echo "  task docker:run   - Run Docker container"
         echo ""
         echo "💡 Examples:"
         echo "  task run -- --help"
