@@ -28,7 +28,10 @@ func (f *AppFactory) Create(config Config) (*App, error) {
 	// Create cache
 	cacheManager := cache.NewManager()
 
-	// Create registry
+	// Create enhanced registry and initialize collectors
+	enhancedRegistry := collectors.InitializeCollectors()
+	
+	// Create legacy registry for compatibility
 	registry := collectors.NewRegistry()
 
 	return &App{

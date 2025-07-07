@@ -10,11 +10,7 @@ import (
 )
 
 type ClaudeClient struct {
-<<<<<<< HEAD
-	client *anthropic.Client
-=======
 	client anthropic.Client
->>>>>>> main
 }
 
 func NewClaudeClient() (*ClaudeClient, error) {
@@ -27,11 +23,7 @@ func NewClaudeClient() (*ClaudeClient, error) {
 		option.WithAPIKey(apiKey),
 	)
 
-<<<<<<< HEAD
-	return &ClaudeClient{client: &client}, nil
-=======
 	return &ClaudeClient{client: client}, nil
->>>>>>> main
 }
 
 func (c *ClaudeClient) AnalyzeDrift(ctx context.Context, driftData string) (string, error) {
@@ -49,11 +41,7 @@ Format your response in a clear, actionable manner.`, driftData)
 
 	resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:     anthropic.ModelClaude3_5Sonnet20241022,
-<<<<<<< HEAD
-		MaxTokens: 1024,
-=======
 		MaxTokens: anthropic.Int(1024),
->>>>>>> main
 		Messages: []anthropic.MessageParam{
 			anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
 		},
@@ -87,11 +75,7 @@ Use clear, non-technical language where possible.`, changeData)
 
 	resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:     anthropic.ModelClaude3_5Sonnet20241022,
-<<<<<<< HEAD
-		MaxTokens: 512,
-=======
 		MaxTokens: anthropic.Int(512),
->>>>>>> main
 		Messages: []anthropic.MessageParam{
 			anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
 		},
