@@ -1,9 +1,14 @@
 package app
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/yairfalse/wgo/internal/collectors"
+	"github.com/yairfalse/wgo/pkg/types"
 )
 
 func (a *App) runVersionCommand(cmd *cobra.Command, args []string) {
@@ -27,13 +32,140 @@ func (a *App) runStatusCommand(cmd *cobra.Command, args []string) {
 }
 
 func (a *App) runScanCommand(cmd *cobra.Command, args []string) {
-	a.logger.Info("Scanning infrastructure...")
+	a.logger.Info("Starting infrastructure scan...")
 	
-	collectors := a.registry.List()
-	fmt.Printf("Found %d collectors\n", len(collectors))
+	// Get flags
+	provider, _ := cmd.Flags().GetString("provider")
+	statePaths, _ := cmd.Flags().GetStringSlice("state-file")
+	outputFile, _ := cmd.Flags().GetString("output")
+	autoDiscover, _ := cmd.Flags().GetBool("auto-discover")
 	
-	for _, name := range collectors {
-		fmt.Printf("  - %s: Available\n", name)
+	ctx := cmd.Context()
+	
+	if provider == "" {
+		// List available providers
+		enhancedProviders := a.enhancedRegistry.ListEnhanced()
+		legacyProviders := a.enhancedRegistry.ListLegacy()
+		
+		fmt.Println("Available providers:")
+		fmt.Println("\nEnhanced providers (support full collection):")
+		for _, name := range enhancedProviders {
+			status := "unknown"
+			if collector, err := a.enhancedRegistry.GetEnhanced(name); err == nil {
+				status = collector.Status()
+			}
+			fmt.Printf("  • %s (%s)\n", name, status)
+		}
+		
+		if len(legacyProviders) > 0 {
+			fmt.Println("\nLegacy providers (status only):")
+			for _, name := range legacyProviders {
+				fmt.Printf("  • %s\n", name)
+			}
+		}
+		
+		fmt.Println("\nUse --provider <name> to scan a specific provider")
+		fmt.Println("Example: wgo scan --provider terraform")
+		return
+	}
+	
+	// Validate provider
+	if !a.enhancedRegistry.IsEnhanced(provider) {
+		fmt.Printf("Error: Provider '%s' is not available or does not support collection\n", provider)
+		fmt.Println("Available enhanced providers:")
+		for _, name := range a.enhancedRegistry.ListEnhanced() {
+			fmt.Printf("  • %s\n", name)
+		}
+		return
+	}
+	
+	// Get collector
+	collector, err := a.enhancedRegistry.GetEnhanced(provider)
+	if err != nil {
+		fmt.Printf("Error: Failed to get collector for provider '%s': %v\n", provider, err)
+		return
+	}
+	
+	// Check collector status
+	status := collector.Status()
+	if status != "ready" {
+		fmt.Printf("Warning: Collector status: %s\n", status)
+	}
+	
+	// Build collector configuration
+	var config collectors.CollectorConfig
+	
+	if autoDiscover {
+		fmt.Println("🔍 Auto-discovering configuration...")
+		discoveredConfig, err := collector.AutoDiscover()
+		if err != nil {
+			fmt.Printf("Auto-discovery failed: %v\n", err)
+			return
+		}
+		config = discoveredConfig
+		fmt.Printf("Found %d state paths\n", len(config.StatePaths))
+	} else if len(statePaths) > 0 {
+		config.StatePaths = statePaths
+	} else {
+		// Default configuration for terraform
+		if provider == "terraform" {
+			config.StatePaths = []string{"./terraform.tfstate", "./"}
+		}
+	}
+	
+	// Add common configuration
+	config.Config = map[string]interface{}{
+		"scan_id": fmt.Sprintf("%s-%d", provider, time.Now().Unix()),
+	}
+	
+	// Validate configuration
+	if err := collector.Validate(config); err != nil {
+		fmt.Printf("Configuration validation failed: %v\n", err)
+		return
+	}
+	
+	// Perform collection
+	fmt.Printf("📊 Collecting resources from %s...\n", provider)
+	startTime := time.Now()
+	
+	snapshot, err := collector.Collect(ctx, config)
+	if err != nil {
+		fmt.Printf("Collection failed: %v\n", err)
+		return
+	}
+	
+	collectionTime := time.Since(startTime)
+	
+	// Display results
+	fmt.Printf("\n✅ Collection completed in %v\n", collectionTime)
+	fmt.Printf("📋 Snapshot ID: %s\n", snapshot.ID)
+	fmt.Printf("📊 Resources found: %d\n", len(snapshot.Resources))
+	
+	// Group resources by type
+	byType := make(map[string]int)
+	for _, resource := range snapshot.Resources {
+		byType[resource.Type]++
+	}
+	
+	fmt.Println("\n📈 Resource breakdown:")
+	for resourceType, count := range byType {
+		fmt.Printf("  • %s: %d\n", resourceType, count)
+	}
+	
+	// Save snapshot
+	if err := a.storage.SaveSnapshot(snapshot); err != nil {
+		fmt.Printf("Warning: Failed to save snapshot: %v\n", err)
+	} else {
+		fmt.Printf("\n💾 Snapshot saved successfully\n")
+	}
+	
+	// Save to output file if specified
+	if outputFile != "" {
+		if err := a.saveSnapshotToFile(snapshot, outputFile); err != nil {
+			fmt.Printf("Warning: Failed to save to output file: %v\n", err)
+		} else {
+			fmt.Printf("📄 Output saved to: %s\n", outputFile)
+		}
 	}
 }
 
@@ -43,6 +175,15 @@ func (a *App) runCheckCommand(cmd *cobra.Command, args []string) {
 	fmt.Println("Drift Check:")
 	fmt.Println("  Baseline: Not found")
 	fmt.Println("  Status: Run 'wgo baseline create' first")
+}
+
+func (a *App) runDiffCommand(cmd *cobra.Command, args []string) {
+	a.logger.Info("Comparing infrastructure states...")
+	
+	fmt.Println("Infrastructure Diff:")
+	fmt.Println("  Use 'wgo diff --baseline <name>' to compare with baseline")
+	fmt.Println("  Use 'wgo diff --from <file1> --to <file2>' to compare snapshots")
+	fmt.Println("  Example: wgo diff --baseline prod-v1.0 --format json")
 }
 
 func (a *App) runBaselineCommand(cmd *cobra.Command, args []string) {
@@ -98,4 +239,14 @@ func (a *App) runSetupCommand(cmd *cobra.Command, args []string) {
 	fmt.Println("  - Kubernetes: Checking for kubeconfig...")
 	fmt.Println("  - Git: Checking for .git directory...")
 	fmt.Println("  Setup complete! Run 'wgo config' to see configuration.")
+}
+
+// saveSnapshotToFile saves a snapshot to a JSON file
+func (a *App) saveSnapshotToFile(snapshot *types.Snapshot, filename string) error {
+	data, err := json.MarshalIndent(snapshot, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal snapshot: %w", err)
+	}
+	
+	return os.WriteFile(filename, data, 0644)
 }

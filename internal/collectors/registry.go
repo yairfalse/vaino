@@ -20,6 +20,17 @@ func NewRegistry() *CollectorRegistry {
 	}
 }
 
+// defaultRegistry is the global registry instance
+var defaultRegistry *CollectorRegistry
+
+// DefaultRegistry returns the default collector registry
+func DefaultRegistry() *CollectorRegistry {
+	if defaultRegistry == nil {
+		defaultRegistry = NewRegistry()
+	}
+	return defaultRegistry
+}
+
 func (r *CollectorRegistry) Register(collector Collector) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

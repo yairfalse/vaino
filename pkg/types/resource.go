@@ -152,10 +152,3 @@ const (
 	DriftSeverityCritical DriftSeverity = "critical"
 )
 
-// Change represents a specific change in a resource
-type Change struct {
-	Field    string      `json:"field"`
-	OldValue interface{} `json:"old_value"`
-	NewValue interface{} `json:"new_value"`
-	Impact   string      `json:"impact,omitempty"`
-}
