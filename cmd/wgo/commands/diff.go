@@ -3,7 +3,9 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -38,20 +40,25 @@ detailed differences. Supports multiple output formats for different use cases.`
 		RunE: runDiff,
 	}
 
-	// Flags
+	// Flags - Unix-style like git diff
 	cmd.Flags().String("baseline", "", "baseline name to compare against")
 	cmd.Flags().String("from", "", "source snapshot file")
 	cmd.Flags().String("to", "", "target snapshot file")
-	cmd.Flags().String("format", "table", "output format (table, json, yaml, markdown, csv, html)")
+	cmd.Flags().String("format", "", "output format (unix, simple, name-only, stat, json, yaml)")
 	cmd.Flags().StringP("output", "o", "", "output file (use '-' for stdout)")
+	
+	// Unix-style options
+	cmd.Flags().Bool("name-only", false, "show only names of changed resources")
+	cmd.Flags().Bool("stat", false, "show diffstat")
+	cmd.Flags().BoolP("quiet", "q", false, "suppress all output, exit with status only")
+	
+	// Filtering options
 	cmd.Flags().StringP("provider", "p", "", "limit diff to specific provider")
 	cmd.Flags().StringSlice("region", []string{}, "limit diff to specific regions")
 	cmd.Flags().StringSlice("namespace", []string{}, "limit diff to specific namespaces")
-	cmd.Flags().String("min-severity", "low", "minimum severity to show (low, medium, high, critical)")
 	cmd.Flags().StringSlice("resource-type", []string{}, "limit to specific resource types")
 	cmd.Flags().StringSlice("ignore-fields", []string{}, "ignore changes in specified fields")
-	cmd.Flags().Bool("summary-only", false, "show only summary statistics")
-	cmd.Flags().Bool("show-unchanged", false, "include unchanged resources")
+	cmd.Flags().String("min-severity", "low", "minimum severity level to show (low, medium, high, critical)")
 
 	return cmd
 }
@@ -225,9 +232,6 @@ func formatTableReport(report *differ.DriftReport, summaryOnly bool, showUnchang
 }
 
 func runDiff(cmd *cobra.Command, args []string) error {
-	fmt.Println("📊 Infrastructure State Comparison")
-	fmt.Println("==================================")
-	
 	// Parse flags
 	baseline, _ := cmd.Flags().GetString("baseline")
 	from, _ := cmd.Flags().GetString("from")
@@ -235,15 +239,82 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	format, _ := cmd.Flags().GetString("format")
 	outputFile, _ := cmd.Flags().GetString("output")
 	provider, _ := cmd.Flags().GetString("provider")
-	minSeverity, _ := cmd.Flags().GetString("min-severity")
-	_, _ = cmd.Flags().GetBool("summary-only")
+	quiet, _ := cmd.Flags().GetBool("quiet")
+	nameOnly, _ := cmd.Flags().GetBool("name-only")
+	stat, _ := cmd.Flags().GetBool("stat")
 	ignoreFields, _ := cmd.Flags().GetStringSlice("ignore-fields")
-	_, _ = cmd.Flags().GetBool("show-unchanged")
+	minSeverity, _ := cmd.Flags().GetString("min-severity")
 	
 	// Check for no-color flag from global flags
 	noColor := cmd.Flag("no-color") != nil && cmd.Flag("no-color").Value.String() == "true"
 	
-	// Validate inputs
+	// Handle format shortcuts
+	if nameOnly {
+		format = "name-only"
+	} else if stat {
+		format = "stat"
+	}
+	
+	// Auto-detect last scan if no inputs provided
+	if baseline == "" && from == "" && to == "" {
+		// Try to find the most recent scan in ~/.wgo
+		homeDir, _ := os.UserHomeDir()
+		wgoDir := filepath.Join(homeDir, ".wgo")
+		
+		// Find all last-scan files
+		matches, _ := filepath.Glob(filepath.Join(wgoDir, "last-scan-*.json"))
+		if len(matches) > 0 {
+			// Use the most recently modified one
+			var mostRecent string
+			var mostRecentTime time.Time
+			
+			for _, match := range matches {
+				info, err := os.Stat(match)
+				if err == nil && info.ModTime().After(mostRecentTime) {
+					mostRecent = match
+					mostRecentTime = info.ModTime()
+				}
+			}
+			
+			if mostRecent != "" {
+				// Extract provider from filename
+				base := filepath.Base(mostRecent)
+				providerName := strings.TrimPrefix(strings.TrimSuffix(base, ".json"), "last-scan-")
+				
+				fmt.Printf("Comparing %s infrastructure...\n", providerName)
+				
+				// Create temp file for new scan
+				tempFile, err := os.CreateTemp("", "wgo-scan-*.json")
+				if err != nil {
+					return fmt.Errorf("failed to create temp file: %w", err)
+				}
+				tempPath := tempFile.Name()
+				tempFile.Close()
+				defer os.Remove(tempPath)
+				
+				// Run new scan silently
+				scanCmd := newScanCommand()
+				scanArgs := []string{"--provider", providerName, "--output-file", tempPath, "--quiet"}
+				
+				// Add auto-discover for terraform
+				if providerName == "terraform" {
+					scanArgs = append(scanArgs, "--auto-discover")
+				}
+				
+				scanCmd.SetArgs(scanArgs)
+				scanCmd.SetOutput(io.Discard) // Suppress output
+				if err := scanCmd.Execute(); err != nil {
+					return fmt.Errorf("failed to run scan: %w", err)
+				}
+				
+				// Set from and to for comparison
+				from = mostRecent
+				to = tempPath
+			}
+		}
+	}
+	
+	// Validate inputs after auto-detection
 	if baseline == "" && (from == "" || to == "") {
 		return fmt.Errorf("must specify either --baseline or both --from and --to")
 	}
@@ -253,12 +324,17 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	}
 	
 	// Validate format
-	validFormats := []string{"table", "json", "yaml", "markdown"}
+	validFormats := []string{"table", "json", "yaml", "markdown", "unix", "simple", "name-only", "stat"}
 	formatValid := false
-	for _, validFormat := range validFormats {
-		if format == validFormat {
-			formatValid = true
-			break
+	if format == "" {
+		format = "unix" // Default format
+		formatValid = true
+	} else {
+		for _, validFormat := range validFormats {
+			if format == validFormat {
+				formatValid = true
+				break
+			}
 		}
 	}
 	if !formatValid {
@@ -276,7 +352,7 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	var fromSnapshot, toSnapshot *types.Snapshot
 	
 	if baseline != "" {
-		fmt.Printf("📋 Loading baseline: %s\n", baseline)
+		// Loading baseline
 		baselineData, err := localStorage.LoadBaseline(baseline)
 		if err != nil {
 			return fmt.Errorf("failed to load baseline '%s': %w", baseline, err)
@@ -286,7 +362,7 @@ func runDiff(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to load baseline snapshot: %w", err)
 		}
 		
-		fmt.Println("📊 Loading current snapshot...")
+		// Loading current snapshot
 		snapshots, err := localStorage.ListSnapshots()
 		if err != nil {
 			return fmt.Errorf("failed to list snapshots: %w", err)
@@ -299,9 +375,9 @@ func runDiff(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("failed to load current snapshot: %w", err)
 		}
-		fmt.Printf("📋 Comparing baseline '%s' with current state\n", baseline)
+		// Comparing baseline with current state
 	} else {
-		fmt.Printf("📊 Loading snapshots: %s → %s\n", from, to)
+		// Loading snapshots for comparison
 		fromSnapshot, err = loadSnapshotFromFile(from)
 		if err != nil {
 			return fmt.Errorf("failed to load from snapshot '%s': %w", from, err)
@@ -329,14 +405,11 @@ func runDiff(cmd *cobra.Command, args []string) error {
 				options.IgnoreProviders = append(options.IgnoreProviders, resource.Provider)
 			}
 		}
-		fmt.Printf("🔧 Provider filter: %s\n", provider)
+		// Provider filter applied
 	}
 	
 	// Create differ engine
 	differ := differ.NewDifferEngine(options)
-	
-	fmt.Println("\n🔍 Comparing snapshots...")
-	startTime := time.Now()
 	
 	// Perform comparison
 	report, err := differ.Compare(fromSnapshot, toSnapshot)
@@ -344,44 +417,56 @@ func runDiff(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("comparison failed: %w", err)
 	}
 	
-	comparisonTime := time.Since(startTime)
-	fmt.Printf("✅ Comparison completed in %v\n\n", comparisonTime)
+	// Comparison completed
 	
-	// Initialize enhanced output system
-	atomicWriter := storage.NewAtomicWriter("./backups")
-	exportManager := output.NewExportManager(atomicWriter, noColor)
-	
-	// Export using enhanced system
-	exportOptions := output.ExportOptions{
-		Format:      format,
-		OutputPath:  outputFile,
-		Pretty:      true,
-		FilterLevel: minSeverity,
+	// If quiet mode, just exit with status
+	if quiet {
+		if len(report.ResourceChanges) > 0 {
+			os.Exit(1)
+		}
+		return nil
 	}
 	
-	if format == "table" {
-		// Use enhanced table renderer for terminal output
-		renderer := output.NewEnhancedTableRenderer(noColor, 120)
-		result := renderer.RenderDriftReport(report)
-		
-		if outputFile == "" || outputFile == "-" {
-			fmt.Print(result)
-		} else {
-			if err := atomicWriter.WriteFile(outputFile, []byte(result), 0644); err != nil {
-				fmt.Printf("⚠️  Failed to save output: %v\n", err)
-			} else {
-				fmt.Printf("\n💾 Output saved to: %s\n", outputFile)
-			}
-		}
+	// Use Unix-style output by default
+	formatter := output.NewUnixFormatter(noColor)
+	
+	var result []byte
+	
+	// Handle different formats
+	switch format {
+	case "", "unix":
+		// Default Unix-style output
+		result, err = formatter.FormatDriftReport(report)
+	case "simple":
+		result, err = formatter.FormatSimple(report)
+	case "name-only":
+		result, err = formatter.FormatNameOnly(report)
+	case "stat":
+		result, err = formatter.FormatStat(report)
+	case "json":
+		result, err = json.MarshalIndent(report, "", "  ")
+	case "yaml":
+		result, err = yaml.Marshal(report)
+	default:
+		return fmt.Errorf("unsupported format: %s", format)
+	}
+	
+	if err != nil {
+		return fmt.Errorf("failed to format output: %w", err)
+	}
+	
+	// Output the result
+	if outputFile == "" || outputFile == "-" {
+		fmt.Print(string(result))
 	} else {
-		// Use export manager for other formats
-		if err := exportManager.ExportDriftReport(report, exportOptions); err != nil {
-			return fmt.Errorf("failed to export report: %w", err)
+		if err := os.WriteFile(outputFile, result, 0644); err != nil {
+			return fmt.Errorf("failed to write output file: %w", err)
 		}
-		
-		if outputFile != "" && outputFile != "-" {
-			fmt.Printf("\n💾 Report exported to: %s\n", outputFile)
-		}
+	}
+	
+	// Set exit code based on whether drift was detected
+	if len(report.ResourceChanges) > 0 {
+		os.Exit(1) // Drift detected - like git diff
 	}
 	
 	return nil
