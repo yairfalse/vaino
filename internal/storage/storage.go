@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,37 +9,77 @@ import (
 	"github.com/yairfalse/wgo/pkg/types"
 )
 
-// Storage interface for persisting data
 type Storage interface {
 	SaveSnapshot(snapshot *types.Snapshot) error
 	LoadSnapshot(id string) (*types.Snapshot, error)
 	ListSnapshots() ([]*types.Snapshot, error)
 	DeleteSnapshot(id string) error
-	
-	SaveBaseline(baseline *types.Baseline) error
-	LoadBaseline(id string) (*types.Baseline, error)
-	ListBaselines() ([]*types.Baseline, error)
-	DeleteBaseline(id string) error
 }
 
-// NewLocal creates a new local file storage instance
-func NewLocal(dataDir string) (Storage, error) {
-	return NewFileStorage(dataDir)
+type LocalStorage struct {
+	basePath string
 }
 
-// NewFileStorage creates a new file-based storage instance
-func NewFileStorage(dataDir string) (Storage, error) {
-	// Create data directory if it doesn't exist
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create data directory: %w", err)
+func NewLocal(basePath string) Storage {
+	return &LocalStorage{
+		basePath: basePath,
 	}
-	
-	// Create subdirectories
-	for _, subdir := range []string{"snapshots", "baselines"} {
-		if err := os.MkdirAll(filepath.Join(dataDir, subdir), 0755); err != nil {
-			return nil, fmt.Errorf("failed to create %s directory: %w", subdir, err)
+}
+
+func (s *LocalStorage) SaveSnapshot(snapshot *types.Snapshot) error {
+	if err := os.MkdirAll(s.basePath, 0755); err != nil {
+		return err
+	}
+
+	filename := filepath.Join(s.basePath, fmt.Sprintf("%s.json", snapshot.ID))
+	data, err := json.MarshalIndent(snapshot, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(filename, data, 0644)
+}
+
+func (s *LocalStorage) LoadSnapshot(id string) (*types.Snapshot, error) {
+	filename := filepath.Join(s.basePath, fmt.Sprintf("%s.json", id))
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	var snapshot types.Snapshot
+	if err := json.Unmarshal(data, &snapshot); err != nil {
+		return nil, err
+	}
+
+	return &snapshot, nil
+}
+
+func (s *LocalStorage) ListSnapshots() ([]*types.Snapshot, error) {
+	files, err := filepath.Glob(filepath.Join(s.basePath, "*.json"))
+	if err != nil {
+		return nil, err
+	}
+
+	var snapshots []*types.Snapshot
+	for _, file := range files {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			continue
 		}
+
+		var snapshot types.Snapshot
+		if err := json.Unmarshal(data, &snapshot); err != nil {
+			continue
+		}
+
+		snapshots = append(snapshots, &snapshot)
 	}
-	
-	return &FileStorage{dataDir: dataDir}, nil
+
+	return snapshots, nil
+}
+
+func (s *LocalStorage) DeleteSnapshot(id string) error {
+	filename := filepath.Join(s.basePath, fmt.Sprintf("%s.json", id))
+	return os.Remove(filename)
 }

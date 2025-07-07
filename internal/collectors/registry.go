@@ -1,16 +1,12 @@
 package collectors
 
 import (
-	"fmt"
 	"sync"
-
-	"github.com/yairfalse/wgo/pkg/types"
 )
 
 type Collector interface {
 	Name() string
-	Collect() ([]types.Resource, error)
-	Health() error
+	Status() string
 }
 
 type CollectorRegistry struct {
@@ -30,18 +26,6 @@ func (r *CollectorRegistry) Register(collector Collector) {
 	r.collectors[collector.Name()] = collector
 }
 
-func (r *CollectorRegistry) Get(name string) (Collector, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	
-	collector, exists := r.collectors[name]
-	if !exists {
-		return nil, fmt.Errorf("collector %s not found", name)
-	}
-	
-	return collector, nil
-}
-
 func (r *CollectorRegistry) List() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -54,26 +38,30 @@ func (r *CollectorRegistry) List() []string {
 	return names
 }
 
-func (r *CollectorRegistry) CollectAll() ([]types.Resource, error) {
+func (r *CollectorRegistry) Get(name string) (Collector, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	
-	var allResources []types.Resource
-	
-	for name, collector := range r.collectors {
-		resources, err := collector.Collect()
-		if err != nil {
-			return nil, fmt.Errorf("collector %s failed: %w", name, err)
-		}
-		allResources = append(allResources, resources...)
-	}
-	
-	return allResources, nil
+	collector, exists := r.collectors[name]
+	return collector, exists
 }
 
-// Default registry instance
-var defaultRegistry = NewRegistry()
+type MockCollector struct {
+	name   string
+	status string
+}
 
-func DefaultRegistry() *CollectorRegistry {
-	return defaultRegistry
+func NewMockCollector(name, status string) Collector {
+	return &MockCollector{
+		name:   name,
+		status: status,
+	}
+}
+
+func (c *MockCollector) Name() string {
+	return c.name
+}
+
+func (c *MockCollector) Status() string {
+	return c.status
 }
