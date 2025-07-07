@@ -50,8 +50,8 @@ type ResourceDiff struct {
 	Description   string      `json:"description"`
 }
 
-// Change represents a specific configuration change
-type Change struct {
+// DifferChange represents a specific configuration change in the differ context
+type DifferChange struct {
 	Type        ChangeType    `json:"type"`
 	ResourceID  string        `json:"resource_id"`
 	Path        string        `json:"path"`
@@ -63,6 +63,9 @@ type Change struct {
 	Impact      string        `json:"impact"`
 	Description string        `json:"description"`
 }
+
+// Change is an alias for backward compatibility
+type Change = DifferChange
 
 // ChangeType represents the type of change detected
 type ChangeType string

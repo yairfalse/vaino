@@ -2,15 +2,25 @@ package types
 
 import "time"
 
+// Change represents a specific configuration change
+type Change struct {
+	Field       string      `json:"field"`
+	OldValue    interface{} `json:"old_value"`
+	NewValue    interface{} `json:"new_value"`
+	Severity    string      `json:"severity"`
+	Path        string      `json:"path"`
+	Description string      `json:"description"`
+}
+
 // DriftReport represents the result of comparing infrastructure states
 type DriftReport struct {
-	ID         string      `json:"id"`
-	Timestamp  time.Time   `json:"timestamp"`
-	BaselineID string      `json:"baseline_id"`
-	CurrentID  string      `json:"current_id"`
-	Changes    []Change    `json:"changes"`
+	ID         string       `json:"id"`
+	Timestamp  time.Time    `json:"timestamp"`
+	BaselineID string       `json:"baseline_id"`
+	CurrentID  string       `json:"current_id"`
+	Changes    []Change     `json:"changes"`
 	Summary    DriftSummary `json:"summary"`
-	Analysis   *Analysis   `json:"analysis,omitempty"`
+	Analysis   *Analysis    `json:"analysis,omitempty"`
 }
 
 // DriftSummary provides high-level drift statistics

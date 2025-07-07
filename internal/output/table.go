@@ -30,7 +30,7 @@ func (t *TableFormatter) FormatDriftReport(report *types.DriftReport) ([]byte, e
 	fmt.Fprintf(w, "============\n")
 	fmt.Fprintf(w, "ID:\t%s\n", report.ID)
 	fmt.Fprintf(w, "Baseline ID:\t%s\n", report.BaselineID)
-	fmt.Fprintf(w, "Snapshot ID:\t%s\n", report.SnapshotID)
+	fmt.Fprintf(w, "Current ID:\t%s\n", report.CurrentID)
 	fmt.Fprintf(w, "Timestamp:\t%s\n", report.Timestamp.Format(t.config.TimeFormat))
 	fmt.Fprintf(w, "Total Changes:\t%d\n", len(report.Changes))
 	fmt.Fprintf(w, "\n")
@@ -40,18 +40,17 @@ func (t *TableFormatter) FormatDriftReport(report *types.DriftReport) ([]byte, e
 	} else {
 		// Changes table
 		fmt.Fprintf(w, "Changes:\n")
-		fmt.Fprintf(w, "Type\tResource ID\tChange Type\tProperty\tOld Value\tNew Value\n")
-		fmt.Fprintf(w, "----\t-----------\t-----------\t--------\t---------\t---------\n")
+		fmt.Fprintf(w, "Field\tPath\tSeverity\tOld Value\tNew Value\n")
+		fmt.Fprintf(w, "-----\t----\t--------\t---------\t---------\n")
 
 		for _, change := range report.Changes {
 			oldVal := truncateString(fmt.Sprintf("%v", change.OldValue), 20)
 			newVal := truncateString(fmt.Sprintf("%v", change.NewValue), 20)
 			
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
-				change.ResourceType,
-				change.ResourceID,
-				change.Type,
-				change.Property,
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+				change.Field,
+				change.Path,
+				change.Severity,
 				oldVal,
 				newVal,
 			)

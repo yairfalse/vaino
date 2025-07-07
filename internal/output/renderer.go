@@ -1,11 +1,9 @@
 package output
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"time"
 
 	"github.com/yairfalse/wgo/internal/storage"
 	"github.com/yairfalse/wgo/pkg/types"
@@ -150,6 +148,15 @@ func (r *Renderer) DisplayWarning(message string) {
 		fmt.Printf("\033[33m⚠️  %s\033[0m\n", message)
 	} else {
 		fmt.Printf("⚠️  %s\n", message)
+	}
+}
+
+// DisplayInfo shows an info message
+func (r *Renderer) DisplayInfo(message string) {
+	if r.config.EnableColors {
+		fmt.Printf("\033[34mℹ️  %s\033[0m\n", message)
+	} else {
+		fmt.Printf("ℹ️  %s\n", message)
 	}
 }
 

@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/yairfalse/wgo/pkg/types"
 )
@@ -258,8 +257,15 @@ func (s *LocalStorage) DeleteSnapshot(id string) error {
 
 // SaveDriftReport saves a drift report to disk
 func (s *LocalStorage) SaveDriftReport(report *types.DriftReport) error {
-	if err := report.Validate(); err != nil {
-		return fmt.Errorf("invalid drift report: %w", err)
+	// Basic validation
+	if report.ID == "" {
+		return fmt.Errorf("drift report ID is required")
+	}
+	if report.BaselineID == "" {
+		return fmt.Errorf("baseline ID is required")
+	}
+	if report.CurrentID == "" {
+		return fmt.Errorf("current snapshot ID is required")
 	}
 
 	filename := fmt.Sprintf("drift-report-%s.json", report.Timestamp.Format("2006-01-02T15-04-05"))
@@ -321,10 +327,10 @@ func (s *LocalStorage) ListDriftReports() ([]DriftReportInfo, error) {
 		info := DriftReportInfo{
 			ID:          report.ID,
 			BaselineID:  report.BaselineID,
-			SnapshotID:  report.SnapshotID,
+			SnapshotID:  report.CurrentID,
 			CreatedAt:   report.Timestamp,
 			ChangeCount: len(report.Changes),
-			Tags:        report.Tags,
+			Tags:        make(map[string]string),
 			FilePath:    path,
 			FileSize:    stat.Size(),
 		}

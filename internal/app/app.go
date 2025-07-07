@@ -17,11 +17,12 @@ type Config struct {
 }
 
 type App struct {
-	config   Config
-	storage  storage.Storage
-	cache    cache.Manager
-	logger   logger.Logger
-	registry *collectors.CollectorRegistry
+	config           Config
+	storage          storage.Storage
+	cache            cache.Manager
+	logger           logger.Logger
+	registry         *collectors.CollectorRegistry
+	enhancedRegistry *collectors.EnhancedRegistry
 }
 
 func (a *App) GetCommands() []*cobra.Command {
@@ -30,6 +31,7 @@ func (a *App) GetCommands() []*cobra.Command {
 		a.createStatusCommand(),
 		a.createScanCommand(),
 		a.createCheckCommand(),
+		a.createDiffCommand(),
 		a.createBaselineCommand(),
 		a.createExplainCommand(),
 		a.createCacheCommand(),
@@ -61,14 +63,36 @@ func (a *App) createStatusCommand() *cobra.Command {
 }
 
 func (a *App) createScanCommand() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "scan",
 		Short: "Scan infrastructure for changes",
 		Long:  `Scan your infrastructure providers for changes`,
+		Example: `  # List available providers
+  wgo scan
+
+  # Scan Terraform state files
+  wgo scan --provider terraform
+
+  # Scan specific state file
+  wgo scan --provider terraform --state-file ./terraform.tfstate
+
+  # Auto-discover and scan
+  wgo scan --provider terraform --auto-discover
+
+  # Save output to file
+  wgo scan --provider terraform --output snapshot.json`,
 		Run: func(cmd *cobra.Command, args []string) {
 			a.runScanCommand(cmd, args)
 		},
 	}
+
+	// Add flags
+	cmd.Flags().StringP("provider", "p", "", "infrastructure provider to scan (terraform, aws, kubernetes)")
+	cmd.Flags().StringSliceP("state-file", "s", []string{}, "specific state files to scan (for terraform)")
+	cmd.Flags().StringP("output", "o", "", "output file to save snapshot JSON")
+	cmd.Flags().Bool("auto-discover", false, "automatically discover state files")
+
+	return cmd
 }
 
 func (a *App) createCheckCommand() *cobra.Command {
@@ -78,6 +102,17 @@ func (a *App) createCheckCommand() *cobra.Command {
 		Long:  `Check for drift between current state and baseline`,
 		Run: func(cmd *cobra.Command, args []string) {
 			a.runCheckCommand(cmd, args)
+		},
+	}
+}
+
+func (a *App) createDiffCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "diff",
+		Short: "Compare infrastructure states",
+		Long:  `Compare two infrastructure states (snapshots or baselines) to see detailed differences`,
+		Run: func(cmd *cobra.Command, args []string) {
+			a.runDiffCommand(cmd, args)
 		},
 	}
 }

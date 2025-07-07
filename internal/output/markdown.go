@@ -29,7 +29,7 @@ func (m *MarkdownFormatter) FormatDriftReport(report *types.DriftReport) ([]byte
 	md.WriteString("## Summary\n\n")
 	md.WriteString(fmt.Sprintf("- **Report ID**: `%s`\n", report.ID))
 	md.WriteString(fmt.Sprintf("- **Baseline ID**: `%s`\n", report.BaselineID))
-	md.WriteString(fmt.Sprintf("- **Snapshot ID**: `%s`\n", report.SnapshotID))
+	md.WriteString(fmt.Sprintf("- **Current ID**: `%s`\n", report.CurrentID))
 	md.WriteString(fmt.Sprintf("- **Generated**: %s\n", report.Timestamp.Format(m.config.TimeFormat)))
 	md.WriteString(fmt.Sprintf("- **Total Changes**: %d\n\n", len(report.Changes)))
 
@@ -37,49 +37,31 @@ func (m *MarkdownFormatter) FormatDriftReport(report *types.DriftReport) ([]byte
 		md.WriteString("## Results\n\n")
 		md.WriteString("✅ **No drift detected** - Infrastructure matches baseline perfectly.\n\n")
 	} else {
-		// Group changes by type
-		changesByType := make(map[types.ChangeType][]types.Change)
-		for _, change := range report.Changes {
-			changesByType[change.Type] = append(changesByType[change.Type], change)
-		}
-
 		md.WriteString("## Changes Detected\n\n")
-
-		for changeType, changes := range changesByType {
-			md.WriteString(fmt.Sprintf("### %s (%d)\n\n", strings.Title(string(changeType)), len(changes)))
+		md.WriteString(fmt.Sprintf("### All Changes (%d)\n\n", len(report.Changes)))
 			
-			md.WriteString("| Resource Type | Resource ID | Property | Old Value | New Value |\n")
-			md.WriteString("|---------------|-------------|----------|-----------|----------|\n")
+		md.WriteString("| Field | Path | Old Value | New Value | Severity |\n")
+		md.WriteString("|-------|------|-----------|-----------|----------|\n")
+		
+		for _, change := range report.Changes {
+			oldVal := m.escapeMarkdown(fmt.Sprintf("%v", change.OldValue))
+			newVal := m.escapeMarkdown(fmt.Sprintf("%v", change.NewValue))
 			
-			for _, change := range changes {
-				oldVal := m.escapeMarkdown(fmt.Sprintf("%v", change.OldValue))
-				newVal := m.escapeMarkdown(fmt.Sprintf("%v", change.NewValue))
-				
-				// Truncate long values
-				if len(oldVal) > 50 {
-					oldVal = oldVal[:47] + "..."
-				}
-				if len(newVal) > 50 {
-					newVal = newVal[:47] + "..."
-				}
-				
-				md.WriteString(fmt.Sprintf("| %s | `%s` | %s | %s | %s |\n",
-					change.ResourceType,
-					change.ResourceID,
-					change.Property,
-					oldVal,
-					newVal,
-				))
+			// Truncate long values
+			if len(oldVal) > 50 {
+				oldVal = oldVal[:47] + "..."
 			}
-			md.WriteString("\n")
-		}
-	}
-
-	// Add tags if present
-	if len(report.Tags) > 0 {
-		md.WriteString("## Tags\n\n")
-		for key, value := range report.Tags {
-			md.WriteString(fmt.Sprintf("- **%s**: %s\n", key, value))
+			if len(newVal) > 50 {
+				newVal = newVal[:47] + "..."
+			}
+			
+			md.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s |\n",
+				change.Field,
+				change.Path,
+				oldVal,
+				newVal,
+				change.Severity,
+			))
 		}
 		md.WriteString("\n")
 	}
@@ -115,8 +97,8 @@ func (m *MarkdownFormatter) FormatSnapshot(snapshot *types.Snapshot) ([]byte, er
 	for resourceType, resources := range resourcesByType {
 		md.WriteString(fmt.Sprintf("### %s (%d)\n\n", resourceType, len(resources)))
 		
-		md.WriteString("| ID | State | Region |\n")
-		md.WriteString("|----|-------|--------|\n")
+		md.WriteString("| ID | Name | Region |\n")
+		md.WriteString("|----|------|--------|\n")
 		
 		for _, resource := range resources {
 			region := resource.Region
@@ -126,7 +108,7 @@ func (m *MarkdownFormatter) FormatSnapshot(snapshot *types.Snapshot) ([]byte, er
 			
 			md.WriteString(fmt.Sprintf("| `%s` | %s | %s |\n",
 				resource.ID,
-				resource.State,
+				resource.Name,
 				region,
 			))
 		}
