@@ -1,0 +1,98 @@
+{
+  "id": "drift-report-20250107-001",
+  "timestamp": "2025-01-07T15:30:00Z",
+  "baseline_id": "baseline-prod-v1.0",
+  "current_id": "snapshot-20250107-current",
+  "changes": [
+    {
+      "field": "instance_type",
+      "old_value": "t3.micro",
+      "new_value": "t3.medium",
+      "severity": "medium",
+      "path": "resources[0].configuration.instance_type",
+      "description": "EC2 instance type upgraded from t3.micro to t3.medium"
+    },
+    {
+      "field": "security_groups",
+      "old_value": ["sg-web"],
+      "new_value": ["sg-web", "sg-admin"],
+      "severity": "high",
+      "path": "resources[0].configuration.security_groups",
+      "description": "Additional security group sg-admin attached to instance"
+    },
+    {
+      "field": "tags.LastModified",
+      "old_value": null,
+      "new_value": "2025-01-07T15:00:00Z",
+      "severity": "low",
+      "path": "resources[0].tags.LastModified",
+      "description": "New tag LastModified added to resource"
+    }
+  ],
+  "summary": {
+    "total_changes": 3,
+    "added_resources": 0,
+    "deleted_resources": 0,
+    "modified_resources": 1,
+    "risk_score": 0.65,
+    "high_risk_changes": 1
+  },
+  "analysis": {
+    "risk_score": 0.65,
+    "categories": {
+      "security": [
+        {
+          "field": "security_groups",
+          "old_value": ["sg-web"],
+          "new_value": ["sg-web", "sg-admin"],
+          "severity": "high",
+          "path": "resources[0].configuration.security_groups",
+          "description": "Additional security group sg-admin attached to instance"
+        }
+      ],
+      "cost": [
+        {
+          "field": "instance_type",
+          "old_value": "t3.micro",
+          "new_value": "t3.medium",
+          "severity": "medium",
+          "path": "resources[0].configuration.instance_type",
+          "description": "EC2 instance type upgraded from t3.micro to t3.medium"
+        }
+      ],
+      "metadata": [
+        {
+          "field": "tags.LastModified",
+          "old_value": null,
+          "new_value": "2025-01-07T15:00:00Z",
+          "severity": "low",
+          "path": "resources[0].tags.LastModified",
+          "description": "New tag LastModified added to resource"
+        }
+      ]
+    },
+    "recommendations": [
+      "Review the addition of sg-admin security group to ensure it follows security policies",
+      "Verify that the instance type upgrade is intentional and approved",
+      "Consider documenting the change in tags for audit purposes"
+    ],
+    "insights": [
+      {
+        "type": "warning",
+        "title": "Security Group Addition",
+        "description": "A new security group (sg-admin) was added to the instance. This could expose additional ports or services.",
+        "confidence": 0.85,
+        "action": "Review security group rules and ensure principle of least privilege"
+      },
+      {
+        "type": "info",
+        "title": "Instance Size Increase",
+        "description": "Instance type was upgraded which will increase costs but may improve performance.",
+        "confidence": 0.90,
+        "action": "Monitor resource utilization to ensure the upgrade is necessary"
+      }
+    ],
+    "security_impact": "Medium - New security group added requires review",
+    "cost_impact": "Medium - Instance upgrade will increase monthly costs by approximately 100%"
+  }
+}

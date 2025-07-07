@@ -67,6 +67,25 @@ type Config struct {
 	PersistPath string `json:"persist_path"`
 }
 
+// Manager extends Cache with management operations
+type Manager interface {
+	Cache
+	
+	// Close shuts down the cache manager
+	Close() error
+	
+	// Flush forces cache persistence if enabled
+	Flush() error
+	
+	// Config returns the current cache configuration
+	Config() Config
+}
+
+// NewManager creates a new cache manager with default configuration
+func NewManager() Manager {
+	return NewMemoryCache(DefaultConfig())
+}
+
 // DefaultConfig returns a reasonable default cache configuration
 func DefaultConfig() Config {
 	return Config{

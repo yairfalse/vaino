@@ -8,7 +8,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/yairfalse/wgo/internal/collectors"
+	"github.com/yairfalse/wgo/internal/collectors/kubernetes"
 	"github.com/yairfalse/wgo/internal/collectors/terraform"
+	"github.com/yairfalse/wgo/internal/discovery"
+	"github.com/yairfalse/wgo/pkg/config"
 	"github.com/yairfalse/wgo/pkg/types"
 )
 
@@ -63,30 +66,59 @@ func runScan(cmd *cobra.Command, args []string) error {
 	statePaths, _ := cmd.Flags().GetStringSlice("state-file")
 	autoDiscover, _ := cmd.Flags().GetBool("auto-discover")
 	
+	// Create smart defaults manager
+	defaultsManager := config.NewDefaultsManager()
+	
 	// Initialize the enhanced registry
 	enhancedRegistry := collectors.NewEnhancedRegistry()
 	terraformCollector := terraform.NewTerraformCollector()
 	enhancedRegistry.RegisterEnhanced(terraformCollector)
+	kubernetesCollector := kubernetes.NewKubernetesCollector()
+	enhancedRegistry.RegisterEnhanced(kubernetesCollector)
 	
 	ctx := cmd.Context()
 	
 	if !scanAll && provider == "" {
-		// List available providers
-		enhancedProviders := enhancedRegistry.ListEnhanced()
-		
-		fmt.Println("Available providers:")
-		fmt.Println("\nEnhanced providers (support full collection):")
-		for _, name := range enhancedProviders {
-			status := "unknown"
-			if collector, err := enhancedRegistry.GetEnhanced(name); err == nil {
-				status = collector.Status()
-			}
-			fmt.Printf("  • %s (%s)\n", name, status)
+		// Generate smart defaults and auto-discover infrastructure
+		fmt.Println("🔍 Auto-discovering infrastructure...")
+		smartConfig, err := defaultsManager.GenerateSmartDefaults()
+		if err != nil {
+			return fmt.Errorf("failed to generate smart defaults: %w", err)
 		}
 		
-		fmt.Println("\nUse --provider <name> to scan a specific provider")
-		fmt.Println("Example: wgo scan --provider terraform")
-		return nil
+		// Show user-friendly feedback about what was detected
+		feedback := defaultsManager.GetUserFriendlyFeedback(smartConfig)
+		for _, line := range feedback {
+			fmt.Println(line)
+		}
+		
+		discovery := discovery.NewTerraformDiscovery()
+		stateFiles, err := discovery.DiscoverStateFiles("")
+		
+		if err == nil && len(stateFiles) > 0 {
+			// Found Terraform state files, use terraform provider
+			provider = "terraform"
+			autoDiscover = true
+			fmt.Printf("✅ Found %d Terraform state file(s), using terraform provider\n", len(stateFiles))
+		} else {
+			// No auto-discovery possible, show available providers
+			enhancedProviders := enhancedRegistry.ListEnhanced()
+			
+			fmt.Println("⚠️  No infrastructure automatically detected.")
+			fmt.Println("Available providers:")
+			fmt.Println("\nEnhanced providers (support full collection):")
+			for _, name := range enhancedProviders {
+				status := "unknown"
+				if collector, err := enhancedRegistry.GetEnhanced(name); err == nil {
+					status = collector.Status()
+				}
+				fmt.Printf("  • %s (%s)\n", name, status)
+			}
+			
+			fmt.Println("\nUse --provider <name> to scan a specific provider")
+			fmt.Println("Example: wgo scan --provider terraform")
+			return nil
+		}
 	}
 	
 	if scanAll {
@@ -129,19 +161,35 @@ func runScan(cmd *cobra.Command, args []string) error {
 	} else if len(statePaths) > 0 {
 		config.StatePaths = statePaths
 	} else {
-		// Default configuration for terraform
-		if provider == "terraform" {
+		// Provider-specific configuration
+		switch provider {
+		case "terraform":
 			config.StatePaths = []string{"./terraform.tfstate", "./"}
+		case "kubernetes":
+			// Get Kubernetes-specific flags
+			contexts, _ := cmd.Flags().GetStringSlice("context")
+			namespaces, _ := cmd.Flags().GetStringSlice("namespace")
+			
+			config.Namespaces = namespaces
+			config.Config = map[string]interface{}{}
+			if len(contexts) > 0 {
+				config.Config["contexts"] = contexts
+			}
 		}
 	}
 	
 	// Add common configuration
-	config.Config = map[string]interface{}{
-		"scan_id": fmt.Sprintf("%s-%d", provider, time.Now().Unix()),
+	if config.Config == nil {
+		config.Config = make(map[string]interface{})
 	}
-	if snapshotName != "" {
-		config.Config["snapshot_name"] = snapshotName
+	config.Config["scan_id"] = fmt.Sprintf("%s-%d", provider, time.Now().Unix())
+	
+	// Generate snapshot name if not provided
+	if snapshotName == "" {
+		snapshotName = defaultsManager.GenerateAutoName("scan")
+		fmt.Printf("📝 Auto-generated snapshot name: %s\n", snapshotName)
 	}
+	config.Config["snapshot_name"] = snapshotName
 	
 	// Validate configuration
 	if err := collector.Validate(config); err != nil {

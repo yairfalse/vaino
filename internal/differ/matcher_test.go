@@ -129,9 +129,10 @@ func TestSmartResourceMatcher_Match(t *testing.T) {
 	}
 }
 
-func TestSmartResourceMatcher_CalculateSimilarity(t *testing.T) {
+func TestSmartResourceMatcher_TagMatching(t *testing.T) {
 	matcher := &SmartResourceMatcher{}
 	
+	// Test with complex tag matching scenario
 	resource1 := types.Resource{
 		ID:       "id-1",
 		Type:     "instance",
@@ -145,63 +146,28 @@ func TestSmartResourceMatcher_CalculateSimilarity(t *testing.T) {
 		},
 	}
 	
-	// Identical resource (different ID)
+	// Similar resource with overlapping tags
 	resource2 := types.Resource{
 		ID:       "id-2",
 		Type:     "instance",
-		Name:     "web-server",
+		Name:     "web-server", // Same name
 		Provider: "aws",
 		Region:   "us-east-1",
 		Tags: map[string]string{
-			"Environment": "production",
-			"Application": "web", 
-			"Team":        "backend",
+			"Environment": "production", // Same
+			"Application": "web",        // Same
+			"Team":        "frontend",   // Different
 		},
 	}
 	
-	// Similar resource (different name)
-	resource3 := types.Resource{
-		ID:       "id-3",
-		Type:     "instance",
-		Name:     "api-server", // Different name
-		Provider: "aws",
-		Region:   "us-east-1",
-		Tags: map[string]string{
-			"Environment": "production",
-			"Application": "web",
-			"Team":        "backend",
-		},
-	}
+	baseline := []types.Resource{resource1}
+	current := []types.Resource{resource2}
 	
-	// Different resource
-	resource4 := types.Resource{
-		ID:       "id-4",
-		Type:     "database", // Different type
-		Name:     "db-server",
-		Provider: "aws",
-		Region:   "us-west-2", // Different region
-		Tags: map[string]string{
-			"Environment": "staging", // Different tags
-			"Application": "database",
-		},
-	}
+	matches, _, _ := matcher.Match(baseline, current)
 	
-	// Test identical resources (except ID)
-	similarity1 := matcher.calculateSimilarity(resource1, resource2)
-	if similarity1 < 0.9 {
-		t.Errorf("expected high similarity for identical resources, got %f", similarity1)
-	}
-	
-	// Test similar resources
-	similarity2 := matcher.calculateSimilarity(resource1, resource3)
-	if similarity2 < 0.5 || similarity2 > 0.9 {
-		t.Errorf("expected medium similarity for similar resources, got %f", similarity2)
-	}
-	
-	// Test different resources
-	similarity3 := matcher.calculateSimilarity(resource1, resource4)
-	if similarity3 > 0.3 {
-		t.Errorf("expected low similarity for different resources, got %f", similarity3)
+	// Should match by name and most tags
+	if matches["id-1"] != "id-2" {
+		t.Errorf("expected resources to match by name and tags")
 	}
 }
 

@@ -15,7 +15,7 @@ func TestSimpleLogger_Info(t *testing.T) {
 	log.SetOutput(&buf)
 	defer log.SetOutput(os.Stderr)
 
-	logger := NewSimpleLogger()
+	logger := NewSimple()
 	logger.Info("test message")
 
 	output := buf.String()
@@ -31,7 +31,7 @@ func TestSimpleLogger_Error(t *testing.T) {
 	r, w, _ := os.Pipe()
 	os.Stderr = w
 
-	logger := NewSimpleLogger()
+	logger := NewSimple()
 	testErr := errors.New("test error")
 	logger.Error("test error message", testErr)
 
@@ -50,7 +50,7 @@ func TestSimpleLogger_WithField(t *testing.T) {
 	log.SetOutput(&buf)
 	defer log.SetOutput(os.Stderr)
 
-	logger := NewSimpleLogger()
+	logger := NewSimple()
 	fieldLogger := logger.WithField("key", "value")
 	fieldLogger.Info("test with field")
 
@@ -65,7 +65,7 @@ func TestSimpleLogger_WithFields(t *testing.T) {
 	log.SetOutput(&buf)
 	defer log.SetOutput(os.Stderr)
 
-	logger := NewSimpleLogger()
+	logger := NewSimple()
 	fields := map[string]interface{}{
 		"key1": "value1",
 		"key2": 42,
@@ -84,7 +84,7 @@ func TestSimpleLogger_ChainedFields(t *testing.T) {
 	log.SetOutput(&buf)
 	defer log.SetOutput(os.Stderr)
 
-	logger := NewSimpleLogger()
+	logger := NewSimple()
 	chainedLogger := logger.WithField("first", "value1").WithField("second", "value2")
 	chainedLogger.Info("chained fields test")
 

@@ -41,7 +41,7 @@ Format your response in a clear, actionable manner.`, driftData)
 
 	resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:     anthropic.ModelClaude3_5Sonnet20241022,
-		MaxTokens: anthropic.Int(1024),
+		MaxTokens: 1024,
 		Messages: []anthropic.MessageParam{
 			anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
 		},
@@ -75,7 +75,7 @@ Use clear, non-technical language where possible.`, changeData)
 
 	resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:     anthropic.ModelClaude3_5Sonnet20241022,
-		MaxTokens: anthropic.Int(512),
+		MaxTokens: 512,
 		Messages: []anthropic.MessageParam{
 			anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
 		},
@@ -109,7 +109,7 @@ Focus on practical, actionable solutions.`, driftData)
 
 	resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:     anthropic.ModelClaude3_5Sonnet20241022,
-		MaxTokens: anthropic.Int(1024),
+		MaxTokens: 1024,
 		Messages: []anthropic.MessageParam{
 			anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
 		},

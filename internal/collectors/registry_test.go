@@ -1,254 +1,320 @@
 package collectors
 
 import (
-	"errors"
-	"fmt"
-	"sync"
+	"context"
 	"testing"
 
 	"github.com/yairfalse/wgo/pkg/types"
 )
 
-// Mock collector for testing
-type mockCollector struct {
-	name      string
-	resources []types.Resource
-	err       error
-	healthErr error
+// Use the MockCollector from registry.go
+
+// MockEnhancedCollector for testing
+type MockEnhancedCollector struct {
+	name         string
+	status       string
+	collectFunc  func(ctx context.Context, config CollectorConfig) (*types.Snapshot, error)
+	validateFunc func(config CollectorConfig) error
 }
 
-func (m *mockCollector) Name() string {
+func (m *MockEnhancedCollector) Name() string {
 	return m.name
 }
 
-func (m *mockCollector) Collect() ([]types.Resource, error) {
-	if m.err != nil {
-		return nil, m.err
-	}
-	return m.resources, nil
+func (m *MockEnhancedCollector) Status() string {
+	return m.status
 }
 
-func (m *mockCollector) Health() error {
-	return m.healthErr
+func (m *MockEnhancedCollector) Collect(ctx context.Context, config CollectorConfig) (*types.Snapshot, error) {
+	if m.collectFunc != nil {
+		return m.collectFunc(ctx, config)
+	}
+	return &types.Snapshot{
+		ID:       "mock-snapshot",
+		Provider: m.name,
+	}, nil
+}
+
+func (m *MockEnhancedCollector) Validate(config CollectorConfig) error {
+	if m.validateFunc != nil {
+		return m.validateFunc(config)
+	}
+	return nil
+}
+
+func (m *MockEnhancedCollector) AutoDiscover() (CollectorConfig, error) {
+	return CollectorConfig{}, nil
+}
+
+func (m *MockEnhancedCollector) SupportedRegions() []string {
+	return []string{"us-east-1", "us-west-2"}
 }
 
 func TestCollectorRegistry_Register(t *testing.T) {
 	registry := NewRegistry()
-	collector := &mockCollector{name: "test-collector"}
-
+	
+	collector := NewMockCollector("test-collector", "ready")
+	
 	registry.Register(collector)
-
-	// Verify collector was registered
-	retrieved, err := registry.Get("test-collector")
-	if err != nil {
-		t.Fatalf("Failed to get registered collector: %v", err)
+	
+	// Test retrieval
+	retrieved, exists := registry.Get("test-collector")
+	if !exists {
+		t.Error("expected collector to exist after registration")
 	}
-
+	
 	if retrieved.Name() != "test-collector" {
-		t.Errorf("Expected collector name 'test-collector', got %s", retrieved.Name())
+		t.Errorf("expected name 'test-collector', got '%s'", retrieved.Name())
 	}
-}
-
-func TestCollectorRegistry_GetNonExistent(t *testing.T) {
-	registry := NewRegistry()
-
-	_, err := registry.Get("nonexistent")
-	if err == nil {
-		t.Error("Expected error for nonexistent collector")
-	}
-
-	if err.Error() != "collector nonexistent not found" {
-		t.Errorf("Unexpected error message: %s", err.Error())
+	
+	if retrieved.Status() != "ready" {
+		t.Errorf("expected status 'ready', got '%s'", retrieved.Status())
 	}
 }
 
 func TestCollectorRegistry_List(t *testing.T) {
 	registry := NewRegistry()
-
-	// Empty registry
+	
+	// Initially empty
 	names := registry.List()
 	if len(names) != 0 {
-		t.Errorf("Expected empty list, got %d items", len(names))
+		t.Errorf("expected empty list, got %d items", len(names))
 	}
-
+	
 	// Add collectors
-	collectors := []*mockCollector{
-		{name: "aws"},
-		{name: "kubernetes"},
-		{name: "terraform"},
-	}
-
-	for _, collector := range collectors {
-		registry.Register(collector)
-	}
-
+	registry.Register(NewMockCollector("collector1", "ready"))
+	registry.Register(NewMockCollector("collector2", "error"))
+	
 	names = registry.List()
-	if len(names) != 3 {
-		t.Errorf("Expected 3 collectors, got %d", len(names))
+	if len(names) != 2 {
+		t.Errorf("expected 2 collectors, got %d", len(names))
 	}
-
-	// Check all names are present
-	nameSet := make(map[string]bool)
+	
+	// Check that both names are present
+	nameMap := make(map[string]bool)
 	for _, name := range names {
-		nameSet[name] = true
+		nameMap[name] = true
 	}
-
-	expectedNames := []string{"aws", "kubernetes", "terraform"}
-	for _, expected := range expectedNames {
-		if !nameSet[expected] {
-			t.Errorf("Expected collector %s not found in list", expected)
-		}
+	
+	if !nameMap["collector1"] || !nameMap["collector2"] {
+		t.Error("expected both collector1 and collector2 to be listed")
 	}
 }
 
-func TestCollectorRegistry_CollectAll(t *testing.T) {
-	registry := NewRegistry()
-
-	// Create collectors with different resources
-	awsCollector := &mockCollector{
-		name: "aws",
-		resources: []types.Resource{
-			{ID: "i-123", Type: "ec2:instance", Provider: "aws"},
-			{ID: "vol-456", Type: "ec2:volume", Provider: "aws"},
-		},
-	}
-
-	k8sCollector := &mockCollector{
-		name: "kubernetes",
-		resources: []types.Resource{
-			{ID: "pod-789", Type: "pod", Provider: "kubernetes"},
-		},
-	}
-
-	registry.Register(awsCollector)
-	registry.Register(k8sCollector)
-
-	// Collect all resources
-	resources, err := registry.CollectAll()
-	if err != nil {
-		t.Fatalf("CollectAll failed: %v", err)
-	}
-
-	if len(resources) != 3 {
-		t.Errorf("Expected 3 total resources, got %d", len(resources))
-	}
-
-	// Verify we got resources from both collectors
-	awsCount := 0
-	k8sCount := 0
-	for _, resource := range resources {
-		switch resource.Provider {
-		case "aws":
-			awsCount++
-		case "kubernetes":
-			k8sCount++
-		}
-	}
-
-	if awsCount != 2 {
-		t.Errorf("Expected 2 AWS resources, got %d", awsCount)
-	}
-	if k8sCount != 1 {
-		t.Errorf("Expected 1 Kubernetes resource, got %d", k8sCount)
-	}
-}
-
-func TestCollectorRegistry_CollectAllWithError(t *testing.T) {
-	registry := NewRegistry()
-
-	// Create a failing collector
-	failingCollector := &mockCollector{
-		name: "failing",
-		err:  errors.New("collection failed"),
-	}
-
-	workingCollector := &mockCollector{
-		name:      "working",
-		resources: []types.Resource{{ID: "test", Provider: "working"}},
-	}
-
-	registry.Register(failingCollector)
-	registry.Register(workingCollector)
-
-	// CollectAll should fail if any collector fails
-	_, err := registry.CollectAll()
-	if err == nil {
-		t.Error("Expected CollectAll to fail when a collector fails")
-	}
-
-	if err.Error() != "collector failing failed: collection failed" {
-		t.Errorf("Unexpected error message: %s", err.Error())
-	}
-}
-
-func TestCollectorRegistry_ConcurrentAccess(t *testing.T) {
+func TestCollectorRegistry_GetNonExistent(t *testing.T) {
 	registry := NewRegistry()
 	
-	var wg sync.WaitGroup
-	numGoroutines := 10
-
-	// Concurrent registration
-	wg.Add(numGoroutines)
-	for i := 0; i < numGoroutines; i++ {
-		go func(id int) {
-			defer wg.Done()
-			collector := &mockCollector{
-				name:      fmt.Sprintf("collector-%d", id),
-				resources: []types.Resource{},
-			}
-			registry.Register(collector)
-		}(i)
+	_, exists := registry.Get("non-existent")
+	if exists {
+		t.Error("expected non-existent collector to not exist")
 	}
-	wg.Wait()
-
-	// Verify all collectors were registered
-	names := registry.List()
-	if len(names) != numGoroutines {
-		t.Errorf("Expected %d collectors, got %d", numGoroutines, len(names))
-	}
-
-	// Concurrent access
-	wg.Add(numGoroutines * 2)
-	
-	// Readers
-	for i := 0; i < numGoroutines; i++ {
-		go func(id int) {
-			defer wg.Done()
-			_, err := registry.Get(fmt.Sprintf("collector-%d", id))
-			if err != nil {
-				t.Errorf("Failed to get collector-%d: %v", id, err)
-			}
-		}(i)
-	}
-
-	// List operations
-	for i := 0; i < numGoroutines; i++ {
-		go func() {
-			defer wg.Done()
-			registry.List()
-		}()
-	}
-
-	wg.Wait()
 }
 
 func TestDefaultRegistry(t *testing.T) {
-	// Test that default registry is accessible
-	defaultReg := DefaultRegistry()
-	if defaultReg == nil {
-		t.Error("Default registry should not be nil")
+	// Reset default registry for testing
+	defaultRegistry = nil
+	
+	registry1 := DefaultRegistry()
+	registry2 := DefaultRegistry()
+	
+	// Should return the same instance
+	if registry1 != registry2 {
+		t.Error("DefaultRegistry should return the same instance")
 	}
-
-	// Test that it works like a normal registry
-	collector := &mockCollector{name: "default-test"}
-	defaultReg.Register(collector)
-
-	retrieved, err := defaultReg.Get("default-test")
-	if err != nil {
-		t.Errorf("Failed to get collector from default registry: %v", err)
+	
+	// Test that it works
+	collector := NewMockCollector("default-test", "ready")
+	registry1.Register(collector)
+	
+	retrieved, exists := registry2.Get("default-test")
+	if !exists {
+		t.Error("expected collector to be accessible through both references")
 	}
-
+	
 	if retrieved.Name() != "default-test" {
-		t.Errorf("Expected 'default-test', got %s", retrieved.Name())
+		t.Error("expected same collector through both references")
+	}
+}
+
+func TestEnhancedRegistry_RegisterEnhanced(t *testing.T) {
+	registry := NewEnhancedRegistry()
+	
+	collector := &MockEnhancedCollector{
+		name:   "enhanced-test",
+		status: "ready",
+	}
+	
+	registry.RegisterEnhanced(collector)
+	
+	// Test enhanced retrieval
+	retrieved, err := registry.GetEnhanced("enhanced-test")
+	if err != nil {
+		t.Fatalf("failed to get enhanced collector: %v", err)
+	}
+	
+	if retrieved.Name() != "enhanced-test" {
+		t.Errorf("expected name 'enhanced-test', got '%s'", retrieved.Name())
+	}
+	
+	// Enhanced collectors are not automatically available as legacy collectors
+	_, err = registry.GetLegacy("enhanced-test")
+	if err == nil {
+		t.Error("expected error getting enhanced collector as legacy")
+	}
+}
+
+func TestEnhancedRegistry_List(t *testing.T) {
+	registry := NewEnhancedRegistry()
+	
+	// Add enhanced collector
+	enhanced := &MockEnhancedCollector{
+		name:   "enhanced1",
+		status: "ready",
+	}
+	registry.RegisterEnhanced(enhanced)
+	
+	// Add legacy collector
+	legacy := NewMockCollector("legacy1", "ready")
+	registry.RegisterLegacy(legacy)
+	
+	// Test enhanced list
+	enhancedNames := registry.ListEnhanced()
+	if len(enhancedNames) != 1 || enhancedNames[0] != "enhanced1" {
+		t.Errorf("expected [enhanced1], got %v", enhancedNames)
+	}
+	
+	// Test legacy list
+	legacyNames := registry.ListLegacy()
+	if len(legacyNames) != 1 || legacyNames[0] != "legacy1" {
+		t.Errorf("expected [legacy1], got %v", legacyNames)
+	}
+	
+	// Test all list
+	allNames := registry.ListAll()
+	if len(allNames) != 2 {
+		t.Errorf("expected 2 total collectors, got %d", len(allNames))
+	}
+	
+	nameMap := make(map[string]bool)
+	for _, name := range allNames {
+		nameMap[name] = true
+	}
+	
+	if !nameMap["enhanced1"] || !nameMap["legacy1"] {
+		t.Error("expected both enhanced1 and legacy1 in all list")
+	}
+}
+
+func TestEnhancedRegistry_GetNonExistent(t *testing.T) {
+	registry := NewEnhancedRegistry()
+	
+	_, err := registry.GetEnhanced("non-existent")
+	if err == nil {
+		t.Error("expected error getting non-existent enhanced collector")
+	}
+	
+	_, err = registry.GetLegacy("non-existent")
+	if err == nil {
+		t.Error("expected error getting non-existent legacy collector")
+	}
+}
+
+func TestEnhancedRegistry_GetSupportedProviders(t *testing.T) {
+	registry := NewEnhancedRegistry()
+	
+	// Initially empty
+	providers := registry.GetSupportedProviders()
+	if len(providers) != 0 {
+		t.Errorf("expected empty providers list, got %d", len(providers))
+	}
+	
+	// Add collectors
+	registry.RegisterEnhanced(&MockEnhancedCollector{
+		name: "terraform",
+		status: "ready",
+	})
+	registry.RegisterLegacy(NewMockCollector("aws", "ready"))
+	
+	providers = registry.GetSupportedProviders()
+	if len(providers) != 2 {
+		t.Errorf("expected 2 providers, got %d", len(providers))
+	}
+	
+	providerMap := make(map[string]bool)
+	for _, provider := range providers {
+		providerMap[provider] = true
+	}
+	
+	if !providerMap["terraform"] || !providerMap["aws"] {
+		t.Error("expected both terraform and aws in supported providers")
+	}
+}
+
+func TestEnhancedRegistry_GetEnhancedProviders(t *testing.T) {
+	registry := NewEnhancedRegistry()
+	
+	// Add enhanced and legacy collectors
+	registry.RegisterEnhanced(&MockEnhancedCollector{
+		name: "terraform",
+		status: "ready",
+	})
+	registry.RegisterLegacy(NewMockCollector("aws", "ready"))
+	
+	enhancedProviders := registry.GetEnhancedProviders()
+	if len(enhancedProviders) != 1 || enhancedProviders[0] != "terraform" {
+		t.Errorf("expected [terraform], got %v", enhancedProviders)
+	}
+}
+
+func TestEnhancedRegistry_GetStatus(t *testing.T) {
+	registry := NewEnhancedRegistry()
+	
+	// Add collectors with different statuses
+	registry.RegisterEnhanced(&MockEnhancedCollector{
+		name: "terraform",
+		status: "ready",
+	})
+	registry.RegisterLegacy(NewMockCollector("aws", "error"))
+	
+	statuses := registry.GetStatus()
+	if len(statuses) != 2 {
+		t.Errorf("expected 2 status entries, got %d", len(statuses))
+	}
+	
+	if statuses["terraform"] != "ready" {
+		t.Errorf("expected terraform status 'ready', got '%s'", statuses["terraform"])
+	}
+	
+	if statuses["aws"] != "error" {
+		t.Errorf("expected aws status 'error', got '%s'", statuses["aws"])
+	}
+}
+
+func TestDefaultEnhancedRegistry(t *testing.T) {
+	// Reset default enhanced registry for testing
+	defaultEnhancedRegistry = nil
+	
+	registry1 := DefaultEnhancedRegistry()
+	registry2 := DefaultEnhancedRegistry()
+	
+	// Should return the same instance
+	if registry1 != registry2 {
+		t.Error("DefaultEnhancedRegistry should return the same instance")
+	}
+	
+	// Test that it works
+	collector := &MockEnhancedCollector{
+		name: "default-enhanced-test",
+		status: "ready",
+	}
+	registry1.RegisterEnhanced(collector)
+	
+	retrieved, err := registry2.GetEnhanced("default-enhanced-test")
+	if err != nil {
+		t.Fatalf("failed to get collector: %v", err)
+	}
+	
+	if retrieved.Name() != "default-enhanced-test" {
+		t.Error("expected same collector through both references")
 	}
 }

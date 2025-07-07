@@ -1,0 +1,149 @@
+{
+  "version": 4,
+  "terraform_version": "1.0.0",
+  "serial": 42,
+  "lineage": "12345678-1234-5678-9012-123456789012",
+  "outputs": {
+    "instance_id": {
+      "value": "i-1234567890abcdef0",
+      "type": "string"
+    },
+    "public_ip": {
+      "value": "203.0.113.12",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "aws_instance",
+      "name": "web",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "id": "i-1234567890abcdef0",
+            "arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
+            "instance_type": "t3.micro",
+            "ami": "ami-0c02fb55956c7d316",
+            "availability_zone": "us-east-1a",
+            "subnet_id": "subnet-12345",
+            "vpc_security_group_ids": ["sg-12345"],
+            "key_name": "my-key",
+            "public_ip": "203.0.113.12",
+            "private_ip": "10.0.1.12",
+            "state": "running",
+            "tags": {
+              "Name": "web-server",
+              "Environment": "production",
+              "Team": "platform",
+              "Project": "wgo-demo"
+            },
+            "tags_all": {
+              "Name": "web-server",
+              "Environment": "production",
+              "Team": "platform",
+              "Project": "wgo-demo"
+            }
+          },
+          "sensitive_attributes": [],
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ==",
+          "dependencies": [
+            "aws_security_group.web",
+            "aws_subnet.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "web",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "id": "sg-12345",
+            "arn": "arn:aws:ec2:us-east-1:123456789012:security-group/sg-12345",
+            "name": "web-sg",
+            "description": "Security group for web server",
+            "vpc_id": "vpc-12345",
+            "ingress": [
+              {
+                "from_port": 80,
+                "to_port": 80,
+                "protocol": "tcp",
+                "cidr_blocks": ["0.0.0.0/0"],
+                "description": "HTTP"
+              },
+              {
+                "from_port": 443,
+                "to_port": 443,
+                "protocol": "tcp",
+                "cidr_blocks": ["0.0.0.0/0"],
+                "description": "HTTPS"
+              }
+            ],
+            "egress": [
+              {
+                "from_port": 0,
+                "to_port": 0,
+                "protocol": "-1",
+                "cidr_blocks": ["0.0.0.0/0"],
+                "description": ""
+              }
+            ],
+            "tags": {
+              "Name": "web-sg",
+              "Environment": "production"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket",
+      "name": "assets",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "company-assets-prod-12345",
+            "arn": "arn:aws:s3:::company-assets-prod-12345",
+            "bucket": "company-assets-prod-12345",
+            "region": "us-east-1",
+            "versioning": [
+              {
+                "enabled": true,
+                "mfa_delete": false
+              }
+            ],
+            "server_side_encryption_configuration": [
+              {
+                "rule": [
+                  {
+                    "apply_server_side_encryption_by_default": [
+                      {
+                        "kms_master_key_id": "",
+                        "sse_algorithm": "AES256"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "tags": {
+              "Name": "company-assets",
+              "Environment": "production",
+              "Team": "platform"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
