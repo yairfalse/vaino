@@ -1,0 +1,54 @@
+# JarJar Binks Pod - For testing drift detection
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jarjar
+  namespace: test-workloads
+  labels:
+    app: jarjar
+    character: "gungan"
+    side: "light"
+    annoyance-level: "maximum"
+spec:
+  containers:
+  - name: jarjar
+    image: busybox
+    command: ['sh', '-c']
+    args:
+    - |
+      while true; do
+        echo "Mesa called JarJar Binks! Mesa your humble servant!"
+        echo "Yousa thinking yousa people gonna die?"
+        echo "Ex-squeeze me, but de mostest safest place would be Gunga City!"
+        sleep 30
+      done
+    resources:
+      requests:
+        memory: "32Mi"
+        cpu: "50m"
+      limits:
+        memory: "64Mi"
+        cpu: "100m"
+    env:
+    - name: HOME_PLANET
+      value: "Naboo"
+    - name: SPECIES
+      value: "Gungan"
+    - name: BEST_FRIEND
+      value: "Qui-Gon Jinn"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jarjar-service
+  namespace: test-workloads
+  labels:
+    app: jarjar
+spec:
+  selector:
+    app: jarjar
+  ports:
+  - port: 9999
+    targetPort: 9999
+    name: mesa-port

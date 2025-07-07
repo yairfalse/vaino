@@ -39,16 +39,16 @@ func (u *UnixFormatter) FormatDriftReport(report *differ.DriftReport) ([]byte, e
 	for resource, changes := range changesByResource {
 		output.WriteString(fmt.Sprintf("--- %s\n", resource))
 		output.WriteString(fmt.Sprintf("+++ %s\n", resource))
-		
+
 		for _, change := range changes {
 			// Show the change in a simple format
 			output.WriteString(fmt.Sprintf("@@ %s @@\n", change.Field))
-			
+
 			// Old value
 			if change.OldValue != nil {
 				output.WriteString(fmt.Sprintf("-%s: %v\n", change.Field, change.OldValue))
 			}
-			
+
 			// New value
 			if change.NewValue != nil {
 				output.WriteString(fmt.Sprintf("+%s: %v\n", change.Field, change.NewValue))
@@ -75,7 +75,7 @@ func (u *UnixFormatter) FormatSimple(report *differ.DriftReport) ([]byte, error)
 	}
 
 	var output strings.Builder
-	
+
 	// Just list what changed
 	for _, resourceChange := range report.ResourceChanges {
 		switch resourceChange.DriftType {
@@ -98,7 +98,7 @@ func (u *UnixFormatter) FormatNameOnly(report *differ.DriftReport) ([]byte, erro
 	}
 
 	var resources []string
-	
+
 	for _, resourceChange := range report.ResourceChanges {
 		key := fmt.Sprintf("%s/%s", resourceChange.ResourceType, resourceChange.ResourceID)
 		resources = append(resources, key)
@@ -114,7 +114,7 @@ func (u *UnixFormatter) FormatStat(report *differ.DriftReport) ([]byte, error) {
 	}
 
 	var output strings.Builder
-	
+
 	// Count changes per resource
 	for _, resourceChange := range report.ResourceChanges {
 		resource := fmt.Sprintf("%s/%s", resourceChange.ResourceType, resourceChange.ResourceID)
@@ -128,9 +128,9 @@ func (u *UnixFormatter) FormatStat(report *differ.DriftReport) ([]byte, error) {
 	for _, rc := range report.ResourceChanges {
 		totalChanges += len(rc.Changes)
 	}
-	
-	output.WriteString(fmt.Sprintf(" %d %s changed, %d %s\n", 
-		totalResources, 
+
+	output.WriteString(fmt.Sprintf(" %d %s changed, %d %s\n",
+		totalResources,
 		plural(totalResources, "resource"),
 		totalChanges,
 		plural(totalChanges, "modification")))
