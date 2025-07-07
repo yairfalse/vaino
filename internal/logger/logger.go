@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Logger interface {
@@ -13,46 +15,85 @@ type Logger interface {
 	WithFields(fields map[string]interface{}) Logger
 }
 
-type SimpleLogger struct{}
+type SimpleLogger struct {
+	fields map[string]interface{}
+}
 
 func NewSimple() Logger {
-	return &SimpleLogger{}
+	return &SimpleLogger{
+		fields: make(map[string]interface{}),
+	}
 }
 
 func (l *SimpleLogger) Info(msg string) {
-	log.Printf("INFO: %s", msg)
+	if len(l.fields) > 0 {
+		log.Printf("INFO: %s %v", msg, l.fields)
+	} else {
+		log.Printf("INFO: %s", msg)
+	}
 }
 
 func (l *SimpleLogger) Error(msg string, err error) {
-	log.Printf("ERROR: %s: %v", msg, err)
+	if len(l.fields) > 0 {
+		fmt.Fprintf(os.Stderr, "ERROR: %s: %v %v\n", msg, err, l.fields)
+	} else {
+		fmt.Fprintf(os.Stderr, "ERROR: %s: %v\n", msg, err)
+	}
 }
 
 func (l *SimpleLogger) WithField(key string, value interface{}) Logger {
-	return l
+	newFields := make(map[string]interface{})
+	for k, v := range l.fields {
+		newFields[k] = v
+	}
+	newFields[key] = value
+	
+	return &SimpleLogger{fields: newFields}
 }
 
 func (l *SimpleLogger) WithFields(fields map[string]interface{}) Logger {
-	return l
+	newFields := make(map[string]interface{})
+	for k, v := range l.fields {
+		newFields[k] = v
+	}
+	for k, v := range fields {
+		newFields[k] = v
+	}
+	
+	return &SimpleLogger{fields: newFields}
 }
 
-type LogrusLogger struct{}
+type LogrusLogger struct {
+	logger *logrus.Logger
+	entry  *logrus.Entry
+}
 
 func NewLogrus() Logger {
-	return &LogrusLogger{}
+	logger := logrus.New()
+	return &LogrusLogger{
+		logger: logger,
+		entry:  logrus.NewEntry(logger),
+	}
 }
 
 func (l *LogrusLogger) Info(msg string) {
-	fmt.Fprintf(os.Stdout, "INFO: %s\n", msg)
+	l.entry.Info(msg)
 }
 
 func (l *LogrusLogger) Error(msg string, err error) {
-	fmt.Fprintf(os.Stderr, "ERROR: %s: %v\n", msg, err)
+	l.entry.WithError(err).Error(msg)
 }
 
 func (l *LogrusLogger) WithField(key string, value interface{}) Logger {
-	return l
+	return &LogrusLogger{
+		logger: l.logger,
+		entry:  l.entry.WithField(key, value),
+	}
 }
 
 func (l *LogrusLogger) WithFields(fields map[string]interface{}) Logger {
-	return l
+	return &LogrusLogger{
+		logger: l.logger,
+		entry:  l.entry.WithFields(fields),
+	}
 }

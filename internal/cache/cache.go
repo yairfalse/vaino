@@ -5,12 +5,6 @@ import (
 	"time"
 )
 
-type Stats struct {
-	Items  int64
-	Hits   int64
-	Misses int64
-}
-
 type Manager interface {
 	Get(key string) (interface{}, bool)
 	Set(key string, value interface{}, ttl time.Duration)
@@ -19,9 +13,15 @@ type Manager interface {
 	Stats() Stats
 }
 
+type Stats struct {
+	Hits   int64
+	Misses int64
+	Size   int64
+}
+
 type MemoryCache struct {
 	mu    sync.RWMutex
-	items map[string]cacheItem
+	items map[string]*cacheItem
 	stats Stats
 }
 
@@ -32,7 +32,7 @@ type cacheItem struct {
 
 func NewManager() Manager {
 	return &MemoryCache{
-		items: make(map[string]cacheItem),
+		items: make(map[string]*cacheItem),
 		stats: Stats{},
 	}
 }
@@ -47,8 +47,9 @@ func (c *MemoryCache) Get(key string) (interface{}, bool) {
 		return nil, false
 	}
 
-	if time.Now().After(item.expiry) {
+	if !item.expiry.IsZero() && time.Now().After(item.expiry) {
 		c.stats.Misses++
+		delete(c.items, key)
 		return nil, false
 	}
 
@@ -60,13 +61,14 @@ func (c *MemoryCache) Set(key string, value interface{}, ttl time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, exists := c.items[key]; !exists {
-		c.stats.Items++
+	var expiry time.Time
+	if ttl > 0 {
+		expiry = time.Now().Add(ttl)
 	}
 
-	c.items[key] = cacheItem{
+	c.items[key] = &cacheItem{
 		value:  value,
-		expiry: time.Now().Add(ttl),
+		expiry: expiry,
 	}
 }
 
@@ -74,18 +76,14 @@ func (c *MemoryCache) Delete(key string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, exists := c.items[key]; exists {
-		delete(c.items, key)
-		c.stats.Items--
-	}
+	delete(c.items, key)
 }
 
 func (c *MemoryCache) Clear() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.items = make(map[string]cacheItem)
-	c.stats = Stats{}
+	c.items = make(map[string]*cacheItem)
 	return nil
 }
 
@@ -93,5 +91,7 @@ func (c *MemoryCache) Stats() Stats {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	return c.stats
+	stats := c.stats
+	stats.Size = int64(len(c.items))
+	return stats
 }

@@ -13,8 +13,7 @@ type Config struct {
 	Debug     bool
 	Version   string
 	Commit    string
-	BuildTime string
-	BuiltBy   string
+	BuildDate string
 }
 
 type App struct {

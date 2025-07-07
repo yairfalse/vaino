@@ -1,26 +1,49 @@
 package collectors
 
+import (
+	"sync"
+)
+
 type Collector interface {
 	Name() string
 	Status() string
 }
 
 type CollectorRegistry struct {
-	collectors []Collector
+	mu         sync.RWMutex
+	collectors map[string]Collector
 }
 
 func NewRegistry() *CollectorRegistry {
 	return &CollectorRegistry{
-		collectors: make([]Collector, 0),
+		collectors: make(map[string]Collector),
 	}
 }
 
 func (r *CollectorRegistry) Register(collector Collector) {
-	r.collectors = append(r.collectors, collector)
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.collectors[collector.Name()] = collector
 }
 
-func (r *CollectorRegistry) GetCollectors() []Collector {
-	return r.collectors
+func (r *CollectorRegistry) List() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	
+	names := make([]string, 0, len(r.collectors))
+	for name := range r.collectors {
+		names = append(names, name)
+	}
+	
+	return names
+}
+
+func (r *CollectorRegistry) Get(name string) (Collector, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	
+	collector, exists := r.collectors[name]
+	return collector, exists
 }
 
 type MockCollector struct {

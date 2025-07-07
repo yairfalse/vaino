@@ -61,12 +61,11 @@ func init() {
 
 	// Create app configuration
 	config := app.Config{
-		Verbose: verbose,
-		Debug:   debug,
-		Version: version,
-		Commit:  commit,
-		BuildTime: buildTime,
-		BuiltBy: builtBy,
+		Verbose:   verbose,
+		Debug:     debug,
+		Version:   version,
+		Commit:    commit,
+		BuildDate: buildTime,
 	}
 
 	// Create app instance

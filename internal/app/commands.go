@@ -9,8 +9,7 @@ import (
 func (a *App) runVersionCommand(cmd *cobra.Command, args []string) {
 	fmt.Printf("wgo version %s\n", a.config.Version)
 	fmt.Printf("  commit: %s\n", a.config.Commit)
-	fmt.Printf("  built: %s\n", a.config.BuildTime)
-	fmt.Printf("  built by: %s\n", a.config.BuiltBy)
+	fmt.Printf("  built: %s\n", a.config.BuildDate)
 }
 
 func (a *App) runStatusCommand(cmd *cobra.Command, args []string) {
@@ -30,11 +29,11 @@ func (a *App) runStatusCommand(cmd *cobra.Command, args []string) {
 func (a *App) runScanCommand(cmd *cobra.Command, args []string) {
 	a.logger.Info("Scanning infrastructure...")
 	
-	collectors := a.registry.GetCollectors()
+	collectors := a.registry.List()
 	fmt.Printf("Found %d collectors\n", len(collectors))
 	
-	for _, collector := range collectors {
-		fmt.Printf("  - %s: %s\n", collector.Name(), collector.Status())
+	for _, name := range collectors {
+		fmt.Printf("  - %s: Available\n", name)
 	}
 }
 
@@ -68,10 +67,12 @@ func (a *App) runCacheCommand(cmd *cobra.Command, args []string) {
 	
 	stats := a.cache.Stats()
 	fmt.Println("Cache Status:")
-	fmt.Printf("  Items: %d\n", stats.Items)
+	fmt.Printf("  Items: %d\n", stats.Size)
 	fmt.Printf("  Hits: %d\n", stats.Hits)
 	fmt.Printf("  Misses: %d\n", stats.Misses)
-	fmt.Printf("  Hit Rate: %.2f%%\n", float64(stats.Hits)/(float64(stats.Hits+stats.Misses))*100)
+	if stats.Hits+stats.Misses > 0 {
+		fmt.Printf("  Hit Rate: %.2f%%\n", float64(stats.Hits)/(float64(stats.Hits+stats.Misses))*100)
+	}
 }
 
 func (a *App) runConfigCommand(cmd *cobra.Command, args []string) {

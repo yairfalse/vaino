@@ -1,33 +1,33 @@
 package ai
 
 import (
-    "context"
-    "fmt"
-    "os"
+	"context"
+	"fmt"
+	"os"
 
-    "github.com/anthropics/anthropic-sdk-go"
-    "github.com/anthropics/anthropic-sdk-go/option"
+	"github.com/anthropics/anthropic-sdk-go"
+	"github.com/anthropics/anthropic-sdk-go/option"
 )
 
 type ClaudeClient struct {
-    client *anthropic.Client
+	client anthropic.Client
 }
 
 func NewClaudeClient() (*ClaudeClient, error) {
-    apiKey := os.Getenv("ANTHROPIC_API_KEY")
-    if apiKey == "" {
-        return nil, fmt.Errorf("ANTHROPIC_API_KEY environment variable is required")
-    }
+	apiKey := os.Getenv("ANTHROPIC_API_KEY")
+	if apiKey == "" {
+		return nil, fmt.Errorf("ANTHROPIC_API_KEY environment variable is required")
+	}
 
-    client := anthropic.NewClient(
-        option.WithAPIKey(apiKey),
-    )
+	client := anthropic.NewClient(
+		option.WithAPIKey(apiKey),
+	)
 
-    return &ClaudeClient{client: &client}, nil
+	return &ClaudeClient{client: client}, nil
 }
 
 func (c *ClaudeClient) AnalyzeDrift(ctx context.Context, driftData string) (string, error) {
-    prompt := fmt.Sprintf(`You are an expert infrastructure engineer. Analyze the following infrastructure drift data and provide insights:
+	prompt := fmt.Sprintf(`You are an expert infrastructure engineer. Analyze the following infrastructure drift data and provide insights:
 
 %s
 
@@ -39,29 +39,29 @@ Please provide:
 
 Format your response in a clear, actionable manner.`, driftData)
 
-    resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
-        Model:     anthropic.ModelClaude3_5Sonnet20241022,
-        MaxTokens: 1024,
-        Messages: []anthropic.MessageParam{
-            anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
-        },
-    })
+	resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
+		Model:     anthropic.ModelClaude3_5Sonnet20241022,
+		MaxTokens: anthropic.Int(1024),
+		Messages: []anthropic.MessageParam{
+			anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
+		},
+	})
 
-    if err != nil {
-        return "", fmt.Errorf("failed to analyze drift: %w", err)
-    }
+	if err != nil {
+		return "", fmt.Errorf("failed to analyze drift: %w", err)
+	}
 
-    if len(resp.Content) > 0 {
-        if textBlock := resp.Content[0].Text; textBlock != "" {
-            return textBlock, nil
-        }
-    }
+	if len(resp.Content) > 0 {
+		if textBlock := resp.Content[0].Text; textBlock != "" {
+			return textBlock, nil
+		}
+	}
 
-    return "No response content received", nil
+	return "No response content received", nil
 }
 
 func (c *ClaudeClient) ExplainChange(ctx context.Context, changeData string) (string, error) {
-    prompt := fmt.Sprintf(`You are an infrastructure expert. Explain the following infrastructure change in simple terms:
+	prompt := fmt.Sprintf(`You are an infrastructure expert. Explain the following infrastructure change in simple terms:
 
 %s
 
@@ -73,29 +73,29 @@ Please explain:
 
 Use clear, non-technical language where possible.`, changeData)
 
-    resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
-        Model:     anthropic.ModelClaude3_5Sonnet20241022,
-        MaxTokens: 512,
-        Messages: []anthropic.MessageParam{
-            anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
-        },
-    })
+	resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
+		Model:     anthropic.ModelClaude3_5Sonnet20241022,
+		MaxTokens: anthropic.Int(512),
+		Messages: []anthropic.MessageParam{
+			anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
+		},
+	})
 
-    if err != nil {
-        return "", fmt.Errorf("failed to explain change: %w", err)
-    }
+	if err != nil {
+		return "", fmt.Errorf("failed to explain change: %w", err)
+	}
 
-    if len(resp.Content) > 0 {
-        if textBlock := resp.Content[0].Text; textBlock != "" {
-            return textBlock, nil
-        }
-    }
+	if len(resp.Content) > 0 {
+		if textBlock := resp.Content[0].Text; textBlock != "" {
+			return textBlock, nil
+		}
+	}
 
-    return "No response content received", nil
+	return "No response content received", nil
 }
 
 func (c *ClaudeClient) GenerateRemediation(ctx context.Context, driftData string) (string, error) {
-    prompt := fmt.Sprintf(`You are an infrastructure automation expert. Based on the following drift data, provide specific remediation steps:
+	prompt := fmt.Sprintf(`You are an infrastructure automation expert. Based on the following drift data, provide specific remediation steps:
 
 %s
 
@@ -107,23 +107,23 @@ Please provide:
 
 Focus on practical, actionable solutions.`, driftData)
 
-    resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
-        Model:     anthropic.ModelClaude3_5Sonnet20241022,
-        MaxTokens: 1024,
-        Messages: []anthropic.MessageParam{
-            anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
-        },
-    })
+	resp, err := c.client.Messages.New(ctx, anthropic.MessageNewParams{
+		Model:     anthropic.ModelClaude3_5Sonnet20241022,
+		MaxTokens: anthropic.Int(1024),
+		Messages: []anthropic.MessageParam{
+			anthropic.NewUserMessage(anthropic.NewTextBlock(prompt)),
+		},
+	})
 
-    if err != nil {
-        return "", fmt.Errorf("failed to generate remediation: %w", err)
-    }
+	if err != nil {
+		return "", fmt.Errorf("failed to generate remediation: %w", err)
+	}
 
-    if len(resp.Content) > 0 {
-        if textBlock := resp.Content[0].Text; textBlock != "" {
-            return textBlock, nil
-        }
-    }
+	if len(resp.Content) > 0 {
+		if textBlock := resp.Content[0].Text; textBlock != "" {
+			return textBlock, nil
+		}
+	}
 
-    return "No response content received", nil
+	return "No response content received", nil
 }
