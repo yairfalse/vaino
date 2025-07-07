@@ -1,4 +1,4 @@
-# WGO 🔍
+# WGO 🔍 - "Whats going on?"
 
 **AI-powered infrastructure drift detection made simple**
 
