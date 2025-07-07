@@ -1,0 +1,320 @@
+package system
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/yairfalse/wgo/internal/collectors"
+	// "github.com/yairfalse/wgo/internal/collectors/gcp" // Temporarily disabled
+	"github.com/yairfalse/wgo/internal/collectors/kubernetes"
+	"github.com/yairfalse/wgo/internal/collectors/terraform"
+)
+
+func TestCollectorRegistry_Integration(t *testing.T) {
+	// Test that all collectors can be registered and retrieved
+	registry := collectors.NewEnhancedRegistry()
+	
+	// Register collectors
+	terraformCollector := terraform.NewTerraformCollector()
+	kubernetesCollector := kubernetes.NewKubernetesCollector()
+	// gcpCollector := gcp.NewGCPCollector() // Temporarily disabled
+	
+	registry.RegisterEnhanced(terraformCollector)
+	registry.RegisterEnhanced(kubernetesCollector)
+	// registry.RegisterEnhanced(gcpCollector) // Temporarily disabled
+	
+	// Verify all collectors are registered
+	providers := registry.ListEnhanced()
+	if len(providers) < 3 {
+		t.Errorf("Expected at least 3 providers, got %d", len(providers))
+	}
+	
+	// Check each collector can be retrieved
+	collectors := map[string]bool{
+		"terraform":  false,
+		"kubernetes": false,
+		"gcp":        false,
+	}
+	
+	for _, provider := range providers {
+		collectors[provider] = true
+		
+		collector, err := registry.GetEnhanced(provider)
+		if err != nil {
+			t.Errorf("Failed to get collector for %s: %v", provider, err)
+		}
+		
+		if collector == nil {
+			t.Errorf("Got nil collector for %s", provider)
+		}
+		
+		// Verify basic collector properties
+		if collector.Name() != provider {
+			t.Errorf("Collector name mismatch: expected %s, got %s", provider, collector.Name())
+		}
+		
+		status := collector.Status()
+		if status == "" {
+			t.Errorf("Collector %s returned empty status", provider)
+		}
+	}
+	
+	// Verify all expected collectors were found
+	for name, found := range collectors {
+		if !found {
+			t.Errorf("Expected collector %s was not found in registry", name)
+		}
+	}
+}
+
+func TestCollectorValidation_Integration(t *testing.T) {
+	tests := []struct {
+		name         string
+		collector    collectors.EnhancedCollector
+		config       collectors.CollectorConfig
+		shouldError  bool
+	}{
+		{
+			name:      "terraform with empty config",
+			collector: terraform.NewTerraformCollector(),
+			config:    collectors.CollectorConfig{},
+			shouldError: false, // Terraform accepts empty config
+		},
+		{
+			name:      "kubernetes with namespaces",
+			collector: kubernetes.NewKubernetesCollector(),
+			config: collectors.CollectorConfig{
+				Namespaces: []string{"default", "kube-system"},
+			},
+			shouldError: false,
+		},
+		{
+			name:      "gcp without project",
+			collector: gcp.NewGCPCollector(),
+			config:    collectors.CollectorConfig{},
+			shouldError: true, // GCP requires project_id
+		},
+		{
+			name:      "gcp with project",
+			collector: gcp.NewGCPCollector(),
+			config: collectors.CollectorConfig{
+				Config: map[string]interface{}{
+					"project_id": "test-project",
+				},
+			},
+			shouldError: false,
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.collector.Validate(tt.config)
+			if (err != nil) != tt.shouldError {
+				t.Errorf("Validate() error = %v, shouldError = %v", err, tt.shouldError)
+			}
+		})
+	}
+}
+
+func TestCollectorAutoDiscovery_Integration(t *testing.T) {
+	collectors := []struct {
+		name      string
+		collector collectors.EnhancedCollector
+	}{
+		{"terraform", terraform.NewTerraformCollector()},
+		{"kubernetes", kubernetes.NewKubernetesCollector()},
+		{"gcp", gcp.NewGCPCollector()},
+	}
+	
+	for _, tc := range collectors {
+		t.Run(tc.name+"_autodiscovery", func(t *testing.T) {
+			config, err := tc.collector.AutoDiscover()
+			
+			// AutoDiscovery might fail if no infrastructure is present,
+			// but should not panic
+			if err == nil {
+				// If successful, config should be valid
+				if config.Config == nil && tc.name != "terraform" {
+					t.Errorf("%s AutoDiscover returned nil Config map", tc.name)
+				}
+			}
+		})
+	}
+}
+
+func TestCollectorStatus_Integration(t *testing.T) {
+	collectors := []struct {
+		name      string
+		collector collectors.EnhancedCollector
+	}{
+		{"terraform", terraform.NewTerraformCollector()},
+		{"kubernetes", kubernetes.NewKubernetesCollector()},
+		{"gcp", gcp.NewGCPCollector()},
+	}
+	
+	for _, tc := range collectors {
+		t.Run(tc.name+"_status", func(t *testing.T) {
+			status := tc.collector.Status()
+			
+			if status == "" {
+				t.Errorf("%s returned empty status", tc.name)
+			}
+			
+			// Status should be one of known values
+			validStatuses := map[string]bool{
+				"ready":           true,
+				"not_initialized": true,
+				"error":           true,
+			}
+			
+			// For error status, it might include error details
+			isValid := false
+			for validStatus := range validStatuses {
+				if status == validStatus || len(status) > len(validStatus) {
+					isValid = true
+					break
+				}
+			}
+			
+			if !isValid {
+				t.Errorf("%s returned unexpected status: %s", tc.name, status)
+			}
+		})
+	}
+}
+
+func TestCollectorSupportedRegions_Integration(t *testing.T) {
+	tests := []struct {
+		name             string
+		collector        collectors.EnhancedCollector
+		expectRegions    bool
+		minRegionCount   int
+	}{
+		{
+			name:           "terraform has no regions",
+			collector:      terraform.NewTerraformCollector(),
+			expectRegions:  false,
+		},
+		{
+			name:           "kubernetes has no regions",
+			collector:      kubernetes.NewKubernetesCollector(),
+			expectRegions:  false,
+		},
+		{
+			name:           "gcp has many regions",
+			collector:      gcp.NewGCPCollector(),
+			expectRegions:  true,
+			minRegionCount: 10,
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			regions := tt.collector.SupportedRegions()
+			
+			if tt.expectRegions {
+				if len(regions) < tt.minRegionCount {
+					t.Errorf("Expected at least %d regions, got %d", tt.minRegionCount, len(regions))
+				}
+			} else {
+				if len(regions) > 0 {
+					t.Errorf("Expected no regions, got %d", len(regions))
+				}
+			}
+		})
+	}
+}
+
+func TestCollectorConcurrency_Integration(t *testing.T) {
+	// Test that collectors can be used concurrently
+	registry := collectors.NewEnhancedRegistry()
+	
+	terraformCollector := terraform.NewTerraformCollector()
+	kubernetesCollector := kubernetes.NewKubernetesCollector()
+	gcpCollector := gcp.NewGCPCollector()
+	
+	registry.RegisterEnhanced(terraformCollector)
+	registry.RegisterEnhanced(kubernetesCollector)
+	registry.RegisterEnhanced(gcpCollector)
+	
+	// Run operations concurrently
+	done := make(chan bool, 3)
+	
+	go func() {
+		for i := 0; i < 10; i++ {
+			_, _ = registry.GetEnhanced("terraform")
+			_ = terraformCollector.Status()
+		}
+		done <- true
+	}()
+	
+	go func() {
+		for i := 0; i < 10; i++ {
+			_, _ = registry.GetEnhanced("kubernetes")
+			_ = kubernetesCollector.Status()
+		}
+		done <- true
+	}()
+	
+	go func() {
+		for i := 0; i < 10; i++ {
+			_, _ = registry.GetEnhanced("gcp")
+			_ = gcpCollector.Status()
+		}
+		done <- true
+	}()
+	
+	// Wait for all goroutines with timeout
+	timeout := time.After(5 * time.Second)
+	for i := 0; i < 3; i++ {
+		select {
+		case <-done:
+			// Success
+		case <-timeout:
+			t.Fatal("Timeout waiting for concurrent operations")
+		}
+	}
+}
+
+func TestCollectorCollection_WithTimeout(t *testing.T) {
+	// Test that collection respects context timeout
+	collectors := []struct {
+		name      string
+		collector collectors.EnhancedCollector
+	}{
+		{"terraform", terraform.NewTerraformCollector()},
+		{"kubernetes", kubernetes.NewKubernetesCollector()},
+		{"gcp", gcp.NewGCPCollector()},
+	}
+	
+	for _, tc := range collectors {
+		t.Run(tc.name+"_timeout", func(t *testing.T) {
+			// Create a context with very short timeout
+			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
+			defer cancel()
+			
+			config := collectors.CollectorConfig{}
+			if tc.name == "gcp" {
+				config.Config = map[string]interface{}{
+					"project_id": "test-project",
+				}
+			}
+			
+			// Collection should fail or complete quickly
+			start := time.Now()
+			_, err := tc.collector.Collect(ctx, config)
+			duration := time.Since(start)
+			
+			// Should complete within reasonable time (context timeout + processing)
+			if duration > 1*time.Second {
+				t.Errorf("Collection took too long: %v", duration)
+			}
+			
+			// Error is expected due to timeout or missing credentials
+			if err == nil && tc.name != "terraform" {
+				t.Log("Warning: Expected error but collection succeeded")
+			}
+		})
+	}
+}

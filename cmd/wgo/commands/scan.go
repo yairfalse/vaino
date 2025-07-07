@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/yairfalse/wgo/internal/collectors"
-	// "github.com/yairfalse/wgo/internal/collectors/gcp"  // Temporarily disabled
+	// "github.com/yairfalse/wgo/internal/collectors/gcp" // Removed temporarily
 	"github.com/yairfalse/wgo/internal/collectors/kubernetes"
 	"github.com/yairfalse/wgo/internal/collectors/terraform"
 	"github.com/yairfalse/wgo/internal/discovery"
@@ -103,7 +103,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 	kubernetesCollector := kubernetes.NewKubernetesCollector()
 	enhancedRegistry.RegisterEnhanced(kubernetesCollector)
 	// gcpCollector := gcp.NewGCPCollector()
-	// enhancedRegistry.RegisterEnhanced(gcpCollector)  // Temporarily disabled
+	// enhancedRegistry.RegisterEnhanced(gcpCollector) // Removed temporarily
 	
 	ctx := cmd.Context()
 	

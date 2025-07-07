@@ -104,12 +104,40 @@ func newBaselineDeleteCommand() *cobra.Command {
 }
 
 func runBaselineCreate(cmd *cobra.Command, args []string) error {
-	fmt.Println("📋 Creating Baseline")
-	fmt.Println("===================")
-	
 	name, _ := cmd.Flags().GetString("name")
 	description, _ := cmd.Flags().GetString("description")
 	fromSnapshot, _ := cmd.Flags().GetString("from-snapshot")
+	
+	// Check if any snapshots exist
+	// TODO: Actually check for snapshots
+	hasSnapshots := false
+	
+	if !hasSnapshots && fromSnapshot == "" {
+		fmt.Println("❌ No Infrastructure Snapshots Found")
+		fmt.Println("=====================================")
+		fmt.Println()
+		fmt.Println("You need to scan your infrastructure first!")
+		fmt.Println()
+		fmt.Println("🎯 DO THIS NOW:")
+		fmt.Println()
+		fmt.Println("  1. Run a scan (choose one):")
+		fmt.Println("     wgo scan --provider terraform")
+		fmt.Println("     wgo scan --provider aws --region us-east-1")
+		fmt.Println("     wgo scan --provider gcp --project YOUR-PROJECT")
+		fmt.Println()
+		fmt.Println("  2. Then create your baseline:")
+		fmt.Printf("     wgo baseline create --name %s", name)
+		if description != "" {
+			fmt.Printf(" --description \"%s\"", description)
+		}
+		fmt.Println()
+		fmt.Println()
+		fmt.Println("💡 TIP: Having auth issues? Run 'wgo auth status'")
+		return nil
+	}
+	
+	fmt.Println("📋 Creating Baseline")
+	fmt.Println("===================")
 	
 	fmt.Printf("🏷️  Name: %s\n", name)
 	if description != "" {

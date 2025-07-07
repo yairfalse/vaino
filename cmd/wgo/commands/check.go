@@ -183,7 +183,26 @@ func runCheck(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to list baselines: %w", err)
 		}
 		if len(baselines) == 0 {
-			return fmt.Errorf("no baselines found. Create one with 'wgo baseline create'")
+			fmt.Println("❌ No Baselines Found")
+			fmt.Println("====================")
+			fmt.Println()
+			fmt.Println("You need to create a baseline first!")
+			fmt.Println()
+			fmt.Println("🎯 DO THIS NOW:")
+			fmt.Println()
+			fmt.Println("  1. Scan your infrastructure (if not done already):")
+			fmt.Println("     wgo scan --provider terraform")
+			fmt.Println("     wgo scan --provider aws --region us-east-1")
+			fmt.Println("     wgo scan --provider gcp --project YOUR-PROJECT")
+			fmt.Println()
+			fmt.Println("  2. Create a baseline:")
+			fmt.Println("     wgo baseline create --name prod-baseline")
+			fmt.Println()
+			fmt.Println("  3. Then check for drift:")
+			fmt.Println("     wgo check")
+			fmt.Println()
+			fmt.Println("💡 TIP: The baseline is your 'known good' state")
+			return nil
 		}
 		// Use the most recent baseline
 		fmt.Printf("📋 Using baseline: %s\n", baselines[0].Name)
@@ -217,7 +236,20 @@ func runCheck(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to list snapshots: %w", err)
 		}
 		if len(snapshots) == 0 {
-			return fmt.Errorf("no snapshots found. Run 'wgo scan' first")
+			fmt.Println("❌ No Infrastructure Snapshots Found")
+			fmt.Println("=====================================")
+			fmt.Println()
+			fmt.Println("You need to scan your infrastructure first!")
+			fmt.Println()
+			fmt.Println("🎯 DO THIS NOW (choose one):")
+			fmt.Println()
+			fmt.Println("  wgo scan --provider terraform")
+			fmt.Println("  wgo scan --provider aws --region us-east-1")
+			fmt.Println("  wgo scan --provider gcp --project YOUR-PROJECT")
+			fmt.Println("  wgo scan --provider kubernetes")
+			fmt.Println()
+			fmt.Println("💡 TIP: Having auth issues? Run 'wgo auth status'")
+			return nil
 		}
 		// Load the most recent snapshot
 		currentSnapshot, err = localStorage.LoadSnapshot(snapshots[0].ID)

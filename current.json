@@ -1,0 +1,757 @@
+{
+  "id": "k8s-snapshot-1751926884",
+  "timestamp": "2025-07-08T00:21:24.742915+02:00",
+  "provider": "kubernetes",
+  "resources": [
+    {
+      "id": "deployment/api-server",
+      "type": "deployment",
+      "name": "api-server",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "containers": [
+          {
+            "image": "kennethreitz/httpbin",
+            "name": "api",
+            "ports": [
+              {
+                "containerPort": 80,
+                "protocol": "TCP"
+              }
+            ],
+            "resources": {
+              "limits": {
+                "cpu": "200m",
+                "memory": "256Mi"
+              },
+              "requests": {
+                "cpu": "100m",
+                "memory": "128Mi"
+              }
+            }
+          }
+        ],
+        "replicas": 2,
+        "selector": {
+          "matchLabels": {
+            "app": "api"
+          }
+        },
+        "strategy": {
+          "type": "RollingUpdate",
+          "rollingUpdate": {
+            "maxUnavailable": "25%",
+            "maxSurge": "25%"
+          }
+        }
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "783",
+        "additional_data": {
+          "generation": 1,
+          "ready_replicas": 2,
+          "replicas": 2,
+          "uid": "a33a1ec5-b1b1-4555-a9b8-24ddac7b9ae7"
+        }
+      },
+      "tags": {
+        "app": "api",
+        "tier": "backend"
+      }
+    },
+    {
+      "id": "deployment/frontend",
+      "type": "deployment",
+      "name": "frontend",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "containers": [
+          {
+            "image": "nginx:alpine",
+            "name": "nginx",
+            "ports": [
+              {
+                "containerPort": 80,
+                "protocol": "TCP"
+              }
+            ],
+            "resources": {
+              "limits": {
+                "cpu": "500m",
+                "memory": "128Mi"
+              },
+              "requests": {
+                "cpu": "250m",
+                "memory": "64Mi"
+              }
+            }
+          }
+        ],
+        "replicas": 3,
+        "selector": {
+          "matchLabels": {
+            "app": "frontend"
+          }
+        },
+        "strategy": {
+          "type": "RollingUpdate",
+          "rollingUpdate": {
+            "maxUnavailable": "25%",
+            "maxSurge": "25%"
+          }
+        }
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "683",
+        "additional_data": {
+          "generation": 1,
+          "ready_replicas": 3,
+          "replicas": 3,
+          "uid": "3d23634a-1fc8-44de-bfd4-19b5ee278c76"
+        }
+      },
+      "tags": {
+        "app": "frontend",
+        "tier": "web"
+      }
+    },
+    {
+      "id": "deployment/rabbitmq",
+      "type": "deployment",
+      "name": "rabbitmq",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "containers": [
+          {
+            "image": "rabbitmq:3-alpine",
+            "name": "rabbitmq",
+            "ports": [
+              {
+                "containerPort": 5672,
+                "protocol": "TCP"
+              },
+              {
+                "containerPort": 15672,
+                "protocol": "TCP"
+              }
+            ],
+            "resources": {}
+          }
+        ],
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "app": "rabbitmq"
+          }
+        },
+        "strategy": {
+          "type": "RollingUpdate",
+          "rollingUpdate": {
+            "maxUnavailable": "25%",
+            "maxSurge": "25%"
+          }
+        }
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "709",
+        "additional_data": {
+          "generation": 1,
+          "ready_replicas": 1,
+          "replicas": 1,
+          "uid": "549f4b73-a611-4ea0-bbd8-bfed84a2a32d"
+        }
+      },
+      "tags": {
+        "app": "rabbitmq",
+        "tier": "messaging"
+      }
+    },
+    {
+      "id": "deployment/redis",
+      "type": "deployment",
+      "name": "redis",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "containers": [
+          {
+            "image": "redis:6-alpine",
+            "name": "redis",
+            "ports": [
+              {
+                "containerPort": 6379,
+                "protocol": "TCP"
+              }
+            ],
+            "resources": {
+              "limits": {
+                "cpu": "100m",
+                "memory": "128Mi"
+              },
+              "requests": {
+                "cpu": "50m",
+                "memory": "64Mi"
+              }
+            }
+          }
+        ],
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "app": "redis"
+          }
+        },
+        "strategy": {
+          "type": "RollingUpdate",
+          "rollingUpdate": {
+            "maxUnavailable": "25%",
+            "maxSurge": "25%"
+          }
+        }
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "725",
+        "additional_data": {
+          "generation": 1,
+          "ready_replicas": 1,
+          "replicas": 1,
+          "uid": "513d1100-ee64-427a-9366-1a4d1049206a"
+        }
+      },
+      "tags": {
+        "app": "redis",
+        "tier": "cache"
+      }
+    },
+    {
+      "id": "statefulset/postgres",
+      "type": "statefulset",
+      "name": "postgres",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "containers": [
+          {
+            "image": "postgres:13-alpine",
+            "name": "postgres",
+            "ports": [
+              {
+                "containerPort": 5432,
+                "protocol": "TCP"
+              }
+            ],
+            "resources": {}
+          }
+        ],
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "app": "postgres"
+          }
+        },
+        "service_name": "postgres",
+        "update_strategy": {
+          "type": "RollingUpdate",
+          "rollingUpdate": {
+            "partition": 0
+          }
+        }
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "841",
+        "additional_data": {
+          "generation": 1,
+          "ready_replicas": 1,
+          "replicas": 1,
+          "uid": "faa442d1-b421-454f-a4b3-cc8f2cd5b6e5"
+        }
+      }
+    },
+    {
+      "id": "service/api-server",
+      "type": "service",
+      "name": "api-server",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "cluster_ip": "10.96.97.115",
+        "ports": [
+          {
+            "protocol": "TCP",
+            "port": 8080,
+            "targetPort": 80
+          }
+        ],
+        "selector": {
+          "app": "api"
+        },
+        "type": "ClusterIP"
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "525",
+        "additional_data": {
+          "cluster_ip": "10.96.97.115",
+          "service_type": "ClusterIP",
+          "uid": "1538f057-7300-4f27-b8f1-ae3acb56a7f1"
+        }
+      }
+    },
+    {
+      "id": "service/frontend",
+      "type": "service",
+      "name": "frontend",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "cluster_ip": "10.96.78.104",
+        "ports": [
+          {
+            "protocol": "TCP",
+            "port": 80,
+            "targetPort": 80,
+            "nodePort": 30523
+          }
+        ],
+        "selector": {
+          "app": "frontend"
+        },
+        "type": "LoadBalancer"
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "499",
+        "additional_data": {
+          "cluster_ip": "10.96.78.104",
+          "service_type": "LoadBalancer",
+          "uid": "7d1d162a-722b-4c9a-afe6-532c3b740103"
+        }
+      }
+    },
+    {
+      "id": "service/jarjar-service",
+      "type": "service",
+      "name": "jarjar-service",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "cluster_ip": "10.96.174.15",
+        "ports": [
+          {
+            "name": "mesa-port",
+            "protocol": "TCP",
+            "port": 9999,
+            "targetPort": 9999
+          }
+        ],
+        "selector": {
+          "app": "jarjar"
+        },
+        "type": "ClusterIP"
+      },
+      "metadata": {
+        "created_at": "2025-07-08T00:21:21+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "5817",
+        "additional_data": {
+          "cluster_ip": "10.96.174.15",
+          "service_type": "ClusterIP",
+          "uid": "60b16527-2ed4-412f-991b-add5f073f3f6"
+        }
+      },
+      "tags": {
+        "app": "jarjar"
+      }
+    },
+    {
+      "id": "service/postgres",
+      "type": "service",
+      "name": "postgres",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "cluster_ip": "None",
+        "ports": [
+          {
+            "protocol": "TCP",
+            "port": 5432,
+            "targetPort": 5432
+          }
+        ],
+        "selector": {
+          "app": "postgres"
+        },
+        "type": "ClusterIP"
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "534",
+        "additional_data": {
+          "cluster_ip": "None",
+          "service_type": "ClusterIP",
+          "uid": "f81a40d4-d6aa-46fd-b8ce-3f3be703ec96"
+        }
+      }
+    },
+    {
+      "id": "service/rabbitmq",
+      "type": "service",
+      "name": "rabbitmq",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "cluster_ip": "10.96.84.37",
+        "ports": [
+          {
+            "name": "amqp",
+            "protocol": "TCP",
+            "port": 5672,
+            "targetPort": 5672
+          },
+          {
+            "name": "management",
+            "protocol": "TCP",
+            "port": 15672,
+            "targetPort": 15672
+          }
+        ],
+        "selector": {
+          "app": "rabbitmq"
+        },
+        "type": "ClusterIP"
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "580",
+        "additional_data": {
+          "cluster_ip": "10.96.84.37",
+          "service_type": "ClusterIP",
+          "uid": "b84c6b86-5f01-4793-8b72-946d90a4f837"
+        }
+      }
+    },
+    {
+      "id": "service/redis",
+      "type": "service",
+      "name": "redis",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "cluster_ip": "10.96.73.46",
+        "ports": [
+          {
+            "protocol": "TCP",
+            "port": 6379,
+            "targetPort": 6379
+          }
+        ],
+        "selector": {
+          "app": "redis"
+        },
+        "type": "ClusterIP"
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "563",
+        "additional_data": {
+          "cluster_ip": "10.96.73.46",
+          "service_type": "ClusterIP",
+          "uid": "5d4066e4-9dd5-45c6-8846-f6d8dc330f41"
+        }
+      }
+    },
+    {
+      "id": "ingress/main-ingress",
+      "type": "ingress",
+      "name": "main-ingress",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "rules": [
+          {
+            "host": "test.wgo.local",
+            "http": {
+              "paths": [
+                {
+                  "path": "/",
+                  "pathType": "Prefix",
+                  "backend": {
+                    "service": {
+                      "name": "frontend",
+                      "port": {
+                        "number": 80
+                      }
+                    }
+                  }
+                },
+                {
+                  "path": "/api",
+                  "pathType": "Prefix",
+                  "backend": {
+                    "service": {
+                      "name": "api-server",
+                      "port": {
+                        "number": 8080
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "600",
+        "additional_data": {
+          "uid": "45eb103b-5472-461a-befe-aa6a03de5038"
+        }
+      }
+    },
+    {
+      "id": "configmap/app-config",
+      "type": "configmap",
+      "name": "app-config",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "data_keys": [
+          "feature_flags",
+          "log_level",
+          "environment"
+        ]
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "592",
+        "additional_data": {
+          "data_keys": 3,
+          "uid": "acb9a8ed-a617-48fc-a2af-67eb3739be85"
+        }
+      }
+    },
+    {
+      "id": "configmap/kube-root-ca.crt",
+      "type": "configmap",
+      "name": "kube-root-ca.crt",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "data_keys": [
+          "ca.crt"
+        ]
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "476",
+        "additional_data": {
+          "data_keys": 1,
+          "uid": "1dcd1930-54b9-43d8-bdf6-180c4deebaf4"
+        }
+      }
+    },
+    {
+      "id": "configmap/nginx-config",
+      "type": "configmap",
+      "name": "nginx-config",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "data_keys": [
+          "default.conf"
+        ]
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "594",
+        "additional_data": {
+          "data_keys": 1,
+          "uid": "f0558e3d-97e7-4c78-ab7d-0536867739cc"
+        }
+      }
+    },
+    {
+      "id": "secret/api-keys",
+      "type": "secret",
+      "name": "api-keys",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "data_keys": [
+          "github_token",
+          "slack_webhook",
+          "stripe_key"
+        ],
+        "type": "Opaque"
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "597",
+        "additional_data": {
+          "data_keys": 3,
+          "secret_type": "Opaque",
+          "uid": "452fd26c-6ceb-48d6-8c58-44380de43254"
+        }
+      }
+    },
+    {
+      "id": "secret/db-secret",
+      "type": "secret",
+      "name": "db-secret",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "data_keys": [
+          "password",
+          "url"
+        ],
+        "type": "Opaque"
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "595",
+        "additional_data": {
+          "data_keys": 2,
+          "secret_type": "Opaque",
+          "uid": "11bb41d1-200b-43af-9e6f-eb2412595f4c"
+        }
+      }
+    },
+    {
+      "id": "secret/rabbitmq-secret",
+      "type": "secret",
+      "name": "rabbitmq-secret",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "data_keys": [
+          "password"
+        ],
+        "type": "Opaque"
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "596",
+        "additional_data": {
+          "data_keys": 1,
+          "secret_type": "Opaque",
+          "uid": "6b3f23ae-b082-40d4-ae1d-bd7ece645b35"
+        }
+      }
+    },
+    {
+      "id": "persistentvolume/pvc-da58c265-fc92-47eb-b6b7-09b2da3f105f",
+      "type": "persistentvolume",
+      "name": "pvc-da58c265-fc92-47eb-b6b7-09b2da3f105f",
+      "provider": "kubernetes",
+      "configuration": {
+        "access_modes": [
+          "ReadWriteOnce"
+        ],
+        "capacity": {
+          "storage": "1Gi"
+        },
+        "reclaim_policy": "Delete",
+        "volume_mode": "Filesystem"
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:47+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "649",
+        "additional_data": {
+          "access_modes": [
+            "ReadWriteOnce"
+          ],
+          "phase": "Bound",
+          "uid": "bb1de97b-bcbe-485c-ba95-9c4d605bd051"
+        }
+      }
+    },
+    {
+      "id": "persistentvolumeclaim/postgres-storage-postgres-0",
+      "type": "persistentvolumeclaim",
+      "name": "postgres-storage-postgres-0",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "access_modes": [
+          "ReadWriteOnce"
+        ],
+        "resources": {
+          "requests": {
+            "storage": "1Gi"
+          }
+        },
+        "storage_class_name": "standard",
+        "volume_mode": "Filesystem",
+        "volume_name": "pvc-da58c265-fc92-47eb-b6b7-09b2da3f105f"
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "651",
+        "additional_data": {
+          "phase": "Bound",
+          "uid": "da58c265-fc92-47eb-b6b7-09b2da3f105f",
+          "volume_name": "pvc-da58c265-fc92-47eb-b6b7-09b2da3f105f"
+        }
+      },
+      "tags": {
+        "app": "postgres"
+      }
+    },
+    {
+      "id": "serviceaccount/default",
+      "type": "serviceaccount",
+      "name": "default",
+      "provider": "kubernetes",
+      "namespace": "test-workloads",
+      "configuration": {
+        "automount_service_account_token": null
+      },
+      "metadata": {
+        "created_at": "2025-07-07T23:23:43+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "475",
+        "additional_data": {
+          "secrets_count": 0,
+          "uid": "5b41f312-36aa-4075-88a8-a49c904a621d"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "collector_version": "1.0.0",
+    "collection_time": 65268291,
+    "resource_count": 21,
+    "namespaces": [
+      "test-workloads"
+    ]
+  }
+}

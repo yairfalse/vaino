@@ -1,0 +1,489 @@
+{
+  "id": "gcp-1751921687",
+  "timestamp": "2025-07-07T22:54:47.161608+02:00",
+  "provider": "gcp",
+  "resources": [
+    {
+      "id": "modernblog-storage-taskmate-461721",
+      "type": "storage_bucket",
+      "name": "modernblog-storage-taskmate-461721",
+      "provider": "gcp",
+      "region": "EUROPE-WEST3",
+      "configuration": {
+        "acl": null,
+        "cors": null,
+        "default_object_acl": null,
+        "encryption": null,
+        "iam_config": {
+          "public_access_prevention": "inherited",
+          "uniform_bucket_level_access": {
+            "enabled": true,
+            "locked_time": "2025-09-24T15:06:40.519Z"
+          }
+        },
+        "lifecycle": null,
+        "location": "EUROPE-WEST3",
+        "location_type": "region",
+        "logging": null,
+        "metageneration": 1,
+        "retention_policy": null,
+        "storage_class": "STANDARD",
+        "versioning": null,
+        "website": null
+      },
+      "metadata": {
+        "created_at": "2025-06-26T15:06:40.519Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "modernblog-terraform-state-bucket",
+      "type": "storage_bucket",
+      "name": "modernblog-terraform-state-bucket",
+      "provider": "gcp",
+      "region": "US",
+      "configuration": {
+        "acl": null,
+        "cors": null,
+        "default_object_acl": null,
+        "encryption": null,
+        "iam_config": {
+          "public_access_prevention": "inherited",
+          "uniform_bucket_level_access": {
+            "enabled": false,
+            "locked_time": ""
+          }
+        },
+        "lifecycle": null,
+        "location": "US",
+        "location_type": "multi-region",
+        "logging": null,
+        "metageneration": 1,
+        "retention_policy": null,
+        "storage_class": "STANDARD",
+        "versioning": null,
+        "website": null
+      },
+      "metadata": {
+        "created_at": "2025-06-05T11:42:17.011Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "modernblog-tf-state-yey-20250615",
+      "type": "storage_bucket",
+      "name": "modernblog-tf-state-yey-20250615",
+      "provider": "gcp",
+      "region": "EUROPE-WEST3",
+      "configuration": {
+        "acl": null,
+        "cors": null,
+        "default_object_acl": null,
+        "encryption": null,
+        "iam_config": {
+          "public_access_prevention": "inherited",
+          "uniform_bucket_level_access": {
+            "enabled": false,
+            "locked_time": ""
+          }
+        },
+        "lifecycle": null,
+        "location": "EUROPE-WEST3",
+        "location_type": "region",
+        "logging": null,
+        "metageneration": 2,
+        "retention_policy": null,
+        "storage_class": "STANDARD",
+        "versioning": {
+          "enabled": true
+        },
+        "website": null
+      },
+      "metadata": {
+        "created_at": "2025-06-14T23:25:57.759Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "5016216853523179840",
+      "type": "network",
+      "name": "default",
+      "provider": "gcp",
+      "configuration": {
+        "auto_create_subnetworks": true,
+        "description": "Default network for the project",
+        "gateway_ipv4": "",
+        "ipv4_range": "",
+        "peerings": null,
+        "routing_config": {
+          "routing_mode": "REGIONAL"
+        },
+        "subnetworks": [
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/europe-north1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/europe-west9/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/asia-northeast3/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/southamerica-west1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/us-west2/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/europe-west2/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/asia-south2/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/africa-south1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/us-east4/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/asia-south1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/asia-southeast2/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/me-west1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/us-west1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/europe-west10/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/australia-southeast1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/australia-southeast2/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/southamerica-east1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/europe-west12/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/northamerica-south1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/northamerica-northeast2/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/europe-west4/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/us-west4/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/europe-west8/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/asia-northeast2/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/us-south1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/asia-northeast1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/asia-east1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/us-east5/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/europe-west1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/northamerica-northeast1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/me-central1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/asia-east2/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/europe-west3/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/us-east1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/europe-southwest1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/us-west3/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/us-central1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/europe-west6/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/asia-southeast1/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/europe-north2/subnetworks/default",
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/europe-central2/subnetworks/default"
+        ]
+      },
+      "metadata": {
+        "created_at": "2025-06-02T14:29:19.678-07:00",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "2545209691536995999",
+      "type": "network",
+      "name": "modernblog-vpc",
+      "provider": "gcp",
+      "configuration": {
+        "auto_create_subnetworks": false,
+        "description": "",
+        "gateway_ipv4": "",
+        "ipv4_range": "",
+        "peerings": null,
+        "routing_config": {
+          "routing_mode": "REGIONAL"
+        },
+        "subnetworks": [
+          "https://www.googleapis.com/compute/v1/projects/taskmate-461721/regions/europe-west3/subnetworks/modernblog-subnet"
+        ]
+      },
+      "metadata": {
+        "created_at": "2025-06-25T07:32:16.552-07:00",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "1217964513875437910",
+      "type": "subnet",
+      "name": "default",
+      "provider": "gcp",
+      "region": "us-central1",
+      "configuration": {
+        "description": "",
+        "enable_flow_logs": false,
+        "gateway_address": "10.128.0.1",
+        "ip_cidr_range": "10.128.0.0/20",
+        "log_config": null,
+        "network": "https://www.googleapis.com/compute/v1/projects/taskmate-461721/global/networks/default",
+        "private_ip_google_access": false,
+        "secondary_ip_ranges": []
+      },
+      "metadata": {
+        "created_at": "2025-06-02T14:29:29.251-07:00",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "3961437198465870166",
+      "type": "subnet",
+      "name": "default",
+      "provider": "gcp",
+      "region": "us-east1",
+      "configuration": {
+        "description": "",
+        "enable_flow_logs": false,
+        "gateway_address": "10.142.0.1",
+        "ip_cidr_range": "10.142.0.0/20",
+        "log_config": null,
+        "network": "https://www.googleapis.com/compute/v1/projects/taskmate-461721/global/networks/default",
+        "private_ip_google_access": false,
+        "secondary_ip_ranges": []
+      },
+      "metadata": {
+        "created_at": "2025-06-02T14:29:29.239-07:00",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "2394991883208337750",
+      "type": "subnet",
+      "name": "default",
+      "provider": "gcp",
+      "region": "us-west1",
+      "configuration": {
+        "description": "",
+        "enable_flow_logs": false,
+        "gateway_address": "10.138.0.1",
+        "ip_cidr_range": "10.138.0.0/20",
+        "log_config": null,
+        "network": "https://www.googleapis.com/compute/v1/projects/taskmate-461721/global/networks/default",
+        "private_ip_google_access": false,
+        "secondary_ip_ranges": []
+      },
+      "metadata": {
+        "created_at": "2025-06-02T14:29:29.364-07:00",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "4930369304908769622",
+      "type": "subnet",
+      "name": "default",
+      "provider": "gcp",
+      "region": "europe-west1",
+      "configuration": {
+        "description": "",
+        "enable_flow_logs": false,
+        "gateway_address": "10.132.0.1",
+        "ip_cidr_range": "10.132.0.0/20",
+        "log_config": null,
+        "network": "https://www.googleapis.com/compute/v1/projects/taskmate-461721/global/networks/default",
+        "private_ip_google_access": false,
+        "secondary_ip_ranges": []
+      },
+      "metadata": {
+        "created_at": "2025-06-02T14:29:29.395-07:00",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "4236498758211447102",
+      "type": "firewall_rule",
+      "name": "default-allow-icmp",
+      "provider": "gcp",
+      "configuration": {
+        "allowed": [
+          {
+            "ip_protocol": "icmp",
+            "ports": null
+          }
+        ],
+        "denied": [],
+        "description": "Allow ICMP from anywhere",
+        "destination_ranges": null,
+        "direction": "INGRESS",
+        "disabled": false,
+        "log_config": {
+          "enable": false,
+          "metadata": ""
+        },
+        "network": "https://www.googleapis.com/compute/v1/projects/taskmate-461721/global/networks/default",
+        "priority": 65534,
+        "source_ranges": [
+          "0.0.0.0/0"
+        ],
+        "source_service_accounts": null,
+        "source_tags": null,
+        "target_service_accounts": null,
+        "target_tags": null
+      },
+      "metadata": {
+        "created_at": "2025-06-02T14:29:53.166-07:00",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "448276807877372223",
+      "type": "firewall_rule",
+      "name": "default-allow-internal",
+      "provider": "gcp",
+      "configuration": {
+        "allowed": [
+          {
+            "ip_protocol": "tcp",
+            "ports": [
+              "0-65535"
+            ]
+          },
+          {
+            "ip_protocol": "udp",
+            "ports": [
+              "0-65535"
+            ]
+          },
+          {
+            "ip_protocol": "icmp",
+            "ports": null
+          }
+        ],
+        "denied": [],
+        "description": "Allow internal traffic on the default network",
+        "destination_ranges": null,
+        "direction": "INGRESS",
+        "disabled": false,
+        "log_config": {
+          "enable": false,
+          "metadata": ""
+        },
+        "network": "https://www.googleapis.com/compute/v1/projects/taskmate-461721/global/networks/default",
+        "priority": 65534,
+        "source_ranges": [
+          "10.128.0.0/9"
+        ],
+        "source_service_accounts": null,
+        "source_tags": null,
+        "target_service_accounts": null,
+        "target_tags": null
+      },
+      "metadata": {
+        "created_at": "2025-06-02T14:29:52.962-07:00",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "8458001961463294270",
+      "type": "firewall_rule",
+      "name": "default-allow-rdp",
+      "provider": "gcp",
+      "configuration": {
+        "allowed": [
+          {
+            "ip_protocol": "tcp",
+            "ports": [
+              "3389"
+            ]
+          }
+        ],
+        "denied": [],
+        "description": "Allow RDP from anywhere",
+        "destination_ranges": null,
+        "direction": "INGRESS",
+        "disabled": false,
+        "log_config": {
+          "enable": false,
+          "metadata": ""
+        },
+        "network": "https://www.googleapis.com/compute/v1/projects/taskmate-461721/global/networks/default",
+        "priority": 65534,
+        "source_ranges": [
+          "0.0.0.0/0"
+        ],
+        "source_service_accounts": null,
+        "source_tags": null,
+        "target_service_accounts": null,
+        "target_tags": null
+      },
+      "metadata": {
+        "created_at": "2025-06-02T14:29:53.097-07:00",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "1750384967878420799",
+      "type": "firewall_rule",
+      "name": "default-allow-ssh",
+      "provider": "gcp",
+      "configuration": {
+        "allowed": [
+          {
+            "ip_protocol": "tcp",
+            "ports": [
+              "22"
+            ]
+          }
+        ],
+        "denied": [],
+        "description": "Allow SSH from anywhere",
+        "destination_ranges": null,
+        "direction": "INGRESS",
+        "disabled": false,
+        "log_config": {
+          "enable": false,
+          "metadata": ""
+        },
+        "network": "https://www.googleapis.com/compute/v1/projects/taskmate-461721/global/networks/default",
+        "priority": 65534,
+        "source_ranges": [
+          "0.0.0.0/0"
+        ],
+        "source_service_accounts": null,
+        "source_tags": null,
+        "target_service_accounts": null,
+        "target_tags": null
+      },
+      "metadata": {
+        "created_at": "2025-06-02T14:29:53.03-07:00",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "111026204883683519824",
+      "type": "service_account",
+      "name": "Compute Engine default service account",
+      "provider": "gcp",
+      "configuration": {
+        "description": "",
+        "disabled": false,
+        "display_name": "Compute Engine default service account",
+        "email": "1054597307819-compute@developer.gserviceaccount.com",
+        "oauth2_client_id": "111026204883683519824",
+        "project_id": "taskmate-461721"
+      },
+      "metadata": {
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    },
+    {
+      "id": "103169534914434578629",
+      "type": "service_account",
+      "name": "ModernBlog CI",
+      "provider": "gcp",
+      "configuration": {
+        "description": "ModernBlog CI/CD service account",
+        "disabled": false,
+        "display_name": "ModernBlog CI",
+        "email": "modernblog-ci@taskmate-461721.iam.gserviceaccount.com",
+        "oauth2_client_id": "103169534914434578629",
+        "project_id": "taskmate-461721"
+      },
+      "metadata": {
+        "created_at": "0001-01-01T00:00:00Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+      }
+    }
+  ],
+  "metadata": {
+    "collector_version": "1.0.0",
+    "collection_time": 0,
+    "resource_count": 15,
+    "regions": [
+      "us-central1",
+      "us-east1",
+      "us-west1",
+      "europe-west1"
+    ],
+    "additional_data": {
+      "collected_at": "2025-07-07T22:54:47.161609+02:00",
+      "project_id": "taskmate-461721"
+    }
+  }
+}
