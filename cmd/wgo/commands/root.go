@@ -33,6 +33,15 @@ Features include:
 - Baseline management
 - AI-powered explanations via Claude
 - Multiple output formats`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// Handle --version flag
+		if showVersion, _ := cmd.Flags().GetBool("version"); showVersion {
+			runVersion(cmd, []string{})
+			return nil
+		}
+		// If no subcommand is provided and no --version flag, show help
+		return cmd.Help()
+	},
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return initConfig()
 	},
@@ -54,6 +63,7 @@ func init() {
 	rootCmd.PersistentFlags().String("log-level", "info", "log level (debug, info, warn, error)")
 	rootCmd.PersistentFlags().String("output", "table", "output format (table, json, yaml, markdown)")
 	rootCmd.PersistentFlags().Bool("no-color", false, "disable colored output")
+	rootCmd.PersistentFlags().Bool("version", false, "show version information")
 
 	// Bind flags to viper
 	viper.BindPFlag("logging.level", rootCmd.PersistentFlags().Lookup("log-level"))
@@ -66,6 +76,8 @@ func init() {
 	rootCmd.AddCommand(newCheckCommand())
 	rootCmd.AddCommand(newExplainCommand())
 	rootCmd.AddCommand(newDiffCommand())
+	rootCmd.AddCommand(newSimpleDiffCommand()) // New simple changes command
+	rootCmd.AddCommand(newAuthCommand())
 	rootCmd.AddCommand(newVersionCommand())
 }
 

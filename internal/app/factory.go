@@ -3,7 +3,7 @@ package app
 import (
 	"github.com/yairfalse/wgo/internal/cache"
 	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/collectors/gcp"
+	// "github.com/yairfalse/wgo/internal/collectors/gcp"  // Temporarily disabled due to compilation errors
 	"github.com/yairfalse/wgo/internal/collectors/kubernetes"
 	"github.com/yairfalse/wgo/internal/collectors/terraform"
 	"github.com/yairfalse/wgo/internal/logger"
@@ -43,8 +43,8 @@ func (f *AppFactory) Create(config Config) (*App, error) {
 	enhancedRegistry.RegisterEnhanced(kubernetesCollector)
 	
 	// Register GCP collector
-	gcpCollector := gcp.NewGCPCollector()
-	enhancedRegistry.RegisterEnhanced(gcpCollector)
+	// gcpCollector := gcp.NewGCPCollector()
+	// enhancedRegistry.RegisterEnhanced(gcpCollector)  // Temporarily disabled due to compilation errors
 	
 	// Create legacy registry for compatibility
 	registry := collectors.NewRegistry()
