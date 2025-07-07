@@ -1,0 +1,91 @@
+{
+  "version": 4,
+  "terraform_version": "1.5.0",
+  "serial": 1,
+  "lineage": "test-lineage-12345",
+  "outputs": {},
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "aws_instance",
+      "name": "web_server",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "id": "i-1234567890abcdef0",
+            "instance_type": "t3.micro",
+            "ami": "ami-12345678",
+            "availability_zone": "us-west-2a",
+            "region": "us-west-2",
+            "state": "running",
+            "tags": {
+              "Name": "web-server",
+              "Environment": "production",
+              "Team": "platform"
+            },
+            "security_groups": ["sg-12345678"],
+            "subnet_id": "subnet-12345678",
+            "private_ip": "10.0.1.100",
+            "public_ip": "203.0.113.1"
+          }
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_s3_bucket",
+      "name": "data_bucket",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "my-data-bucket-12345",
+            "bucket": "my-data-bucket-12345",
+            "region": "us-west-2",
+            "versioning": {
+              "enabled": true
+            },
+            "tags": {
+              "Purpose": "data-storage",
+              "Environment": "production",
+              "Backup": "daily"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_rds_instance",
+      "name": "database",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 2,
+          "attributes": {
+            "id": "prod-database",
+            "identifier": "prod-database",
+            "engine": "postgres",
+            "engine_version": "13.7",
+            "instance_class": "db.t3.micro",
+            "allocated_storage": 20,
+            "storage_type": "gp2",
+            "db_name": "appdb",
+            "username": "admin",
+            "availability_zone": "us-west-2a",
+            "endpoint": "prod-database.c123456789.us-west-2.rds.amazonaws.com:5432",
+            "status": "available",
+            "tags": {
+              "Name": "production-database",
+              "Environment": "production",
+              "BackupRetention": "7"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
