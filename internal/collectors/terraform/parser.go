@@ -1,10 +1,13 @@
 package terraform
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
+	"sync"
 	"time"
 )
 
@@ -297,4 +300,362 @@ func (r *TerraformResource) GetTags() map[string]string {
 	}
 	
 	return tags
+}
+
+// ParallelStateParser handles multiple state files concurrently
+type ParallelStateParser struct {
+	parser      *StateParser
+	streamParser *StreamingParser
+	maxWorkers  int
+	timeout     time.Duration
+}
+
+// NewParallelStateParser creates a new parallel parser
+func NewParallelStateParser() *ParallelStateParser {
+	return &ParallelStateParser{
+		parser:       NewStateParser(),
+		streamParser: NewStreamingParser(),
+		maxWorkers:   4, // Default to 4 workers
+		timeout:      30 * time.Second,
+	}
+}
+
+// ParseResult represents the result of parsing a single state file
+type ParseResult struct {
+	FilePath string
+	State    *TerraformState
+	Error    error
+	Duration time.Duration
+	FileSize int64
+}
+
+// ParseMultipleStates parses multiple state files in parallel
+func (pp *ParallelStateParser) ParseMultipleStates(ctx context.Context, filePaths []string) ([]*ParseResult, error) {
+	if len(filePaths) == 0 {
+		return nil, fmt.Errorf("no state files provided")
+	}
+
+	// Create results channel and worker pool
+	results := make(chan *ParseResult, len(filePaths))
+	jobs := make(chan string, len(filePaths))
+	
+	// Determine worker count (don't exceed number of files)
+	workerCount := pp.maxWorkers
+	if len(filePaths) < workerCount {
+		workerCount = len(filePaths)
+	}
+
+	// Start workers
+	var wg sync.WaitGroup
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go pp.worker(ctx, jobs, results, &wg)
+	}
+
+	// Send jobs
+	go func() {
+		defer close(jobs)
+		for _, filePath := range filePaths {
+			select {
+			case jobs <- filePath:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	// Collect results
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	var parseResults []*ParseResult
+	for result := range results {
+		parseResults = append(parseResults, result)
+	}
+
+	return parseResults, nil
+}
+
+// worker processes individual state files
+func (pp *ParallelStateParser) worker(ctx context.Context, jobs <-chan string, results chan<- *ParseResult, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for filePath := range jobs {
+		select {
+		case <-ctx.Done():
+			results <- &ParseResult{
+				FilePath: filePath,
+				Error:    fmt.Errorf("parsing cancelled: %w", ctx.Err()),
+			}
+			return
+		default:
+			result := pp.parseWithTimeout(ctx, filePath)
+			results <- result
+		}
+	}
+}
+
+// parseWithTimeout parses a single file with timeout protection
+func (pp *ParallelStateParser) parseWithTimeout(ctx context.Context, filePath string) *ParseResult {
+	start := time.Now()
+	
+	// Create timeout context
+	parseCtx, cancel := context.WithTimeout(ctx, pp.timeout)
+	defer cancel()
+
+	result := &ParseResult{
+		FilePath: filePath,
+		Duration: time.Since(start),
+	}
+
+	// Get file info
+	if stat, err := os.Stat(filePath); err != nil {
+		result.Error = fmt.Errorf("cannot access state file %s: %w", filePath, err)
+		return result
+	} else {
+		result.FileSize = stat.Size()
+	}
+
+	// Parse in goroutine with timeout
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		
+		// Use streaming parser for large files, regular parser for smaller ones
+		if result.FileSize > 50*1024*1024 { // 50MB threshold
+			state, err := pp.streamParser.ParseStateFile(filePath)
+			result.State = state
+			result.Error = err
+		} else {
+			state, err := pp.parser.ParseStateFile(filePath)
+			result.State = state
+			result.Error = err
+		}
+		
+		result.Duration = time.Since(start)
+	}()
+
+	// Wait for completion or timeout
+	select {
+	case <-done:
+		return result
+	case <-parseCtx.Done():
+		result.Error = fmt.Errorf("parsing state file %s timed out after %v", filePath, pp.timeout)
+		return result
+	}
+}
+
+// ValidateStateFiles validates multiple state files in parallel
+func (pp *ParallelStateParser) ValidateStateFiles(ctx context.Context, filePaths []string) ([]string, []error) {
+	var validFiles []string
+	var errors []error
+	
+	// Create channels for validation
+	type validationResult struct {
+		filePath string
+		error    error
+	}
+	
+	results := make(chan validationResult, len(filePaths))
+	jobs := make(chan string, len(filePaths))
+	
+	// Start validation workers
+	var wg sync.WaitGroup
+	workerCount := pp.maxWorkers
+	if len(filePaths) < workerCount {
+		workerCount = len(filePaths)
+	}
+	
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for filePath := range jobs {
+				err := pp.streamParser.ValidateStateFile(filePath)
+				results <- validationResult{filePath: filePath, error: err}
+			}
+		}()
+	}
+
+	// Send jobs
+	go func() {
+		defer close(jobs)
+		for _, filePath := range filePaths {
+			select {
+			case jobs <- filePath:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	// Collect results
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	for result := range results {
+		if result.error != nil {
+			errors = append(errors, fmt.Errorf("validation failed for %s: %w", result.filePath, result.error))
+		} else {
+			validFiles = append(validFiles, result.filePath)
+		}
+	}
+
+	return validFiles, errors
+}
+
+// GetParsingStats returns statistics about parsing performance
+func (pp *ParallelStateParser) GetParsingStats(results []*ParseResult) map[string]interface{} {
+	stats := make(map[string]interface{})
+	
+	var totalFiles, successFiles, failedFiles int
+	var totalSize, totalDuration int64
+	var avgDuration time.Duration
+	
+	for _, result := range results {
+		totalFiles++
+		totalSize += result.FileSize
+		totalDuration += int64(result.Duration)
+		
+		if result.Error != nil {
+			failedFiles++
+		} else {
+			successFiles++
+		}
+	}
+	
+	if totalFiles > 0 {
+		avgDuration = time.Duration(totalDuration / int64(totalFiles))
+	}
+	
+	stats["total_files"] = totalFiles
+	stats["successful_files"] = successFiles
+	stats["failed_files"] = failedFiles
+	stats["total_size_mb"] = float64(totalSize) / (1024 * 1024)
+	stats["average_parse_time"] = avgDuration.String()
+	stats["success_rate"] = float64(successFiles) / float64(totalFiles) * 100
+	
+	return stats
+}
+
+// OptimizedResourceExtractor efficiently extracts resources from parsed states
+type OptimizedResourceExtractor struct {
+	resourceTypeCache map[string]bool
+	mu                sync.RWMutex
+}
+
+// NewOptimizedResourceExtractor creates a new optimized extractor
+func NewOptimizedResourceExtractor() *OptimizedResourceExtractor {
+	return &OptimizedResourceExtractor{
+		resourceTypeCache: make(map[string]bool),
+	}
+}
+
+// ExtractResourcesFromResults extracts resources from multiple parse results
+func (ore *OptimizedResourceExtractor) ExtractResourcesFromResults(results []*ParseResult) ([]ExtractedResource, error) {
+	var allResources []ExtractedResource
+	var mu sync.Mutex
+	
+	// Process results in parallel
+	var wg sync.WaitGroup
+	
+	for _, result := range results {
+		if result.Error != nil || result.State == nil {
+			continue
+		}
+		
+		wg.Add(1)
+		go func(r *ParseResult) {
+			defer wg.Done()
+			
+			resources := ore.extractFromState(r.State, r.FilePath)
+			
+			mu.Lock()
+			allResources = append(allResources, resources...)
+			mu.Unlock()
+		}(result)
+	}
+	
+	wg.Wait()
+	
+	return allResources, nil
+}
+
+// extractFromState extracts resources from a single state
+func (ore *OptimizedResourceExtractor) extractFromState(state *TerraformState, filePath string) []ExtractedResource {
+	var resources []ExtractedResource
+	
+	for _, tfResource := range state.Resources {
+		// Skip data sources and other non-managed resources
+		if tfResource.Mode != "managed" {
+			continue
+		}
+		
+		// Check if resource type is supported (with caching)
+		if !ore.isResourceTypeSupported(tfResource.Type) {
+			continue
+		}
+		
+		for instanceIndex, instance := range tfResource.Instances {
+			resource := ExtractedResource{
+				OriginalResource: tfResource,
+				InstanceIndex:    instanceIndex,
+				Instance:         instance,
+				FilePath:         filePath,
+				StateVersion:     state.Version,
+				TerraformVersion: state.TerraformVersion,
+			}
+			
+			resources = append(resources, resource)
+		}
+	}
+	
+	return resources
+}
+
+// isResourceTypeSupported checks if a resource type is supported (with caching)
+func (ore *OptimizedResourceExtractor) isResourceTypeSupported(resourceType string) bool {
+	ore.mu.RLock()
+	supported, exists := ore.resourceTypeCache[resourceType]
+	ore.mu.RUnlock()
+	
+	if exists {
+		return supported
+	}
+	
+	// Determine support based on prefix
+	supportedPrefixes := []string{
+		"aws_", "azurerm_", "google_", "kubernetes_", 
+		"helm_", "docker_", "local_", "random_", 
+		"tls_", "http_", "external_", "archive_",
+	}
+	
+	supported = false
+	for _, prefix := range supportedPrefixes {
+		if strings.HasPrefix(resourceType, prefix) {
+			supported = true
+			break
+		}
+	}
+	
+	// Cache the result
+	ore.mu.Lock()
+	ore.resourceTypeCache[resourceType] = supported
+	ore.mu.Unlock()
+	
+	return supported
+}
+
+// ExtractedResource represents a resource extracted from state
+type ExtractedResource struct {
+	OriginalResource TerraformResource
+	InstanceIndex    int
+	Instance         TerraformInstance
+	FilePath         string
+	StateVersion     int
+	TerraformVersion string
 }

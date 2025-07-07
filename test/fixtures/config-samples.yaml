@@ -1,0 +1,109 @@
+# Sample WGO configuration files for testing
+
+# Basic configuration
+basic: |
+  storage:
+    base_path: ~/.wgo
+  output:
+    format: table
+  logging:
+    level: info
+
+# Development configuration
+development: |
+  storage:
+    base_path: ./test-data/.wgo
+  output:
+    format: json
+    pretty: true
+    no_color: false
+  logging:
+    level: debug
+  collectors:
+    terraform:
+      enabled: true
+      state_paths: ["./terraform.tfstate", "./environments/*/terraform.tfstate"]
+    aws:
+      enabled: false
+      regions: ["us-east-1", "us-west-2"]
+      profiles: ["default", "dev"]
+    kubernetes:
+      enabled: false
+      contexts: ["minikube", "dev-cluster"]
+
+# Production configuration
+production: |
+  storage:
+    base_path: /var/lib/wgo
+  output:
+    format: table
+    no_color: true
+  logging:
+    level: warn
+  collectors:
+    terraform:
+      enabled: true
+      state_paths: ["/data/terraform/prod/terraform.tfstate"]
+    aws:
+      enabled: true
+      regions: ["us-east-1", "us-west-1", "eu-west-1"]
+      profiles: ["prod"]
+    kubernetes:
+      enabled: true
+      contexts: ["prod-cluster"]
+      namespaces: ["default", "kube-system", "monitoring"]
+  claude:
+    api_key: "${CLAUDE_API_KEY}"
+    model: "claude-3-sonnet-20240229"
+    max_tokens: 1024
+
+# Comprehensive configuration with all options
+comprehensive: |
+  storage:
+    base_path: ~/.wgo
+    backend: local
+  output:
+    format: json
+    pretty: true
+    no_color: false
+  logging:
+    level: info
+  collectors:
+    terraform:
+      enabled: true
+      state_paths:
+        - "./terraform.tfstate"
+        - "./environments/*/terraform.tfstate"
+        - "s3://my-terraform-bucket/prod/terraform.tfstate"
+    aws:
+      enabled: true
+      regions:
+        - "us-east-1"
+        - "us-west-2"
+        - "eu-west-1"
+      profiles:
+        - "default"
+        - "prod"
+        - "staging"
+    kubernetes:
+      enabled: true
+      contexts:
+        - "prod-cluster"
+        - "staging-cluster"
+      namespaces:
+        - "default"
+        - "kube-system"
+        - "monitoring"
+        - "ingress-nginx"
+  claude:
+    api_key: "${CLAUDE_API_KEY}"
+    model: "claude-3-sonnet-20240229"
+    max_tokens: 2048
+    timeout: "30s"
+  cache:
+    enabled: true
+    max_items: 1000
+    default_ttl: "1h"
+    cleanup_interval: "10m"
+    persist_to_disk: true
+    persist_path: "~/.wgo/cache"

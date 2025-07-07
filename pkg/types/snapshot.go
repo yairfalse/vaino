@@ -16,12 +16,13 @@ type Snapshot struct {
 
 // SnapshotMetadata contains metadata about the snapshot collection process
 type SnapshotMetadata struct {
-	CollectorVersion string        `json:"collector_version"`
-	CollectionTime   time.Duration `json:"collection_time"`
-	ResourceCount    int           `json:"resource_count"`
-	Regions          []string      `json:"regions,omitempty"`
-	Namespaces       []string      `json:"namespaces,omitempty"`
-	Tags             map[string]string `json:"tags,omitempty"`
+	CollectorVersion string                 `json:"collector_version"`
+	CollectionTime   time.Duration          `json:"collection_time"`
+	ResourceCount    int                    `json:"resource_count"`
+	Regions          []string               `json:"regions,omitempty"`
+	Namespaces       []string               `json:"namespaces,omitempty"`
+	Tags             map[string]string      `json:"tags,omitempty"`
+	AdditionalData   map[string]interface{} `json:"additional_data,omitempty"`
 }
 
 // Validate checks if the snapshot has all required fields

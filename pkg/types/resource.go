@@ -23,11 +23,14 @@ type Resource struct {
 
 // ResourceMetadata contains metadata about the resource
 type ResourceMetadata struct {
-	CreatedAt    time.Time `json:"created_at,omitempty"`
-	UpdatedAt    time.Time `json:"updated_at,omitempty"`
-	Version      string    `json:"version,omitempty"`
-	Checksum     string    `json:"checksum,omitempty"`
-	Dependencies []string  `json:"dependencies,omitempty"`
+	CreatedAt      time.Time              `json:"created_at,omitempty"`
+	UpdatedAt      time.Time              `json:"updated_at,omitempty"`
+	Version        string                 `json:"version,omitempty"`
+	Checksum       string                 `json:"checksum,omitempty"`
+	Dependencies   []string               `json:"dependencies,omitempty"`
+	StateFile      string                 `json:"state_file,omitempty"`
+	StateVersion   string                 `json:"state_version,omitempty"`
+	AdditionalData map[string]interface{} `json:"additional_data,omitempty"`
 }
 
 // Validate checks if the resource has all required fields

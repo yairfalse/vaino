@@ -9,24 +9,31 @@ import (
 	"time"
 
 	"github.com/yairfalse/wgo/internal/collectors"
+	"github.com/yairfalse/wgo/internal/discovery"
 	"github.com/yairfalse/wgo/pkg/types"
 )
 
 // TerraformCollector implements the EnhancedCollector interface for Terraform
 type TerraformCollector struct {
-	parser     *StateParser
-	normalizer *ResourceNormalizer
-	remote     *RemoteStateHandler
-	version    string
+	parser          *StateParser
+	parallelParser  *ParallelStateParser
+	streamParser    *StreamingParser
+	normalizer      *ResourceNormalizer
+	remote          *RemoteStateHandler
+	resourceExtractor *OptimizedResourceExtractor
+	version         string
 }
 
 // NewTerraformCollector creates a new Terraform collector
 func NewTerraformCollector() collectors.EnhancedCollector {
 	return &TerraformCollector{
-		parser:     NewStateParser(),
-		normalizer: NewResourceNormalizer(),
-		remote:     NewRemoteStateHandler(),
-		version:    "1.0.0",
+		parser:            NewStateParser(),
+		parallelParser:    NewParallelStateParser(),
+		streamParser:      NewStreamingParser(),
+		normalizer:        NewResourceNormalizer(),
+		remote:            NewRemoteStateHandler(),
+		resourceExtractor: NewOptimizedResourceExtractor(),
+		version:           "1.0.0",
 	}
 }
 
@@ -70,15 +77,62 @@ func (c *TerraformCollector) Collect(ctx context.Context, config collectors.Coll
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 	
-	var allResources []types.Resource
+	// Separate local and remote state paths
+	localPaths, remotePaths := c.separateStatePaths(config.StatePaths)
 	
-	// Process each state file path
-	for _, statePath := range config.StatePaths {
-		resources, err := c.collectFromStatePath(ctx, statePath)
+	var allResources []types.Resource
+	var parseStats map[string]interface{}
+	
+	// Process local state files in parallel if we have multiple
+	if len(localPaths) > 1 {
+		fmt.Printf("🔄 Processing %d state files in parallel...\n", len(localPaths))
+		resources, stats, err := c.collectFromMultipleLocalStates(ctx, localPaths)
 		if err != nil {
-			return nil, fmt.Errorf("failed to collect from %s: %w", statePath, err)
+			return nil, fmt.Errorf("failed to collect from local state files: %w", err)
 		}
 		allResources = append(allResources, resources...)
+		parseStats = stats
+	} else {
+		// Process single local state files one by one
+		for _, statePath := range localPaths {
+			resources, err := c.collectFromStatePath(ctx, statePath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to collect from %s: %w", statePath, err)
+			}
+			allResources = append(allResources, resources...)
+		}
+	}
+	
+	// Process remote state files
+	for _, remotePath := range remotePaths {
+		resources, err := c.collectFromStatePath(ctx, remotePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to collect from remote %s: %w", remotePath, err)
+		}
+		allResources = append(allResources, resources...)
+	}
+	
+	collectionTime := time.Since(startTime)
+	
+	// Create enhanced metadata with performance stats
+	metadata := types.SnapshotMetadata{
+		CollectorVersion: c.version,
+		CollectionTime:   collectionTime,
+		ResourceCount:    len(allResources),
+		Tags:             config.Tags,
+	}
+	
+	// Add parsing statistics if available
+	if parseStats != nil {
+		if metadata.AdditionalData == nil {
+			metadata.AdditionalData = make(map[string]interface{})
+		}
+		metadata.AdditionalData["parsing_stats"] = parseStats
+		metadata.AdditionalData["performance_info"] = map[string]interface{}{
+			"total_files_processed": len(config.StatePaths),
+			"parallel_processing":   len(localPaths) > 1,
+			"collection_time_ms":    collectionTime.Milliseconds(),
+		}
 	}
 	
 	// Create snapshot
@@ -87,12 +141,14 @@ func (c *TerraformCollector) Collect(ctx context.Context, config collectors.Coll
 		Timestamp: time.Now(),
 		Provider:  "terraform",
 		Resources: allResources,
-		Metadata: types.SnapshotMetadata{
-			CollectorVersion: c.version,
-			CollectionTime:   time.Since(startTime),
-			ResourceCount:    len(allResources),
-			Tags:             config.Tags,
-		},
+		Metadata:  metadata,
+	}
+	
+	fmt.Printf("✅ Processed %d resources in %v\n", len(allResources), collectionTime)
+	if parseStats != nil {
+		if successRate, ok := parseStats["success_rate"]; ok {
+			fmt.Printf("📊 Parse success rate: %.1f%%\n", successRate)
+		}
 	}
 	
 	return snapshot, nil
@@ -109,7 +165,7 @@ func (c *TerraformCollector) collectFromStatePath(ctx context.Context, statePath
 	return c.collectFromLocalState(statePath)
 }
 
-// collectFromLocalState processes local Terraform state files
+// collectFromLocalState processes local Terraform state files with optimized parsing
 func (c *TerraformCollector) collectFromLocalState(statePath string) ([]types.Resource, error) {
 	// Check if it's a directory (look for terraform.tfstate or .terraform/terraform.tfstate)
 	if info, err := os.Stat(statePath); err == nil && info.IsDir() {
@@ -121,6 +177,20 @@ func (c *TerraformCollector) collectFromLocalState(statePath string) ([]types.Re
 		return nil, fmt.Errorf("state file must have .tfstate extension: %s", statePath)
 	}
 	
+	// Check file size to determine parsing strategy
+	if stat, err := os.Stat(statePath); err == nil {
+		fileSize := stat.Size()
+		if fileSize > 50*1024*1024 { // 50MB threshold
+			fmt.Printf("📄 Large state file detected (%d MB), using streaming parser...\n", fileSize/(1024*1024))
+			tfState, err := c.streamParser.ParseStateFile(statePath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse large state file %s: %w", statePath, err)
+			}
+			return c.normalizer.NormalizeResources(tfState)
+		}
+	}
+	
+	// Use standard parser for smaller files
 	tfState, err := c.parser.ParseStateFile(statePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse state file %s: %w", statePath, err)
@@ -129,12 +199,130 @@ func (c *TerraformCollector) collectFromLocalState(statePath string) ([]types.Re
 	return c.normalizer.NormalizeResources(tfState)
 }
 
-// collectFromDirectory looks for state files in a directory
+// collectFromDirectory looks for state files in a directory with optimized processing
 func (c *TerraformCollector) collectFromDirectory(dirPath string) ([]types.Resource, error) {
+	// Find all state files in directory
+	stateFiles, err := c.findStateFilesInDirectory(dirPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find state files in directory %s: %w", dirPath, err)
+	}
+	
+	if len(stateFiles) == 0 {
+		return []types.Resource{}, nil
+	}
+	
+	// If we have multiple state files, process them in parallel
+	if len(stateFiles) > 1 {
+		fmt.Printf("🔄 Found %d state files in directory, processing in parallel...\n", len(stateFiles))
+		ctx := context.Background()
+		resources, _, err := c.collectFromMultipleLocalStates(ctx, stateFiles)
+		return resources, err
+	}
+	
+	// Single state file - process normally
+	return c.collectFromLocalState(stateFiles[0])
+}
+
+// separateStatePaths separates local and remote state paths
+func (c *TerraformCollector) separateStatePaths(statePaths []string) (local []string, remote []string) {
+	for _, path := range statePaths {
+		if strings.HasPrefix(path, "s3://") || strings.HasPrefix(path, "azurerm://") || strings.HasPrefix(path, "gcs://") {
+			remote = append(remote, path)
+		} else {
+			local = append(local, path)
+		}
+	}
+	return
+}
+
+// collectFromMultipleLocalStates processes multiple local state files in parallel
+func (c *TerraformCollector) collectFromMultipleLocalStates(ctx context.Context, localPaths []string) ([]types.Resource, map[string]interface{}, error) {
+	// Expand directory paths to actual state files
+	var allStateFiles []string
+	for _, path := range localPaths {
+		files, err := c.expandStatePath(path)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to expand path %s: %w", path, err)
+		}
+		allStateFiles = append(allStateFiles, files...)
+	}
+	
+	if len(allStateFiles) == 0 {
+		return []types.Resource{}, nil, nil
+	}
+	
+	// Parse all state files in parallel
+	parseResults, err := c.parallelParser.ParseMultipleStates(ctx, allStateFiles)
+	if err != nil {
+		return nil, nil, fmt.Errorf("parallel parsing failed: %w", err)
+	}
+	
+	// Extract resources from parsed states
+	extractedResources, err := c.resourceExtractor.ExtractResourcesFromResults(parseResults)
+	if err != nil {
+		return nil, nil, fmt.Errorf("resource extraction failed: %w", err)
+	}
+	
+	// Normalize all extracted resources
 	var allResources []types.Resource
+	for _, extracted := range extractedResources {
+		// Create a temporary state with just this resource for normalization
+		tempState := &TerraformState{
+			Version:          extracted.StateVersion,
+			TerraformVersion: extracted.TerraformVersion,
+			Resources:        []TerraformResource{extracted.OriginalResource},
+		}
+		
+		resources, err := c.normalizer.NormalizeResources(tempState)
+		if err != nil {
+			// Log warning but continue with other resources
+			fmt.Printf("⚠️  Warning: Failed to normalize resource %s.%s: %v\n", 
+				extracted.OriginalResource.Type, extracted.OriginalResource.Name, err)
+			continue
+		}
+		
+		// Add file path information to metadata
+		for i := range resources {
+			resources[i].Metadata.StateFile = extracted.FilePath
+			resources[i].Metadata.StateVersion = fmt.Sprintf("%d", extracted.StateVersion)
+			if resources[i].Metadata.AdditionalData == nil {
+				resources[i].Metadata.AdditionalData = make(map[string]interface{})
+			}
+			resources[i].Metadata.AdditionalData["terraform_version"] = extracted.TerraformVersion
+		}
+		
+		allResources = append(allResources, resources...)
+	}
+	
+	// Generate parsing statistics
+	stats := c.parallelParser.GetParsingStats(parseResults)
+	
+	return allResources, stats, nil
+}
+
+// expandStatePath expands a path to actual state files
+func (c *TerraformCollector) expandStatePath(statePath string) ([]string, error) {
+	// Check if it's a directory
+	if info, err := os.Stat(statePath); err == nil && info.IsDir() {
+		// Find state files in directory
+		return c.findStateFilesInDirectory(statePath)
+	} else if err == nil {
+		// It's a file
+		if !strings.HasSuffix(statePath, ".tfstate") {
+			return nil, fmt.Errorf("state file must have .tfstate extension: %s", statePath)
+		}
+		return []string{statePath}, nil
+	} else {
+		return nil, fmt.Errorf("cannot access path %s: %w", statePath, err)
+	}
+}
+
+// findStateFilesInDirectory finds all state files in a directory
+func (c *TerraformCollector) findStateFilesInDirectory(dirPath string) ([]string, error) {
+	var stateFiles []string
 	
 	// Common state file locations
-	stateFiles := []string{
+	candidateFiles := []string{
 		filepath.Join(dirPath, "terraform.tfstate"),
 		filepath.Join(dirPath, ".terraform", "terraform.tfstate"),
 	}
@@ -147,25 +335,20 @@ func (c *TerraformCollector) collectFromDirectory(dirPath string) ([]types.Resou
 			for _, workspace := range workspaces {
 				if workspace.IsDir() {
 					stateFile := filepath.Join(workspaceDir, workspace.Name(), "terraform.tfstate")
-					stateFiles = append(stateFiles, stateFile)
+					candidateFiles = append(candidateFiles, stateFile)
 				}
 			}
 		}
 	}
 	
-	// Process each found state file
-	for _, stateFile := range stateFiles {
-		if _, err := os.Stat(stateFile); err == nil {
-			resources, err := c.collectFromLocalState(stateFile)
-			if err != nil {
-				// Log warning but continue with other state files
-				continue
-			}
-			allResources = append(allResources, resources...)
+	// Check which files actually exist
+	for _, candidate := range candidateFiles {
+		if _, err := os.Stat(candidate); err == nil {
+			stateFiles = append(stateFiles, candidate)
 		}
 	}
 	
-	return allResources, nil
+	return stateFiles, nil
 }
 
 // Validate checks if the collector configuration is valid
@@ -197,45 +380,33 @@ func (c *TerraformCollector) Validate(config collectors.CollectorConfig) error {
 
 // AutoDiscover automatically discovers Terraform state files in the current directory
 func (c *TerraformCollector) AutoDiscover() (collectors.CollectorConfig, error) {
-	var statePaths []string
+	// Use the discovery service for intelligent state file discovery
+	discoveryService := discovery.NewTerraformDiscovery()
 	
-	// Get current working directory
-	cwd, err := os.Getwd()
+	stateFiles, err := discoveryService.DiscoverStateFiles("")
 	if err != nil {
-		return collectors.CollectorConfig{}, err
+		return collectors.CollectorConfig{}, fmt.Errorf("failed to discover state files: %w", err)
 	}
 	
-	// Look for common state file patterns
-	patterns := []string{
-		"terraform.tfstate",
-		"**/terraform.tfstate",
-		"**/*.tfstate",
-		".terraform/terraform.tfstate",
-		"terraform.tfstate.d/*/terraform.tfstate",
+	if len(stateFiles) == 0 {
+		return collectors.CollectorConfig{}, fmt.Errorf("no Terraform state files found")
 	}
 	
-	for _, pattern := range patterns {
-		matches, err := filepath.Glob(filepath.Join(cwd, pattern))
-		if err != nil {
-			continue
-		}
-		statePaths = append(statePaths, matches...)
-	}
+	// Get the most relevant state files (limit to 10 to avoid overwhelming)
+	preferredFiles := discoveryService.GetPreferredStateFiles(stateFiles, 10)
 	
-	// Remove duplicates
-	uniquePaths := make(map[string]bool)
-	var finalPaths []string
-	for _, path := range statePaths {
-		if !uniquePaths[path] {
-			uniquePaths[path] = true
-			finalPaths = append(finalPaths, path)
-		}
+	var statePaths []string
+	for _, file := range preferredFiles {
+		statePaths = append(statePaths, file.Path)
 	}
 	
 	return collectors.CollectorConfig{
-		StatePaths: finalPaths,
+		StatePaths: statePaths,
 		Config: map[string]interface{}{
-			"auto_discovered": true,
+			"auto_discovered":     true,
+			"total_files_found":   len(stateFiles),
+			"files_selected":      len(statePaths),
+			"discovery_details":   preferredFiles,
 		},
 	}, nil
 }

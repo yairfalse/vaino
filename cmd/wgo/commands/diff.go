@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/yairfalse/wgo/internal/differ"
+	"github.com/yairfalse/wgo/internal/output"
 	"github.com/yairfalse/wgo/internal/storage"
 	"github.com/yairfalse/wgo/pkg/types"
 	"gopkg.in/yaml.v3"
@@ -41,8 +42,8 @@ detailed differences. Supports multiple output formats for different use cases.`
 	cmd.Flags().String("baseline", "", "baseline name to compare against")
 	cmd.Flags().String("from", "", "source snapshot file")
 	cmd.Flags().String("to", "", "target snapshot file")
-	cmd.Flags().String("format", "table", "output format (table, json, yaml, markdown)")
-	cmd.Flags().String("output-file", "", "save diff to file")
+	cmd.Flags().String("format", "table", "output format (table, json, yaml, markdown, csv, html)")
+	cmd.Flags().StringP("output", "o", "", "output file (use '-' for stdout)")
 	cmd.Flags().StringP("provider", "p", "", "limit diff to specific provider")
 	cmd.Flags().StringSlice("region", []string{}, "limit diff to specific regions")
 	cmd.Flags().StringSlice("namespace", []string{}, "limit diff to specific namespaces")
@@ -232,12 +233,15 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	from, _ := cmd.Flags().GetString("from")
 	to, _ := cmd.Flags().GetString("to")
 	format, _ := cmd.Flags().GetString("format")
-	outputFile, _ := cmd.Flags().GetString("output-file")
+	outputFile, _ := cmd.Flags().GetString("output")
 	provider, _ := cmd.Flags().GetString("provider")
 	minSeverity, _ := cmd.Flags().GetString("min-severity")
-	summaryOnly, _ := cmd.Flags().GetBool("summary-only")
+	_, _ = cmd.Flags().GetBool("summary-only")
 	ignoreFields, _ := cmd.Flags().GetStringSlice("ignore-fields")
-	showUnchanged, _ := cmd.Flags().GetBool("show-unchanged")
+	_, _ = cmd.Flags().GetBool("show-unchanged")
+	
+	// Check for no-color flag from global flags
+	noColor := cmd.Flag("no-color") != nil && cmd.Flag("no-color").Value.String() == "true"
 	
 	// Validate inputs
 	if baseline == "" && (from == "" || to == "") {
@@ -343,20 +347,40 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	comparisonTime := time.Since(startTime)
 	fmt.Printf("✅ Comparison completed in %v\n\n", comparisonTime)
 	
-	// Format and display results
-	output, err := formatDiffReport(report, format, summaryOnly, showUnchanged)
-	if err != nil {
-		return fmt.Errorf("failed to format report: %w", err)
+	// Initialize enhanced output system
+	atomicWriter := storage.NewAtomicWriter("./backups")
+	exportManager := output.NewExportManager(atomicWriter, noColor)
+	
+	// Export using enhanced system
+	exportOptions := output.ExportOptions{
+		Format:      format,
+		OutputPath:  outputFile,
+		Pretty:      true,
+		FilterLevel: minSeverity,
 	}
 	
-	fmt.Print(output)
-	
-	// Save output if requested
-	if outputFile != "" {
-		if err := os.WriteFile(outputFile, []byte(output), 0644); err != nil {
-			fmt.Printf("⚠️  Failed to save output: %v\n", err)
+	if format == "table" {
+		// Use enhanced table renderer for terminal output
+		renderer := output.NewEnhancedTableRenderer(noColor, 120)
+		result := renderer.RenderDriftReport(report)
+		
+		if outputFile == "" || outputFile == "-" {
+			fmt.Print(result)
 		} else {
-			fmt.Printf("\n💾 Output saved to: %s\n", outputFile)
+			if err := atomicWriter.WriteFile(outputFile, []byte(result), 0644); err != nil {
+				fmt.Printf("⚠️  Failed to save output: %v\n", err)
+			} else {
+				fmt.Printf("\n💾 Output saved to: %s\n", outputFile)
+			}
+		}
+	} else {
+		// Use export manager for other formats
+		if err := exportManager.ExportDriftReport(report, exportOptions); err != nil {
+			return fmt.Errorf("failed to export report: %w", err)
+		}
+		
+		if outputFile != "" && outputFile != "-" {
+			fmt.Printf("\n💾 Report exported to: %s\n", outputFile)
 		}
 	}
 	

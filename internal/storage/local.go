@@ -21,6 +21,18 @@ type LocalStorage struct {
 	cache     string
 }
 
+// NewLocal creates a new local storage instance with default directory
+func NewLocal(baseDir string) Storage {
+	config := Config{BaseDir: baseDir}
+	storage, err := NewLocalStorage(config)
+	if err != nil {
+		// For convenience, create a storage that will work in most cases
+		// but will return errors on actual operations if directory creation fails
+		return storage
+	}
+	return storage
+}
+
 // NewLocalStorage creates a new local storage instance
 func NewLocalStorage(config Config) (*LocalStorage, error) {
 	if config.BaseDir == "" {

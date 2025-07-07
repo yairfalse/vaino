@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/yairfalse/wgo/internal/collectors"
+	"github.com/yairfalse/wgo/internal/output"
 	"github.com/yairfalse/wgo/pkg/types"
 )
 
@@ -124,33 +125,32 @@ func (a *App) runScanCommand(cmd *cobra.Command, args []string) {
 		return
 	}
 	
-	// Perform collection
-	fmt.Printf("📊 Collecting resources from %s...\n", provider)
+	// Start progress indicator
+	noColor := a.config.Debug // Use debug flag to determine color preference
+	spinner := output.NewSpinner("Collecting resources from "+provider+"...", noColor)
+	spinner.Start()
+	
 	startTime := time.Now()
 	
 	snapshot, err := collector.Collect(ctx, config)
+	
+	spinner.Stop()
+	
 	if err != nil {
-		fmt.Printf("Collection failed: %v\n", err)
+		fmt.Printf("❌ Collection failed: %v\n", err)
 		return
 	}
 	
 	collectionTime := time.Since(startTime)
 	
-	// Display results
+	// Display results using enhanced renderer
 	fmt.Printf("\n✅ Collection completed in %v\n", collectionTime)
 	fmt.Printf("📋 Snapshot ID: %s\n", snapshot.ID)
-	fmt.Printf("📊 Resources found: %d\n", len(snapshot.Resources))
 	
-	// Group resources by type
-	byType := make(map[string]int)
-	for _, resource := range snapshot.Resources {
-		byType[resource.Type]++
-	}
-	
-	fmt.Println("\n📈 Resource breakdown:")
-	for resourceType, count := range byType {
-		fmt.Printf("  • %s: %d\n", resourceType, count)
-	}
+	// Use enhanced table renderer for resource display
+	renderer := output.NewEnhancedTableRenderer(noColor, 120)
+	resourceSummary := renderer.RenderResourceList(snapshot.Resources)
+	fmt.Print(resourceSummary)
 	
 	// Save snapshot
 	if err := a.storage.SaveSnapshot(snapshot); err != nil {

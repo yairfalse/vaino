@@ -36,7 +36,7 @@ func TestMemoryCache_TTLExpiration(t *testing.T) {
 	}
 }
 
-func TestMemoryCache_Delete(t *testing.T) {
+func TestManager_Delete(t *testing.T) {
 	cache := NewManager()
 
 	cache.Set("key3", "value3", time.Hour)
@@ -48,12 +48,12 @@ func TestMemoryCache_Delete(t *testing.T) {
 	}
 }
 
-func TestMemoryCache_Stats(t *testing.T) {
+func TestManager_Stats(t *testing.T) {
 	cache := NewManager()
 
 	// Test initial stats
 	stats := cache.Stats()
-	if stats.Items != 0 || stats.Hits != 0 || stats.Misses != 0 {
+	if stats.Size != 0 || stats.Hits != 0 || stats.Misses != 0 {
 		t.Error("Initial stats should be zero")
 	}
 
@@ -75,7 +75,7 @@ func TestMemoryCache_Stats(t *testing.T) {
 	}
 }
 
-func TestMemoryCache_Clear(t *testing.T) {
+func TestManager_Clear(t *testing.T) {
 	cache := NewManager()
 
 	cache.Set("key5", "value5", time.Hour)

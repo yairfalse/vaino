@@ -291,6 +291,19 @@ func (c *MemoryCache) loadFromDisk() {
 	}
 }
 
+// Flush forces cache persistence if enabled
+func (c *MemoryCache) Flush() error {
+	if c.config.PersistToDisk {
+		c.persistToDisk()
+	}
+	return nil
+}
+
+// Config returns the current cache configuration
+func (c *MemoryCache) Config() Config {
+	return c.config
+}
+
 // GenerateKey creates a cache key from components
 func GenerateKey(prefix string, components ...string) string {
 	key := prefix
