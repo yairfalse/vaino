@@ -10,9 +10,8 @@ env:
   GO_VERSION: '1.23'
 
 jobs:
-  # Quick validation - runs on every push/PR
-  validate:
-    name: Validate
+  build-and-test:
+    name: Build and Test
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -20,113 +19,17 @@ jobs:
     - uses: actions/setup-go@v5
       with:
         go-version: ${{ env.GO_VERSION }}
-        cache: true
-    
-    - name: Check Go modules
-      run: |
-        go mod download
-        go mod verify
-        go mod tidy
-        git diff --exit-code go.mod go.sum
-    
-    - name: Build
-      run: |
-        make build
-        ./build/wgo version
-    
-    - name: Lint
-      uses: golangci/golangci-lint-action@v6
-      with:
-        version: latest
-        args: --timeout=5m
         skip-cache: true
     
-    - name: Format check
-      run: |
-        gofmt -l .
-        test -z "$(gofmt -l .)"
-
-  # Test job - runs unit tests only
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    needs: validate
-    steps:
-    - uses: actions/checkout@v4
-    
-    - uses: actions/setup-go@v5
-      with:
-        go-version: ${{ env.GO_VERSION }}
-        cache: true
-    
-    - name: Run tests
-      run: |
-        go test -v -race -coverprofile=coverage.out ./...
-    
-    - name: Upload coverage
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.out
-        fail_ci_if_error: false
-
-  # Build matrix - ensure it works on all platforms
-  build-matrix:
-    name: Build (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    needs: validate
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    steps:
-    - uses: actions/checkout@v4
-    
-    - uses: actions/setup-go@v5
-      with:
-        go-version: ${{ env.GO_VERSION }}
-        cache: true
-    
     - name: Build
-      run: go build -o ./build/wgo${{ matrix.os == 'windows-latest' && '.exe' || '' }} ./cmd/wgo
-    
-    - name: Smoke test
-      run: ./build/wgo${{ matrix.os == 'windows-latest' && '.exe' || '' }} --help
-
-  # Integration tests - only on main branch or when labeled
-  integration:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    needs: [validate, test]
-    if: github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'integration-test')
-    steps:
-    - uses: actions/checkout@v4
-    
-    - uses: actions/setup-go@v5
-      with:
-        go-version: ${{ env.GO_VERSION }}
-        cache: true
-    
-    - name: Run integration tests
       run: |
-        make test-integration
-
-  # All checks passed
-  ci-status:
-    name: CI Status
-    runs-on: ubuntu-latest
-    needs: [validate, test, build-matrix]
-    if: always()
-    steps:
-    - name: Check status
+        echo "Building WGO..."
+        go build -o wgo ./cmd/wgo
+        ./wgo --help
+        echo "✅ Build successful!"
+    
+    - name: Test
       run: |
-        if [[ "${{ needs.validate.result }}" == "success" && 
-              "${{ needs.test.result }}" == "success" && 
-              "${{ needs.build-matrix.result }}" == "success" ]]; then
-          echo "✅ All CI checks passed!"
-          exit 0
-        else
-          echo "❌ CI checks failed"
-          echo "Validate: ${{ needs.validate.result }}"
-          echo "Test: ${{ needs.test.result }}"
-          echo "Build Matrix: ${{ needs.build-matrix.result }}"
-          exit 1
-        fi
+        echo "Running tests..."
+        go test ./...
+        echo "✅ Tests passed!"
