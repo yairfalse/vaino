@@ -9,6 +9,7 @@ const (
 	ChangeTypeAdded    ChangeType = "added"
 	ChangeTypeModified ChangeType = "modified"
 	ChangeTypeDeleted  ChangeType = "deleted"
+	ChangeTypeRemoved  ChangeType = "removed"
 )
 
 // Change represents a specific configuration change

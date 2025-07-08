@@ -3,13 +3,10 @@ package workers
 import (
 	"context"
 	"fmt"
-	"math"
 	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/yairfalse/wgo/pkg/types"
 )
 
 // ScalableWorkerManager provides dynamic scaling of worker pools

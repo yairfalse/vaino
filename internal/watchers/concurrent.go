@@ -11,7 +11,6 @@ import (
 	"github.com/yairfalse/wgo/internal/collectors/gcp"
 	"github.com/yairfalse/wgo/internal/collectors/kubernetes"
 	"github.com/yairfalse/wgo/internal/collectors/terraform"
-	"github.com/yairfalse/wgo/pkg/types"
 )
 
 // ConcurrentWatcher manages multiple provider watchers concurrently

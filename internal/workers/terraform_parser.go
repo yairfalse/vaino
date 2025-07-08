@@ -468,7 +468,7 @@ func (p *ConcurrentTerraformParser) parseStandardMode(ctx context.Context, file 
 
 // parseStreamingMode parses using streaming JSON decoder
 func (p *ConcurrentTerraformParser) parseStreamingMode(ctx context.Context, file *os.File, stateFile TerraformStateFile, opts ParseOptions) ([]types.Resource, StateInfo, error) {
-	decoder := json.NewDecoder(file)
+	_ = json.NewDecoder(file)
 	
 	// For streaming mode, we need to implement a streaming JSON parser
 	// This is a simplified version - in production, you'd want to use a proper streaming parser
