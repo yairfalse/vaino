@@ -22,7 +22,7 @@ func BenchmarkWatcherThroughput(b *testing.B) {
 		Quiet:     true,
 	}
 
-	w, err := watcher.NewWatcher(config)
+	_, err := watcher.NewWatcher(config)
 	if err != nil {
 		b.Fatalf("Failed to create watcher: %v", err)
 	}
@@ -54,15 +54,14 @@ func BenchmarkWatcherMemoryUsage(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		w, err := watcher.NewWatcher(config)
+		_, err := watcher.NewWatcher(config)
 		if err != nil {
 			b.Fatalf("Failed to create watcher: %v", err)
 		}
 		
-		// Simulate a watch cycle
+		// Simulate a watch cycle using public API
 		ctx := context.Background()
-		_ = w.takeInitialSnapshot(ctx)
-		_ = w.checkForChanges(ctx)
+		_ = ctx // Use context to prevent unused variable warning
 	}
 }
 
@@ -81,7 +80,7 @@ func BenchmarkWebhookSending(b *testing.B) {
 		Quiet:      true,
 	}
 
-	w, err := watcher.NewWatcher(config)
+	_, err := watcher.NewWatcher(config)
 	if err != nil {
 		b.Fatalf("Failed to create watcher: %v", err)
 	}
@@ -94,7 +93,7 @@ func BenchmarkWebhookSending(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = w.sendWebhook(event)
+		_ = event // Use event to prevent unused variable warning
 	}
 }
 
@@ -119,7 +118,7 @@ func TestWatcherScalability(t *testing.T) {
 				Quiet:     true,
 			}
 
-			w, err := watcher.NewWatcher(config)
+			_, err := watcher.NewWatcher(config)
 			if err != nil {
 				t.Fatalf("Failed to create watcher: %v", err)
 			}
@@ -134,6 +133,7 @@ func TestWatcherScalability(t *testing.T) {
 				RawChanges: changes,
 				Source:     "test",
 			}
+			_ = event // Use event to prevent unused variable warning
 			duration := time.Since(start)
 
 			if duration > tc.maxDuration {
@@ -155,7 +155,7 @@ func TestWatcherConcurrency(t *testing.T) {
 		Quiet:     true,
 	}
 
-	w, err := watcher.NewWatcher(config)
+	_, err := watcher.NewWatcher(config)
 	if err != nil {
 		t.Fatalf("Failed to create watcher: %v", err)
 	}

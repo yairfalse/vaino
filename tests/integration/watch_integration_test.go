@@ -170,7 +170,7 @@ func TestWatchModeWebhookIntegration(t *testing.T) {
 		Quiet:        true,
 	}
 
-	w, err := watcher.NewWatcher(config)
+	_, err := watcher.NewWatcher(config)
 	if err != nil {
 		t.Fatalf("Failed to create watcher: %v", err)
 	}
@@ -333,7 +333,7 @@ func TestWatchModeConcurrentWebhooks(t *testing.T) {
 		Quiet:      true,
 	}
 
-	w, err := watcher.NewWatcher(config)
+	_, err := watcher.NewWatcher(config)
 	if err != nil {
 		t.Fatalf("Failed to create watcher: %v", err)
 	}
@@ -389,21 +389,36 @@ func (m *mockCollector) Type() string {
 	return m.name
 }
 
-func (m *mockCollector) Collect(ctx context.Context, config interface{}) ([]types.Resource, error) {
+func (m *mockCollector) Collect(ctx context.Context, config collectors.CollectorConfig) (*types.Snapshot, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.resources, nil
+	return &types.Snapshot{
+		ID:        "mock-snapshot",
+		Provider:  m.name,
+		Timestamp: time.Now(),
+		Resources: m.resources,
+	}, nil
 }
 
-func (m *mockCollector) Validate(config interface{}) error {
+func (m *mockCollector) Validate(config collectors.CollectorConfig) error {
 	return nil
 }
 
-func (m *mockCollector) AutoDiscover(ctx context.Context) (interface{}, error) {
+func (m *mockCollector) AutoDiscover() (collectors.CollectorConfig, error) {
 	// Return a simple config for testing
-	return map[string]interface{}{
-		"enabled": true,
+	return collectors.CollectorConfig{
+		Config: map[string]interface{}{
+			"enabled": true,
+		},
 	}, nil
+}
+
+func (m *mockCollector) Status() string {
+	return "ready"
+}
+
+func (m *mockCollector) SupportedRegions() []string {
+	return []string{"us-east-1", "us-west-2"}
 }
 
 func (m *mockCollector) SetResources(resources []types.Resource) {

@@ -81,7 +81,7 @@ func TestCLIBasicCommands(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			stdout, stderr, err := runWGO(tt.args...)
+			stdout, stderr, err := runWGOCLI(tt.args...)
 
 			if (err != nil) != tt.expectError {
 				t.Fatalf("Expected error: %v, got: %v\nstderr: %s", tt.expectError, err, stderr)
@@ -179,7 +179,7 @@ func TestScanWorkflow(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			stdout, stderr, err := runWGO(tt.args...)
+			stdout, stderr, err := runWGOCLI(tt.args...)
 
 			if (err != nil) != tt.expectError {
 				t.Fatalf("Expected error: %v, got: %v\nstderr: %s", tt.expectError, err, stderr)
@@ -278,7 +278,7 @@ func TestBaselineWorkflow(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			stdout, stderr, err := runWGO(tt.args...)
+			stdout, stderr, err := runWGOCLI(tt.args...)
 
 			if (err != nil) != tt.expectError {
 				t.Fatalf("Expected error: %v, got: %v\nstderr: %s", tt.expectError, err, stderr)
@@ -373,7 +373,7 @@ func TestDiffWorkflow(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			stdout, stderr, err := runWGO(tt.args...)
+			stdout, stderr, err := runWGOCLI(tt.args...)
 
 			if (err != nil) != tt.expectError {
 				t.Fatalf("Expected error: %v, got: %v\nstderr: %s", tt.expectError, err, stderr)
@@ -446,7 +446,7 @@ func TestProviderIntegration(t *testing.T) {
 			args, cleanup := tt.setupFunc(t)
 			defer cleanup()
 
-			stdout, stderr, err := runWGO(args...)
+			stdout, stderr, err := runWGOCLI(args...)
 
 			if (err != nil) != tt.expectError {
 				t.Fatalf("Expected error: %v, got: %v\nstderr: %s", tt.expectError, err, stderr)
@@ -463,7 +463,7 @@ func TestProviderIntegration(t *testing.T) {
 
 // Helper functions
 
-func runWGO(args ...string) (string, string, error) {
+func runWGOCLI(args ...string) (string, string, error) {
 	cmd := exec.Command("./wgo", args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

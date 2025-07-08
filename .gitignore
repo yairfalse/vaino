@@ -1,14 +1,8 @@
-# Edit the .gitignore file to fix the YAML rule
-# Change this section:
-# Configuration files (except examples)
-# *.yaml
-# *.yml
-# !example*.yaml
-# !example*.yml
-# !.*.yaml
-# !.*.yml
+# Binaries
+*.test
+wgo
+!wgo/
 
-# To something more specific like:
 # Application config files (not examples or workflows)
 config.yaml
 config.yml
@@ -17,3 +11,7 @@ config.yml
 !example*.yml
 !.github/**/*.yml
 !.github/**/*.yaml
+
+# Test artifacts
+coverage.out
+coverage.html

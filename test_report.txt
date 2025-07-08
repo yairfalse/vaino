@@ -1,0 +1,12 @@
+=== WGO Test Report ===
+Date: Tue Jul  8 12:35:50 CEST 2025
+
+Test Categories:
+1. Unit Tests (./internal/... ./pkg/... ./cmd/...)
+2. Integration Tests (./test/integration/...)
+3. System Tests (./test/system/...)
+4. End-to-End Tests (./test/e2e/...)
+5. Performance Tests (./test/performance/...)
+
+=== Summary ===
+

@@ -2,6 +2,7 @@ package system
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -65,7 +66,7 @@ func TestTimelineSystemWorkflow(t *testing.T) {
 	
 	// Create test snapshots with time progression
 	snapshot1 := createTimelineSnapshot1(t)
-	snapshot2 := createTimelineSnapshot2(t)
+	_ = createTimelineSnapshot2(t)
 	snapshot3 := createTimelineSnapshot3(t)
 	
 	// Test timeline visualization
@@ -359,7 +360,7 @@ func createScalingSnapshot(t *testing.T, baselineFile string) string {
 	// Scale frontend deployment
 	for i := range scaled.Resources {
 		if scaled.Resources[i].ID == "deployment/frontend" {
-			config := scaled.Resources[i].Configuration.(map[string]interface{})
+			config := scaled.Resources[i].Configuration
 			config["replicas"] = 5 // Scale up
 			scaled.Resources[i].Metadata.Version = "101"
 		}
@@ -416,14 +417,15 @@ func createMixedChangesSnapshot(t *testing.T, baselineFile string) string {
 	// Scale deployment AND modify unrelated config
 	for i := range mixed.Resources {
 		if mixed.Resources[i].ID == "deployment/frontend" {
-			config := mixed.Resources[i].Configuration.(map[string]interface{})
+			config := mixed.Resources[i].Configuration
 			config["replicas"] = 5
 			mixed.Resources[i].Metadata.Version = "101"
 		}
 		if mixed.Resources[i].ID == "configmap/app-config" {
-			config := mixed.Resources[i].Configuration.(map[string]interface{})
-			data := config["data"].(map[string]string)
-			data["version"] = "2.0" // Unrelated config change
+			config := mixed.Resources[i].Configuration
+			if data, ok := config["data"].(map[string]string); ok {
+				data["version"] = "2.0" // Unrelated config change
+			}
 		}
 	}
 	
@@ -441,9 +443,10 @@ func createUnrelatedChangesSnapshot(t *testing.T, baselineFile string) string {
 	// Make unrelated changes across different namespaces/times
 	for i := range unrelated.Resources {
 		if unrelated.Resources[i].ID == "configmap/app-config" {
-			config := unrelated.Resources[i].Configuration.(map[string]interface{})
-			data := config["data"].(map[string]string)
-			data["debug"] = "true"
+			config := unrelated.Resources[i].Configuration
+			if data, ok := config["data"].(map[string]string); ok {
+				data["debug"] = "true"
+			}
 		}
 	}
 	
@@ -504,7 +507,7 @@ func createLargeChangesSnapshot(t *testing.T, baselineFile string, changeCount i
 	
 	// Modify first N resources
 	for i := 0; i < changeCount && i < len(changed.Resources); i++ {
-		config := changed.Resources[i].Configuration.(map[string]interface{})
+		config := changed.Resources[i].Configuration
 		config["replicas"] = 5 // Scale all
 		changed.Resources[i].Metadata.Version = fmt.Sprintf("%d", 200+i)
 	}

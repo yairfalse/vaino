@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>wgo</id>
+    <version>$version$</version>
+    <packageSourceUrl>https://github.com/yairfalse/wgo/tree/main/packaging/chocolatey</packageSourceUrl>
+    <owners>yairfalse</owners>
+    <title>WGO (What's Going On)</title>
+    <authors>Yair and Contributors</authors>
+    <projectUrl>https://github.com/yairfalse/wgo</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/yairfalse/wgo/main/assets/logo.png</iconUrl>
+    <copyright>2024 WGO Contributors</copyright>
+    <licenseUrl>https://github.com/yairfalse/wgo/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/yairfalse/wgo</projectSourceUrl>
+    <docsUrl>https://github.com/yairfalse/wgo/blob/main/README.md</docsUrl>
+    <bugTrackerUrl>https://github.com/yairfalse/wgo/issues</bugTrackerUrl>
+    <tags>infrastructure drift-detection terraform aws gcp kubernetes devops monitoring cli</tags>
+    <summary>Git diff for infrastructure - simple drift detection</summary>
+    <description><![CDATA[
+# WGO - What's Going On
+
+WGO is "git diff" for your infrastructure - see what changed, when, and why.
+
+## Features
+
+- **Multi-Provider Support**: Works with Terraform, AWS, GCP, Kubernetes
+- **Smart Auto-Discovery**: Automatically finds and scans your infrastructure
+- **Time-Based Comparisons**: Compare infrastructure states across different time periods
+- **Unix-Style Output**: Integrates seamlessly with existing tools and scripts
+- **Zero Configuration**: Works out of the box with sensible defaults
+
+## Quick Start
+
+```powershell
+# Auto-discover and scan infrastructure
+wgo scan
+
+# Compare current state with baseline
+wgo diff
+
+# Scan specific provider
+wgo scan --provider aws --region us-east-1
+
+# Compare with previous scan
+wgo diff --since yesterday
+```
+
+## Why WGO?
+
+- **Simple**: Just like `git diff`, but for infrastructure
+- **Fast**: Efficient scanning and comparison
+- **Flexible**: Works with multiple cloud providers
+- **Scriptable**: Unix-style output for automation
+- **Secure**: All data stays local
+
+This package installs the WGO command-line tool to track and detect infrastructure drift.
+]]></description>
+    <releaseNotes>https://github.com/yairfalse/wgo/releases/tag/v$version$</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

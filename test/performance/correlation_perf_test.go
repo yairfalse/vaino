@@ -419,7 +419,7 @@ func generateTestSnapshots(resourceCount int) (*types.Snapshot, *types.Snapshot)
 	changeCount := resourceCount / 10
 	for i := 0; i < changeCount; i++ {
 		idx := rand.Intn(resourceCount)
-		config := modifiedResources[idx].Configuration.(map[string]interface{})
+		config := modifiedResources[idx].Configuration
 		config["replicas"] = 5 // Scale up
 		modifiedResources[idx].Metadata.Version = fmt.Sprintf("%d", 200+idx)
 	}

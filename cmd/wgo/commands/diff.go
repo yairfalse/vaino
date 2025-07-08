@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/yairfalse/wgo/internal/differ"
+	wgoerrors "github.com/yairfalse/wgo/internal/errors"
 	"github.com/yairfalse/wgo/internal/output"
 	"github.com/yairfalse/wgo/internal/storage"
 	"github.com/yairfalse/wgo/pkg/types"
@@ -46,7 +47,7 @@ By default, compares current infrastructure state with the last scan automatical
 
   # Use in CI/CD pipelines
   if ! wgo diff --quiet; then
-    echo "⚠️  Infrastructure drift detected!"
+    echo "WARNING: Infrastructure drift detected!"
     wgo diff --stat
   fi`,
 		RunE: runDiff,
@@ -185,7 +186,7 @@ func formatMarkdownReport(report *differ.DriftReport, summaryOnly bool, showUnch
 func formatTableReport(report *differ.DriftReport, summaryOnly bool, showUnchanged bool) string {
 	var output strings.Builder
 	
-	output.WriteString("📊 Drift Summary\n")
+	output.WriteString("Drift Summary\n")
 	output.WriteString("=================\n")
 	output.WriteString(fmt.Sprintf("Total Resources: %d\n", report.Summary.TotalResources))
 	output.WriteString(fmt.Sprintf("Changed Resources: %d\n", report.Summary.ChangedResources))
@@ -195,7 +196,7 @@ func formatTableReport(report *differ.DriftReport, summaryOnly bool, showUnchang
 	output.WriteString(fmt.Sprintf("Overall Risk: %s (%.2f)\n", report.Summary.OverallRisk, report.Summary.RiskScore))
 	
 	if len(report.Summary.ChangesBySeverity) > 0 {
-		output.WriteString("\n📈 Changes by Severity:\n")
+		output.WriteString("\nChanges by Severity:\n")
 		for severity, count := range report.Summary.ChangesBySeverity {
 			if count > 0 {
 				output.WriteString(fmt.Sprintf("  %s: %d\n", severity, count))
@@ -204,7 +205,7 @@ func formatTableReport(report *differ.DriftReport, summaryOnly bool, showUnchang
 	}
 	
 	if len(report.Summary.ChangesByCategory) > 0 {
-		output.WriteString("\n📋 Changes by Category:\n")
+		output.WriteString("\nChanges by Category:\n")
 		for category, count := range report.Summary.ChangesByCategory {
 			if count > 0 {
 				output.WriteString(fmt.Sprintf("  %s: %d\n", category, count))
@@ -213,11 +214,11 @@ func formatTableReport(report *differ.DriftReport, summaryOnly bool, showUnchang
 	}
 	
 	if !summaryOnly && len(report.ResourceChanges) > 0 {
-		output.WriteString("\n🔍 Detailed Changes\n")
+		output.WriteString("\nDetailed Changes\n")
 		output.WriteString("====================\n")
 		
 		for _, resourceChange := range report.ResourceChanges {
-			output.WriteString(fmt.Sprintf("\n📦 Resource: %s (%s)\n", resourceChange.ResourceID, resourceChange.ResourceType))
+			output.WriteString(fmt.Sprintf("\nResource: %s (%s)\n", resourceChange.ResourceID, resourceChange.ResourceType))
 			output.WriteString(fmt.Sprintf("   Provider: %s\n", resourceChange.Provider))
 			output.WriteString(fmt.Sprintf("   Change Type: %s\n", resourceChange.DriftType))
 			output.WriteString(fmt.Sprintf("   Severity: %s\n", resourceChange.Severity))
@@ -235,9 +236,9 @@ func formatTableReport(report *differ.DriftReport, summaryOnly bool, showUnchang
 	}
 	
 	if report.Summary.ChangedResources == 0 {
-		output.WriteString("\n✅ No drift detected - infrastructure matches baseline\n")
+		output.WriteString("\nNo drift detected - infrastructure matches baseline\n")
 	} else {
-		output.WriteString(fmt.Sprintf("\n⚠️  Drift detected in %d resources\n", report.Summary.ChangedResources))
+		output.WriteString(fmt.Sprintf("\nDrift detected in %d resources\n", report.Summary.ChangedResources))
 	}
 	
 	return output.String()
@@ -275,6 +276,18 @@ func runDiff(cmd *cobra.Command, args []string) error {
 		
 		// Find all last-scan files
 		matches, _ := filepath.Glob(filepath.Join(wgoDir, "last-scan-*.json"))
+		if len(matches) == 0 {
+			// No scans found - provide helpful guidance
+			return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown, 
+				"No previous scans found").
+				WithCause("No snapshot files in ~/.wgo").
+				WithSolutions(
+					"Run 'wgo scan' to create your first snapshot",
+					"Specify snapshots manually with --from and --to",
+				).
+				WithHelp("wgo scan --help")
+		}
+		
 		if len(matches) > 0 {
 			// Use the most recently modified one
 			var mostRecent string
@@ -316,7 +329,18 @@ func runDiff(cmd *cobra.Command, args []string) error {
 				scanCmd.SetArgs(scanArgs)
 				scanCmd.SetOutput(io.Discard) // Suppress output
 				if err := scanCmd.Execute(); err != nil {
-					return fmt.Errorf("failed to run scan: %w", err)
+					// Check if it's a known error type
+					if wgoErr, ok := err.(*wgoerrors.WGOError); ok {
+						return wgoErr
+					}
+					return wgoerrors.New(wgoerrors.ErrorTypeProvider, wgoerrors.Provider(providerName),
+						"Failed to scan current infrastructure").
+						WithCause(err.Error()).
+						WithSolutions(
+							fmt.Sprintf("Run 'wgo scan --provider %s' manually to debug", providerName),
+							"Check provider authentication with 'wgo check-config'",
+						).
+						WithHelp("wgo check-config")
 				}
 				
 				// Set from and to for comparison
@@ -328,11 +352,27 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	
 	// Validate inputs after auto-detection
 	if baseline == "" && (from == "" || to == "") {
-		return fmt.Errorf("must specify either --baseline or both --from and --to")
+		return wgoerrors.New(wgoerrors.ErrorTypeValidation, wgoerrors.ProviderUnknown,
+			"Missing required arguments").
+			WithCause("Must specify snapshots to compare").
+			WithSolutions(
+				"Run 'wgo diff' (auto-detects last scan)",
+				"Use 'wgo diff --from snapshot1.json --to snapshot2.json'",
+				"Use 'wgo diff --baseline prod-v1.0'",
+			).
+			WithHelp("wgo diff --help")
 	}
 	
 	if baseline != "" && (from != "" || to != "") {
-		return fmt.Errorf("cannot use --baseline with --from/--to")
+		return wgoerrors.New(wgoerrors.ErrorTypeValidation, wgoerrors.ProviderUnknown,
+			"Conflicting arguments").
+			WithCause("Cannot use --baseline with --from/--to").
+			WithSolutions(
+				"Use either --baseline OR --from/--to, not both",
+				"Example: wgo diff --baseline prod-v1.0",
+				"Example: wgo diff --from old.json --to new.json",
+			).
+			WithHelp("wgo diff --help")
 	}
 	
 	// Validate format
@@ -357,7 +397,15 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	storageConfig := storage.Config{BaseDir: "./snapshots"}
 	localStorage, err := storage.NewLocalStorage(storageConfig)
 	if err != nil {
-		return fmt.Errorf("failed to initialize storage: %w", err)
+		return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+			"Storage initialization failed").
+			WithCause(err.Error()).
+			WithSolutions(
+				"Check directory permissions",
+				"Ensure disk has available space",
+				"Run 'wgo check-config' to diagnose",
+			).
+			WithHelp("wgo check-config")
 	}
 	
 	// Load snapshots
@@ -367,11 +415,26 @@ func runDiff(cmd *cobra.Command, args []string) error {
 		// Loading baseline
 		baselineData, err := localStorage.LoadBaseline(baseline)
 		if err != nil {
-			return fmt.Errorf("failed to load baseline '%s': %w", baseline, err)
+			return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+				fmt.Sprintf("Baseline '%s' not found", baseline)).
+				WithCause(err.Error()).
+				WithSolutions(
+					"List available baselines: wgo baseline list",
+					"Create a baseline: wgo baseline create --name <name>",
+					"Check baseline name spelling",
+				).
+				WithHelp("wgo baseline --help")
 		}
 		fromSnapshot, err = localStorage.LoadSnapshot(baselineData.SnapshotID)
 		if err != nil {
-			return fmt.Errorf("failed to load baseline snapshot: %w", err)
+			return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+				"Failed to load baseline snapshot data").
+				WithCause(err.Error()).
+				WithSolutions(
+					"Baseline may be corrupted",
+					"Recreate baseline: wgo baseline create --name <name>",
+				).
+				WithHelp("wgo baseline --help")
 		}
 		
 		// Loading current snapshot
@@ -392,11 +455,47 @@ func runDiff(cmd *cobra.Command, args []string) error {
 		// Loading snapshots for comparison
 		fromSnapshot, err = loadSnapshotFromFile(from)
 		if err != nil {
-			return fmt.Errorf("failed to load from snapshot '%s': %w", from, err)
+			if os.IsNotExist(err) {
+				return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+					fmt.Sprintf("Snapshot file not found: %s", from)).
+					WithCause("File does not exist").
+					WithSolutions(
+						"Check file path and spelling",
+						"Use absolute paths for clarity",
+						"List available snapshots: ls ~/.wgo/history/",
+					).
+					WithHelp("wgo scan --help")
+			}
+			return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+				"Failed to load snapshot").
+				WithCause(err.Error()).
+				WithSolutions(
+					"Ensure file is valid JSON",
+					"Check file permissions",
+				).
+				WithHelp("wgo diff --help")
 		}
 		toSnapshot, err = loadSnapshotFromFile(to)
 		if err != nil {
-			return fmt.Errorf("failed to load to snapshot '%s': %w", to, err)
+			if os.IsNotExist(err) {
+				return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+					fmt.Sprintf("Snapshot file not found: %s", to)).
+					WithCause("File does not exist").
+					WithSolutions(
+						"Check file path and spelling",
+						"Use absolute paths for clarity",
+						"Run 'wgo scan' to create new snapshot",
+					).
+					WithHelp("wgo scan --help")
+			}
+			return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+				"Failed to load snapshot").
+				WithCause(err.Error()).
+				WithSolutions(
+					"Ensure file is valid JSON",
+					"Check file permissions",
+				).
+				WithHelp("wgo diff --help")
 		}
 	}
 	
@@ -426,7 +525,15 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	// Perform comparison
 	report, err := differ.Compare(fromSnapshot, toSnapshot)
 	if err != nil {
-		return fmt.Errorf("comparison failed: %w", err)
+		return wgoerrors.New(wgoerrors.ErrorTypeValidation, wgoerrors.ProviderUnknown,
+			"Comparison failed").
+			WithCause(err.Error()).
+			WithSolutions(
+				"Ensure snapshots are from compatible WGO versions",
+				"Check that snapshots contain valid resource data",
+				"Try regenerating snapshots with 'wgo scan'",
+			).
+			WithHelp("wgo scan --help")
 	}
 	
 	// Comparison completed

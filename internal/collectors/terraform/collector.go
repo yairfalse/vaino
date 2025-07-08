@@ -85,7 +85,7 @@ func (c *TerraformCollector) Collect(ctx context.Context, config collectors.Coll
 	
 	// Process local state files in parallel if we have multiple
 	if len(localPaths) > 1 {
-		fmt.Printf("🔄 Processing %d state files in parallel...\n", len(localPaths))
+		fmt.Printf("Processing %d state files in parallel...\n", len(localPaths))
 		resources, stats, err := c.collectFromMultipleLocalStates(ctx, localPaths)
 		if err != nil {
 			return nil, fmt.Errorf("failed to collect from local state files: %w", err)
@@ -144,10 +144,10 @@ func (c *TerraformCollector) Collect(ctx context.Context, config collectors.Coll
 		Metadata:  metadata,
 	}
 	
-	fmt.Printf("✅ Processed %d resources in %v\n", len(allResources), collectionTime)
+	fmt.Printf("Processed %d resources in %v\n", len(allResources), collectionTime)
 	if parseStats != nil {
 		if successRate, ok := parseStats["success_rate"]; ok {
-			fmt.Printf("📊 Parse success rate: %.1f%%\n", successRate)
+			fmt.Printf("Parse success rate: %.1f%%\n", successRate)
 		}
 	}
 	
@@ -213,7 +213,7 @@ func (c *TerraformCollector) collectFromDirectory(dirPath string) ([]types.Resou
 	
 	// If we have multiple state files, process them in parallel
 	if len(stateFiles) > 1 {
-		fmt.Printf("🔄 Found %d state files in directory, processing in parallel...\n", len(stateFiles))
+		fmt.Printf("Found %d state files in directory, processing in parallel...\n", len(stateFiles))
 		ctx := context.Background()
 		resources, _, err := c.collectFromMultipleLocalStates(ctx, stateFiles)
 		return resources, err

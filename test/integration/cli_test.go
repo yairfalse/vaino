@@ -29,7 +29,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func runWGO(args ...string) (string, string, error) {
+func runWGOIntegration(args ...string) (string, string, error) {
 	cmd := exec.Command(wgoBinary, args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -40,7 +40,7 @@ func runWGO(args ...string) (string, string, error) {
 }
 
 func TestWGO_Help(t *testing.T) {
-	stdout, stderr, err := runWGO("--help")
+	stdout, stderr, err := runWGOIntegration("--help")
 	if err != nil {
 		t.Fatalf("wgo --help failed: %v\nstderr: %s", err, stderr)
 	}
@@ -64,7 +64,7 @@ func TestWGO_Help(t *testing.T) {
 }
 
 func TestWGO_Version(t *testing.T) {
-	stdout, stderr, err := runWGO("version")
+	stdout, stderr, err := runWGOIntegration("version")
 	if err != nil {
 		t.Fatalf("wgo version failed: %v\nstderr: %s", err, stderr)
 	}
@@ -75,7 +75,7 @@ func TestWGO_Version(t *testing.T) {
 }
 
 func TestWGO_BaselineHelp(t *testing.T) {
-	stdout, stderr, err := runWGO("baseline", "--help")
+	stdout, stderr, err := runWGOIntegration("baseline", "--help")
 	if err != nil {
 		t.Fatalf("wgo baseline --help failed: %v\nstderr: %s", err, stderr)
 	}
@@ -97,7 +97,7 @@ func TestWGO_BaselineHelp(t *testing.T) {
 }
 
 func TestWGO_ScanHelp(t *testing.T) {
-	stdout, stderr, err := runWGO("scan", "--help")
+	stdout, stderr, err := runWGOIntegration("scan", "--help")
 	if err != nil {
 		t.Fatalf("wgo scan --help failed: %v\nstderr: %s", err, stderr)
 	}
@@ -120,7 +120,7 @@ func TestWGO_ScanHelp(t *testing.T) {
 }
 
 func TestWGO_CheckHelp(t *testing.T) {
-	stdout, stderr, err := runWGO("check", "--help")
+	stdout, stderr, err := runWGOIntegration("check", "--help")
 	if err != nil {
 		t.Fatalf("wgo check --help failed: %v\nstderr: %s", err, stderr)
 	}
@@ -143,7 +143,7 @@ func TestWGO_BaselineCreate(t *testing.T) {
 	tmpDir := t.TempDir()
 	
 	// Test baseline create command
-	stdout, stderr, err := runWGO("baseline", "create", "--name", "test-baseline", "--config", filepath.Join(tmpDir, "config.yaml"))
+	stdout, stderr, err := runWGOIntegration("baseline", "create", "--name", "test-baseline", "--config", filepath.Join(tmpDir, "config.yaml"))
 	
 	// Should show "not implemented" message but not error
 	if err != nil {
@@ -163,7 +163,7 @@ func TestWGO_BaselineCreate(t *testing.T) {
 func TestWGO_BaselineList(t *testing.T) {
 	tmpDir := t.TempDir()
 	
-	stdout, stderr, err := runWGO("baseline", "list", "--config", filepath.Join(tmpDir, "config.yaml"))
+	stdout, stderr, err := runWGOIntegration("baseline", "list", "--config", filepath.Join(tmpDir, "config.yaml"))
 	
 	// Should show "not implemented" message but not error
 	if err != nil {
@@ -178,7 +178,7 @@ func TestWGO_BaselineList(t *testing.T) {
 func TestWGO_ScanTerraform(t *testing.T) {
 	tmpDir := t.TempDir()
 	
-	stdout, stderr, err := runWGO("scan", "--provider", "terraform", "--path", tmpDir, "--config", filepath.Join(tmpDir, "config.yaml"))
+	stdout, stderr, err := runWGOIntegration("scan", "--provider", "terraform", "--path", tmpDir, "--config", filepath.Join(tmpDir, "config.yaml"))
 	
 	// Should show scan output but may error due to no state files
 	if err != nil {
@@ -191,7 +191,7 @@ func TestWGO_ScanTerraform(t *testing.T) {
 }
 
 func TestWGO_InvalidCommand(t *testing.T) {
-	_, stderr, err := runWGO("invalid-command")
+	_, stderr, err := runWGOIntegration("invalid-command")
 	
 	if err == nil {
 		t.Error("Expected invalid command to return error")
@@ -206,7 +206,7 @@ func TestWGO_RequiredFlags(t *testing.T) {
 	tmpDir := t.TempDir()
 	
 	// Test baseline create without required name flag
-	_, stderr, err := runWGO("baseline", "create", "--config", filepath.Join(tmpDir, "config.yaml"))
+	_, stderr, err := runWGOIntegration("baseline", "create", "--config", filepath.Join(tmpDir, "config.yaml"))
 	
 	if err == nil {
 		t.Error("Expected baseline create without name to return error")
@@ -223,7 +223,7 @@ func TestWGO_OutputFormats(t *testing.T) {
 	
 	for _, format := range formats {
 		t.Run("format_"+format, func(t *testing.T) {
-			stdout, stderr, err := runWGO("baseline", "list", "--output", format, "--config", filepath.Join(tmpDir, "config.yaml"))
+			stdout, stderr, err := runWGOIntegration("baseline", "list", "--output", format, "--config", filepath.Join(tmpDir, "config.yaml"))
 			
 			// Should not error due to invalid format
 			if err != nil {
@@ -257,7 +257,7 @@ logging:
 		t.Fatalf("Failed to create config file: %v", err)
 	}
 	
-	stdout, stderr, err := runWGO("baseline", "list", "--config", configFile)
+	stdout, stderr, err := runWGOIntegration("baseline", "list", "--config", configFile)
 	
 	if err != nil {
 		t.Logf("baseline list with config stderr: %s", stderr)
@@ -277,7 +277,7 @@ func TestWGO_GlobalFlags(t *testing.T) {
 	tmpDir := t.TempDir()
 	
 	// Test verbose flag
-	stdout, stderr, err := runWGO("version", "--verbose", "--config", filepath.Join(tmpDir, "config.yaml"))
+	stdout, stderr, err := runWGOIntegration("version", "--verbose", "--config", filepath.Join(tmpDir, "config.yaml"))
 	
 	if err != nil {
 		t.Logf("version with verbose stderr: %s", stderr)
@@ -288,7 +288,7 @@ func TestWGO_GlobalFlags(t *testing.T) {
 	}
 	
 	// Test debug flag
-	stdout, stderr, err = runWGO("version", "--debug", "--config", filepath.Join(tmpDir, "config.yaml"))
+	stdout, stderr, err = runWGOIntegration("version", "--debug", "--config", filepath.Join(tmpDir, "config.yaml"))
 	
 	if err != nil {
 		t.Logf("version with debug stderr: %s", stderr)

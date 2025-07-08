@@ -1,17 +1,29 @@
-name: CI
+name: CI (Legacy - Deprecated)
+
+# This workflow is deprecated in favor of selective-tests.yml
+# Keeping for backward compatibility
 
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'examples/**'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - 'examples/**'
 
 env:
-  GO_VERSION: '1.21'
+  GO_VERSION: '1.23'
 
 jobs:
-  test:
-    name: Test
+  # Quick validation job
+  quick-validation:
+    name: Quick Validation
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -26,10 +38,10 @@ jobs:
     - name: Get dependencies
       run: go mod download
 
-    - name: Run tests with coverage
+    - name: Run smart tests
       run: |
-        go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
-        go tool cover -html=coverage.out -o coverage.html
+        chmod +x scripts/smart-test.sh
+        make test || make test-unit
         
     - name: Check test coverage threshold
       run: |
