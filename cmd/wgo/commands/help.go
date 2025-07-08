@@ -220,14 +220,15 @@ func runHelp(cmd *cobra.Command, args []string) error {
 	switch topic {
 	case "providers":
 		fmt.Println("\nWGO Provider Setup Guides")
-		fmt.Println("========================\n")
+		fmt.Println("========================")
+		fmt.Println()
 		fmt.Println("Available providers:")
 		fmt.Println("  - gcp         (Google Cloud Platform)")
 		fmt.Println("  - aws         (Amazon Web Services)")
 		fmt.Println("  - kubernetes  (Kubernetes clusters)")
 		fmt.Println("  - terraform   (Terraform state)")
 		fmt.Println()
-		fmt.Println("Get specific help: wgo help <provider>")
+		fmt.Print("Get specific help: wgo help <provider>")
 
 	case "gcp", "google", "gcloud":
 		fmt.Print(providerHelp["gcp"])

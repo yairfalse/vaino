@@ -126,8 +126,8 @@ func (w *Watcher) takeInitialSnapshot(ctx context.Context) error {
 	w.lastSnapshot = snapshot
 	
 	if !w.quiet {
-		fmt.Printf("📊 Initial snapshot captured (%d resources)\n", len(snapshot.Resources))
-		fmt.Printf("⏰ Watching for changes every %v...\n\n", w.interval)
+		fmt.Printf("Initial snapshot captured (%d resources)\n", len(snapshot.Resources))
+		fmt.Printf("Watching for changes every %v...\n\n", w.interval)
 	}
 
 	return nil

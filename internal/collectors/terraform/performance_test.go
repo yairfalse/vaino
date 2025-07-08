@@ -80,7 +80,7 @@ func TestParallelProcessingPerformance(t *testing.T) {
 		}
 	}
 	
-	t.Logf("✅ Processed %d resources from %d files in %v", 
+	t.Logf("Processed %d resources from %d files in %v", 
 		len(snapshot.Resources), len(stateFiles), collectionTime)
 }
 
@@ -131,7 +131,7 @@ func TestStreamingParserPerformance(t *testing.T) {
 		t.Errorf("Streaming parsing took too long: %v (expected < 500ms)", parseTime)
 	}
 	
-	t.Logf("✅ Streaming parser processed %.2f MB file with %d resources in %v", 
+	t.Logf("Streaming parser processed %.2f MB file with %d resources in %v", 
 		fileSizeMB, len(parsedState.Resources), parseTime)
 }
 
@@ -199,9 +199,9 @@ func TestParallelParserConcurrency(t *testing.T) {
 		t.Errorf("Parallel parsing took too long: %v (expected < 2s for 10 files)", parseTime)
 	}
 	
-	t.Logf("✅ Parallel parsed %d files with %d total resources in %v", 
+	t.Logf("Parallel parsed %d files with %d total resources in %v", 
 		len(stateFiles), totalResources, parseTime)
-	t.Logf("📊 Performance stats: %+v", stats)
+	t.Logf("Performance stats: %+v", stats)
 }
 
 // createLargeTestState creates a test state with specified number of resources

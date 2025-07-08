@@ -70,7 +70,7 @@ func (w *Watcher) displayTableFormat(event *WatchEvent) {
 		fmt.Printf("└─\n")
 	} else {
 		// Show individual changes if no correlation
-		fmt.Printf("┌─ 📋 Individual Changes:\n")
+		fmt.Printf("┌─ Individual Changes:\n")
 		for i, change := range event.RawChanges {
 			prefix := "├─"
 			if i == len(event.RawChanges)-1 {

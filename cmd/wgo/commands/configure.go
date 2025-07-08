@@ -50,7 +50,8 @@ func runConfigure(cmd *cobra.Command, args []string) error {
 	}
 	
 	fmt.Println("WGO Configuration Wizard")
-	fmt.Println("=========================\n")
+	fmt.Println("=========================")
+	fmt.Println()
 	
 	// Determine which providers to configure
 	var providers []string
@@ -61,7 +62,8 @@ func runConfigure(cmd *cobra.Command, args []string) error {
 		detector := config.NewProviderDetector()
 		results := detector.DetectAll()
 		
-		fmt.Println("Detecting available providers...\n")
+		fmt.Println("Detecting available providers...")
+		fmt.Println()
 		
 		for provider, result := range results {
 			if result.Available {
