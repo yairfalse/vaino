@@ -1,0 +1,14 @@
+# github.com/yairfalse/wgo/test/performance [github.com/yairfalse/wgo/test/performance.test]
+./comprehensive_benchmarks_test.go:191:19: assignment mismatch: 1 variable but storage.NewLocalStorage returns 2 values
+./comprehensive_benchmarks_test.go:191:43: cannot use tmpDir (variable of type string) as storage.Config value in argument to storage.NewLocalStorage
+./comprehensive_benchmarks_test.go:198:26: undefined: watcher.WatchConfig
+./comprehensive_benchmarks_test.go:208:8: assignment mismatch: 1 variable but watcher.NewWatcher returns 2 values
+./comprehensive_benchmarks_test.go:385:22: assignment mismatch: 1 variable but storage.NewLocalStorage returns 2 values
+./comprehensive_benchmarks_test.go:385:46: cannot use tmpDir (variable of type string) as storage.Config value in argument to storage.NewLocalStorage
+./comprehensive_benchmarks_test.go:610:5: undefined: strings
+./comprehensive_benchmarks_test.go:613:5: undefined: strings
+./comprehensive_benchmarks_test.go:616:5: undefined: strings
+./concurrent_operations_test.go:215:29: undefined: differ.SimpleDriftReport
+./concurrent_operations_test.go:215:29: too many errors
+FAIL	github.com/yairfalse/wgo/test/performance [build failed]
+FAIL

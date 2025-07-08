@@ -1,5 +1,5 @@
 # Multi-stage build for WGO
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # Install dependencies
 RUN apk add --no-cache git make
@@ -26,7 +26,14 @@ RUN apk add --no-cache \
     git \
     curl \
     aws-cli \
-    terraform
+    wget \
+    unzip
+
+# Install Terraform manually
+RUN wget https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_linux_arm64.zip \
+    && unzip terraform_1.7.5_linux_arm64.zip \
+    && mv terraform /usr/local/bin/ \
+    && rm terraform_1.7.5_linux_arm64.zip
 
 # Create non-root user
 RUN addgroup -g 1000 wgo && \

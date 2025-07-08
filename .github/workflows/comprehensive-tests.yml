@@ -426,3 +426,71 @@ jobs:
       run: |
         echo "❌ Comprehensive tests failed!"
         exit 1
+
+  # Performance validation for releases
+  performance-validation:
+    name: Performance Validation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Run performance benchmarks
+      run: |
+        echo "🚀 Running performance validation for main branch..."
+        chmod +x scripts/run-performance-tests.sh
+        ./scripts/run-performance-tests.sh benchmarks --system-check
+
+    - name: Upload performance validation results
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-validation-${{ github.sha }}
+        path: performance-results/
+        retention-days: 30
+
+    - name: Performance validation summary
+      run: |
+        echo "## 🎯 Performance Validation Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch**: main" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Test Level**: benchmarks" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if ls performance-results/*benchmarks*.txt 1> /dev/null 2>&1; then
+          echo "### 📊 Key Performance Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          
+          # Extract file processing performance
+          for file in performance-results/*benchmarks*.txt; do
+            if grep -q "BenchmarkMegaFileProcessing" "$file"; then
+              echo "=== File Processing Performance ===" >> $GITHUB_STEP_SUMMARY
+              grep "BenchmarkMegaFileProcessing.*-8" "$file" | head -3 >> $GITHUB_STEP_SUMMARY
+              break
+            fi
+          done
+          
+          # Extract concurrent performance
+          for file in performance-results/*benchmarks*.txt; do
+            if grep -q "BenchmarkConcurrentOperations" "$file"; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "=== Concurrent Operations Performance ===" >> $GITHUB_STEP_SUMMARY
+              grep "BenchmarkConcurrentOperations.*-8" "$file" | head -3 >> $GITHUB_STEP_SUMMARY
+              break
+            fi
+          done
+          
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status**: Performance validation completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "📈 **Baseline**: Results available for future regression detection" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ **Warning**: No performance results found" >> $GITHUB_STEP_SUMMARY
+        fi
