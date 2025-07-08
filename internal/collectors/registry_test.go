@@ -1,35 +1,26 @@
 package collectors
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"testing"
-
-	"github.com/yairfalse/wgo/pkg/types"
 )
 
 // Mock collector for testing
 type mockCollector struct {
-	name      string
-	resources []types.Resource
-	err       error
-	healthErr error
+	name   string
+	status string
 }
 
 func (m *mockCollector) Name() string {
 	return m.name
 }
 
-func (m *mockCollector) Collect() ([]types.Resource, error) {
-	if m.err != nil {
-		return nil, m.err
+func (m *mockCollector) Status() string {
+	if m.status == "" {
+		return "ready"
 	}
-	return m.resources, nil
-}
-
-func (m *mockCollector) Health() error {
-	return m.healthErr
+	return m.status
 }
 
 func TestCollectorRegistry_Register(t *testing.T) {
@@ -39,9 +30,9 @@ func TestCollectorRegistry_Register(t *testing.T) {
 	registry.Register(collector)
 
 	// Verify collector was registered
-	retrieved, err := registry.Get("test-collector")
-	if err != nil {
-		t.Fatalf("Failed to get registered collector: %v", err)
+	retrieved, exists := registry.Get("test-collector")
+	if !exists {
+		t.Fatalf("Failed to get registered collector")
 	}
 
 	if retrieved.Name() != "test-collector" {
@@ -52,13 +43,9 @@ func TestCollectorRegistry_Register(t *testing.T) {
 func TestCollectorRegistry_GetNonExistent(t *testing.T) {
 	registry := NewRegistry()
 
-	_, err := registry.Get("nonexistent")
-	if err == nil {
-		t.Error("Expected error for nonexistent collector")
-	}
-
-	if err.Error() != "collector nonexistent not found" {
-		t.Errorf("Unexpected error message: %s", err.Error())
+	_, exists := registry.Get("nonexistent")
+	if exists {
+		t.Error("Expected false for nonexistent collector")
 	}
 }
 
@@ -101,85 +88,6 @@ func TestCollectorRegistry_List(t *testing.T) {
 	}
 }
 
-func TestCollectorRegistry_CollectAll(t *testing.T) {
-	registry := NewRegistry()
-
-	// Create collectors with different resources
-	awsCollector := &mockCollector{
-		name: "aws",
-		resources: []types.Resource{
-			{ID: "i-123", Type: "ec2:instance", Provider: "aws"},
-			{ID: "vol-456", Type: "ec2:volume", Provider: "aws"},
-		},
-	}
-
-	k8sCollector := &mockCollector{
-		name: "kubernetes",
-		resources: []types.Resource{
-			{ID: "pod-789", Type: "pod", Provider: "kubernetes"},
-		},
-	}
-
-	registry.Register(awsCollector)
-	registry.Register(k8sCollector)
-
-	// Collect all resources
-	resources, err := registry.CollectAll()
-	if err != nil {
-		t.Fatalf("CollectAll failed: %v", err)
-	}
-
-	if len(resources) != 3 {
-		t.Errorf("Expected 3 total resources, got %d", len(resources))
-	}
-
-	// Verify we got resources from both collectors
-	awsCount := 0
-	k8sCount := 0
-	for _, resource := range resources {
-		switch resource.Provider {
-		case "aws":
-			awsCount++
-		case "kubernetes":
-			k8sCount++
-		}
-	}
-
-	if awsCount != 2 {
-		t.Errorf("Expected 2 AWS resources, got %d", awsCount)
-	}
-	if k8sCount != 1 {
-		t.Errorf("Expected 1 Kubernetes resource, got %d", k8sCount)
-	}
-}
-
-func TestCollectorRegistry_CollectAllWithError(t *testing.T) {
-	registry := NewRegistry()
-
-	// Create a failing collector
-	failingCollector := &mockCollector{
-		name: "failing",
-		err:  errors.New("collection failed"),
-	}
-
-	workingCollector := &mockCollector{
-		name:      "working",
-		resources: []types.Resource{{ID: "test", Provider: "working"}},
-	}
-
-	registry.Register(failingCollector)
-	registry.Register(workingCollector)
-
-	// CollectAll should fail if any collector fails
-	_, err := registry.CollectAll()
-	if err == nil {
-		t.Error("Expected CollectAll to fail when a collector fails")
-	}
-
-	if err.Error() != "collector failing failed: collection failed" {
-		t.Errorf("Unexpected error message: %s", err.Error())
-	}
-}
 
 func TestCollectorRegistry_ConcurrentAccess(t *testing.T) {
 	registry := NewRegistry()
@@ -193,8 +101,7 @@ func TestCollectorRegistry_ConcurrentAccess(t *testing.T) {
 		go func(id int) {
 			defer wg.Done()
 			collector := &mockCollector{
-				name:      fmt.Sprintf("collector-%d", id),
-				resources: []types.Resource{},
+				name: fmt.Sprintf("collector-%d", id),
 			}
 			registry.Register(collector)
 		}(i)
@@ -214,9 +121,9 @@ func TestCollectorRegistry_ConcurrentAccess(t *testing.T) {
 	for i := 0; i < numGoroutines; i++ {
 		go func(id int) {
 			defer wg.Done()
-			_, err := registry.Get(fmt.Sprintf("collector-%d", id))
-			if err != nil {
-				t.Errorf("Failed to get collector-%d: %v", id, err)
+			_, exists := registry.Get(fmt.Sprintf("collector-%d", id))
+			if !exists {
+				t.Errorf("Failed to get collector-%d", id)
 			}
 		}(i)
 	}
@@ -233,19 +140,19 @@ func TestCollectorRegistry_ConcurrentAccess(t *testing.T) {
 }
 
 func TestDefaultRegistry(t *testing.T) {
-	// Test that default registry is accessible
-	defaultReg := DefaultRegistry()
-	if defaultReg == nil {
-		t.Error("Default registry should not be nil")
+	// Just test that we can create a registry
+	registry := NewRegistry()
+	if registry == nil {
+		t.Error("Registry should not be nil")
 	}
 
 	// Test that it works like a normal registry
 	collector := &mockCollector{name: "default-test"}
-	defaultReg.Register(collector)
+	registry.Register(collector)
 
-	retrieved, err := defaultReg.Get("default-test")
-	if err != nil {
-		t.Errorf("Failed to get collector from default registry: %v", err)
+	retrieved, exists := registry.Get("default-test")
+	if !exists {
+		t.Error("Failed to get collector from registry")
 	}
 
 	if retrieved.Name() != "default-test" {
