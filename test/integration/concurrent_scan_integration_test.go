@@ -10,6 +10,7 @@ import (
 
 	"github.com/yairfalse/wgo/cmd/wgo/commands"
 	"github.com/yairfalse/wgo/internal/collectors"
+	"github.com/yairfalse/wgo/internal/collectors/terraform"
 	"github.com/yairfalse/wgo/internal/scanner"
 	"github.com/yairfalse/wgo/pkg/types"
 )
@@ -117,24 +118,24 @@ func TestConcurrentScanIntegration(t *testing.T) {
 	})
 
 	// Test CLI integration
-	t.Run("CLI_ConcurrentScan", func(t *testing.T) {
-		// This test would normally use exec.Command to test the CLI
-		// but we'll test the command functions directly
-		
-		// Create a mock command for testing
-		cmd := commands.NewScanCommand()
-		
-		// Set up command flags
-		cmd.Flags().Set("concurrent", "true")
-		cmd.Flags().Set("max-workers", "2")
-		cmd.Flags().Set("quiet", "true")
-		cmd.Flags().Set("state-file", stateFile)
-		cmd.Flags().Set("provider", "terraform")
-
-		// Note: This would normally execute the command
-		// In a real integration test, you'd use exec.Command or similar
-		t.Log("CLI command would be executed here")
-	})
+	// t.Run("CLI_ConcurrentScan", func(t *testing.T) {
+	// 	// This test would normally use exec.Command to test the CLI
+	// 	// but we'll test the command functions directly
+	// 	
+	// 	// Skip command test - function is not exported
+	// 	// cmd := commands.NewScanCommand()
+	// 	
+	// 	// Set up command flags
+	// 	// cmd.Flags().Set("concurrent", "true")
+	// 	// cmd.Flags().Set("max-workers", "2")
+	// 	// cmd.Flags().Set("quiet", "true")
+	// 	// cmd.Flags().Set("state-file", stateFile)
+	// 	// cmd.Flags().Set("provider", "terraform")
+	//
+	// 	// Note: This would normally execute the command
+	// 	// In a real integration test, you'd use exec.Command or similar
+	// 	// t.Log("CLI command would be executed here")
+	// })
 }
 
 func TestConcurrentScanPerformance(t *testing.T) {

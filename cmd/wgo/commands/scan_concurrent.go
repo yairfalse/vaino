@@ -311,7 +311,3 @@ Concurrent mode can provide 3-10x performance improvements by parallelizing:
 	return cmd
 }
 
-// Replace the original newScanCommand with enhanced version
-func newScanCommand() *cobra.Command {
-	return enhancedScanCommand()
-}

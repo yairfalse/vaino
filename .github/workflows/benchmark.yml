@@ -130,12 +130,12 @@ jobs:
       run: |
         # Test concurrent operations
         for i in {1..10}; do
-          ./wgo baseline list --config stress-test/config.yaml &
+          ./build/wgo baseline list --config stress-test/config.yaml &
         done
         wait
         
         # Test with large datasets
-        ./wgo scan --provider terraform --path stress-test/ --config stress-test/config.yaml || true
+        ./build/wgo scan --provider terraform --path stress-test/ --config stress-test/config.yaml || true
     
     - name: Check memory usage
       run: |

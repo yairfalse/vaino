@@ -8,7 +8,6 @@ import (
 
 	"github.com/yairfalse/wgo/internal/collectors"
 	"github.com/yairfalse/wgo/pkg/types"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ConcurrentKubernetesCollector implements parallel resource collection for Kubernetes
@@ -37,7 +36,7 @@ func NewConcurrentKubernetesCollector(maxWorkers int, timeout time.Duration) col
 	}
 
 	return &ConcurrentKubernetesCollector{
-		KubernetesCollector: NewKubernetesCollector(),
+		KubernetesCollector: NewKubernetesCollector().(*KubernetesCollector),
 		maxWorkers:          maxWorkers,
 		timeout:             timeout,
 	}
@@ -380,7 +379,7 @@ func (c *ConcurrentKubernetesCollector) CollectFilteredResources(ctx context.Con
 }
 
 // initializeClient initializes the Kubernetes client
-func (c *ConcurrentKubernetesCollector) initializeClient(config collectors.CollectorConfig) (*Client, error) {
+func (c *ConcurrentKubernetesCollector) initializeClient(config collectors.CollectorConfig) (*KubernetesClient, error) {
 	// Extract context from config
 	context := ""
 	if config.Config != nil {
@@ -390,9 +389,10 @@ func (c *ConcurrentKubernetesCollector) initializeClient(config collectors.Colle
 	}
 
 	// Create client
-	client, err := NewClient(context)
+	client := NewKubernetesClient()
+	err := client.Initialize(context, "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Kubernetes client: %w", err)
+		return nil, fmt.Errorf("failed to initialize Kubernetes client: %w", err)
 	}
 
 	return client, nil

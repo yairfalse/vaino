@@ -81,11 +81,11 @@ jobs:
     
     - name: Test CLI help commands
       run: |
-        ./wgo --help
-        ./wgo baseline --help
-        ./wgo scan --help
-        ./wgo check --help
-        ./wgo version
+        ./build/wgo --help
+        ./build/wgo baseline --help
+        ./build/wgo scan --help
+        ./build/wgo check --help
+        ./build/wgo version
 
   e2e-tests:
     name: E2E Tests
@@ -149,8 +149,8 @@ jobs:
     - name: Test basic functionality (Unix)
       if: matrix.os != 'windows-latest'
       run: |
-        ./wgo --version
-        ./wgo --help
+        ./build/wgo --version
+        ./build/wgo --help
     
     - name: Test basic functionality (Windows)
       if: matrix.os == 'windows-latest'
@@ -220,7 +220,7 @@ jobs:
         RUN apk --no-cache add ca-certificates
         WORKDIR /root/
         COPY --from=builder /app/wgo .
-        CMD ["./wgo", "--help"]
+        CMD ["./build/wgo", "--help"]
         EOF
     
     - name: Build Docker image

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -663,5 +664,3 @@ func DefaultMemoryOptimizationConfig() MemoryOptimizationConfig {
 	}
 }
 
-// Need to import debug package for SetGCPercent
-import "runtime/debug"

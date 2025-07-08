@@ -199,13 +199,13 @@ jobs:
         make build
         
         # Test configuration workflow
-        ./wgo configure --help
-        ./wgo status
-        ./wgo check-config || true  # May fail without real providers
+        ./build/wgo configure --help
+        ./build/wgo status
+        ./build/wgo check-config || true  # May fail without real providers
         
         # Test scanning workflow  
         cd test-fixtures
-        ../wgo scan --provider terraform --path . --quiet || true
+        ../build/wgo scan --provider terraform --path . --quiet || true
 
   # End-to-end tests
   e2e-tests:
@@ -349,8 +349,8 @@ jobs:
         
     - name: Test binary
       run: |
-        ./wgo --help
-        ./wgo version
+        ./build/wgo --help
+        ./build/wgo version
 
   # Security and quality
   security-scan:

@@ -186,9 +186,9 @@ jobs:
       run: |
         echo "🔧 Testing CLI binary..."
         make build
-        ./wgo --help
-        ./wgo status
-        ./wgo configure --help
+        ./build/wgo --help
+        ./build/wgo status
+        ./build/wgo configure --help
 
   test-config:
     name: Test Configuration System
