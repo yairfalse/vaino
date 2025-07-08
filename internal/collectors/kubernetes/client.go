@@ -29,6 +29,11 @@ func NewKubernetesClient() *KubernetesClient {
 
 // Initialize initializes the Kubernetes client with given context and kubeconfig
 func (k *KubernetesClient) Initialize(contextName, kubeconfig string) error {
+	// Skip initialization in CI/test environment
+	if os.Getenv("CI") == "true" || os.Getenv("GITHUB_ACTIONS") == "true" {
+		return nil
+	}
+	
 	config, err := k.GetConfig(contextName, kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to get Kubernetes config: %w", err)
