@@ -15,3 +15,29 @@ config.yml
 # Test artifacts
 coverage.out
 coverage.html
+
+# Secrets and sensitive files
+*.key
+*.pem
+*.p12
+*.pfx
+.env
+.env.*
+secrets/
+credentials/
+*_api_key*
+*_secret*
+
+# Provider credentials
+datadog.conf
+aws_credentials
+gcp_credentials.json
+kubeconfig*
+
+# IDE and temp files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
