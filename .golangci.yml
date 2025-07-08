@@ -8,10 +8,8 @@ run:
   allow-parallel-runners: true
 
 output:
-  format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
-  uniq-by-line: true
   sort-results: true
 
 linters:
@@ -97,7 +95,6 @@ linters-settings:
     check-blank: true
 
   govet:
-    check-shadowing: true
     enable-all: true
     disable:
       - fieldalignment
@@ -162,7 +159,6 @@ linters-settings:
     min-complexity: 4
 
   nolintlint:
-    allow-leading-space: true
     allow-unused: false
     require-explanation: false
     require-specific: false
@@ -185,9 +181,6 @@ linters-settings:
       - name: unreachable-code
 
   unparam:
-    check-exported: false
-
-  unused:
     check-exported: false
 
 issues:

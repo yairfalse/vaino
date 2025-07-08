@@ -71,10 +71,10 @@ func (w *AtomicWriter) WriteFile(filename string, data []byte, perm os.FileMode)
 func (w *AtomicWriter) ReadFile(filename string) ([]byte, error) {
 	fileLock := w.getFileLock(filename)
 	fileLock.RLock()
-	defer fileLock.RUnlock()
 
 	data, err := os.ReadFile(filename)
 	if err != nil {
+		fileLock.RUnlock() // Release read lock before recovery
 		// Try to recover from backup if main file is missing/corrupted
 		if os.IsNotExist(err) {
 			return w.recoverFromBackup(filename)
@@ -84,9 +84,11 @@ func (w *AtomicWriter) ReadFile(filename string) ([]byte, error) {
 
 	// Basic corruption check - ensure file is not empty and has valid content
 	if len(data) == 0 {
+		fileLock.RUnlock() // Release read lock before recovery
 		return w.recoverFromBackup(filename)
 	}
 
+	fileLock.RUnlock()
 	return data, nil
 }
 

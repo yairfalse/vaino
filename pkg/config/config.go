@@ -167,10 +167,9 @@ func Load() (*Config, error) {
 
 // Validate validates the configuration
 func (c *Config) Validate() error {
-	if c.Claude.APIKey == "" {
-		return fmt.Errorf("Claude API key is required for AI features")
-	}
-
+	// Claude API key is optional - only required for AI features
+	// This makes WGO work without needing AI setup
+	
 	if c.Storage.BasePath == "" {
 		return fmt.Errorf("storage base path is required")
 	}
@@ -180,6 +179,11 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
+}
+
+// HasAIFeatures checks if AI features are available
+func (c *Config) HasAIFeatures() bool {
+	return c.Claude.APIKey != ""
 }
 
 // ExpandPaths expands home directory paths
