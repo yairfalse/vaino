@@ -1,0 +1,120 @@
+name: Validate Test Suite
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run weekly to ensure tests stay healthy
+    - cron: '0 10 * * 1'
+
+env:
+  GO_VERSION: '1.21'
+
+jobs:
+  validate-correlation-tests:
+    name: Validate Correlation Test Suite
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Get dependencies
+      run: go mod download
+
+    - name: Validate test compilation
+      run: |
+        echo "🔍 Validating all test files compile..."
+        
+        # Check unit tests compile
+        go test -c ./internal/analyzer/... -o /dev/null
+        go test -c ./internal/differ/... -o /dev/null
+        
+        # Check performance tests compile
+        go test -c ./test/performance/... -o /dev/null
+        
+        # Check system tests compile
+        go test -c ./test/system/... -o /dev/null
+        
+        # Check e2e tests compile
+        go test -c ./test/e2e/... -o /dev/null
+        
+        echo "✅ All test files compile successfully"
+
+    - name: Validate test discovery
+      run: |
+        echo "🔍 Discovering correlation tests..."
+        
+        # List correlation unit tests
+        echo "Correlation unit tests:"
+        go test -list=. ./internal/analyzer/... | grep -E "(Correlat|Timeline|Format)" || echo "No correlation tests found"
+        
+        # List simple differ tests
+        echo "Simple differ tests:"
+        go test -list=. ./internal/differ/... | grep -E "SimpleDiffer" || echo "No simple differ tests found"
+        
+        # List performance tests
+        echo "Performance tests:"
+        go test -list=. ./test/performance/... | grep -E "(Benchmark|Test)" || echo "No performance tests found"
+        
+        # List system tests
+        echo "System integration tests:"
+        go test -list=. ./test/system/... | grep -E "Test" || echo "No system tests found"
+
+    - name: Quick smoke test
+      run: |
+        echo "🚀 Running quick smoke test..."
+        
+        # Run a few critical tests quickly
+        go test -v ./internal/analyzer/... -run "TestCorrelator_NewCorrelator" -timeout=30s
+        go test -v ./internal/analyzer/... -run "TestFormatCorrelatedChanges_EmptyGroups" -timeout=30s
+        go test -v ./internal/differ/... -run "TestSimpleDiffer_NewSimpleDiffer" -timeout=30s
+        
+        echo "✅ Smoke tests passed"
+
+    - name: Validate benchmark availability
+      run: |
+        echo "🔍 Validating benchmarks are available..."
+        
+        # List available benchmarks
+        go test -list=Benchmark ./test/performance/... || echo "No benchmarks found"
+        
+        # Quick benchmark run to ensure they work
+        go test -bench=BenchmarkCorrelationEngine/changes_10 -benchtime=1s ./test/performance/... | head -20
+        
+        echo "✅ Benchmarks validated"
+
+    - name: Report test statistics
+      run: |
+        echo "📊 Test Suite Statistics"
+        echo "======================="
+        
+        # Count test functions
+        UNIT_TESTS=$(go test -list=. ./internal/analyzer/... ./internal/differ/... | grep -c "^Test" || echo "0")
+        BENCHMARKS=$(go test -list=. ./test/performance/... | grep -c "^Benchmark" || echo "0")
+        SYSTEM_TESTS=$(go test -list=. ./test/system/... | grep -c "^Test" || echo "0")
+        E2E_TESTS=$(go test -list=. ./test/e2e/... | grep -c "^Test" || echo "0")
+        
+        echo "Unit Tests: $UNIT_TESTS"
+        echo "Benchmarks: $BENCHMARKS"
+        echo "System Tests: $SYSTEM_TESTS"
+        echo "E2E Tests: $E2E_TESTS"
+        echo ""
+        echo "Total Tests: $((UNIT_TESTS + SYSTEM_TESTS + E2E_TESTS))"
+        echo "Total Benchmarks: $BENCHMARKS"
+        
+        # Validate we have reasonable test coverage
+        if [ "$UNIT_TESTS" -lt "15" ]; then
+          echo "⚠️ Warning: Low unit test count ($UNIT_TESTS < 15)"
+        fi
+        
+        if [ "$BENCHMARKS" -lt "5" ]; then
+          echo "⚠️ Warning: Low benchmark count ($BENCHMARKS < 5)"
+        fi
+        
+        echo "✅ Test suite validation complete"

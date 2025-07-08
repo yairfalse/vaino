@@ -30,6 +30,7 @@ func (a *App) GetCommands() []*cobra.Command {
 		a.createStatusCommand(),
 		a.createScanCommand(),
 		a.createCheckCommand(),
+		a.createDiffCommand(),
 		a.createBaselineCommand(),
 		a.createExplainCommand(),
 		a.createCacheCommand(),
@@ -124,6 +125,25 @@ func (a *App) createConfigCommand() *cobra.Command {
 			a.runConfigCommand(cmd, args)
 		},
 	}
+}
+
+func (a *App) createDiffCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "diff",
+		Short: "Compare infrastructure states",
+		Long:  `Compare two infrastructure states to see detailed differences`,
+		Run: func(cmd *cobra.Command, args []string) {
+			a.runDiffCommand(cmd, args)
+		},
+	}
+
+	// Unix-style flags
+	cmd.Flags().Bool("name-only", false, "show only names of changed resources")
+	cmd.Flags().Bool("stat", false, "show diffstat")
+	cmd.Flags().BoolP("quiet", "q", false, "suppress all output, exit with status only")
+	cmd.Flags().String("format", "", "output format (unix, simple, name-only, stat)")
+
+	return cmd
 }
 
 func (a *App) createSetupCommand() *cobra.Command {
