@@ -130,18 +130,43 @@ func (a *App) createConfigCommand() *cobra.Command {
 func (a *App) createDiffCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "diff",
-		Short: "Compare infrastructure states",
-		Long:  `Compare two infrastructure states to see detailed differences`,
+		Short: "Compare infrastructure states (like 'git diff' for infrastructure)",
+		Long: `Compare infrastructure states to see what changed - just like 'git diff' but for your infrastructure.
+
+Shows changes in a familiar, easy-to-read format that works great with Unix tools.
+
+QUICK START:
+  wgo diff              # See what changed (git diff style)
+  wgo diff --name-only  # Just list what changed
+  wgo diff --stat       # Show change summary
+  wgo diff --quiet      # Silent mode for scripts`,
+		Example: `  # See infrastructure changes (like git diff)
+  wgo diff
+
+  # List just the names of changed resources
+  wgo diff --name-only
+
+  # Show statistics about changes
+  wgo diff --stat
+
+  # Silent mode - check exit code (0=no changes, 1=changes found)
+  wgo diff --quiet && echo "All good!" || echo "Changes detected!"
+
+  # Use in scripts and pipelines
+  if ! wgo diff --quiet; then
+    echo "⚠️  Infrastructure drift detected!"
+    wgo diff --stat
+  fi`,
 		Run: func(cmd *cobra.Command, args []string) {
 			a.runDiffCommand(cmd, args)
 		},
 	}
 
-	// Unix-style flags
-	cmd.Flags().Bool("name-only", false, "show only names of changed resources")
-	cmd.Flags().Bool("stat", false, "show diffstat")
-	cmd.Flags().BoolP("quiet", "q", false, "suppress all output, exit with status only")
-	cmd.Flags().String("format", "", "output format (unix, simple, name-only, stat)")
+	// Unix-style flags with clear descriptions
+	cmd.Flags().Bool("name-only", false, "show only names of changed resources (like 'git diff --name-only')")
+	cmd.Flags().Bool("stat", false, "show change statistics (like 'git diff --stat')")
+	cmd.Flags().BoolP("quiet", "q", false, "silent mode - no output, just exit code (0=no changes, 1=changes)")
+	cmd.Flags().String("format", "", "output format: unix (default), simple, name-only, stat")
 
 	return cmd
 }

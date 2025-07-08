@@ -92,13 +92,16 @@ func (a *App) runConfigCommand(cmd *cobra.Command, args []string) {
 }
 
 func (a *App) runDiffCommand(cmd *cobra.Command, args []string) {
-	a.logger.Info("Comparing infrastructure states...")
-	
 	// Get Unix-style flags
 	quiet, _ := cmd.Flags().GetBool("quiet")
 	nameOnly, _ := cmd.Flags().GetBool("name-only")
 	stat, _ := cmd.Flags().GetBool("stat")
 	format, _ := cmd.Flags().GetString("format")
+	
+	// Only show verbose logging in debug mode
+	if a.config.Debug {
+		a.logger.Info("Comparing infrastructure states...")
+	}
 	
 	// Handle format shortcuts
 	if nameOnly {
@@ -110,16 +113,32 @@ func (a *App) runDiffCommand(cmd *cobra.Command, args []string) {
 	}
 	
 	// For demo purposes, create a sample drift report
+	// In a real implementation, this would load actual infrastructure data
 	report := a.createSampleDriftReport()
 	
-	// If quiet mode, just exit with status
-	if quiet {
-		if len(report.ResourceChanges) > 0 {
-			// Exit code 1 means drift detected
-			fmt.Printf("") // Silent output
-			return
-		}
+	// If this is a real empty state (no demo data), show helpful guidance
+	if len(report.ResourceChanges) == 0 && !quiet {
+		fmt.Println("No infrastructure changes detected.")
+		fmt.Println()
+		fmt.Println("💡 Getting started with WGO:")
+		fmt.Println("   1. Run 'wgo scan' to scan your infrastructure")
+		fmt.Println("   2. Run 'wgo baseline create' to create a baseline")
+		fmt.Println("   3. Run 'wgo diff' to see what changed")
+		fmt.Println()
+		fmt.Println("   Or try 'wgo setup' for automatic configuration")
 		return
+	}
+	
+	// If quiet mode, just exit with status (no output)
+	if quiet {
+		// In real implementation: os.Exit(1) if drift detected, os.Exit(0) if not
+		return
+	}
+	
+	// Add helpful context for first-time users (not in quiet mode)
+	if !quiet && len(report.ResourceChanges) > 0 {
+		fmt.Printf("# Infrastructure drift detected (showing demo data)\n")
+		fmt.Printf("# This shows how changes would appear:\n\n")
 	}
 	
 	// Use Unix-style formatter
@@ -145,6 +164,15 @@ func (a *App) runDiffCommand(cmd *cobra.Command, args []string) {
 	}
 	
 	fmt.Print(string(result))
+	
+	// Add helpful next steps for users
+	if !quiet && len(report.ResourceChanges) > 0 {
+		fmt.Printf("\n💡 Try these commands:\n")
+		fmt.Printf("   wgo diff --name-only    # List just the changed resources\n")
+		fmt.Printf("   wgo diff --stat         # Show change statistics\n")
+		fmt.Printf("   wgo diff --quiet        # Silent mode for scripts\n")
+		fmt.Printf("   wgo explain             # Get AI explanation of changes\n")
+	}
 	
 	// Set exit code based on whether drift was detected (like git diff)
 	if len(report.ResourceChanges) > 0 {

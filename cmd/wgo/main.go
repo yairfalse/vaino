@@ -23,10 +23,22 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:   "wgo",
-	Short: "A powerful infrastructure drift detection tool",
-	Long: `wgo is a tool for detecting and managing infrastructure drift.
-It helps you track changes in your infrastructure over time and identify
-discrepancies between expected and actual states.`,
+	Short: "Git diff for infrastructure - simple drift detection",
+	Long: `WGO detects infrastructure drift in a simple, familiar way.
+
+Think of it as "git diff" but for your infrastructure - see what changed,
+when it changed, and get clear explanations.
+
+QUICK START:
+  wgo diff              # See what changed in your infrastructure
+  wgo scan              # Scan your current infrastructure  
+  wgo setup             # Auto-configure for your environment
+
+WORKS WITH:
+  • Terraform state files
+  • AWS resources  
+  • Kubernetes clusters
+  • And more...`,
 	Version: version,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if configFile != "" {
