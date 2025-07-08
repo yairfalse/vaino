@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/yairfalse/wgo/internal/collectors"
+	"github.com/yairfalse/wgo/internal/collectors/aws"
 	"github.com/yairfalse/wgo/internal/collectors/gcp"
 	"github.com/yairfalse/wgo/internal/collectors/kubernetes"
 	"github.com/yairfalse/wgo/internal/collectors/terraform"
@@ -64,6 +65,9 @@ compared against existing baselines to identify changes.`,
 	cmd.Flags().StringSlice("tags", []string{}, "tags to apply to snapshot (key=value)")
 	cmd.Flags().Bool("quiet", false, "suppress output (for automated use)")
 	
+	// AWS specific flags
+	cmd.Flags().String("profile", "", "AWS profile to use")
+	
 	// GCP specific flags
 	cmd.Flags().String("project", "", "GCP project ID")
 	cmd.Flags().String("credentials", "", "path to GCP service account credentials JSON file")
@@ -102,6 +106,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 	enhancedRegistry.RegisterEnhanced(terraformCollector)
 	kubernetesCollector := kubernetes.NewKubernetesCollector()
 	enhancedRegistry.RegisterEnhanced(kubernetesCollector)
+	awsCollector := aws.NewAWSCollector()
+	enhancedRegistry.RegisterEnhanced(awsCollector)
 	gcpCollector := gcp.NewGCPCollector()
 	enhancedRegistry.RegisterEnhanced(gcpCollector)
 	
@@ -211,6 +217,18 @@ func runScan(cmd *cobra.Command, args []string) error {
 			config.Config = map[string]interface{}{}
 			if len(contexts) > 0 {
 				config.Config["contexts"] = contexts
+			}
+		case "aws":
+			// Get AWS-specific flags
+			profile, _ := cmd.Flags().GetString("profile")
+			regions, _ := cmd.Flags().GetStringSlice("region")
+			
+			config.Config = map[string]interface{}{}
+			if profile != "" {
+				config.Config["profile"] = profile
+			}
+			if len(regions) > 0 && regions[0] != "" {
+				config.Config["region"] = regions[0] // AWS SDK works with single region
 			}
 		case "gcp":
 			// Get GCP-specific flags
