@@ -20,23 +20,35 @@ import (
 func newDiffCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "diff",
-		Short: "Compare infrastructure states",
-		Long: `Compare two infrastructure states (snapshots or baselines) to see
-detailed differences. Supports multiple output formats for different use cases.`,
-		Example: `  # Compare current state with baseline
+		Short: "Show infrastructure changes (like 'git diff' for infrastructure)",
+		Long: `Show changes in your infrastructure state - just like 'git diff' but for infrastructure.
+
+Works great with Unix tools and scripts. Exit codes: 0 = no changes, 1 = changes detected.
+
+By default, compares current infrastructure state with the last scan automatically.`,
+		Example: `  # See what changed in your infrastructure
+  wgo diff
+
+  # Just list what changed (like git diff --name-only)
+  wgo diff --name-only
+
+  # Show change statistics (like git diff --stat)  
+  wgo diff --stat
+
+  # Silent mode for scripts (like git diff --quiet)
+  wgo diff --quiet && echo "All good!" || echo "Changes detected!"
+
+  # Compare with specific baseline
   wgo diff --baseline prod-v1.0
 
-  # Compare two snapshots
+  # Compare two specific snapshots
   wgo diff --from snapshot-1.json --to snapshot-2.json
 
-  # Compare with specific format
-  wgo diff --baseline prod-v1.0 --format markdown --output-file changes.md
-
-  # Compare specific provider only
-  wgo diff --baseline prod-v1.0 --provider aws --region us-east-1
-
-  # Show only high-impact changes
-  wgo diff --baseline prod-v1.0 --min-severity medium`,
+  # Use in CI/CD pipelines
+  if ! wgo diff --quiet; then
+    echo "⚠️  Infrastructure drift detected!"
+    wgo diff --stat
+  fi`,
 		RunE: runDiff,
 	}
 
