@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func runWGO(workDir string, args ...string) (string, string, error) {
+func runWGOWorkflow(workDir string, args ...string) (string, string, error) {
 	cmd := exec.Command(wgoBinary, args...)
 	cmd.Dir = workDir
 	var stdout, stderr bytes.Buffer
@@ -108,7 +108,7 @@ collectors:
 	
 	// Step 1: Test scan command
 	t.Run("scan_infrastructure", func(t *testing.T) {
-		stdout, stderr, err := runWGO(workDir, "scan", "--provider", "terraform", "--config", configFile)
+		stdout, stderr, err := runWGOWorkflow(workDir, "scan", "--provider", "terraform", "--config", configFile)
 		
 		if err != nil {
 			t.Logf("Scan stderr: %s", stderr)
@@ -122,7 +122,7 @@ collectors:
 	
 	// Step 2: Test baseline creation
 	t.Run("create_baseline", func(t *testing.T) {
-		stdout, stderr, err := runWGO(workDir, "baseline", "create", 
+		stdout, stderr, err := runWGOWorkflow(workDir, "baseline", "create", 
 			"--name", "test-baseline", 
 			"--description", "E2E test baseline",
 			"--config", configFile)
@@ -142,7 +142,7 @@ collectors:
 	
 	// Step 3: Test baseline listing
 	t.Run("list_baselines", func(t *testing.T) {
-		stdout, stderr, err := runWGO(workDir, "baseline", "list", "--config", configFile)
+		stdout, stderr, err := runWGOWorkflow(workDir, "baseline", "list", "--config", configFile)
 		
 		if err != nil {
 			t.Logf("Baseline list stderr: %s", stderr)
@@ -155,7 +155,7 @@ collectors:
 	
 	// Step 4: Test drift checking
 	t.Run("check_drift", func(t *testing.T) {
-		stdout, stderr, err := runWGO(workDir, "check", "--config", configFile)
+		stdout, stderr, err := runWGOWorkflow(workDir, "check", "--config", configFile)
 		
 		if err != nil {
 			t.Logf("Check drift stderr: %s", stderr)
@@ -171,7 +171,7 @@ collectors:
 		formats := []string{"json", "yaml", "markdown"}
 		
 		for _, format := range formats {
-			stdout, stderr, err := runWGO(workDir, "baseline", "list", "--output", format, "--config", configFile)
+			stdout, stderr, err := runWGOWorkflow(workDir, "baseline", "list", "--output", format, "--config", configFile)
 			
 			if err != nil {
 				t.Logf("Format %s stderr: %s", format, stderr)
@@ -200,7 +200,7 @@ func TestE2E_ErrorHandling(t *testing.T) {
 			t.Fatalf("Failed to create invalid config: %v", err)
 		}
 		
-		_, stderr, err := runWGO(workDir, "baseline", "list", "--config", invalidConfig)
+		_, stderr, err := runWGOWorkflow(workDir, "baseline", "list", "--config", invalidConfig)
 		
 		if err == nil {
 			t.Error("Expected error with invalid config")
@@ -223,7 +223,7 @@ storage:
 			t.Fatalf("Failed to create config: %v", err)
 		}
 		
-		_, stderr, err := runWGO(workDir, "baseline", "show", "non-existent", "--config", configFile)
+		_, stderr, err := runWGOWorkflow(workDir, "baseline", "show", "non-existent", "--config", configFile)
 		
 		if err == nil {
 			t.Error("Expected error with non-existent baseline")
@@ -237,7 +237,7 @@ storage:
 	
 	// Test with missing required flags
 	t.Run("missing_required_flags", func(t *testing.T) {
-		_, stderr, err := runWGO(workDir, "baseline", "create")
+		_, stderr, err := runWGOWorkflow(workDir, "baseline", "create")
 		
 		if err == nil {
 			t.Error("Expected error with missing required flags")
@@ -276,7 +276,7 @@ output:
 		
 		for i := 0; i < numOperations; i++ {
 			go func(index int) {
-				_, _, err := runWGO(workDir, "baseline", "list", "--config", configFile)
+				_, _, err := runWGOWorkflow(workDir, "baseline", "list", "--config", configFile)
 				results <- err
 			}(i)
 		}
@@ -347,7 +347,7 @@ logging:
 			}
 			
 			// Test that each config works
-			stdout, stderr, err := runWGO(workDir, "version", "--config", configFile)
+			stdout, stderr, err := runWGOWorkflow(workDir, "version", "--config", configFile)
 			
 			if err != nil {
 				t.Logf("Config %s stderr: %s", configName, stderr)
@@ -358,7 +358,7 @@ logging:
 			}
 			
 			// Test baseline operations with each config
-			stdout, stderr, err = runWGO(workDir, "baseline", "list", "--config", configFile)
+			stdout, stderr, err = runWGOWorkflow(workDir, "baseline", "list", "--config", configFile)
 			
 			if err != nil {
 				t.Logf("Baseline list with config %s stderr: %s", configName, stderr)

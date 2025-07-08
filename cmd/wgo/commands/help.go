@@ -219,7 +219,8 @@ func runHelp(cmd *cobra.Command, args []string) error {
 
 	switch topic {
 	case "providers":
-		fmt.Println("\nWGO Provider Setup Guides")
+		fmt.Println()
+		fmt.Println("WGO Provider Setup Guides")
 		fmt.Println("========================")
 		fmt.Println()
 		fmt.Println("Available providers:")
