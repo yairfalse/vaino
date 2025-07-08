@@ -17,22 +17,26 @@ var (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "wgo",
-	Short: "A powerful infrastructure drift detection tool",
-	Long: `WGO (What's Going On) is a comprehensive infrastructure drift detection tool
-that helps you track changes in your infrastructure over time and identify
-discrepancies between expected and actual states.
+	Short: "Git diff for infrastructure - simple drift detection",
+	Long: `WGO is "git diff" for your infrastructure - see what changed, when, and why.
 
-WGO supports multiple infrastructure providers including:
-- Terraform state files
-- AWS resources
-- Kubernetes clusters
+Think of it as 'git diff' but for infrastructure changes:
+- Simple, familiar command-line experience
+- Unix-style output that works with pipes and scripts  
+- Exit codes: 0 = no changes, 1 = changes detected
+- Multiple output formats for different use cases
 
-Features include:
-- Infrastructure state snapshots
-- Drift detection and analysis  
-- Baseline management
-- AI-powered explanations via Claude
-- Multiple output formats`,
+QUICK START:
+  wgo diff              # See what changed in your infrastructure
+  wgo scan              # Scan your current infrastructure  
+  wgo diff --stat       # Show change statistics
+  wgo diff --quiet      # Silent mode for scripts
+
+WORKS WITH:
+  • Terraform state files
+  • AWS resources  
+  • Kubernetes clusters
+  • And more...`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Handle --version flag
 		if showVersion, _ := cmd.Flags().GetBool("version"); showVersion {
