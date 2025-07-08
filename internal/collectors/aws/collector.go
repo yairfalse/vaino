@@ -3,9 +3,11 @@ package aws
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/yairfalse/wgo/internal/collectors"
+	wgoerrors "github.com/yairfalse/wgo/internal/errors"
 	"github.com/yairfalse/wgo/pkg/types"
 )
 
@@ -128,7 +130,22 @@ func (c *AWSCollector) Collect(ctx context.Context, config collectors.CollectorC
 	for _, service := range services {
 		resources, err := service.collector(ctx)
 		if err != nil {
-			// Log error but continue with other services
+			// Return authentication errors immediately, don't continue
+			if isAuthenticationError(err) {
+				return nil, wgoerrors.New(wgoerrors.ErrorTypeAuthentication, wgoerrors.ProviderAWS, 
+					fmt.Sprintf("Authentication failed for %s service", service.name)).
+					WithCause(err.Error()).
+					WithSolutions(
+						"Verify AWS credentials are configured correctly",
+						"Check AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables",
+						"Ensure AWS profile is valid if using profiles",
+						"Verify IAM permissions for the service",
+					).
+					WithVerify("aws sts get-caller-identity").
+					WithHelp("wgo validate aws")
+			}
+			
+			// For other errors, log and continue
 			fmt.Printf("Warning: Failed to collect %s resources: %v\n", service.name, err)
 			continue
 		}
@@ -190,4 +207,38 @@ func (c *AWSCollector) GetDefaultConfig() map[string]interface{} {
 		"region":  "us-east-1",
 		"profile": "",
 	}
+}
+
+// isAuthenticationError checks if an error is related to authentication
+func isAuthenticationError(err error) bool {
+	if err == nil {
+		return false
+	}
+	
+	errStr := err.Error()
+	
+	// Common AWS authentication error patterns
+	authErrorPatterns := []string{
+		"UnauthorizedOperation",
+		"InvalidUserID.NotFound", 
+		"AuthFailure",
+		"SignatureDoesNotMatch",
+		"TokenRefreshRequired",
+		"AccessDenied",
+		"InvalidAccessKeyId",
+		"SignatureDoesNotMatch",
+		"RequestExpired",
+		"no valid credentials",
+		"credential provider",
+		"unable to load AWS config",
+		"NoCredentialProviders",
+	}
+	
+	for _, pattern := range authErrorPatterns {
+		if strings.Contains(errStr, pattern) {
+			return true
+		}
+	}
+	
+	return false
 }

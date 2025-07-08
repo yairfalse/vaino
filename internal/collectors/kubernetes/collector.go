@@ -3,9 +3,11 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/yairfalse/wgo/internal/collectors"
+	wgoerrors "github.com/yairfalse/wgo/internal/errors"
 	"github.com/yairfalse/wgo/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -52,6 +54,21 @@ func (k *KubernetesCollector) Collect(ctx context.Context, config collectors.Col
 	kubeConfig := k.extractKubernetesConfig(config)
 	err := k.client.Initialize(kubeConfig.Context, kubeConfig.Kubeconfig)
 	if err != nil {
+		// Check if it's an authentication error
+		if isKubernetesAuthError(err) {
+			return nil, wgoerrors.New(wgoerrors.ErrorTypeAuthentication, wgoerrors.ProviderKubernetes,
+				"Kubernetes authentication failed").
+				WithCause(err.Error()).
+				WithSolutions(
+					"Check your kubeconfig file exists and is valid",
+					"Verify kubectl can connect to the cluster",
+					"Ensure the current context is correct",
+					"Check if your cluster credentials have expired",
+				).
+				WithVerify("kubectl cluster-info").
+				WithHelp("wgo validate kubernetes")
+		}
+		
 		return nil, fmt.Errorf("failed to initialize Kubernetes client: %w", err)
 	}
 	
@@ -362,4 +379,39 @@ func (k *KubernetesCollector) collectSecurity(ctx context.Context, namespaces []
 	}
 	
 	return resources, nil
+}
+
+// isKubernetesAuthError checks if an error is related to Kubernetes authentication
+func isKubernetesAuthError(err error) bool {
+	if err == nil {
+		return false
+	}
+	
+	errStr := strings.ToLower(err.Error())
+	
+	// Common Kubernetes authentication error patterns
+	authErrorPatterns := []string{
+		"unauthorized",
+		"forbidden",
+		"authentication required",
+		"invalid bearer token",
+		"token has expired",
+		"certificate has expired", 
+		"x509: certificate",
+		"unable to authenticate",
+		"permission denied",
+		"access denied",
+		"credentials",
+		"kubeconfig",
+		"context",
+		"authentication",
+	}
+	
+	for _, pattern := range authErrorPatterns {
+		if strings.Contains(errStr, pattern) {
+			return true
+		}
+	}
+	
+	return false
 }

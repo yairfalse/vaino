@@ -28,8 +28,8 @@ func NewKubernetesClient() *KubernetesClient {
 }
 
 // Initialize initializes the Kubernetes client with given context and kubeconfig
-func (k *KubernetesClient) Initialize(context, kubeconfig string) error {
-	config, err := k.GetConfig(context, kubeconfig)
+func (k *KubernetesClient) Initialize(contextName, kubeconfig string) error {
+	config, err := k.GetConfig(contextName, kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to get Kubernetes config: %w", err)
 	}
@@ -41,11 +41,19 @@ func (k *KubernetesClient) Initialize(context, kubeconfig string) error {
 
 	k.config = config
 	k.clientset = clientset
+	
+	// Test connectivity to ensure the config actually works
+	ctx := context.Background()
+	_, err = clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{Limit: 1})
+	if err != nil {
+		return fmt.Errorf("failed to connect to Kubernetes cluster: %w", err)
+	}
+	
 	return nil
 }
 
 // GetConfig returns Kubernetes configuration
-func (k *KubernetesClient) GetConfig(context, kubeconfig string) (*rest.Config, error) {
+func (k *KubernetesClient) GetConfig(contextName, kubeconfig string) (*rest.Config, error) {
 	// If kubeconfig is not specified, use default paths
 	if kubeconfig == "" {
 		if home := homeDir(); home != "" {
@@ -55,7 +63,11 @@ func (k *KubernetesClient) GetConfig(context, kubeconfig string) (*rest.Config, 
 
 	// First try in-cluster config
 	if config, err := rest.InClusterConfig(); err == nil {
-		return config, nil
+		// Only use in-cluster config if we're actually in a cluster
+		// Check for service account token file to confirm we're in a pod
+		if _, statErr := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount/token"); statErr == nil {
+			return config, nil
+		}
 	}
 
 	// Then try kubeconfig file
@@ -65,8 +77,8 @@ func (k *KubernetesClient) GetConfig(context, kubeconfig string) (*rest.Config, 
 	}
 
 	configOverrides := &clientcmd.ConfigOverrides{}
-	if context != "" {
-		configOverrides.CurrentContext = context
+	if contextName != "" {
+		configOverrides.CurrentContext = contextName
 	}
 
 	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(

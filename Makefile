@@ -30,7 +30,8 @@ RESET := \033[0m
 
 .PHONY: all build clean test test-all test-unit test-integration test-e2e test-coverage lint fmt help \
 		test-collectors test-terraform test-gcp test-aws test-kubernetes test-commands test-config \
-		test-changed test-parallel
+		test-changed test-parallel perf-test perf-bench perf-stress perf-memory perf-concurrent \
+		perf-large-dataset perf-quick perf-profile perf-report check-deps
 
 # Default target
 all: clean lint test build
@@ -68,6 +69,18 @@ help:
 	@echo "  fmt               Format code"
 	@echo "  test-coverage     Run tests with coverage report"
 	@echo "  deps              Download dependencies"
+	@echo ""
+	@echo "$(GREEN)⚡ Performance Testing:$(RESET)"
+	@echo "  perf-test         Run comprehensive performance tests"
+	@echo "  perf-bench        Run performance benchmarks"
+	@echo "  perf-stress       Run stress tests"
+	@echo "  perf-memory       Run memory analysis tests"
+	@echo "  perf-concurrent   Run concurrent operation tests"
+	@echo "  perf-large-dataset Run large dataset tests"
+	@echo "  perf-quick        Run quick performance tests"
+	@echo "  perf-profile      Run performance tests with profiling"
+	@echo "  perf-report       Show latest performance report"
+	@echo "  perf-ci           Run CI performance tests (reduced set)"
 
 # Build targets
 build:
@@ -244,6 +257,80 @@ docs-serve:
 	@echo "Serving documentation..."
 	@command -v mkdocs >/dev/null 2>&1 || { echo "mkdocs not installed"; exit 1; }
 	mkdocs serve
+
+# Performance Testing targets
+perf-test:
+	@echo "$(CYAN)Running comprehensive performance tests...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh all
+	@echo "$(GREEN)✅ Performance tests completed$(RESET)"
+
+perf-bench:
+	@echo "$(CYAN)Running performance benchmarks...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh benchmarks
+	@echo "$(GREEN)✅ Performance benchmarks completed$(RESET)"
+
+perf-stress:
+	@echo "$(CYAN)Running stress tests...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh stress
+	@echo "$(GREEN)✅ Stress tests completed$(RESET)"
+
+perf-memory:
+	@echo "$(CYAN)Running memory analysis tests...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh memory --profile
+	@echo "$(GREEN)✅ Memory tests completed$(RESET)"
+
+perf-concurrent:
+	@echo "$(CYAN)Running concurrent operation tests...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh concurrent
+	@echo "$(GREEN)✅ Concurrent tests completed$(RESET)"
+
+perf-large-dataset:
+	@echo "$(CYAN)Running large dataset tests...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh large-dataset
+	@echo "$(GREEN)✅ Large dataset tests completed$(RESET)"
+
+perf-quick:
+	@echo "$(CYAN)Running quick performance tests...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh quick
+	@echo "$(GREEN)✅ Quick performance tests completed$(RESET)"
+
+perf-profile:
+	@echo "$(CYAN)Running performance tests with profiling...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh benchmarks --profile
+	@echo "$(GREEN)✅ Performance profiling completed$(RESET)"
+
+perf-report:
+	@echo "$(CYAN)Generating performance report...$(RESET)"
+	@if [ -d "performance-results" ]; then \
+		echo "Performance results found:"; \
+		ls -la performance-results/performance_report_*.md | tail -5; \
+		echo "$(GREEN)Latest performance report:$(RESET)"; \
+		ls -t performance-results/performance_report_*.md | head -1; \
+	else \
+		echo "$(YELLOW)No performance results found. Run 'make perf-test' first.$(RESET)"; \
+	fi
+
+# CI Performance testing (reduced test set)
+perf-ci:
+	@echo "$(CYAN)Running CI performance tests...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh quick --ci
+	@echo "$(GREEN)✅ CI performance tests completed$(RESET)"
+
+# Dependency checking
+check-deps:
+	@echo "$(CYAN)Checking dependencies...$(RESET)"
+	$(GOMOD) verify
+	$(GOMOD) download
+	@echo "$(GREEN)✅ Dependencies verified$(RESET)"
 
 # Maintenance targets
 mod-tidy:

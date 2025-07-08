@@ -25,6 +25,7 @@ jobs:
       docs: ${{ steps.changes.outputs.docs }}
       deps: ${{ steps.changes.outputs.deps }}
       workflows: ${{ steps.changes.outputs.workflows }}
+      performance: ${{ steps.changes.outputs.performance }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -69,6 +70,11 @@ jobs:
             - 'go.sum'
           workflows:
             - '.github/workflows/**'
+          performance:
+            - 'internal/collectors/**'
+            - 'internal/differ/**'
+            - 'internal/analyzer/**'
+            - 'pkg/types/**'
 
   # Fast component-specific tests
   test-terraform:
@@ -422,3 +428,52 @@ jobs:
       run: |
         echo "❌ Some tests failed!"
         exit 1
+
+  # Performance regression check for critical components
+  performance-regression-check:
+    name: Performance Regression Check
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.performance == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Run performance regression check
+      run: |
+        echo "🔍 Running performance regression check for critical components..."
+        chmod +x scripts/run-performance-tests.sh
+        ./scripts/run-performance-tests.sh quick --ci
+
+    - name: Upload regression check results
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-regression-check-${{ github.sha }}
+        path: performance-results/
+        retention-days: 7
+
+    - name: Performance regression summary
+      run: |
+        echo "## ⚡ Performance Regression Check" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Trigger**: Changes detected in performance-critical components" >> $GITHUB_STEP_SUMMARY
+        echo "**Components**: collectors, differ, analyzer, types" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f performance-results/quick_bench_*.txt ]; then
+          echo "### 📊 Quick Performance Results" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          tail -10 performance-results/quick_bench_*.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status**: Performance regression check completed" >> $GITHUB_STEP_SUMMARY
+          echo "📄 **Action**: Review results for any performance impact" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ **Warning**: No benchmark results found" >> $GITHUB_STEP_SUMMARY
+        fi

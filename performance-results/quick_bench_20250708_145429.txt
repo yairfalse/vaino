@@ -1,0 +1,4 @@
+# github.com/yairfalse/wgo/test/performance [github.com/yairfalse/wgo/test/performance.test]
+./large_dataset_test.go:486:23: invalid operation: resource.Configuration (variable of type map[string]interface{}) is not an interface
+FAIL	github.com/yairfalse/wgo/test/performance [build failed]
+FAIL
