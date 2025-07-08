@@ -29,7 +29,7 @@ func (w *Watcher) displayTableFormat(event *WatchEvent) {
 	timestamp := event.Timestamp.Format("15:04:05")
 	
 	// Summary line
-	fmt.Printf("[%s] 📊 %d changes detected (%d added, %d modified, %d removed)\n",
+	fmt.Printf("[%s] %d changes detected (%d added, %d modified, %d removed)\n",
 		timestamp,
 		event.Summary.Total,
 		event.Summary.Added,
@@ -129,13 +129,13 @@ func (w *Watcher) displayQuietFormat(event *WatchEvent) {
 func (w *Watcher) getConfidenceIndicator(confidence string) string {
 	switch confidence {
 	case "high":
-		return "●" // High confidence - solid circle
+		return "[H]" // High confidence
 	case "medium":
-		return "◐" // Medium confidence - half circle
+		return "[M]" // Medium confidence
 	case "low":
-		return "○" // Low confidence - empty circle
+		return "[L]" // Low confidence
 	default:
-		return "?"
+		return "[?]"
 	}
 }
 
@@ -183,7 +183,7 @@ func (w *Watcher) displayStatistics(totalChecks, totalChanges int) {
 		return
 	}
 
-	fmt.Printf("📈 Statistics: %d checks performed, %d change events detected\n\n",
+	fmt.Printf("Statistics: %d checks performed, %d change events detected\n\n",
 		totalChecks, totalChanges)
 }
 

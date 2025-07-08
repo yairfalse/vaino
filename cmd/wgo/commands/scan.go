@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -14,6 +15,7 @@ import (
 	"github.com/yairfalse/wgo/internal/collectors/kubernetes"
 	"github.com/yairfalse/wgo/internal/collectors/terraform"
 	"github.com/yairfalse/wgo/internal/discovery"
+	wgoerrors "github.com/yairfalse/wgo/internal/errors"
 	"github.com/yairfalse/wgo/pkg/config"
 	"github.com/yairfalse/wgo/pkg/types"
 )
@@ -86,8 +88,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}
 	
 	if !quiet {
-		fmt.Println("🔍 Infrastructure Scan")
-		fmt.Println("=====================")
+		fmt.Println("Infrastructure Scan")
+		fmt.Println("===================")
 	}
 	
 	provider, _ := cmd.Flags().GetString("provider")
@@ -115,7 +117,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 	
 	if !scanAll && provider == "" {
 		// Generate smart defaults and auto-discover infrastructure
-		log("🔍 Auto-discovering infrastructure...\n")
+		log("Auto-discovering infrastructure...\n")
 		smartConfig, err := defaultsManager.GenerateSmartDefaults()
 		if err != nil {
 			return fmt.Errorf("failed to generate smart defaults: %w", err)
@@ -136,15 +138,55 @@ func runScan(cmd *cobra.Command, args []string) error {
 			// Found Terraform state files, use terraform provider
 			provider = "terraform"
 			autoDiscover = true
-			fmt.Printf("✅ Found %d Terraform state file(s), using terraform provider\n", len(stateFiles))
+			fmt.Printf("Found %d Terraform state file(s), using terraform provider\n", len(stateFiles))
 		} else {
 			// No auto-discovery possible, show helpful guidance
-			fmt.Println("\n👋 Welcome to WGO!")
+			// Enhanced first-run experience
+			fmt.Println("\nWelcome to WGO")
 			fmt.Println("==================")
 			fmt.Println()
-			fmt.Println("I couldn't auto-detect your infrastructure.")
+			
+			// Check if this is first run
+			homeDir, _ := os.UserHomeDir()
+			configPath := filepath.Join(homeDir, ".wgo", "config.yaml")
+			isFirstRun := false
+			if _, err := os.Stat(configPath); os.IsNotExist(err) {
+				isFirstRun = true
+			}
+			
+			if isFirstRun {
+				fmt.Println("First run detected! Let me set up WGO for you...")
+				fmt.Println()
+				
+				// Run auto-detection
+				detector := config.NewProviderDetector()
+				detectionResults := detector.DetectAll()
+				
+				availableProviders := []string{}
+				fmt.Println("Detecting available providers:")
+				for provider, result := range detectionResults {
+					if provider == "terraform" && result.StateFiles > 0 {
+						fmt.Printf("  [OK] %s: %d state files found\n", provider, result.StateFiles)
+						availableProviders = append(availableProviders, provider)
+					} else if result.Available && provider != "terraform" {
+						fmt.Printf("  [OK] %s: %s\n", provider, result.Status)
+						availableProviders = append(availableProviders, provider)
+					}
+				}
+				
+				if len(availableProviders) > 0 {
+					fmt.Println()
+					fmt.Println("Creating default configuration...")
+					if err := createDefaultConfig(configPath); err == nil {
+						fmt.Printf("Configuration created at: %s\n", configPath)
+					}
+				}
+			}
+			
 			fmt.Println()
-			fmt.Println("🎯 QUICK START - Choose your provider:")
+			fmt.Println("I couldn't auto-detect your infrastructure to scan.")
+			fmt.Println()
+			fmt.Println("QUICK START - Choose your provider:")
 			fmt.Println()
 			fmt.Println("  For Terraform projects:")
 			fmt.Println("    wgo scan --provider terraform")
@@ -158,7 +200,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 			fmt.Println("  For Kubernetes:")
 			fmt.Println("    wgo scan --provider kubernetes")
 			fmt.Println()
-			fmt.Println("💡 TIP: Run 'wgo auth status' to check your authentication")
+			fmt.Println("TIP: Run 'wgo status' to check your configuration")
+			fmt.Println("        Run 'wgo configure' for interactive setup")
 			fmt.Println()
 			return nil
 		}
@@ -181,7 +224,14 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// Get collector
 	collector, err := enhancedRegistry.GetEnhanced(provider)
 	if err != nil {
-		return fmt.Errorf("failed to get collector for provider '%s': %w", provider, err)
+		return wgoerrors.New(wgoerrors.ErrorTypeProvider, wgoerrors.Provider(provider), 
+			fmt.Sprintf("Failed to initialize %s collector", provider)).
+			WithCause(err.Error()).
+			WithSolutions(
+				fmt.Sprintf("Ensure %s provider is properly installed", provider),
+				"Run 'wgo check-config' to diagnose issues",
+			).
+			WithHelp(fmt.Sprintf("wgo help %s", provider))
 	}
 	
 	// Check collector status
@@ -194,7 +244,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 	var config collectors.CollectorConfig
 	
 	if autoDiscover {
-		fmt.Println("🔍 Auto-discovering configuration...")
+		fmt.Println("Auto-discovering configuration...")
 		discoveredConfig, err := collector.AutoDiscover()
 		if err != nil {
 			return fmt.Errorf("auto-discovery failed: %w", err)
@@ -258,31 +308,76 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// Generate snapshot name if not provided
 	if snapshotName == "" {
 		snapshotName = defaultsManager.GenerateAutoName("scan")
-		log("📝 Auto-generated snapshot name: %s\n", snapshotName)
+		log("Auto-generated snapshot name: %s\n", snapshotName)
 	}
 	config.Config["snapshot_name"] = snapshotName
 	
 	// Validate configuration
 	if err := collector.Validate(config); err != nil {
-		return fmt.Errorf("configuration validation failed: %w", err)
+		// Provider-specific error handling
+		switch provider {
+		case "gcp":
+			if projectID, _ := cmd.Flags().GetString("project"); projectID == "" {
+				return wgoerrors.GCPProjectError()
+			}
+			return wgoerrors.GCPAuthenticationError(err)
+		case "aws":
+			if region, _ := cmd.Flags().GetString("region"); region == "" && os.Getenv("AWS_REGION") == "" {
+				return wgoerrors.AWSRegionError()
+			}
+			return wgoerrors.AWSCredentialsError(err)
+		case "kubernetes":
+			return wgoerrors.KubernetesConnectionError("", err)
+		case "terraform":
+			return wgoerrors.TerraformStateError(filepath.Join(statePaths...))
+		default:
+			return fmt.Errorf("configuration validation failed: %w", err)
+		}
 	}
 	
 	// Perform collection
-	log("📊 Collecting resources from %s...\n", provider)
+	log("Collecting resources from %s...\n", provider)
 	startTime := time.Now()
 	
 	snapshot, err := collector.Collect(ctx, config)
 	if err != nil {
-		return fmt.Errorf("collection failed: %w", err)
+		// Check for common error patterns
+		errStr := err.Error()
+		switch provider {
+		case "gcp":
+			if strings.Contains(errStr, "403") || strings.Contains(errStr, "permission") {
+				return wgoerrors.PermissionError(wgoerrors.ProviderGCP, "GCP APIs")
+			}
+			if strings.Contains(errStr, "could not find default credentials") {
+				return wgoerrors.GCPAuthenticationError(err)
+			}
+			return wgoerrors.New(wgoerrors.ErrorTypeProvider, wgoerrors.ProviderGCP, "Resource collection failed").
+				WithCause(err.Error()).
+				WithSolutions("Check GCP permissions", "Verify API is enabled").
+				WithHelp("wgo help gcp")
+		case "aws":
+			if strings.Contains(errStr, "UnauthorizedOperation") || strings.Contains(errStr, "AccessDenied") {
+				return wgoerrors.PermissionError(wgoerrors.ProviderAWS, "AWS resources")
+			}
+			if strings.Contains(errStr, "ExpiredToken") {
+				return wgoerrors.AWSCredentialsError(err)
+			}
+			return wgoerrors.New(wgoerrors.ErrorTypeProvider, wgoerrors.ProviderAWS, "Resource collection failed").
+				WithCause(err.Error()).
+				WithSolutions("Check AWS permissions", "Verify credentials").
+				WithHelp("wgo help aws")
+		default:
+			return fmt.Errorf("collection failed: %w", err)
+		}
 	}
 	
 	collectionTime := time.Since(startTime)
 	
 	// Display results
 	if !quiet {
-		fmt.Printf("\n✅ Collection completed in %v\n", collectionTime)
-		fmt.Printf("📋 Snapshot ID: %s\n", snapshot.ID)
-		fmt.Printf("📊 Resources found: %d\n", len(snapshot.Resources))
+		fmt.Printf("\nCollection completed in %v\n", collectionTime)
+		fmt.Printf("Snapshot ID: %s\n", snapshot.ID)
+		fmt.Printf("Resources found: %d\n", len(snapshot.Resources))
 		
 		// Group resources by type
 		byType := make(map[string]int)
@@ -290,9 +385,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 			byType[resource.Type]++
 		}
 		
-		fmt.Println("\n📈 Resource breakdown:")
+		fmt.Println("\nResource breakdown:")
 		for resourceType, count := range byType {
-			fmt.Printf("  • %s: %d\n", resourceType, count)
+			fmt.Printf("  - %s: %d\n", resourceType, count)
 		}
 	}
 	
@@ -320,11 +415,11 @@ func runScan(cmd *cobra.Command, args []string) error {
 		if err := saveSnapshotToFile(snapshot, outputFile); err != nil {
 			log("Warning: Failed to save to output file: %v\n", err)
 		} else {
-			log("\n📄 Output saved to: %s\n", outputFile)
+			log("\nOutput saved to: %s\n", outputFile)
 		}
 	}
 	
-	log("\n💾 Snapshot saved - use 'wgo diff' to detect changes\n")
+	log("\nSnapshot saved - use 'wgo diff' to detect changes\n")
 	return nil
 }
 
@@ -337,3 +432,4 @@ func saveSnapshotToFile(snapshot *types.Snapshot, filename string) error {
 	
 	return os.WriteFile(filename, data, 0644)
 }
+

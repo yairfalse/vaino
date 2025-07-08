@@ -14,6 +14,7 @@ type Config struct {
 	Claude     ClaudeConfig     `mapstructure:"claude"`
 	Cache      CacheConfig      `mapstructure:"cache"`
 	Collectors CollectorsConfig `mapstructure:"collectors"`
+	Providers  ProvidersConfig  `mapstructure:"providers"`
 	Storage    StorageConfig    `mapstructure:"storage"`
 	Output     OutputConfig     `mapstructure:"output"`
 	Logging    LoggingConfig    `mapstructure:"logging"`
@@ -62,6 +63,7 @@ type KubernetesConfig struct {
 // StorageConfig contains storage configuration
 type StorageConfig struct {
 	BasePath string `mapstructure:"base_path"`
+	BaseDir  string `mapstructure:"base_dir"`
 	Backend  string `mapstructure:"backend"`
 }
 
@@ -80,8 +82,40 @@ type LoggingConfig struct {
 	File   string `mapstructure:"file"`
 }
 
+// ProvidersConfig contains provider-specific configuration
+type ProvidersConfig struct {
+	Terraform  TerraformProviderConfig  `mapstructure:"terraform"`
+	GCP        GCPProviderConfig        `mapstructure:"gcp"`
+	AWS        AWSProviderConfig        `mapstructure:"aws"`
+	Kubernetes KubernetesProviderConfig `mapstructure:"kubernetes"`
+}
+
+// TerraformProviderConfig contains Terraform-specific configuration
+type TerraformProviderConfig struct {
+	AutoDiscover bool     `mapstructure:"auto_discover"`
+	StatePaths   []string `mapstructure:"state_paths"`
+}
+
+// GCPProviderConfig contains GCP-specific configuration
+type GCPProviderConfig struct {
+	Project string   `mapstructure:"project"`
+	Regions []string `mapstructure:"regions"`
+}
+
+// AWSProviderConfig contains AWS-specific configuration
+type AWSProviderConfig struct {
+	Profile       string `mapstructure:"profile"`
+	DefaultRegion string `mapstructure:"default_region"`
+}
+
+// KubernetesProviderConfig contains Kubernetes-specific configuration
+type KubernetesProviderConfig struct {
+	Namespaces []string `mapstructure:"namespaces"`
+}
+
 // DefaultConfig returns a configuration with sensible defaults
 func DefaultConfig() *Config {
+	homeDir, _ := os.UserHomeDir()
 	return &Config{
 		Claude: ClaudeConfig{
 			APIKey: "",
@@ -107,8 +141,26 @@ func DefaultConfig() *Config {
 				Namespaces: []string{"default"},
 			},
 		},
+		Providers: ProvidersConfig{
+			Terraform: TerraformProviderConfig{
+				AutoDiscover: true,
+				StatePaths:   []string{"."},
+			},
+			GCP: GCPProviderConfig{
+				Project: "",
+				Regions: []string{"us-central1"},
+			},
+			AWS: AWSProviderConfig{
+				Profile:       "",
+				DefaultRegion: "",
+			},
+			Kubernetes: KubernetesProviderConfig{
+				Namespaces: []string{"default", "kube-system"},
+			},
+		},
 		Storage: StorageConfig{
 			BasePath: "~/.wgo",
+			BaseDir:  filepath.Join(homeDir, ".wgo", "storage"),
 			Backend:  "local",
 		},
 		Output: OutputConfig{
