@@ -10,7 +10,7 @@ on:
     - cron: '0 1 * * *'
 
 env:
-  GO_VERSION: '1.22'
+  GO_VERSION: '1.23'
 
 jobs:
   # Unit tests with coverage
@@ -131,15 +131,15 @@ jobs:
     
     - name: Test basic CLI commands
       run: |
-        ./wgo --help
-        ./wgo version
-        ./wgo scan --help
-        ./wgo baseline --help
-        ./wgo diff --help
+        ./build/wgo --help
+        ./build/wgo version
+        ./build/wgo scan --help
+        ./build/wgo baseline --help
+        ./build/wgo diff --help
     
     - name: Test provider listing
       run: |
-        ./wgo scan 2>&1 | grep -E "(terraform|kubernetes|gcp)" || exit 1
+        ./build/wgo scan 2>&1 | grep -E "(terraform|kubernetes|gcp)" || exit 1
 
   # Provider-specific tests
   provider-tests:
@@ -168,17 +168,17 @@ jobs:
     - name: Test ${{ matrix.provider }} provider
       run: |
         # Test provider help
-        ./wgo scan --provider ${{ matrix.provider }} --help || true
+        ./build/wgo scan --provider ${{ matrix.provider }} --help || true
         
         # Test provider validation
         if [ "${{ matrix.provider }}" = "terraform" ]; then
           # Create dummy state file
           echo '{"version": 4}' > test.tfstate
-          ./wgo scan --provider terraform --state-file test.tfstate || true
+          ./build/wgo scan --provider terraform --state-file test.tfstate || true
         elif [ "${{ matrix.provider }}" = "kubernetes" ]; then
-          ./wgo scan --provider kubernetes 2>&1 | grep -i "kubeconfig" || exit 0
+          ./build/wgo scan --provider kubernetes 2>&1 | grep -i "kubeconfig" || exit 0
         elif [ "${{ matrix.provider }}" = "gcp" ]; then
-          ./wgo scan --provider gcp 2>&1 | grep -i "project" || exit 0
+          ./build/wgo scan --provider gcp 2>&1 | grep -i "project" || exit 0
         fi
     
     - name: Run provider unit tests

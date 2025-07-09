@@ -31,7 +31,7 @@ linters:
     - durationcheck
     - errname
     - errorlint
-    - exportloopref
+    - copyloopvar
     - forcetypeassert
     - gci
     - gochecknoinits
@@ -62,7 +62,7 @@ linters:
     - revive
     - rowserrcheck
     - sqlclosecheck
-    - tenv
+    - usetesting
     - tparallel
     - unconvert
     - unparam
@@ -71,19 +71,14 @@ linters:
 
   disable:
     - exhaustive
-    - exhaustivestruct
     - forbidigo
     - funlen
     - gochecknoglobals
     - godox
-    - goerr113
-    - gomnd
+    - err113  # renamed from goerr113
     - gomoddirectives
-    - interfacer  # deprecated
-    - maligned    # deprecated
     - nlreturn
     - paralleltest
-    - scopelint   # deprecated
     - testpackage
     - varnamelen
     - wrapcheck
@@ -166,7 +161,7 @@ linters-settings:
   revive:
     rules:
       - name: exported
-        arguments: [true]
+        arguments: ["checkPrivateReceivers"]
       - name: package-comments
       - name: var-naming
       - name: range-val-in-closure
