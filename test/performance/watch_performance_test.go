@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/yairfalse/wgo/internal/differ"
-	"github.com/yairfalse/wgo/internal/watcher"
+	"github.com/yairfalse/wgo/internal/watchers"
 )
 
 // BenchmarkWatcherThroughput benchmarks the throughput of change processing

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/yairfalse/wgo/internal/watcher"
+	"github.com/yairfalse/wgo/internal/watchers"
 )
 
 // watchCmd represents the watch command
@@ -98,7 +98,7 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create watcher configuration
-	config := watcher.WatcherConfig{
+	config := watchers.WatcherConfig{
 		Providers:    watchProviders,
 		Interval:     watchInterval,
 		OutputFormat: watchFormat,
@@ -108,7 +108,7 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create watcher
-	w, err := watcher.NewWatcher(config)
+	w, err := watchers.NewWatcher(config)
 	if err != nil {
 		return fmt.Errorf("failed to create watcher: %w", err)
 	}
