@@ -115,7 +115,6 @@ func TestConcurrentScanIntegration(t *testing.T) {
 		t.Logf("Concurrent scan completed in %v", scanDuration)
 		t.Logf("Found %d resources", len(result.Snapshot.Resources))
 	})
-
 }
 
 func TestConcurrentScanPerformance(t *testing.T) {

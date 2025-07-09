@@ -326,20 +326,6 @@ func runDiff(cmd *cobra.Command, args []string) error {
 				if providerName == "terraform" {
 					scanArgs = append(scanArgs, "--auto-discover")
 				}
-
-				// For Kubernetes, add namespace restrictions from config to prevent scanning all namespaces
-				if providerName == "kubernetes" {
-					// Add configured namespaces if available
-					if configuredNamespaces := getConfiguredNamespaces(); len(configuredNamespaces) > 0 {
-						for _, ns := range configuredNamespaces {
-							scanArgs = append(scanArgs, "--namespace", ns)
-						}
-					} else {
-						// Default to common namespaces to prevent scanning all
-						scanArgs = append(scanArgs, "--namespace", "default", "--namespace", "test-workloads")
-					}
-				}
-
 				scanCmd.SetArgs(scanArgs)
 				scanCmd.SetOutput(io.Discard) // Suppress output
 
@@ -625,33 +611,4 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
-}
-
-// getConfiguredNamespaces reads namespaces from the config file
-func getConfiguredNamespaces() []string {
-	// Try to read from config file
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return nil
-	}
-
-	configFile := filepath.Join(homeDir, ".wgo", "config.yaml")
-	data, err := os.ReadFile(configFile)
-	if err != nil {
-		return nil
-	}
-
-	var config struct {
-		Providers struct {
-			Kubernetes struct {
-				Namespaces []string `yaml:"namespaces"`
-			} `yaml:"kubernetes"`
-		} `yaml:"providers"`
-	}
-
-	if err := yaml.Unmarshal(data, &config); err != nil {
-		return nil
-	}
-
-	return config.Providers.Kubernetes.Namespaces
 }
