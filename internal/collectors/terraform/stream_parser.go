@@ -39,7 +39,7 @@ func (sp *StreamingParser) ParseStateFile(filename string) (*TerraformState, err
 	}
 
 	fileSize := stat.Size()
-	
+
 	// For very large files, use streaming parser
 	if fileSize > sp.maxMemory {
 		return sp.parseStreamingMode(file, filename, fileSize)
@@ -52,7 +52,7 @@ func (sp *StreamingParser) ParseStateFile(filename string) (*TerraformState, err
 // parseStandardMode handles normal-sized files with standard JSON parsing
 func (sp *StreamingParser) parseStandardMode(file *os.File, filename string) (*TerraformState, error) {
 	var state TerraformState
-	
+
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(&state); err != nil {
 		return nil, sp.createJSONError(err, filename)
@@ -64,10 +64,10 @@ func (sp *StreamingParser) parseStandardMode(file *os.File, filename string) (*T
 // parseStreamingMode handles large files with streaming JSON parsing
 func (sp *StreamingParser) parseStreamingMode(file *os.File, filename string, fileSize int64) (*TerraformState, error) {
 	fmt.Printf("⚠️  Large state file detected (%d MB). Using streaming parser...\n", fileSize/(1024*1024))
-	
+
 	// Read file in chunks to find the structure
 	reader := bufio.NewReaderSize(file, 64*1024) // 64KB buffer
-	
+
 	// For very large files, we need to parse incrementally
 	// This is a simplified streaming approach - in practice, you'd use a more sophisticated JSON streaming library
 	state, err := sp.parseInChunks(reader, filename)
@@ -82,10 +82,10 @@ func (sp *StreamingParser) parseStreamingMode(file *os.File, filename string, fi
 func (sp *StreamingParser) parseInChunks(reader *bufio.Reader, filename string) (*TerraformState, error) {
 	// For this implementation, we'll still load the entire JSON but with better error handling
 	// In a full production system, you'd use a proper streaming JSON parser like jstream
-	
+
 	var jsonBuilder strings.Builder
 	buffer := make([]byte, 32*1024) // 32KB chunks
-	
+
 	for {
 		n, err := reader.Read(buffer)
 		if n > 0 {
@@ -139,18 +139,18 @@ func (sp *StreamingParser) validateAndNormalizeState(state *TerraformState, file
 // createJSONError creates helpful error messages for JSON parsing errors
 func (sp *StreamingParser) createJSONError(err error, filename string) error {
 	errStr := err.Error()
-	
+
 	// Common JSON error patterns and helpful messages
 	switch {
 	case strings.Contains(errStr, "unexpected end of JSON"):
 		return fmt.Errorf("terraform state file %s appears to be truncated or corrupted. Try regenerating with 'terraform refresh'", filename)
-	
+
 	case strings.Contains(errStr, "invalid character"):
 		return fmt.Errorf("terraform state file %s contains invalid JSON. Check for corruption or manual edits", filename)
-	
+
 	case strings.Contains(errStr, "cannot unmarshal"):
 		return fmt.Errorf("terraform state file %s has unexpected structure. This may be from an unsupported Terraform version", filename)
-	
+
 	default:
 		return fmt.Errorf("failed to parse terraform state file %s: %w", filename, err)
 	}
@@ -176,11 +176,11 @@ func (sp *StreamingParser) CountResources(filename string) (*ResourceCounter, er
 
 	// Use a streaming approach to count resources
 	decoder := json.NewDecoder(file)
-	
+
 	// Skip to the resources array
 	var state struct {
 		Resources []struct {
-			Type string `json:"type"`
+			Type      string        `json:"type"`
 			Instances []interface{} `json:"instances"`
 		} `json:"resources"`
 	}

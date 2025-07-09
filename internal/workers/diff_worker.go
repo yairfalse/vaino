@@ -40,37 +40,37 @@ type DiffJob struct {
 
 // DiffOptions configures comparison behavior
 type DiffOptions struct {
-	DeepComparison    bool          // Enable deep comparison
-	IgnoreMetadata    bool          // Ignore metadata changes
-	IgnorePatterns    []string      // Patterns to ignore
-	CompareTimeout    time.Duration // Timeout for comparison
-	ValidationMode    bool          // Enable validation
-	SeverityFilter    types.DriftSeverity // Minimum severity to report
+	DeepComparison bool                // Enable deep comparison
+	IgnoreMetadata bool                // Ignore metadata changes
+	IgnorePatterns []string            // Patterns to ignore
+	CompareTimeout time.Duration       // Timeout for comparison
+	ValidationMode bool                // Enable validation
+	SeverityFilter types.DriftSeverity // Minimum severity to report
 }
 
 // DiffWorker represents a single comparison worker
 type DiffWorker struct {
-	workerCount     int
-	jobChan         chan DiffJob
-	workers         []*diffWorker
-	
+	workerCount int
+	jobChan     chan DiffJob
+	workers     []*diffWorker
+
 	// Configuration
-	bufferSize      int
-	compareTimeout  time.Duration
-	batchSize       int
-	
+	bufferSize     int
+	compareTimeout time.Duration
+	batchSize      int
+
 	// State management
-	ctx             context.Context
-	cancel          context.CancelFunc
-	wg              sync.WaitGroup
-	
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
+
 	// Metrics
-	totalCompared   int64
-	totalChanges    int64
-	totalErrors     int64
-	totalTime       time.Duration
-	mu              sync.RWMutex
-	
+	totalCompared int64
+	totalChanges  int64
+	totalErrors   int64
+	totalTime     time.Duration
+	mu            sync.RWMutex
+
 	// Performance optimization
 	comparisonCache *ComparisonCache
 	fieldComparer   *FieldComparer
@@ -86,12 +86,12 @@ type diffWorker struct {
 
 // diffWorkerStats holds statistics for a diff worker
 type diffWorkerStats struct {
-	compared      int64
-	changesFound  int64
-	errors        int64
-	totalTime     time.Duration
-	lastActive    time.Time
-	mu            sync.RWMutex
+	compared     int64
+	changesFound int64
+	errors       int64
+	totalTime    time.Duration
+	lastActive   time.Time
+	mu           sync.RWMutex
 }
 
 // ResourceComparer handles the actual comparison logic
@@ -130,18 +130,18 @@ func NewDiffWorker(opts ...DiffWorkerOption) *DiffWorker {
 		comparisonCache: NewComparisonCache(5 * time.Minute),
 		fieldComparer:   NewFieldComparer(),
 	}
-	
+
 	// Apply options
 	for _, opt := range opts {
 		opt(dw)
 	}
-	
+
 	// Initialize channels
 	dw.jobChan = make(chan DiffJob, dw.bufferSize)
-	
+
 	// Create context
 	dw.ctx, dw.cancel = context.WithCancel(context.Background())
-	
+
 	// Initialize workers
 	dw.workers = make([]*diffWorker, dw.workerCount)
 	for i := 0; i < dw.workerCount; i++ {
@@ -151,7 +151,7 @@ func NewDiffWorker(opts ...DiffWorkerOption) *DiffWorker {
 			comparer: NewResourceComparer(dw.fieldComparer),
 		}
 	}
-	
+
 	return dw
 }
 
@@ -204,31 +204,31 @@ func (dw *DiffWorker) ComputeDiffsConcurrent(baseline, current *types.Snapshot) 
 	if baseline == nil || current == nil {
 		return nil, fmt.Errorf("baseline and current snapshots are required")
 	}
-	
+
 	// Start workers
 	if err := dw.start(); err != nil {
 		return nil, fmt.Errorf("failed to start diff workers: %w", err)
 	}
 	defer dw.stop()
-	
+
 	// Create resource maps for efficient lookup
 	baselineMap := make(map[string]*types.Resource)
 	for i := range baseline.Resources {
 		baselineMap[baseline.Resources[i].ID] = &baseline.Resources[i]
 	}
-	
+
 	currentMap := make(map[string]*types.Resource)
 	for i := range current.Resources {
 		currentMap[current.Resources[i].ID] = &current.Resources[i]
 	}
-	
+
 	// Create comparison pairs
 	pairs := dw.createComparisonPairs(baselineMap, currentMap)
-	
+
 	// Process pairs in batches
 	results := make([]DiffResult, 0, len(pairs))
 	resultChan := make(chan DiffResult, len(pairs))
-	
+
 	// Submit comparison jobs
 	for _, pair := range pairs {
 		job := DiffJob{
@@ -242,14 +242,14 @@ func (dw *DiffWorker) ComputeDiffsConcurrent(baseline, current *types.Snapshot) 
 			},
 			ResultChan: resultChan,
 		}
-		
+
 		select {
 		case dw.jobChan <- job:
 		case <-dw.ctx.Done():
 			return nil, fmt.Errorf("diff context cancelled")
 		}
 	}
-	
+
 	// Collect results
 	for i := 0; i < len(pairs); i++ {
 		select {
@@ -259,10 +259,10 @@ func (dw *DiffWorker) ComputeDiffsConcurrent(baseline, current *types.Snapshot) 
 			return nil, fmt.Errorf("timeout waiting for diff results")
 		}
 	}
-	
+
 	// Create drift report
 	report := dw.createDriftReport(baseline, current, results)
-	
+
 	return report, nil
 }
 
@@ -273,7 +273,7 @@ func (dw *DiffWorker) start() error {
 		dw.wg.Add(1)
 		go dw.worker(i)
 	}
-	
+
 	return nil
 }
 
@@ -281,17 +281,17 @@ func (dw *DiffWorker) start() error {
 func (dw *DiffWorker) stop() {
 	// Cancel context
 	dw.cancel()
-	
+
 	// Close job channel
 	close(dw.jobChan)
-	
+
 	// Wait for workers to finish
 	done := make(chan struct{})
 	go func() {
 		dw.wg.Wait()
 		close(done)
 	}()
-	
+
 	// Wait for completion or timeout
 	select {
 	case <-done:
@@ -305,9 +305,9 @@ func (dw *DiffWorker) stop() {
 // worker processes comparison jobs
 func (dw *DiffWorker) worker(workerID int) {
 	defer dw.wg.Done()
-	
+
 	worker := dw.workers[workerID]
-	
+
 	for {
 		select {
 		case <-dw.ctx.Done():
@@ -316,13 +316,13 @@ func (dw *DiffWorker) worker(workerID int) {
 			if !ok {
 				return
 			}
-			
+
 			// Process the job
 			result := dw.processComparisonJob(job, workerID)
-			
+
 			// Update worker stats
 			worker.updateStats(result)
-			
+
 			// Send result
 			select {
 			case job.ResultChan <- result:
@@ -336,13 +336,13 @@ func (dw *DiffWorker) worker(workerID int) {
 // processComparisonJob processes a single comparison job
 func (dw *DiffWorker) processComparisonJob(job DiffJob, workerID int) DiffResult {
 	startTime := time.Now()
-	
+
 	result := DiffResult{
 		ResourceID:  job.Pair.ResourceID,
 		WorkerID:    workerID,
 		CompareTime: 0,
 	}
-	
+
 	// Check cache first
 	if dw.comparisonCache != nil {
 		if cached, found := dw.comparisonCache.Get(job.Pair.ResourceID); found {
@@ -351,25 +351,25 @@ func (dw *DiffWorker) processComparisonJob(job DiffJob, workerID int) DiffResult
 			return cached
 		}
 	}
-	
+
 	// Perform comparison with timeout
 	ctx, cancel := context.WithTimeout(dw.ctx, job.Options.CompareTimeout)
 	defer cancel()
-	
+
 	changes, driftType, severity, riskScore, err := dw.compareResources(ctx, job.Pair, job.Options)
-	
+
 	result.CompareTime = time.Since(startTime)
 	result.Changes = changes
 	result.DriftType = driftType
 	result.Severity = severity
 	result.RiskScore = riskScore
 	result.Error = err
-	
+
 	// Cache result
 	if dw.comparisonCache != nil && err == nil {
 		dw.comparisonCache.Set(job.Pair.ResourceID, result)
 	}
-	
+
 	// Update metrics
 	atomic.AddInt64(&dw.totalCompared, 1)
 	if err != nil {
@@ -377,7 +377,7 @@ func (dw *DiffWorker) processComparisonJob(job DiffJob, workerID int) DiffResult
 	} else {
 		atomic.AddInt64(&dw.totalChanges, int64(len(changes)))
 	}
-	
+
 	return result
 }
 
@@ -385,7 +385,7 @@ func (dw *DiffWorker) processComparisonJob(job DiffJob, workerID int) DiffResult
 func (dw *DiffWorker) compareResources(ctx context.Context, pair ComparisonPair, options DiffOptions) ([]types.Change, types.DriftType, types.DriftSeverity, float64, error) {
 	baseline := pair.BaselineResource
 	current := pair.CurrentResource
-	
+
 	// Determine drift type
 	var driftType types.DriftType
 	if baseline == nil && current != nil {
@@ -397,7 +397,7 @@ func (dw *DiffWorker) compareResources(ctx context.Context, pair ComparisonPair,
 	} else {
 		return nil, "", "", 0, fmt.Errorf("invalid resource pair")
 	}
-	
+
 	// Handle created/deleted resources
 	if driftType == types.DriftTypeCreated || driftType == types.DriftTypeDeleted {
 		var resource *types.Resource
@@ -406,7 +406,7 @@ func (dw *DiffWorker) compareResources(ctx context.Context, pair ComparisonPair,
 		} else {
 			resource = baseline
 		}
-		
+
 		changes := []types.Change{
 			{
 				Field:       "resource",
@@ -417,28 +417,28 @@ func (dw *DiffWorker) compareResources(ctx context.Context, pair ComparisonPair,
 				Description: fmt.Sprintf("Resource %s", driftType),
 			},
 		}
-		
+
 		return changes, driftType, types.DriftSeverityHigh, 0.8, nil
 	}
-	
+
 	// Compare modified resources
 	worker := dw.workers[0] // Use first worker's comparer
 	changes, err := worker.comparer.Compare(ctx, baseline, current, options)
 	if err != nil {
 		return nil, "", "", 0, fmt.Errorf("comparison failed: %w", err)
 	}
-	
+
 	// Calculate severity and risk score
 	severity := dw.calculateSeverity(changes)
 	riskScore := dw.calculateRiskScore(changes, baseline, current)
-	
+
 	return changes, driftType, severity, riskScore, nil
 }
 
 // createComparisonPairs creates pairs of resources to compare
 func (dw *DiffWorker) createComparisonPairs(baselineMap, currentMap map[string]*types.Resource) []ComparisonPair {
 	allIDs := make(map[string]bool)
-	
+
 	// Collect all resource IDs
 	for id := range baselineMap {
 		allIDs[id] = true
@@ -446,18 +446,18 @@ func (dw *DiffWorker) createComparisonPairs(baselineMap, currentMap map[string]*
 	for id := range currentMap {
 		allIDs[id] = true
 	}
-	
+
 	// Create pairs
 	pairs := make([]ComparisonPair, 0, len(allIDs))
 	for id := range allIDs {
 		baseline := baselineMap[id]
 		current := currentMap[id]
-		
+
 		priority := 100
 		if baseline != nil && current != nil {
 			priority = 50 // Modified resources have lower priority
 		}
-		
+
 		pairs = append(pairs, ComparisonPair{
 			BaselineResource: baseline,
 			CurrentResource:  current,
@@ -465,10 +465,10 @@ func (dw *DiffWorker) createComparisonPairs(baselineMap, currentMap map[string]*
 			Priority:         priority,
 		})
 	}
-	
+
 	// Sort by priority (higher first)
 	dw.sortPairsByPriority(pairs)
-	
+
 	return pairs
 }
 
@@ -489,20 +489,20 @@ func (dw *DiffWorker) calculateSeverity(changes []types.Change) types.DriftSever
 	if len(changes) == 0 {
 		return types.DriftSeverityLow
 	}
-	
+
 	highCount := 0
 	for _, change := range changes {
 		if change.Severity == string(types.DriftSeverityHigh) || change.Severity == string(types.DriftSeverityCritical) {
 			highCount++
 		}
 	}
-	
+
 	if highCount > len(changes)/2 {
 		return types.DriftSeverityHigh
 	} else if highCount > 0 {
 		return types.DriftSeverityMedium
 	}
-	
+
 	return types.DriftSeverityLow
 }
 
@@ -511,7 +511,7 @@ func (dw *DiffWorker) calculateRiskScore(changes []types.Change, baseline, curre
 	if len(changes) == 0 {
 		return 0.0
 	}
-	
+
 	score := 0.0
 	for _, change := range changes {
 		switch change.Severity {
@@ -525,13 +525,13 @@ func (dw *DiffWorker) calculateRiskScore(changes []types.Change, baseline, curre
 			score += 0.1
 		}
 	}
-	
+
 	// Normalize score
 	maxScore := float64(len(changes))
 	if maxScore > 0 {
 		score = score / maxScore
 	}
-	
+
 	return score
 }
 
@@ -552,17 +552,17 @@ func (dw *DiffWorker) createDriftReport(baseline, current *types.Snapshot, resul
 			HighRiskChanges:   0,
 		},
 	}
-	
+
 	// Aggregate results
 	totalRiskScore := 0.0
 	for _, result := range results {
 		if result.Error != nil {
 			continue
 		}
-		
+
 		report.Changes = append(report.Changes, result.Changes...)
 		report.Summary.TotalChanges += len(result.Changes)
-		
+
 		switch result.DriftType {
 		case types.DriftTypeCreated:
 			report.Summary.AddedResources++
@@ -573,19 +573,19 @@ func (dw *DiffWorker) createDriftReport(baseline, current *types.Snapshot, resul
 				report.Summary.ModifiedResources++
 			}
 		}
-		
+
 		totalRiskScore += result.RiskScore
-		
+
 		if result.Severity == types.DriftSeverityHigh || result.Severity == types.DriftSeverityCritical {
 			report.Summary.HighRiskChanges++
 		}
 	}
-	
+
 	// Calculate overall risk score
 	if len(results) > 0 {
 		report.Summary.RiskScore = totalRiskScore / float64(len(results))
 	}
-	
+
 	return report
 }
 
@@ -593,11 +593,11 @@ func (dw *DiffWorker) createDriftReport(baseline, current *types.Snapshot, resul
 func (w *diffWorker) updateStats(result DiffResult) {
 	w.stats.mu.Lock()
 	defer w.stats.mu.Unlock()
-	
+
 	w.stats.lastActive = time.Now()
 	w.stats.totalTime += result.CompareTime
 	w.stats.compared++
-	
+
 	if result.Error != nil {
 		w.stats.errors++
 	} else {
@@ -609,15 +609,15 @@ func (w *diffWorker) updateStats(result DiffResult) {
 func (dw *DiffWorker) GetStats() DiffWorkerStats {
 	dw.mu.RLock()
 	defer dw.mu.RUnlock()
-	
+
 	stats := DiffWorkerStats{
-		TotalCompared:  atomic.LoadInt64(&dw.totalCompared),
-		TotalChanges:   atomic.LoadInt64(&dw.totalChanges),
-		TotalErrors:    atomic.LoadInt64(&dw.totalErrors),
-		WorkerCount:    dw.workerCount,
-		WorkerStats:    make([]DiffWorkerStatDetail, len(dw.workers)),
+		TotalCompared: atomic.LoadInt64(&dw.totalCompared),
+		TotalChanges:  atomic.LoadInt64(&dw.totalChanges),
+		TotalErrors:   atomic.LoadInt64(&dw.totalErrors),
+		WorkerCount:   dw.workerCount,
+		WorkerStats:   make([]DiffWorkerStatDetail, len(dw.workers)),
 	}
-	
+
 	for i, worker := range dw.workers {
 		worker.stats.mu.RLock()
 		stats.WorkerStats[i] = DiffWorkerStatDetail{
@@ -630,7 +630,7 @@ func (dw *DiffWorker) GetStats() DiffWorkerStats {
 		}
 		worker.stats.mu.RUnlock()
 	}
-	
+
 	return stats
 }
 
@@ -657,7 +657,7 @@ type DiffWorkerStatDetail struct {
 func NewResourceComparer(fieldComparer *FieldComparer) *ResourceComparer {
 	return &ResourceComparer{
 		fieldComparer: fieldComparer,
-		validator:     &ResourceValidator{
+		validator: &ResourceValidator{
 			validationCache: make(map[string]bool),
 		},
 	}
@@ -666,7 +666,7 @@ func NewResourceComparer(fieldComparer *FieldComparer) *ResourceComparer {
 // Compare compares two resources and returns changes
 func (rc *ResourceComparer) Compare(ctx context.Context, baseline, current *types.Resource, options DiffOptions) ([]types.Change, error) {
 	var changes []types.Change
-	
+
 	// Compare basic fields
 	if baseline.Name != current.Name {
 		changes = append(changes, types.Change{
@@ -678,7 +678,7 @@ func (rc *ResourceComparer) Compare(ctx context.Context, baseline, current *type
 			Description: "Resource name changed",
 		})
 	}
-	
+
 	if baseline.Type != current.Type {
 		changes = append(changes, types.Change{
 			Field:       "type",
@@ -689,17 +689,17 @@ func (rc *ResourceComparer) Compare(ctx context.Context, baseline, current *type
 			Description: "Resource type changed",
 		})
 	}
-	
+
 	// Compare configuration
 	configChanges := rc.fieldComparer.CompareConfiguration(baseline.Configuration, current.Configuration)
 	changes = append(changes, configChanges...)
-	
+
 	// Compare tags if not ignoring metadata
 	if !options.IgnoreMetadata {
 		tagChanges := rc.fieldComparer.CompareTags(baseline.Tags, current.Tags)
 		changes = append(changes, tagChanges...)
 	}
-	
+
 	return changes, nil
 }
 
@@ -713,7 +713,7 @@ func NewFieldComparer() *FieldComparer {
 // CompareConfiguration compares resource configurations
 func (fc *FieldComparer) CompareConfiguration(baseline, current map[string]interface{}) []types.Change {
 	var changes []types.Change
-	
+
 	// Find all keys
 	allKeys := make(map[string]bool)
 	for k := range baseline {
@@ -722,12 +722,12 @@ func (fc *FieldComparer) CompareConfiguration(baseline, current map[string]inter
 	for k := range current {
 		allKeys[k] = true
 	}
-	
+
 	// Compare each key
 	for key := range allKeys {
 		oldVal, oldExists := baseline[key]
 		newVal, newExists := current[key]
-		
+
 		if !oldExists && newExists {
 			changes = append(changes, types.Change{
 				Field:       key,
@@ -757,14 +757,14 @@ func (fc *FieldComparer) CompareConfiguration(baseline, current map[string]inter
 			})
 		}
 	}
-	
+
 	return changes
 }
 
 // CompareTags compares resource tags
 func (fc *FieldComparer) CompareTags(baseline, current map[string]string) []types.Change {
 	var changes []types.Change
-	
+
 	// Find all keys
 	allKeys := make(map[string]bool)
 	for k := range baseline {
@@ -773,12 +773,12 @@ func (fc *FieldComparer) CompareTags(baseline, current map[string]string) []type
 	for k := range current {
 		allKeys[k] = true
 	}
-	
+
 	// Compare each key
 	for key := range allKeys {
 		oldVal, oldExists := baseline[key]
 		newVal, newExists := current[key]
-		
+
 		if !oldExists && newExists {
 			changes = append(changes, types.Change{
 				Field:       key,
@@ -808,7 +808,7 @@ func (fc *FieldComparer) CompareTags(baseline, current map[string]string) []type
 			})
 		}
 	}
-	
+
 	return changes
 }
 
@@ -830,7 +830,7 @@ func NewComparisonCache(ttl time.Duration) *ComparisonCache {
 func (cc *ComparisonCache) Get(key string) (DiffResult, bool) {
 	cc.mu.RLock()
 	defer cc.mu.RUnlock()
-	
+
 	result, exists := cc.cache[key]
 	return result, exists
 }
@@ -839,6 +839,6 @@ func (cc *ComparisonCache) Get(key string) (DiffResult, bool) {
 func (cc *ComparisonCache) Set(key string, result DiffResult) {
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
-	
+
 	cc.cache[key] = result
 }

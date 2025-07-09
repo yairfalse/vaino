@@ -19,8 +19,8 @@ func TestEnhancedTableRenderer_RenderDriftReport_Comprehensive(t *testing.T) {
 		checks   []func(string) error
 	}{
 		{
-			name: "complete drift report with all severity levels",
-			report: createComprehensiveDriftReport(),
+			name:     "complete drift report with all severity levels",
+			report:   createComprehensiveDriftReport(),
 			noColor:  true,
 			maxWidth: 120,
 			checks: []func(string) error{
@@ -226,7 +226,7 @@ func TestEnhancedTableRenderer_HelperMethods(t *testing.T) {
 	for _, test := range tests {
 		result := renderer.truncateResource(test.id, test.resourceType)
 		if result != test.expected {
-			t.Errorf("truncateResource(%s, %s) = %s, expected %s", 
+			t.Errorf("truncateResource(%s, %s) = %s, expected %s",
 				test.id, test.resourceType, result, test.expected)
 		}
 	}
@@ -245,7 +245,7 @@ func TestEnhancedTableRenderer_HelperMethods(t *testing.T) {
 	for _, test := range padTests {
 		result := renderer.padString(test.input, test.width)
 		if len(result) != test.expected {
-			t.Errorf("padString(%s, %d) length = %d, expected %d", 
+			t.Errorf("padString(%s, %d) length = %d, expected %d",
 				test.input, test.width, len(result), test.expected)
 		}
 	}
@@ -262,7 +262,7 @@ func TestEnhancedTableRenderer_SeverityOrdering(t *testing.T) {
 			TotalResources:   4,
 			ChangedResources: 4,
 			OverallRisk:      differ.RiskLevelHigh,
-			RiskScore:       0.8,
+			RiskScore:        0.8,
 		},
 		ResourceChanges: []differ.ResourceDiff{
 			{ResourceID: "low-resource", Severity: differ.RiskLevelLow, DriftType: differ.ChangeTypeModified},
@@ -287,7 +287,7 @@ func TestEnhancedTableRenderer_SeverityOrdering(t *testing.T) {
 
 	if !(criticalPos < highPos && highPos < mediumPos && mediumPos < lowPos) {
 		t.Error("Resources not ordered by severity (critical -> high -> medium -> low)")
-		t.Logf("Positions: critical=%d, high=%d, medium=%d, low=%d", 
+		t.Logf("Positions: critical=%d, high=%d, medium=%d, low=%d",
 			criticalPos, highPos, mediumPos, lowPos)
 	}
 }
@@ -329,7 +329,7 @@ func createComprehensiveDriftReport() *differ.DriftReport {
 			RemovedResources:  1,
 			ModifiedResources: 3,
 			OverallRisk:       differ.RiskLevelCritical,
-			RiskScore:        0.9,
+			RiskScore:         0.9,
 			ChangesBySeverity: map[differ.RiskLevel]int{
 				differ.RiskLevelCritical: 2,
 				differ.RiskLevelHigh:     2,
@@ -415,7 +415,7 @@ func createEmptyDriftReport() *differ.DriftReport {
 			RemovedResources:  0,
 			ModifiedResources: 0,
 			OverallRisk:       differ.RiskLevelLow,
-			RiskScore:        0.0,
+			RiskScore:         0.0,
 		},
 		ResourceChanges: []differ.ResourceDiff{},
 	}
@@ -428,11 +428,11 @@ func createSingleChangeDriftReport() *differ.DriftReport {
 		CurrentID:  "current-single",
 		Timestamp:  time.Now(),
 		Summary: differ.DriftSummary{
-			TotalResources:   3,
-			ChangedResources: 1,
+			TotalResources:    3,
+			ChangedResources:  1,
 			ModifiedResources: 1,
-			OverallRisk:      differ.RiskLevelMedium,
-			RiskScore:       0.5,
+			OverallRisk:       differ.RiskLevelMedium,
+			RiskScore:         0.5,
 			ChangesBySeverity: map[differ.RiskLevel]int{
 				differ.RiskLevelMedium: 1,
 			},

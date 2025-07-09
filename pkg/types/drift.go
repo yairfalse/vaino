@@ -56,9 +56,9 @@ type Analysis struct {
 
 // Insight represents an AI-generated insight about infrastructure changes
 type Insight struct {
-	Type        string  `json:"type"`        // "warning", "info", "critical"
+	Type        string  `json:"type"` // "warning", "info", "critical"
 	Title       string  `json:"title"`
 	Description string  `json:"description"`
-	Confidence  float64 `json:"confidence"`  // 0.0 - 1.0
+	Confidence  float64 `json:"confidence"` // 0.0 - 1.0
 	Action      string  `json:"action,omitempty"`
 }

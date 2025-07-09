@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -47,7 +48,7 @@ func TestE2EAWSDriftDetection(t *testing.T) {
 	t.Run("CompleteWorkflow", func(t *testing.T) {
 		// 1. Scan Terraform state
 		terraformOutput := filepath.Join(tmpDir, "terraform-snapshot.json")
-		runCommand(t, wgoBinary, "scan", 
+		runCommand(t, wgoBinary, "scan",
 			"--provider", "terraform",
 			"--output-file", terraformOutput,
 			"--quiet")
@@ -65,7 +66,7 @@ func TestE2EAWSDriftDetection(t *testing.T) {
 			"--region", "us-east-1",
 			"--output-file", awsOutput,
 			"--quiet")
-		
+
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			if strings.Contains(string(output), "credentials") {
@@ -91,7 +92,7 @@ func TestE2EAWSDriftDetection(t *testing.T) {
 		// Verify drift report was created
 		assert.FileExists(t, diffOutput)
 		driftReport := loadDriftReport(t, diffOutput)
-		
+
 		t.Logf("Drift Report Summary:")
 		t.Logf("  Total Resources: %d", driftReport.Summary.TotalResources)
 		t.Logf("  Changed Resources: %d", driftReport.Summary.ChangedResources)
@@ -119,10 +120,10 @@ func TestE2EAWSProviderFeatures(t *testing.T) {
 	t.Run("AutoDiscovery", func(t *testing.T) {
 		cmd := exec.Command(wgoBinary, "scan", "--auto-discover")
 		output, err := cmd.CombinedOutput()
-		
+
 		// Should discover available providers
 		assert.Contains(t, string(output), "Auto-discovering infrastructure")
-		
+
 		// Should either find Terraform files or show no providers
 		if err == nil {
 			assert.Contains(t, string(output), "Found")
@@ -135,7 +136,7 @@ func TestE2EAWSProviderFeatures(t *testing.T) {
 			"--provider", "aws",
 			"--profile", "nonexistent-profile",
 			"--quiet")
-		
+
 		output, err := cmd.CombinedOutput()
 		assert.Error(t, err)
 		assert.Contains(t, string(output), "profile")
@@ -144,14 +145,14 @@ func TestE2EAWSProviderFeatures(t *testing.T) {
 	// Test multi-region support
 	t.Run("MultiRegion", func(t *testing.T) {
 		regions := []string{"us-east-1", "us-west-2", "eu-west-1"}
-		
+
 		for _, region := range regions {
 			t.Run(region, func(t *testing.T) {
 				cmd := exec.Command(wgoBinary, "scan",
 					"--provider", "aws",
 					"--region", region,
 					"--quiet")
-				
+
 				// Just verify the command accepts the region flag
 				// Actual execution may fail without credentials
 				_ = cmd.Run()
@@ -181,12 +182,12 @@ func TestE2EGitLikeDiff(t *testing.T) {
 		{ID: "sg-456", Type: "aws_security_group", Name: "web-sg"},
 		{ID: "s3-789", Type: "aws_s3_bucket", Name: "my-bucket"},
 	})
-	
+
 	snapshot2 := createMockSnapshot("snapshot2", []mockResource{
 		{ID: "i-123", Type: "aws_instance", Name: "web-server-modified"}, // Modified
-		{ID: "sg-456", Type: "aws_security_group", Name: "web-sg"},      // Unchanged
+		{ID: "sg-456", Type: "aws_security_group", Name: "web-sg"},       // Unchanged
 		// s3-789 removed
-		{ID: "i-999", Type: "aws_instance", Name: "new-server"},          // Added
+		{ID: "i-999", Type: "aws_instance", Name: "new-server"}, // Added
 	})
 
 	file1 := filepath.Join(tmpDir, "snapshot1.json")
@@ -200,7 +201,7 @@ func TestE2EGitLikeDiff(t *testing.T) {
 			"--from", file1,
 			"--to", file2,
 			"--quiet")
-		
+
 		err := cmd.Run()
 		// Should exit with code 1 when differences found
 		assert.Error(t, err)
@@ -215,7 +216,7 @@ func TestE2EGitLikeDiff(t *testing.T) {
 			"--from", file1,
 			"--to", file2,
 			"--name-only")
-		
+
 		lines := strings.Split(strings.TrimSpace(output), "\n")
 		assert.Contains(t, lines, "aws_instance/i-123")
 		assert.Contains(t, lines, "aws_s3_bucket/s3-789")
@@ -228,7 +229,7 @@ func TestE2EGitLikeDiff(t *testing.T) {
 			"--from", file1,
 			"--to", file2,
 			"--stat")
-		
+
 		assert.Contains(t, output, "aws_instance/i-123")
 		assert.Contains(t, output, "change")
 		assert.Contains(t, output, "resources changed")
@@ -240,7 +241,7 @@ func TestE2EGitLikeDiff(t *testing.T) {
 			"--from", file1,
 			"--to", file2,
 			"--format", "unix")
-		
+
 		// Should have git diff-like format
 		assert.Contains(t, output, "---")
 		assert.Contains(t, output, "+++")
@@ -274,22 +275,22 @@ func runCommandGetOutput(t *testing.T, command string, args ...string) string {
 func loadSnapshot(t *testing.T, filename string) *types.Snapshot {
 	data, err := ioutil.ReadFile(filename)
 	require.NoError(t, err)
-	
+
 	var snapshot types.Snapshot
 	err = json.Unmarshal(data, &snapshot)
 	require.NoError(t, err)
-	
+
 	return &snapshot
 }
 
 func loadDriftReport(t *testing.T, filename string) *differ.DriftReport {
 	data, err := ioutil.ReadFile(filename)
 	require.NoError(t, err)
-	
+
 	var report differ.DriftReport
 	err = json.Unmarshal(data, &report)
 	require.NoError(t, err)
-	
+
 	return &report
 }
 
@@ -306,7 +307,7 @@ func createMockSnapshot(id string, resources []mockResource) *types.Snapshot {
 		Provider:  "aws",
 		Resources: []types.Resource{},
 	}
-	
+
 	for _, res := range resources {
 		snapshot.Resources = append(snapshot.Resources, types.Resource{
 			ID:       res.ID,
@@ -322,31 +323,31 @@ func createMockSnapshot(id string, resources []mockResource) *types.Snapshot {
 			},
 		})
 	}
-	
+
 	return snapshot
 }
 
 func saveSnapshot(t *testing.T, snapshot *types.Snapshot, filename string) {
 	data, err := json.MarshalIndent(snapshot, "", "  ")
 	require.NoError(t, err)
-	
+
 	err = ioutil.WriteFile(filename, data, 0644)
 	require.NoError(t, err)
 }
 
 func testDiffFormats(t *testing.T, wgoBinary, from, to string) {
 	formats := []string{"unix", "simple", "name-only", "stat", "json", "yaml"}
-	
+
 	for _, format := range formats {
 		t.Run(fmt.Sprintf("Format_%s", format), func(t *testing.T) {
 			output := runCommandGetOutput(t, wgoBinary, "diff",
 				"--from", from,
 				"--to", to,
 				"--format", format)
-			
+
 			// Verify we got some output
 			assert.NotEmpty(t, output)
-			
+
 			// Format-specific checks
 			switch format {
 			case "json":

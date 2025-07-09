@@ -95,7 +95,7 @@ func displayDriftReport(report *differ.DriftReport, summaryOnly bool) {
 	fmt.Printf("Removed Resources: %d\n", report.Summary.RemovedResources)
 	fmt.Printf("Modified Resources: %d\n", report.Summary.ModifiedResources)
 	fmt.Printf("Overall Risk: %s (%.2f)\n", report.Summary.OverallRisk, report.Summary.RiskScore)
-	
+
 	if len(report.Summary.ChangesBySeverity) > 0 {
 		fmt.Println("\n📈 Changes by Severity:")
 		for severity, count := range report.Summary.ChangesBySeverity {
@@ -104,7 +104,7 @@ func displayDriftReport(report *differ.DriftReport, summaryOnly bool) {
 			}
 		}
 	}
-	
+
 	if len(report.Summary.ChangesByCategory) > 0 {
 		fmt.Println("\n📋 Changes by Category:")
 		for category, count := range report.Summary.ChangesByCategory {
@@ -113,11 +113,11 @@ func displayDriftReport(report *differ.DriftReport, summaryOnly bool) {
 			}
 		}
 	}
-	
+
 	if !summaryOnly && len(report.ResourceChanges) > 0 {
 		fmt.Println("\n🔍 Detailed Changes")
 		fmt.Println("====================")
-		
+
 		for _, resourceChange := range report.ResourceChanges {
 			fmt.Printf("\n📦 Resource: %s (%s)\n", resourceChange.ResourceID, resourceChange.ResourceType)
 			fmt.Printf("   Provider: %s\n", resourceChange.Provider)
@@ -125,17 +125,17 @@ func displayDriftReport(report *differ.DriftReport, summaryOnly bool) {
 			fmt.Printf("   Severity: %s\n", resourceChange.Severity)
 			fmt.Printf("   Risk Score: %.2f\n", resourceChange.RiskScore)
 			fmt.Printf("   Description: %s\n", resourceChange.Description)
-			
+
 			if len(resourceChange.Changes) > 0 {
 				fmt.Println("   Changes:")
 				for _, change := range resourceChange.Changes {
-					fmt.Printf("     • %s: %v → %v (%s)\n", 
+					fmt.Printf("     • %s: %v → %v (%s)\n",
 						change.Field, change.OldValue, change.NewValue, change.Severity)
 				}
 			}
 		}
 	}
-	
+
 	if report.Summary.ChangedResources == 0 {
 		fmt.Println("\n✅ No drift detected - infrastructure matches baseline")
 	} else {
@@ -148,14 +148,14 @@ func saveDriftReport(report *differ.DriftReport, filename string) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal report: %w", err)
 	}
-	
+
 	return os.WriteFile(filename, data, 0644)
 }
 
 func runCheck(cmd *cobra.Command, args []string) error {
 	fmt.Println("🔍 Infrastructure Drift Check")
 	fmt.Println("=============================")
-	
+
 	// Parse flags
 	baseline, _ := cmd.Flags().GetString("baseline")
 	scan, _ := cmd.Flags().GetBool("scan")
@@ -166,14 +166,14 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	failOnDrift, _ := cmd.Flags().GetBool("fail-on-drift")
 	ignoreFields, _ := cmd.Flags().GetStringSlice("ignore-fields")
 	summaryOnly, _ := cmd.Flags().GetBool("summary-only")
-	
+
 	// Initialize storage
 	storageConfig := storage.Config{BaseDir: "./snapshots"}
 	localStorage, err := storage.NewLocalStorage(storageConfig)
 	if err != nil {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
-	
+
 	// Load baseline snapshot
 	var baselineSnapshot *types.Snapshot
 	if baseline == "" {
@@ -221,7 +221,7 @@ func runCheck(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to load baseline snapshot: %w", err)
 		}
 	}
-	
+
 	// Get current snapshot
 	var currentSnapshot *types.Snapshot
 	if scan {
@@ -257,36 +257,36 @@ func runCheck(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to load current snapshot: %w", err)
 		}
 	}
-	
+
 	// Configure differ options
 	options := differ.DiffOptions{
 		IgnoreFields: ignoreFields,
 		MinRiskLevel: differ.RiskLevel(fmt.Sprintf("%.1f", riskThreshold)),
 	}
-	
+
 	if provider != "" {
 		options.IgnoreProviders = []string{}
 		// Filter to only the specified provider
 	}
-	
+
 	// Create differ engine
 	differ := differ.NewDifferEngine(options)
-	
+
 	fmt.Println("\n🔍 Comparing snapshots...")
 	startTime := time.Now()
-	
+
 	// Perform comparison
 	report, err := differ.Compare(baselineSnapshot, currentSnapshot)
 	if err != nil {
 		return fmt.Errorf("drift comparison failed: %w", err)
 	}
-	
+
 	comparisonTime := time.Since(startTime)
 	fmt.Printf("✅ Comparison completed in %v\n\n", comparisonTime)
-	
+
 	// Display results
 	displayDriftReport(report, summaryOnly)
-	
+
 	// Save report if requested
 	if outputFile != "" {
 		if err := saveDriftReport(report, outputFile); err != nil {
@@ -295,7 +295,7 @@ func runCheck(cmd *cobra.Command, args []string) error {
 			fmt.Printf("💾 Report saved to: %s\n", outputFile)
 		}
 	}
-	
+
 	// AI explanation if requested
 	if explain && len(report.ResourceChanges) > 0 {
 		fmt.Println("\n🤖 AI Analysis")
@@ -303,13 +303,13 @@ func runCheck(cmd *cobra.Command, args []string) error {
 		// TODO: Integrate with Claude AI for analysis
 		fmt.Println("AI analysis integration pending...")
 	}
-	
+
 	// Exit with error if drift detected and fail-on-drift is enabled
 	if failOnDrift && report.Summary.ChangedResources > 0 {
 		if report.Summary.OverallRisk == "high" || report.Summary.OverallRisk == "critical" {
 			return fmt.Errorf("infrastructure drift detected with %s risk level", report.Summary.OverallRisk)
 		}
 	}
-	
+
 	return nil
 }

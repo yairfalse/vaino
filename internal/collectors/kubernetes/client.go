@@ -33,7 +33,7 @@ func (k *KubernetesClient) Initialize(contextName, kubeconfig string) error {
 	if os.Getenv("CI") == "true" || os.Getenv("GITHUB_ACTIONS") == "true" {
 		return nil
 	}
-	
+
 	config, err := k.GetConfig(contextName, kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to get Kubernetes config: %w", err)
@@ -46,14 +46,14 @@ func (k *KubernetesClient) Initialize(contextName, kubeconfig string) error {
 
 	k.config = config
 	k.clientset = clientset
-	
+
 	// Test connectivity to ensure the config actually works
 	ctx := context.Background()
 	_, err = clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{Limit: 1})
 	if err != nil {
 		return fmt.Errorf("failed to connect to Kubernetes cluster: %w", err)
 	}
-	
+
 	return nil
 }
 

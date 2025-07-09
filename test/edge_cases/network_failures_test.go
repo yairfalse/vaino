@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/collectors/aws"
 	"github.com/yairfalse/wgo/internal/collectors"
+	"github.com/yairfalse/wgo/internal/collectors/aws"
 	wgoerrors "github.com/yairfalse/wgo/internal/errors"
 )
 
@@ -62,8 +62,8 @@ func TestNetworkTimeouts(t *testing.T) {
 
 			config := collectors.CollectorConfig{
 				Config: map[string]interface{}{
-					"region":           "us-east-1",
-					"custom_endpoint":  server.URL, // For testing
+					"region":          "us-east-1",
+					"custom_endpoint": server.URL, // For testing
 				},
 			}
 
@@ -158,22 +158,22 @@ func TestRateLimitScenarios(t *testing.T) {
 	t.Run("rate_limit_handling", func(t *testing.T) {
 		// Test that we handle rate limits gracefully
 		client := &http.Client{Timeout: 10 * time.Second}
-		
+
 		for i := 0; i < 5; i++ {
 			resp, err := client.Get(server.URL)
 			if err != nil {
 				t.Errorf("Request %d failed: %v", i, err)
 				continue
 			}
-			
+
 			if i < 3 && resp.StatusCode != http.StatusTooManyRequests {
 				t.Errorf("Expected rate limit on request %d, got status %d", i, resp.StatusCode)
 			}
-			
+
 			if i >= 3 && resp.StatusCode != http.StatusOK {
 				t.Errorf("Expected success on request %d, got status %d", i, resp.StatusCode)
 			}
-			
+
 			resp.Body.Close()
 		}
 	})
@@ -204,10 +204,10 @@ func TestProxyAndFirewallIssues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			os.Setenv("HTTP_PROXY", tt.proxyURL)
-			
+
 			client := &http.Client{Timeout: 5 * time.Second}
 			_, err := client.Get("https://httpbin.org/get")
-			
+
 			if tt.shouldErr && err == nil {
 				t.Errorf("Expected error with proxy %s but got none", tt.proxyURL)
 			}
@@ -233,17 +233,17 @@ func TestPartialNetworkFailures(t *testing.T) {
 
 	t.Run("partial_failures", func(t *testing.T) {
 		client := &http.Client{Timeout: 5 * time.Second}
-		
+
 		successCount := 0
 		failureCount := 0
-		
+
 		for i := 0; i < 10; i++ {
 			resp, err := client.Get(server.URL)
 			if err != nil {
 				failureCount++
 				continue
 			}
-			
+
 			if resp.StatusCode == http.StatusOK {
 				successCount++
 			} else {
@@ -251,14 +251,14 @@ func TestPartialNetworkFailures(t *testing.T) {
 			}
 			resp.Body.Close()
 		}
-		
+
 		if successCount == 0 {
 			t.Error("Expected some successful requests")
 		}
 		if failureCount == 0 {
 			t.Error("Expected some failed requests")
 		}
-		
+
 		t.Logf("Success: %d, Failures: %d", successCount, failureCount)
 	})
 }
@@ -269,7 +269,7 @@ func TestConcurrentNetworkFailures(t *testing.T) {
 		// Create multiple servers with different delay patterns
 		servers := make([]*httptest.Server, 3)
 		delays := []time.Duration{1 * time.Second, 5 * time.Second, 10 * time.Second}
-		
+
 		for i, delay := range delays {
 			d := delay // Capture for closure
 			servers[i] = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -279,18 +279,18 @@ func TestConcurrentNetworkFailures(t *testing.T) {
 			}))
 			defer servers[i].Close()
 		}
-		
+
 		// Make concurrent requests with short timeout
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		
+
 		type result struct {
 			index int
 			err   error
 		}
-		
+
 		results := make(chan result, len(servers))
-		
+
 		for i, server := range servers {
 			go func(idx int, url string) {
 				client := &http.Client{Timeout: 3 * time.Second}
@@ -299,10 +299,10 @@ func TestConcurrentNetworkFailures(t *testing.T) {
 				results <- result{index: idx, err: err}
 			}(i, server.URL)
 		}
-		
+
 		timeoutCount := 0
 		successCount := 0
-		
+
 		for i := 0; i < len(servers); i++ {
 			res := <-results
 			if res.err != nil {
@@ -311,7 +311,7 @@ func TestConcurrentNetworkFailures(t *testing.T) {
 				successCount++
 			}
 		}
-		
+
 		// We expect first server to succeed, others to timeout
 		if successCount == 0 {
 			t.Error("Expected at least one success")
@@ -327,16 +327,16 @@ func isNetworkError(err error) bool {
 	if err == nil {
 		return false
 	}
-	
+
 	// Check for common network error types
 	if netErr, ok := err.(net.Error); ok {
 		return netErr.Timeout() || netErr.Temporary()
 	}
-	
+
 	// Check for DNS errors
 	if dnsErr, ok := err.(*net.DNSError); ok {
 		return dnsErr.IsNotFound || dnsErr.IsTimeout
 	}
-	
+
 	return false
 }

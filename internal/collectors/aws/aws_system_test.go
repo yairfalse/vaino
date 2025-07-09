@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package aws
@@ -178,7 +179,7 @@ func TestAWSDriftDetection(t *testing.T) {
 func TestAWSProviderWithMockData(t *testing.T) {
 	// This test uses a mock AWS response file
 	mockDataFile := filepath.Join("testdata", "aws_mock_response.json")
-	
+
 	// Check if mock data exists
 	if _, err := os.Stat(mockDataFile); os.IsNotExist(err) {
 		t.Skip("Mock data file not found")

@@ -13,9 +13,9 @@ import (
 
 // AtomicWriter provides atomic file operations with backup/recovery
 type AtomicWriter struct {
-	mu       sync.RWMutex
-	locks    map[string]*sync.RWMutex // per-file locks
-	locksMu  sync.Mutex               // protects the locks map
+	mu        sync.RWMutex
+	locks     map[string]*sync.RWMutex // per-file locks
+	locksMu   sync.Mutex               // protects the locks map
 	backupDir string
 }
 
@@ -41,7 +41,7 @@ func (w *AtomicWriter) WriteFile(filename string, data []byte, perm os.FileMode)
 
 	// Write to temporary file first
 	tempFile := filename + ".tmp." + generateTempSuffix()
-	
+
 	// Ensure directory exists
 	if err := os.MkdirAll(filepath.Dir(filename), 0755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
@@ -132,7 +132,7 @@ func (w *AtomicWriter) recoverFromBackup(filename string) ([]byte, error) {
 	// Get the most recent backup (assumes sorted by timestamp)
 	var mostRecent string
 	var mostRecentTime time.Time
-	
+
 	for _, match := range matches {
 		info, err := os.Stat(match)
 		if err != nil {
@@ -258,12 +258,12 @@ func (w *AtomicWriter) CleanupBackups(maxAge time.Duration, maxCount int) error 
 // cleanupBackupGroup cleans up backups for a specific file
 func (w *AtomicWriter) cleanupBackupGroup(backups []os.DirEntry, maxAge time.Duration, maxCount int) error {
 	now := time.Now()
-	
+
 	// Sort by modification time (newest first)
 	// Note: This is a simplified sort - in production, you'd want proper timestamp parsing
-	
+
 	var toDelete []string
-	
+
 	for i, backup := range backups {
 		backupPath := filepath.Join(w.backupDir, backup.Name())
 		info, err := backup.Info()
@@ -326,7 +326,7 @@ func (s *StorageSpaceManager) CheckAndCleanup(dataDir string) error {
 // getDirSize calculates the total size of a directory
 func (s *StorageSpaceManager) getDirSize(dir string) (int64, error) {
 	var size int64
-	
+
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -336,14 +336,14 @@ func (s *StorageSpaceManager) getDirSize(dir string) (int64, error) {
 		}
 		return nil
 	})
-	
+
 	return size, err
 }
 
 // performCleanup performs storage cleanup operations
 func (s *StorageSpaceManager) performCleanup(dataDir string, currentSize int64) error {
 	// Strategy: Remove old snapshots first, then old backups
-	
+
 	// Clean up old backups first
 	if err := s.writer.CleanupBackups(30*24*time.Hour, 10); err != nil {
 		return fmt.Errorf("backup cleanup failed: %w", err)
@@ -365,7 +365,7 @@ func (s *StorageSpaceManager) performCleanup(dataDir string, currentSize int64) 
 // cleanupOldSnapshots removes old snapshot files
 func (s *StorageSpaceManager) cleanupOldSnapshots(dataDir string) error {
 	snapshotDir := filepath.Join(dataDir, "snapshots")
-	
+
 	entries, err := os.ReadDir(snapshotDir)
 	if err != nil {
 		return err
@@ -374,14 +374,14 @@ func (s *StorageSpaceManager) cleanupOldSnapshots(dataDir string) error {
 	// Sort by modification time and remove oldest files
 	// This is a simplified implementation
 	var oldFiles []string
-	
+
 	for _, entry := range entries {
 		if entry.Type().IsRegular() {
 			info, err := entry.Info()
 			if err != nil {
 				continue
 			}
-			
+
 			// Remove files older than 7 days
 			if time.Since(info.ModTime()) > 7*24*time.Hour {
 				oldFiles = append(oldFiles, filepath.Join(snapshotDir, entry.Name()))

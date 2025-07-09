@@ -11,9 +11,9 @@ import (
 
 // Renderer implements the Outputter interface
 type Renderer struct {
-	config     Config
-	jsonOut    *JSONFormatter
-	tableOut   *TableFormatter
+	config      Config
+	jsonOut     *JSONFormatter
+	tableOut    *TableFormatter
 	markdownOut *MarkdownFormatter
 }
 
@@ -22,7 +22,7 @@ func NewRenderer(config Config) *Renderer {
 	if config.TimeFormat == "" {
 		config.TimeFormat = "2006-01-02 15:04:05"
 	}
-	
+
 	return &Renderer{
 		config:      config,
 		jsonOut:     NewJSONFormatter(),

@@ -119,7 +119,7 @@ func (c *MemoryCache) Clear() error {
 	defer c.mu.Unlock()
 
 	c.items = make(map[string]*CacheItem)
-	
+
 	// Reset stats except for historical counters
 	c.stats.Size = 0
 
@@ -154,7 +154,7 @@ func (c *MemoryCache) Stats() CacheStats {
 
 	stats := c.stats
 	stats.Size = len(c.items)
-	
+
 	// Calculate hit ratio
 	total := stats.Hits + stats.Misses
 	if total > 0 {

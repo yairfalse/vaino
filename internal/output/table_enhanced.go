@@ -84,7 +84,7 @@ func (r *EnhancedTableRenderer) renderChangesTable(changes []differ.ResourceDiff
 
 	// Calculate column widths
 	colWidths := r.calculateColumnWidths(changes)
-	
+
 	var table strings.Builder
 
 	// Table header
@@ -134,7 +134,7 @@ func (r *EnhancedTableRenderer) calculateColumnWidths(changes []differ.ResourceD
 	// Apply max width constraints
 	maxResourceWidth := r.maxWidth / 3
 	maxImpactWidth := r.maxWidth / 4
-	
+
 	if widths["resource"] > maxResourceWidth {
 		widths["resource"] = maxResourceWidth
 	}
@@ -173,7 +173,7 @@ func (r *EnhancedTableRenderer) renderTableRow(change differ.ResourceDiff, colWi
 	// Resource column with type prefix
 	resourceDisplay := r.truncateResource(change.ResourceID, change.ResourceType)
 	resourceColor := color.FgWhite
-	
+
 	row.WriteString("│ ")
 	row.WriteString(r.colorize(r.padString(resourceDisplay, colWidths["resource"]), resourceColor))
 	row.WriteString(" │ ")
@@ -372,18 +372,18 @@ func (r *EnhancedTableRenderer) truncateResource(id, resourceType string) string
 	if resourceType != "" {
 		prefix = resourceType + ":"
 	}
-	
+
 	maxLen := 25 // Max length for resource display
 	if len(prefix)+len(id) <= maxLen {
 		return prefix + id
 	}
-	
+
 	// Truncate ID to fit
 	availableLen := maxLen - len(prefix) - 3 // 3 for "..."
 	if availableLen <= 0 {
 		return r.truncateString(id, maxLen)
 	}
-	
+
 	return prefix + id[:availableLen] + "..."
 }
 
@@ -411,7 +411,7 @@ func (r *EnhancedTableRenderer) RenderResourceList(resources []types.Resource) s
 	}
 
 	var output strings.Builder
-	
+
 	output.WriteString(r.colorize(fmt.Sprintf("📦 Found %d resources:\n", len(resources)), color.FgCyan, color.Bold))
 	output.WriteString(r.colorize("────────────────────────\n", color.FgCyan))
 
@@ -422,9 +422,9 @@ func (r *EnhancedTableRenderer) RenderResourceList(resources []types.Resource) s
 	}
 
 	for provider, providerResources := range byProvider {
-		output.WriteString(r.colorize(fmt.Sprintf("\n%s (%d resources):\n", 
+		output.WriteString(r.colorize(fmt.Sprintf("\n%s (%d resources):\n",
 			strings.ToUpper(provider), len(providerResources)), color.FgBlue, color.Bold))
-		
+
 		// Group by type within provider
 		byType := make(map[string]int)
 		for _, resource := range providerResources {
@@ -432,8 +432,8 @@ func (r *EnhancedTableRenderer) RenderResourceList(resources []types.Resource) s
 		}
 
 		for resourceType, count := range byType {
-			output.WriteString(fmt.Sprintf("  • %s: %s\n", 
-				resourceType, 
+			output.WriteString(fmt.Sprintf("  • %s: %s\n",
+				resourceType,
 				r.colorize(strconv.Itoa(count), color.FgWhite, color.Bold)))
 		}
 	}

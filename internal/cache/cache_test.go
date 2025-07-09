@@ -26,10 +26,10 @@ func TestMemoryCache_TTLExpiration(t *testing.T) {
 
 	// Set value with very short TTL
 	cache.Set("key2", "value2", time.Millisecond)
-	
+
 	// Wait for expiration
 	time.Sleep(10 * time.Millisecond)
-	
+
 	_, found := cache.Get("key2")
 	if found {
 		t.Error("Expected key2 to be expired")
@@ -41,7 +41,7 @@ func TestManager_Delete(t *testing.T) {
 
 	cache.Set("key3", "value3", time.Hour)
 	cache.Delete("key3")
-	
+
 	_, found := cache.Get("key3")
 	if found {
 		t.Error("Expected key3 to be deleted")
@@ -59,7 +59,7 @@ func TestManager_Stats(t *testing.T) {
 
 	// Add item and test stats
 	cache.Set("key4", "value4", time.Hour)
-	
+
 	// Test hit
 	cache.Get("key4")
 	stats = cache.Stats()
@@ -80,7 +80,7 @@ func TestManager_Clear(t *testing.T) {
 
 	cache.Set("key5", "value5", time.Hour)
 	cache.Set("key6", "value6", time.Hour)
-	
+
 	err := cache.Clear()
 	if err != nil {
 		t.Errorf("Clear should not return error: %v", err)

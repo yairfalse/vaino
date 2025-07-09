@@ -5,9 +5,9 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
-	rdsTypes "github.com/aws/aws-sdk-go-v2/service/rds/types"
 	lambdaTypes "github.com/aws/aws-sdk-go-v2/service/lambda/types"
+	rdsTypes "github.com/aws/aws-sdk-go-v2/service/rds/types"
+	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/yairfalse/wgo/pkg/types"
 )
 
@@ -30,17 +30,17 @@ func (n *Normalizer) NormalizeEC2Instance(instance ec2Types.Instance) types.Reso
 		Name:     getInstanceName(instance.Tags),
 		Region:   n.region,
 		Configuration: map[string]interface{}{
-			"instance_type":        string(instance.InstanceType),
-			"state":               string(instance.State.Name),
-			"vpc_id":              aws.ToString(instance.VpcId),
-			"subnet_id":           aws.ToString(instance.SubnetId),
-			"availability_zone":   aws.ToString(instance.Placement.AvailabilityZone),
-			"private_ip_address":  aws.ToString(instance.PrivateIpAddress),
-			"public_ip_address":   aws.ToString(instance.PublicIpAddress),
-			"image_id":            aws.ToString(instance.ImageId),
-			"key_name":            aws.ToString(instance.KeyName),
-			"security_groups":     normalizeSecurityGroupRefs(instance.SecurityGroups),
-			"monitoring":          instance.Monitoring.State == ec2Types.MonitoringStateEnabled,
+			"instance_type":      string(instance.InstanceType),
+			"state":              string(instance.State.Name),
+			"vpc_id":             aws.ToString(instance.VpcId),
+			"subnet_id":          aws.ToString(instance.SubnetId),
+			"availability_zone":  aws.ToString(instance.Placement.AvailabilityZone),
+			"private_ip_address": aws.ToString(instance.PrivateIpAddress),
+			"public_ip_address":  aws.ToString(instance.PublicIpAddress),
+			"image_id":           aws.ToString(instance.ImageId),
+			"key_name":           aws.ToString(instance.KeyName),
+			"security_groups":    normalizeSecurityGroupRefs(instance.SecurityGroups),
+			"monitoring":         instance.Monitoring.State == ec2Types.MonitoringStateEnabled,
 		},
 		Tags: convertAWSTags(instance.Tags),
 		Metadata: types.ResourceMetadata{
@@ -98,12 +98,12 @@ func (n *Normalizer) NormalizeVPC(vpc ec2Types.Vpc) types.Resource {
 		Name:     getVPCName(vpc.Tags),
 		Region:   n.region,
 		Configuration: map[string]interface{}{
-			"cidr_block":                     aws.ToString(vpc.CidrBlock),
-			"state":                         string(vpc.State),
-			"dhcp_options_id":               aws.ToString(vpc.DhcpOptionsId),
-			"instance_tenancy":              string(vpc.InstanceTenancy),
-			"enable_dns_hostnames":          false, // Will be set separately
-			"enable_dns_support":            false, // Will be set separately
+			"cidr_block":                           aws.ToString(vpc.CidrBlock),
+			"state":                                string(vpc.State),
+			"dhcp_options_id":                      aws.ToString(vpc.DhcpOptionsId),
+			"instance_tenancy":                     string(vpc.InstanceTenancy),
+			"enable_dns_hostnames":                 false, // Will be set separately
+			"enable_dns_support":                   false, // Will be set separately
 			"enable_network_address_usage_metrics": false, // Will be set separately
 		},
 		Tags: convertAWSTags(vpc.Tags),
@@ -122,12 +122,12 @@ func (n *Normalizer) NormalizeSubnet(subnet ec2Types.Subnet) types.Resource {
 		Name:     getSubnetName(subnet.Tags),
 		Region:   n.region,
 		Configuration: map[string]interface{}{
-			"vpc_id":                        aws.ToString(subnet.VpcId),
-			"cidr_block":                    aws.ToString(subnet.CidrBlock),
-			"availability_zone":             aws.ToString(subnet.AvailabilityZone),
-			"availability_zone_id":          aws.ToString(subnet.AvailabilityZoneId),
-			"state":                        string(subnet.State),
-			"map_public_ip_on_launch":      aws.ToBool(subnet.MapPublicIpOnLaunch),
+			"vpc_id":                          aws.ToString(subnet.VpcId),
+			"cidr_block":                      aws.ToString(subnet.CidrBlock),
+			"availability_zone":               aws.ToString(subnet.AvailabilityZone),
+			"availability_zone_id":            aws.ToString(subnet.AvailabilityZoneId),
+			"state":                           string(subnet.State),
+			"map_public_ip_on_launch":         aws.ToBool(subnet.MapPublicIpOnLaunch),
 			"assign_ipv6_address_on_creation": aws.ToBool(subnet.AssignIpv6AddressOnCreation),
 		},
 		Tags: convertAWSTags(subnet.Tags),
@@ -146,7 +146,7 @@ func (n *Normalizer) NormalizeRDSInstance(instance rdsTypes.DBInstance) types.Re
 		Name:     aws.ToString(instance.DBInstanceIdentifier),
 		Region:   n.region,
 		Configuration: map[string]interface{}{
-			"db_instance_identifier":   aws.ToString(instance.DBInstanceIdentifier),
+			"db_instance_identifier":  aws.ToString(instance.DBInstanceIdentifier),
 			"db_instance_class":       aws.ToString(instance.DBInstanceClass),
 			"engine":                  aws.ToString(instance.Engine),
 			"engine_version":          aws.ToString(instance.EngineVersion),
@@ -178,13 +178,13 @@ func (n *Normalizer) NormalizeLambdaFunction(function lambdaTypes.FunctionConfig
 		Region:   n.region,
 		Configuration: map[string]interface{}{
 			"function_name": aws.ToString(function.FunctionName),
-			"role":         aws.ToString(function.Role),
-			"handler":      aws.ToString(function.Handler),
-			"runtime":      string(function.Runtime),
-			"timeout":      aws.ToInt32(function.Timeout),
-			"memory_size":  aws.ToInt32(function.MemorySize),
-			"description":  aws.ToString(function.Description),
-			"kms_key_arn":  aws.ToString(function.KMSKeyArn),
+			"role":          aws.ToString(function.Role),
+			"handler":       aws.ToString(function.Handler),
+			"runtime":       string(function.Runtime),
+			"timeout":       aws.ToInt32(function.Timeout),
+			"memory_size":   aws.ToInt32(function.MemorySize),
+			"description":   aws.ToString(function.Description),
+			"kms_key_arn":   aws.ToString(function.KMSKeyArn),
 		},
 		Tags: make(map[string]string), // Tags will be fetched separately
 		Metadata: types.ResourceMetadata{
@@ -246,21 +246,21 @@ func normalizeSecurityGroupRules(rules []ec2Types.IpPermission) []map[string]int
 			"from_port":   aws.ToInt32(rule.FromPort),
 			"to_port":     aws.ToInt32(rule.ToPort),
 		}
-		
+
 		// Add CIDR blocks
 		var cidrBlocks []string
 		for _, ipRange := range rule.IpRanges {
 			cidrBlocks = append(cidrBlocks, aws.ToString(ipRange.CidrIp))
 		}
 		ruleMap["cidr_blocks"] = cidrBlocks
-		
+
 		// Add security group references
 		var securityGroups []string
 		for _, userIdGroupPair := range rule.UserIdGroupPairs {
 			securityGroups = append(securityGroups, aws.ToString(userIdGroupPair.GroupId))
 		}
 		ruleMap["security_groups"] = securityGroups
-		
+
 		result = append(result, ruleMap)
 	}
 	return result

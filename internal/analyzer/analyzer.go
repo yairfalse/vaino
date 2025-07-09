@@ -23,8 +23,8 @@ func NewStandardAnalyzer() *StandardAnalyzer {
 func (a *StandardAnalyzer) AnalyzeDrift(report *types.DriftReport) (*types.Analysis, error) {
 	// TODO: Implement actual analysis logic
 	analysis := &types.Analysis{
-		RiskScore:     a.CalculateRiskScore(report.Changes),
-		Categories:    a.CategorizeChanges(report.Changes),
+		RiskScore:  a.CalculateRiskScore(report.Changes),
+		Categories: a.CategorizeChanges(report.Changes),
 		Recommendations: []string{
 			"Review security group changes",
 			"Verify resource tagging",
@@ -41,20 +41,20 @@ func (a *StandardAnalyzer) CalculateRiskScore(changes []types.Change) float64 {
 	if len(changes) == 0 {
 		return 0.0
 	}
-	
+
 	// Simple placeholder logic
 	score := float64(len(changes)) * 0.1
 	if score > 1.0 {
 		score = 1.0
 	}
-	
+
 	return score
 }
 
 // CategorizeChanges groups changes by category
 func (a *StandardAnalyzer) CategorizeChanges(changes []types.Change) map[string][]types.Change {
 	categories := make(map[string][]types.Change)
-	
+
 	for _, change := range changes {
 		category := "other"
 		if change.Field == "tags" {
@@ -64,9 +64,9 @@ func (a *StandardAnalyzer) CategorizeChanges(changes []types.Change) map[string]
 		} else if change.Field == "instance_type" {
 			category = "sizing"
 		}
-		
+
 		categories[category] = append(categories[category], change)
 	}
-	
+
 	return categories
 }

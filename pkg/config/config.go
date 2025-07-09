@@ -221,7 +221,7 @@ func Load() (*Config, error) {
 func (c *Config) Validate() error {
 	// Claude API key is optional - only required for AI features
 	// This makes WGO work without needing AI setup
-	
+
 	if c.Storage.BasePath == "" {
 		return fmt.Errorf("storage base path is required")
 	}

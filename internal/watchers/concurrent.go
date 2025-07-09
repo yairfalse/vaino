@@ -29,22 +29,22 @@ type ConcurrentWatcher struct {
 
 // ConcurrentWatcherStats holds statistics for the concurrent watcher
 type ConcurrentWatcherStats struct {
-	TotalProviders      int                        `json:"total_providers"`
-	ActiveProviders     int                        `json:"active_providers"`
-	TotalEvents         int64                      `json:"total_events"`
-	EventsPerSecond     float64                    `json:"events_per_second"`
-	ProviderStats       map[string]WatcherStats    `json:"provider_stats"`
-	CorrelatedEvents    int64                      `json:"correlated_events"`
-	LastActivity        time.Time                  `json:"last_activity"`
-	MemoryUsage         int64                      `json:"memory_usage"`
-	ProcessingLatency   time.Duration              `json:"processing_latency"`
-	ErrorRate           float64                    `json:"error_rate"`
+	TotalProviders    int                     `json:"total_providers"`
+	ActiveProviders   int                     `json:"active_providers"`
+	TotalEvents       int64                   `json:"total_events"`
+	EventsPerSecond   float64                 `json:"events_per_second"`
+	ProviderStats     map[string]WatcherStats `json:"provider_stats"`
+	CorrelatedEvents  int64                   `json:"correlated_events"`
+	LastActivity      time.Time               `json:"last_activity"`
+	MemoryUsage       int64                   `json:"memory_usage"`
+	ProcessingLatency time.Duration           `json:"processing_latency"`
+	ErrorRate         float64                 `json:"error_rate"`
 }
 
 // NewConcurrentWatcher creates a new concurrent watcher
 func NewConcurrentWatcher(config WatchConfig) *ConcurrentWatcher {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	cw := &ConcurrentWatcher{
 		providerWatchers: make(map[string]*ProviderWatcher),
 		eventMerger:      NewEventMerger(config.BufferSize),
@@ -52,13 +52,13 @@ func NewConcurrentWatcher(config WatchConfig) *ConcurrentWatcher {
 		config:           config,
 		globalEventChan:  make(chan WatchEvent, config.BufferSize*len(config.Providers)),
 		running:          false,
-		stats:            ConcurrentWatcherStats{
+		stats: ConcurrentWatcherStats{
 			ProviderStats: make(map[string]WatcherStats),
 		},
 		ctx:    ctx,
 		cancel: cancel,
 	}
-	
+
 	return cw
 }
 
@@ -66,48 +66,48 @@ func NewConcurrentWatcher(config WatchConfig) *ConcurrentWatcher {
 func (cw *ConcurrentWatcher) Start() error {
 	cw.mu.Lock()
 	defer cw.mu.Unlock()
-	
+
 	if cw.running {
 		return fmt.Errorf("concurrent watcher is already running")
 	}
-	
+
 	// Initialize provider watchers
 	for _, provider := range cw.config.Providers {
 		if err := cw.initializeProviderWatcher(provider); err != nil {
 			return fmt.Errorf("failed to initialize %s watcher: %w", provider, err)
 		}
 	}
-	
+
 	// Start event merger
 	if err := cw.eventMerger.Start(); err != nil {
 		return fmt.Errorf("failed to start event merger: %w", err)
 	}
-	
+
 	// Start correlator
 	if err := cw.correlator.Start(); err != nil {
 		return fmt.Errorf("failed to start correlator: %w", err)
 	}
-	
+
 	// Start all provider watchers
 	for provider, watcher := range cw.providerWatchers {
 		if err := watcher.Start(); err != nil {
 			return fmt.Errorf("failed to start %s watcher: %w", provider, err)
 		}
-		
+
 		// Connect watcher to event merger
 		cw.eventMerger.AddEventSource(provider, watcher.EventChannel())
 	}
-	
+
 	cw.running = true
 	cw.stats.TotalProviders = len(cw.providerWatchers)
 	cw.stats.ActiveProviders = len(cw.providerWatchers)
-	
+
 	// Start event processing loop
 	go cw.eventProcessingLoop()
-	
+
 	// Start statistics collection
 	go cw.statsCollectionLoop()
-	
+
 	return nil
 }
 
@@ -115,11 +115,11 @@ func (cw *ConcurrentWatcher) Start() error {
 func (cw *ConcurrentWatcher) Stop() error {
 	cw.mu.Lock()
 	defer cw.mu.Unlock()
-	
+
 	if !cw.running {
 		return fmt.Errorf("concurrent watcher is not running")
 	}
-	
+
 	// Stop all provider watchers
 	var stopErrors []error
 	for provider, watcher := range cw.providerWatchers {
@@ -127,30 +127,30 @@ func (cw *ConcurrentWatcher) Stop() error {
 			stopErrors = append(stopErrors, fmt.Errorf("failed to stop %s watcher: %w", provider, err))
 		}
 	}
-	
+
 	// Stop correlator
 	if err := cw.correlator.Stop(); err != nil {
 		stopErrors = append(stopErrors, fmt.Errorf("failed to stop correlator: %w", err))
 	}
-	
+
 	// Stop event merger
 	if err := cw.eventMerger.Stop(); err != nil {
 		stopErrors = append(stopErrors, fmt.Errorf("failed to stop event merger: %w", err))
 	}
-	
+
 	// Cancel context
 	cw.cancel()
 	cw.running = false
 	cw.stats.ActiveProviders = 0
-	
+
 	// Close global event channel
 	close(cw.globalEventChan)
-	
+
 	// Return combined errors if any
 	if len(stopErrors) > 0 {
 		return fmt.Errorf("multiple stop errors: %v", stopErrors)
 	}
-	
+
 	return nil
 }
 
@@ -170,12 +170,12 @@ func (cw *ConcurrentWatcher) EventChannel() <-chan WatchEvent {
 func (cw *ConcurrentWatcher) GetStats() ConcurrentWatcherStats {
 	cw.mu.RLock()
 	defer cw.mu.RUnlock()
-	
+
 	// Update provider stats
 	for provider, watcher := range cw.providerWatchers {
 		cw.stats.ProviderStats[provider] = watcher.GetStats()
 	}
-	
+
 	return cw.stats
 }
 
@@ -183,7 +183,7 @@ func (cw *ConcurrentWatcher) GetStats() ConcurrentWatcherStats {
 func (cw *ConcurrentWatcher) GetProviderWatcher(provider string) (*ProviderWatcher, bool) {
 	cw.mu.RLock()
 	defer cw.mu.RUnlock()
-	
+
 	watcher, exists := cw.providerWatchers[provider]
 	return watcher, exists
 }
@@ -192,15 +192,15 @@ func (cw *ConcurrentWatcher) GetProviderWatcher(provider string) (*ProviderWatch
 func (cw *ConcurrentWatcher) AddProvider(provider string) error {
 	cw.mu.Lock()
 	defer cw.mu.Unlock()
-	
+
 	if _, exists := cw.providerWatchers[provider]; exists {
 		return fmt.Errorf("provider %s is already being watched", provider)
 	}
-	
+
 	if err := cw.initializeProviderWatcher(provider); err != nil {
 		return fmt.Errorf("failed to initialize %s watcher: %w", provider, err)
 	}
-	
+
 	// If we're running, start the new watcher
 	if cw.running {
 		watcher := cw.providerWatchers[provider]
@@ -208,13 +208,13 @@ func (cw *ConcurrentWatcher) AddProvider(provider string) error {
 			delete(cw.providerWatchers, provider)
 			return fmt.Errorf("failed to start %s watcher: %w", provider, err)
 		}
-		
+
 		// Connect to event merger
 		cw.eventMerger.AddEventSource(provider, watcher.EventChannel())
 		cw.stats.TotalProviders++
 		cw.stats.ActiveProviders++
 	}
-	
+
 	return nil
 }
 
@@ -222,28 +222,28 @@ func (cw *ConcurrentWatcher) AddProvider(provider string) error {
 func (cw *ConcurrentWatcher) RemoveProvider(provider string) error {
 	cw.mu.Lock()
 	defer cw.mu.Unlock()
-	
+
 	watcher, exists := cw.providerWatchers[provider]
 	if !exists {
 		return fmt.Errorf("provider %s is not being watched", provider)
 	}
-	
+
 	// Stop the watcher
 	if err := watcher.Stop(); err != nil {
 		return fmt.Errorf("failed to stop %s watcher: %w", provider, err)
 	}
-	
+
 	// Remove from event merger
 	cw.eventMerger.RemoveEventSource(provider)
-	
+
 	// Remove from our tracking
 	delete(cw.providerWatchers, provider)
 	delete(cw.stats.ProviderStats, provider)
-	
+
 	if cw.running {
 		cw.stats.ActiveProviders--
 	}
-	
+
 	return nil
 }
 
@@ -254,27 +254,27 @@ func (cw *ConcurrentWatcher) initializeProviderWatcher(provider string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get collector for %s: %w", provider, err)
 	}
-	
+
 	// Create collector config
 	config := collectors.CollectorConfig{
 		Regions:    cw.config.Regions,
 		Namespaces: cw.config.Namespaces,
 		Config:     make(map[string]interface{}),
 	}
-	
+
 	// Get polling interval
 	pollingInterval := cw.config.PollingIntervals[provider]
 	if pollingInterval == 0 {
 		pollingInterval = 60 * time.Second // Default
 	}
-	
+
 	// Create provider watcher
 	watcher := NewProviderWatcher(provider, collector, config, pollingInterval, cw.config.BufferSize)
-	
+
 	// Configure watcher
 	watcher.incrementalMode = cw.config.IncrementalScanning
 	watcher.memoryOptimized = cw.config.MemoryOptimization
-	
+
 	cw.providerWatchers[provider] = watcher
 	return nil
 }
@@ -305,12 +305,12 @@ func (cw *ConcurrentWatcher) eventProcessingLoop() {
 			if !ok {
 				return
 			}
-			
+
 			startTime := time.Now()
-			
+
 			// Process event through correlator
 			correlatedEvents := cw.correlator.ProcessEvent(event)
-			
+
 			// Send original event
 			select {
 			case cw.globalEventChan <- event:
@@ -325,7 +325,7 @@ func (cw *ConcurrentWatcher) eventProcessingLoop() {
 				cw.stats.ErrorRate++
 				cw.mu.Unlock()
 			}
-			
+
 			// Send correlated events
 			for _, correlatedEvent := range correlatedEvents {
 				select {
@@ -348,7 +348,7 @@ func (cw *ConcurrentWatcher) eventProcessingLoop() {
 func (cw *ConcurrentWatcher) statsCollectionLoop() {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-cw.ctx.Done():
@@ -363,7 +363,7 @@ func (cw *ConcurrentWatcher) statsCollectionLoop() {
 func (cw *ConcurrentWatcher) updateStats() {
 	cw.mu.Lock()
 	defer cw.mu.Unlock()
-	
+
 	// Calculate events per second
 	if cw.stats.TotalEvents > 0 && !cw.stats.LastActivity.IsZero() {
 		duration := time.Since(cw.stats.LastActivity)
@@ -371,13 +371,13 @@ func (cw *ConcurrentWatcher) updateStats() {
 			cw.stats.EventsPerSecond = float64(cw.stats.TotalEvents) / duration.Seconds()
 		}
 	}
-	
+
 	// Calculate error rate
 	totalOperations := cw.stats.TotalEvents + cw.stats.CorrelatedEvents
 	if totalOperations > 0 {
 		cw.stats.ErrorRate = (cw.stats.ErrorRate / float64(totalOperations)) * 100
 	}
-	
+
 	// Update active providers count
 	activeCount := 0
 	for _, watcher := range cw.providerWatchers {
@@ -386,7 +386,7 @@ func (cw *ConcurrentWatcher) updateStats() {
 		}
 	}
 	cw.stats.ActiveProviders = activeCount
-	
+
 	// Update provider stats
 	for provider, watcher := range cw.providerWatchers {
 		cw.stats.ProviderStats[provider] = watcher.GetStats()
@@ -397,14 +397,14 @@ func (cw *ConcurrentWatcher) updateStats() {
 func (cw *ConcurrentWatcher) GetActiveProviders() []string {
 	cw.mu.RLock()
 	defer cw.mu.RUnlock()
-	
+
 	var active []string
 	for provider, watcher := range cw.providerWatchers {
 		if watcher.IsRunning() {
 			active = append(active, provider)
 		}
 	}
-	
+
 	return active
 }
 
@@ -412,22 +412,22 @@ func (cw *ConcurrentWatcher) GetActiveProviders() []string {
 func (cw *ConcurrentWatcher) RestartProvider(provider string) error {
 	cw.mu.Lock()
 	defer cw.mu.Unlock()
-	
+
 	watcher, exists := cw.providerWatchers[provider]
 	if !exists {
 		return fmt.Errorf("provider %s is not being watched", provider)
 	}
-	
+
 	// Stop the watcher
 	if err := watcher.Stop(); err != nil {
 		return fmt.Errorf("failed to stop %s watcher: %w", provider, err)
 	}
-	
+
 	// Start it again
 	if err := watcher.Start(); err != nil {
 		return fmt.Errorf("failed to restart %s watcher: %w", provider, err)
 	}
-	
+
 	return nil
 }
 
@@ -435,13 +435,13 @@ func (cw *ConcurrentWatcher) RestartProvider(provider string) error {
 func (cw *ConcurrentWatcher) UpdateConfig(newConfig WatchConfig) error {
 	cw.mu.Lock()
 	defer cw.mu.Unlock()
-	
+
 	// Update internal config
 	cw.config = newConfig
-	
+
 	// Update event merger buffer size
 	cw.eventMerger.UpdateBufferSize(newConfig.BufferSize)
-	
+
 	// Update individual provider watchers
 	for provider, watcher := range cw.providerWatchers {
 		if interval, exists := newConfig.PollingIntervals[provider]; exists {
@@ -452,6 +452,6 @@ func (cw *ConcurrentWatcher) UpdateConfig(newConfig WatchConfig) error {
 			watcher.mu.Unlock()
 		}
 	}
-	
+
 	return nil
 }

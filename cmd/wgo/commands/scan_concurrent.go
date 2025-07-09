@@ -77,7 +77,7 @@ func runConcurrentScan(cmd *cobra.Command, args []string) error {
 
 	for providerName, collector := range providers {
 		config := buildProviderConfig(cmd, providerName)
-		
+
 		// Validate provider configuration
 		if err := collector.Validate(config); err != nil {
 			log("Warning: Provider %s not available: %v\n", providerName, err)
@@ -129,7 +129,7 @@ func runConcurrentScan(cmd *cobra.Command, args []string) error {
 			if providerResult.Error != nil {
 				fmt.Printf("  ❌ %s: %v (took %v)\n", providerName, providerResult.Error, providerResult.Duration)
 			} else {
-				fmt.Printf("  ✅ %s: %d resources (took %v)\n", 
+				fmt.Printf("  ✅ %s: %d resources (took %v)\n",
 					providerName, len(providerResult.Snapshot.Resources), providerResult.Duration)
 			}
 		}
@@ -170,7 +170,7 @@ func runConcurrentScan(cmd *cobra.Command, args []string) error {
 		fmt.Printf("\n📊 Performance Summary:\n")
 		fmt.Printf("  Total scan time: %v\n", scanDuration)
 		fmt.Printf("  Average provider time: %v\n", scanDuration/time.Duration(len(availableProviders)))
-		fmt.Printf("  Concurrent efficiency: %.1fx faster than sequential\n", 
+		fmt.Printf("  Concurrent efficiency: %.1fx faster than sequential\n",
 			float64(result.TotalDuration)/float64(scanDuration))
 	}
 
@@ -188,19 +188,19 @@ func buildProviderConfig(cmd *cobra.Command, providerName string) collectors.Col
 		statePaths, _ := cmd.Flags().GetStringSlice("state-file")
 		path, _ := cmd.Flags().GetString("path")
 		autoDiscover, _ := cmd.Flags().GetBool("auto-discover")
-		
+
 		if len(statePaths) > 0 {
 			config.StatePaths = statePaths
 		} else if path != "" {
 			config.StatePaths = []string{path}
 		}
-		
+
 		config.Config["auto_discover"] = autoDiscover
 
 	case "aws":
 		profile, _ := cmd.Flags().GetString("profile")
 		regions, _ := cmd.Flags().GetStringSlice("region")
-		
+
 		if profile != "" {
 			config.Config["profile"] = profile
 		}
@@ -212,7 +212,7 @@ func buildProviderConfig(cmd *cobra.Command, providerName string) collectors.Col
 		projectID, _ := cmd.Flags().GetString("project")
 		credentialsFile, _ := cmd.Flags().GetString("credentials")
 		regions, _ := cmd.Flags().GetStringSlice("region")
-		
+
 		if projectID != "" {
 			config.Config["project_id"] = projectID
 		}
@@ -226,7 +226,7 @@ func buildProviderConfig(cmd *cobra.Command, providerName string) collectors.Col
 	case "kubernetes":
 		contexts, _ := cmd.Flags().GetStringSlice("context")
 		namespaces, _ := cmd.Flags().GetStringSlice("namespace")
-		
+
 		config.Namespaces = namespaces
 		if len(contexts) > 0 {
 			config.Config["contexts"] = contexts
@@ -273,11 +273,11 @@ Concurrent mode can provide 3-10x performance improvements by parallelizing:
 		RunE: func(cmd *cobra.Command, args []string) error {
 			concurrent, _ := cmd.Flags().GetBool("concurrent")
 			scanAll, _ := cmd.Flags().GetBool("all")
-			
+
 			if concurrent || scanAll {
 				return runConcurrentScan(cmd, args)
 			}
-			
+
 			// Fall back to original scan logic
 			return runScan(cmd, args)
 		},
@@ -297,10 +297,10 @@ Concurrent mode can provide 3-10x performance improvements by parallelizing:
 	cmd.Flags().String("snapshot-name", "", "custom name for the snapshot")
 	cmd.Flags().StringSlice("tags", []string{}, "tags to apply to snapshot (key=value)")
 	cmd.Flags().Bool("quiet", false, "suppress output (for automated use)")
-	
+
 	// AWS specific flags
 	cmd.Flags().String("profile", "", "AWS profile to use")
-	
+
 	// GCP specific flags
 	cmd.Flags().String("project", "", "GCP project ID")
 	cmd.Flags().String("credentials", "", "path to GCP service account credentials JSON file")
@@ -310,4 +310,3 @@ Concurrent mode can provide 3-10x performance improvements by parallelizing:
 
 	return cmd
 }
-

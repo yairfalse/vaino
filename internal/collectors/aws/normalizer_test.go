@@ -6,9 +6,9 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
-	rdsTypes "github.com/aws/aws-sdk-go-v2/service/rds/types"
 	lambdaTypes "github.com/aws/aws-sdk-go-v2/service/lambda/types"
+	rdsTypes "github.com/aws/aws-sdk-go-v2/service/rds/types"
+	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,7 +44,7 @@ func TestNormalizeEC2Instance(t *testing.T) {
 				},
 			},
 			expected: map[string]interface{}{
-				"instance_type":       "t2.micro",
+				"instance_type":      "t2.micro",
 				"state":              "running",
 				"vpc_id":             "vpc-12345",
 				"subnet_id":          "subnet-12345",
@@ -74,7 +74,7 @@ func TestNormalizeEC2Instance(t *testing.T) {
 				},
 			},
 			expected: map[string]interface{}{
-				"instance_type":       "t3.large",
+				"instance_type":      "t3.large",
 				"state":              "running",
 				"vpc_id":             "vpc-67890",
 				"subnet_id":          "subnet-67890",
@@ -195,19 +195,19 @@ func TestNormalizeS3Bucket(t *testing.T) {
 func TestNormalizeRDSInstance(t *testing.T) {
 	createTime := time.Now().Add(-48 * time.Hour)
 	dbInstance := rdsTypes.DBInstance{
-		DBInstanceIdentifier: aws.String("mydb-instance"),
-		DBInstanceClass:     aws.String("db.t3.micro"),
-		Engine:              aws.String("mysql"),
-		EngineVersion:       aws.String("8.0.28"),
-		DBName:              aws.String("mydatabase"),
-		MasterUsername:      aws.String("admin"),
-		AllocatedStorage:    aws.Int32(20),
-		StorageType:         aws.String("gp2"),
-		StorageEncrypted:    aws.Bool(true),
-		MultiAZ:             aws.Bool(false),
-		PubliclyAccessible:  aws.Bool(false),
+		DBInstanceIdentifier:  aws.String("mydb-instance"),
+		DBInstanceClass:       aws.String("db.t3.micro"),
+		Engine:                aws.String("mysql"),
+		EngineVersion:         aws.String("8.0.28"),
+		DBName:                aws.String("mydatabase"),
+		MasterUsername:        aws.String("admin"),
+		AllocatedStorage:      aws.Int32(20),
+		StorageType:           aws.String("gp2"),
+		StorageEncrypted:      aws.Bool(true),
+		MultiAZ:               aws.Bool(false),
+		PubliclyAccessible:    aws.Bool(false),
 		BackupRetentionPeriod: aws.Int32(7),
-		InstanceCreateTime:  aws.Time(createTime),
+		InstanceCreateTime:    aws.Time(createTime),
 		DBSubnetGroup: &rdsTypes.DBSubnetGroup{
 			DBSubnetGroupName: aws.String("default-vpc-12345"),
 		},
@@ -224,7 +224,7 @@ func TestNormalizeRDSInstance(t *testing.T) {
 	assert.Equal(t, "mydb-instance", result.ID)
 	assert.Equal(t, "aws_db_instance", result.Type)
 	assert.Equal(t, "mydb-instance", result.Name)
-	
+
 	// Check configuration
 	config := result.Configuration
 	assert.Equal(t, "mydb-instance", config["db_instance_identifier"])
@@ -240,7 +240,7 @@ func TestNormalizeRDSInstance(t *testing.T) {
 	assert.Equal(t, false, config["publicly_accessible"])
 	assert.Equal(t, int32(7), config["backup_retention_period"])
 	assert.Equal(t, "default-vpc-12345", config["db_subnet_group_name"])
-	
+
 	securityGroups := config["vpc_security_group_ids"].([]string)
 	assert.Contains(t, securityGroups, "sg-12345")
 }
@@ -266,7 +266,7 @@ func TestNormalizeLambdaFunction(t *testing.T) {
 	assert.Equal(t, "arn:aws:lambda:us-east-1:123456789012:function:my-function", result.ID)
 	assert.Equal(t, "aws_lambda_function", result.Type)
 	assert.Equal(t, "my-function", result.Name)
-	
+
 	// Check configuration
 	config := result.Configuration
 	assert.Equal(t, "my-function", config["function_name"])
@@ -318,7 +318,7 @@ func TestNormalizeSecurityGroupRules(t *testing.T) {
 	result := normalizeSecurityGroupRules(rules)
 
 	require.Len(t, result, 2)
-	
+
 	// Check first rule
 	assert.Equal(t, "tcp", result[0]["ip_protocol"])
 	assert.Equal(t, int32(22), result[0]["from_port"])
@@ -326,7 +326,7 @@ func TestNormalizeSecurityGroupRules(t *testing.T) {
 	cidrBlocks := result[0]["cidr_blocks"].([]string)
 	assert.Contains(t, cidrBlocks, "10.0.0.0/8")
 	assert.Contains(t, cidrBlocks, "172.16.0.0/12")
-	
+
 	// Check second rule
 	assert.Equal(t, "tcp", result[1]["ip_protocol"])
 	assert.Equal(t, int32(443), result[1]["from_port"])

@@ -29,7 +29,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	// System Status
 	fmt.Println("System Status:")
 	fmt.Printf("  WGO Version: %s\n", getVersion())
-	
+
 	configFile := viper.ConfigFileUsed()
 	if configFile == "" {
 		homeDir, _ := os.UserHomeDir()
@@ -39,7 +39,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 		}
 	}
 	fmt.Printf("  Config File: %s\n", configFile)
-	
+
 	// Storage info
 	homeDir, _ := os.UserHomeDir()
 	storagePath := filepath.Join(homeDir, ".wgo")
@@ -49,7 +49,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	// Provider Status
 	fmt.Println("Provider Status:")
-	
+
 	detector := config.NewProviderDetector()
 	authChecker := config.NewAuthChecker()
 
@@ -124,15 +124,15 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	// Recent Activity
 	fmt.Println("Recent Activity:")
-	
+
 	lastScanPath := filepath.Join(homeDir, ".wgo", "last-scan-*.json")
 	matches, _ := filepath.Glob(lastScanPath)
-	
+
 	if len(matches) > 0 {
 		// Find most recent scan
 		var mostRecent string
 		var mostRecentTime time.Time
-		
+
 		for _, match := range matches {
 			info, err := os.Stat(match)
 			if err == nil && info.ModTime().After(mostRecentTime) {
@@ -140,18 +140,18 @@ func runStatus(cmd *cobra.Command, args []string) error {
 				mostRecentTime = info.ModTime()
 			}
 		}
-		
+
 		if mostRecent != "" {
 			// Extract provider from filename
 			base := filepath.Base(mostRecent)
 			provider := extractProviderFromFilename(base)
-			
+
 			// Calculate time ago
 			timeAgo := formatTimeAgo(mostRecentTime)
-			
+
 			// Try to read resource count
 			resourceCount := getResourceCount(mostRecent)
-			
+
 			fmt.Printf("  Last Scan: %s ago", timeAgo)
 			if provider != "" {
 				fmt.Printf(" (%s provider", provider)
@@ -207,7 +207,7 @@ func formatBytes(bytes int64) string {
 		MB = KB * 1024
 		GB = MB * 1024
 	)
-	
+
 	switch {
 	case bytes >= GB:
 		return fmt.Sprintf("%.1fGB", float64(bytes)/float64(GB))
@@ -222,7 +222,7 @@ func formatBytes(bytes int64) string {
 
 func formatTimeAgo(t time.Time) string {
 	duration := time.Since(t)
-	
+
 	switch {
 	case duration < time.Minute:
 		return fmt.Sprintf("%d seconds", int(duration.Seconds()))
@@ -254,7 +254,7 @@ func getResourceCount(filepath string) int {
 	if err != nil {
 		return 0
 	}
-	
+
 	// Simple heuristic: count occurrences of "id" field
 	count := 0
 	searchStr := `"id":`
@@ -263,7 +263,7 @@ func getResourceCount(filepath string) int {
 			count++
 		}
 	}
-	
+
 	return count
 }
 

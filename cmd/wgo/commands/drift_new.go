@@ -45,7 +45,7 @@ to specific reference points by name, date, or relative time.`,
 	cmd.Flags().String("since", "", "reference point to compare against (name, date, or relative time)")
 	cmd.Flags().String("from", "", "source state for comparison")
 	cmd.Flags().String("to", "", "target state for comparison (defaults to current)")
-	
+
 	// Filter flags
 	cmd.Flags().StringP("provider", "p", "", "filter by provider")
 	cmd.Flags().StringSlice("region", []string{}, "filter by regions")
@@ -53,13 +53,13 @@ to specific reference points by name, date, or relative time.`,
 	cmd.Flags().StringSlice("resource-type", []string{}, "filter by resource types")
 	cmd.Flags().Bool("ignore-tags", false, "ignore tag changes")
 	cmd.Flags().StringSlice("ignore-fields", []string{}, "ignore specific fields")
-	
+
 	// Output flags
 	cmd.Flags().StringP("format", "f", "table", "output format (table, json, yaml, markdown)")
 	cmd.Flags().StringP("output", "o", "", "save results to file")
 	cmd.Flags().Bool("summary", false, "show summary only")
 	cmd.Flags().Bool("quiet", false, "minimal output (exit code indicates drift)")
-	
+
 	// Advanced flags
 	cmd.Flags().Bool("rescan", false, "force new scan before comparison")
 	cmd.Flags().Bool("fail-on-drift", false, "exit with error if drift detected")
@@ -76,28 +76,28 @@ func runDrift(cmd *cobra.Command, args []string) error {
 	outputFile, _ := cmd.Flags().GetString("output")
 	quiet, _ := cmd.Flags().GetBool("quiet")
 	rescan, _ := cmd.Flags().GetBool("rescan")
-	
+
 	if !quiet {
 		fmt.Println("🔍 Drift Detection")
 		fmt.Println("==================")
 	}
-	
+
 	// Initialize storage
 	localStorage, err := storage.NewLocalStorage(storage.Config{BaseDir: "./wgo-states"})
 	if err != nil {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}
-	
+
 	// Determine reference and current states
 	var referenceState, currentState *types.Snapshot
-	
+
 	// Handle --from/--to pattern
 	if from != "" {
 		referenceState, err = loadState(localStorage, from)
 		if err != nil {
 			return fmt.Errorf("failed to load 'from' state: %w", err)
 		}
-		
+
 		if to != "" {
 			currentState, err = loadState(localStorage, to)
 			if err != nil {
@@ -112,7 +112,7 @@ func runDrift(cmd *cobra.Command, args []string) error {
 			if err != nil {
 				return fmt.Errorf("failed to list states: %w", err)
 			}
-			
+
 			if len(states) < 2 {
 				if !quiet {
 					fmt.Println("ℹ️  No previous state found for comparison")
@@ -121,15 +121,15 @@ func runDrift(cmd *cobra.Command, args []string) error {
 				}
 				return nil
 			}
-			
+
 			// states[0] is current, states[1] is previous
 			referenceState, err = localStorage.LoadSnapshot(states[1].ID)
 			if err != nil {
 				return fmt.Errorf("failed to load reference state: %w", err)
 			}
-			
+
 			if !quiet {
-				fmt.Printf("📌 Comparing to: %s (auto-selected)\n", 
+				fmt.Printf("📌 Comparing to: %s (auto-selected)\n",
 					formatTimestamp(referenceState.Timestamp))
 			}
 		} else {
@@ -138,13 +138,13 @@ func runDrift(cmd *cobra.Command, args []string) error {
 			if err != nil {
 				return fmt.Errorf("failed to load reference state '%s': %w", since, err)
 			}
-			
+
 			if !quiet {
 				fmt.Printf("📌 Comparing to: %s\n", since)
 			}
 		}
 	}
-	
+
 	// Get current state
 	if currentState == nil {
 		if rescan || !hasRecentScan(localStorage) {
@@ -161,18 +161,18 @@ func runDrift(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-	
+
 	// Perform drift detection
 	differ := differ.NewDifferEngine(differ.DiffOptions{
 		IgnoreFields: getIgnoreFields(cmd),
 		MinRiskLevel: parseSeverity(cmd),
 	})
-	
+
 	report, err := differ.Compare(referenceState, currentState)
 	if err != nil {
 		return fmt.Errorf("drift detection failed: %w", err)
 	}
-	
+
 	// Handle quiet mode
 	if quiet {
 		if report.Summary.ChangedResources > 0 {
@@ -180,20 +180,20 @@ func runDrift(cmd *cobra.Command, args []string) error {
 		}
 		return nil
 	}
-	
+
 	// Display results
 	if format == "table" && outputFile == "" {
 		displayDriftSummary(report)
 	} else {
 		exportDrift(report, format, outputFile)
 	}
-	
+
 	// Handle fail-on-drift
 	failOnDrift, _ := cmd.Flags().GetBool("fail-on-drift")
 	if failOnDrift && report.Summary.ChangedResources > 0 {
 		return fmt.Errorf("drift detected in %d resources", report.Summary.ChangedResources)
 	}
-	
+
 	return nil
 }
 
@@ -205,15 +205,15 @@ func loadState(storage storage.Storage, identifier string) (*types.Snapshot, err
 	if err == nil {
 		return snapshot, nil
 	}
-	
+
 	// Try as file path
 	if strings.HasSuffix(identifier, ".json") {
 		return loadSnapshotFromFile(identifier)
 	}
-	
+
 	// Try as saved state name
 	// TODO: Implement named state lookup
-	
+
 	return nil, fmt.Errorf("state not found: %s", identifier)
 }
 
@@ -223,12 +223,12 @@ func parseReferencePoint(storage storage.Storage, reference string) (*types.Snap
 	if relativeTime != nil {
 		return findSnapshotByTime(storage, *relativeTime)
 	}
-	
+
 	// Handle absolute dates
 	if timestamp, err := time.Parse("2006-01-02", reference); err == nil {
 		return findSnapshotByTime(storage, timestamp)
 	}
-	
+
 	// Handle named references
 	return loadState(storage, reference)
 }
@@ -236,7 +236,7 @@ func parseReferencePoint(storage storage.Storage, reference string) (*types.Snap
 func parseRelativeTime(reference string) *time.Time {
 	now := time.Now()
 	reference = strings.ToLower(reference)
-	
+
 	switch reference {
 	case "yesterday":
 		t := now.AddDate(0, 0, -1)
@@ -248,10 +248,10 @@ func parseRelativeTime(reference string) *time.Time {
 		t := now.AddDate(0, -1, 0)
 		return &t
 	}
-	
+
 	// Parse "X days ago", "X hours ago", etc.
 	// TODO: Implement more sophisticated parsing
-	
+
 	return nil
 }
 
@@ -260,19 +260,19 @@ func findSnapshotByTime(storage storage.Storage, targetTime time.Time) (*types.S
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Find the snapshot closest to but before the target time
 	for _, meta := range snapshots {
 		snapshot, err := storage.LoadSnapshot(meta.ID)
 		if err != nil {
 			continue
 		}
-		
+
 		if snapshot.Timestamp.Before(targetTime) || snapshot.Timestamp.Equal(targetTime) {
 			return snapshot, nil
 		}
 	}
-	
+
 	return nil, fmt.Errorf("no snapshot found before %s", targetTime.Format("2006-01-02"))
 }
 
@@ -281,7 +281,7 @@ func hasRecentScan(storage storage.Storage) bool {
 	if err != nil || len(snapshots) == 0 {
 		return false
 	}
-	
+
 	// Consider scan recent if less than 5 minutes old
 	latestSnapshot, _ := storage.LoadSnapshot(snapshots[0].ID)
 	return time.Since(latestSnapshot.Timestamp) < 5*time.Minute
@@ -289,7 +289,7 @@ func hasRecentScan(storage storage.Storage) bool {
 
 func formatTimestamp(t time.Time) string {
 	duration := time.Since(t)
-	
+
 	if duration < time.Hour {
 		return fmt.Sprintf("%d minutes ago", int(duration.Minutes()))
 	} else if duration < 24*time.Hour {
@@ -297,7 +297,7 @@ func formatTimestamp(t time.Time) string {
 	} else if duration < 7*24*time.Hour {
 		return fmt.Sprintf("%d days ago", int(duration.Hours()/24))
 	}
-	
+
 	return t.Format("2006-01-02 15:04")
 }
 
@@ -307,11 +307,11 @@ func displayDriftSummary(report *differ.DriftReport) {
 		fmt.Println("Your infrastructure matches the reference state")
 		return
 	}
-	
+
 	// Summary header
 	fmt.Printf("\n⚠️  Drift detected in %d resources\n", report.Summary.ChangedResources)
 	fmt.Println()
-	
+
 	// Quick stats
 	if report.Summary.AddedResources > 0 {
 		fmt.Printf("  + %d added\n", report.Summary.AddedResources)
@@ -322,12 +322,12 @@ func displayDriftSummary(report *differ.DriftReport) {
 	if report.Summary.ModifiedResources > 0 {
 		fmt.Printf("  ~ %d modified\n", report.Summary.ModifiedResources)
 	}
-	
+
 	// Risk assessment
-	fmt.Printf("\n📊 Risk Level: %s (%.1f/10)\n", 
-		strings.Title(string(report.Summary.OverallRisk)), 
+	fmt.Printf("\n📊 Risk Level: %s (%.1f/10)\n",
+		strings.Title(string(report.Summary.OverallRisk)),
 		report.Summary.RiskScore*10)
-	
+
 	// Top changes
 	if len(report.ResourceChanges) > 0 {
 		fmt.Println("\n🔍 Key Changes:")
@@ -340,23 +340,23 @@ func displayDriftSummary(report *differ.DriftReport) {
 				}
 				break
 			}
-			
+
 			icon := "~"
 			if change.DriftType == "added" {
 				icon = "+"
 			} else if change.DriftType == "removed" {
 				icon = "-"
 			}
-			
+
 			fmt.Printf("\n  %s %s.%s\n", icon, change.Provider, change.ResourceID)
 			if change.Description != "" {
 				fmt.Printf("    %s\n", change.Description)
 			}
-			
+
 			shown++
 		}
 	}
-	
+
 	// Next steps
 	fmt.Println("\n💡 Next Steps:")
 	fmt.Println("  • Review changes: wgo drift --format markdown")
@@ -367,11 +367,11 @@ func displayDriftSummary(report *differ.DriftReport) {
 func getIgnoreFields(cmd *cobra.Command) []string {
 	ignoreFields, _ := cmd.Flags().GetStringSlice("ignore-fields")
 	ignoreTags, _ := cmd.Flags().GetBool("ignore-tags")
-	
+
 	if ignoreTags {
 		ignoreFields = append(ignoreFields, "tags", "Tags", "labels", "Labels")
 	}
-	
+
 	return ignoreFields
 }
 
