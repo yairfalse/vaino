@@ -15,7 +15,6 @@ import (
 	"github.com/yairfalse/wgo/internal/analyzer"
 	"github.com/yairfalse/wgo/internal/collectors"
 	"github.com/yairfalse/wgo/internal/differ"
-	"github.com/yairfalse/wgo/internal/watchers"
 	"github.com/yairfalse/wgo/pkg/types"
 )
 

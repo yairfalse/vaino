@@ -4,8 +4,6 @@
 package e2e
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"

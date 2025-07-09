@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/cmd/wgo/commands"
 	"github.com/yairfalse/wgo/internal/collectors"
 	"github.com/yairfalse/wgo/internal/collectors/terraform"
 	"github.com/yairfalse/wgo/internal/scanner"

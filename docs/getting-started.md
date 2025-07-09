@@ -2,38 +2,19 @@
 
 **WGO** (*"What's Going On?"*) is the infrastructure drift detection tool that works like `git diff` for your infrastructure. This guide will get you up and running in under 5 minutes.
 
-## Quick Install
+## Prerequisites
 
-### One-Line Install (Recommended)
+Before you begin, make sure you have WGO installed. See the [Installation Guide](installation.md) for all installation methods.
+
+**Quick install:**
 ```bash
 curl -sSL https://install.wgo.sh | bash
 ```
 
-### Package Managers
-
-**macOS/Linux (Homebrew):**
-```bash
-brew install wgo
-```
-
-**Windows (Chocolatey):**
-```bash
-choco install wgo
-```
-
-**Go Install:**
-```bash
-go install github.com/yairfalse/wgo/cmd/wgo@latest
-```
-
-## Verify Installation
-
+**Verify installation:**
 ```bash
 wgo version
-# WGO (What's Going On) version v1.0.0
-
 wgo --help
-# Shows all available commands
 ```
 
 ## First Scan - 30 Seconds
@@ -168,25 +149,22 @@ wgo configure
 Let's walk through a complete example:
 
 ```bash
-# 1. Install WGO
-curl -sSL https://install.wgo.sh | bash
-
-# 2. Navigate to your infrastructure directory
+# 1. Navigate to your infrastructure directory
 cd my-terraform-project
 
-# 3. Take first snapshot
+# 2. Take first snapshot
 wgo scan --snapshot-name "initial-state"
 
-# 4. Make some changes to your infrastructure
+# 3. Make some changes to your infrastructure
 terraform apply
 
-# 5. See what changed
+# 4. See what changed
 wgo diff
 
-# 6. Get AI analysis of changes
+# 5. Get AI analysis of changes
 wgo explain
 
-# 7. Create new baseline after confirming changes
+# 6. Create new baseline after confirming changes
 wgo scan --snapshot-name "post-deployment-$(date +%Y%m%d)"
 ```
 

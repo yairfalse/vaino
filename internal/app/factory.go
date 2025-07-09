@@ -2,9 +2,11 @@ package app
 
 import (
 	"fmt"
+
 	"github.com/yairfalse/wgo/internal/cache"
 	"github.com/yairfalse/wgo/internal/collectors"
 	"github.com/yairfalse/wgo/internal/collectors/aws"
+
 	// "github.com/yairfalse/wgo/internal/collectors/gcp"  // Removed temporarily
 	"github.com/yairfalse/wgo/internal/collectors/kubernetes"
 	"github.com/yairfalse/wgo/internal/collectors/terraform"
