@@ -2,6 +2,8 @@
 *.test
 wgo
 !wgo/
+/build/
+/dist/
 
 # Application config files (not examples or workflows)
 config.yaml
@@ -15,6 +17,9 @@ config.yml
 # Test artifacts
 coverage.out
 coverage.html
+*.prof
+*.test.out
+test_report.txt
 
 # Secrets and sensitive files
 *.key
