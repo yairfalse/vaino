@@ -12,27 +12,27 @@ import (
 func (c *AWSCollector) CollectLambdaResources(ctx context.Context) ([]types.Resource, error) {
 	var resources []types.Resource
 	var marker *string
-	
+
 	for {
 		input := &lambda.ListFunctionsInput{}
 		if marker != nil {
 			input.Marker = marker
 		}
-		
+
 		result, err := c.clients.Lambda.ListFunctions(ctx, input)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list Lambda functions: %w", err)
 		}
-		
+
 		// Process Lambda functions
 		for _, function := range result.Functions {
 			resource := c.normalizer.NormalizeLambdaFunction(function)
-			
+
 			// Try to get function tags
 			if tags, err := c.getLambdaFunctionTags(ctx, *function.FunctionArn); err == nil {
 				resource.Tags = tags
 			}
-			
+
 			// Try to get function environment variables
 			if envVars, err := c.getLambdaFunctionConfig(ctx, *function.FunctionName); err == nil {
 				if resource.Configuration == nil {
@@ -40,17 +40,17 @@ func (c *AWSCollector) CollectLambdaResources(ctx context.Context) ([]types.Reso
 				}
 				resource.Configuration["environment"] = envVars
 			}
-			
+
 			resources = append(resources, resource)
 		}
-		
+
 		// Check if there are more results
 		marker = result.NextMarker
 		if marker == nil {
 			break
 		}
 	}
-	
+
 	return resources, nil
 }
 
@@ -62,7 +62,7 @@ func (c *AWSCollector) getLambdaFunctionTags(ctx context.Context, functionArn st
 	if err != nil {
 		return make(map[string]string), nil
 	}
-	
+
 	return result.Tags, nil
 }
 
@@ -74,14 +74,14 @@ func (c *AWSCollector) getLambdaFunctionConfig(ctx context.Context, functionName
 	if err != nil {
 		return nil, err
 	}
-	
+
 	config := make(map[string]interface{})
-	
+
 	// Add environment variables
 	if result.Configuration.Environment != nil && result.Configuration.Environment.Variables != nil {
 		config["variables"] = result.Configuration.Environment.Variables
 	}
-	
+
 	// Add VPC configuration
 	if result.Configuration.VpcConfig != nil {
 		vpcConfig := map[string]interface{}{
@@ -93,13 +93,13 @@ func (c *AWSCollector) getLambdaFunctionConfig(ctx context.Context, functionName
 		}
 		config["vpc_config"] = vpcConfig
 	}
-	
+
 	// Add dead letter config
 	if result.Configuration.DeadLetterConfig != nil && result.Configuration.DeadLetterConfig.TargetArn != nil {
 		config["dead_letter_config"] = map[string]interface{}{
 			"target_arn": *result.Configuration.DeadLetterConfig.TargetArn,
 		}
 	}
-	
+
 	return config, nil
 }

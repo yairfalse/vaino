@@ -31,15 +31,15 @@ type EventPipeline struct {
 
 // PipelineStage represents a processing stage in the pipeline
 type PipelineStage struct {
-	ID          string                         `json:"id"`
-	Name        string                         `json:"name"`
-	Processor   EventProcessor                 `json:"-"`
-	Concurrency int                            `json:"concurrency"`
-	BufferSize  int                            `json:"buffer_size"`
-	Timeout     time.Duration                  `json:"timeout"`
-	RetryPolicy RetryPolicy                    `json:"retry_policy"`
-	Enabled     bool                           `json:"enabled"`
-	Stats       PipelineStageStats             `json:"stats"`
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`
+	Processor   EventProcessor     `json:"-"`
+	Concurrency int                `json:"concurrency"`
+	BufferSize  int                `json:"buffer_size"`
+	Timeout     time.Duration      `json:"timeout"`
+	RetryPolicy RetryPolicy        `json:"retry_policy"`
+	Enabled     bool               `json:"enabled"`
+	Stats       PipelineStageStats `json:"stats"`
 }
 
 // EventProcessor interface for processing events
@@ -51,27 +51,27 @@ type EventProcessor interface {
 
 // ProcessedEvent represents an event that has been processed
 type ProcessedEvent struct {
-	ID           string                 `json:"id"`
-	OriginalEvent WatchEvent            `json:"original_event"`
-	ProcessedAt   time.Time             `json:"processed_at"`
-	ProcessorID   string                `json:"processor_id"`
-	ProcessingTime time.Duration        `json:"processing_time"`
-	Enrichments   map[string]interface{} `json:"enrichments"`
-	Severity      types.DriftSeverity   `json:"severity"`
-	Priority      int                   `json:"priority"`
-	Tags          []string              `json:"tags"`
-	Metadata      map[string]interface{} `json:"metadata"`
+	ID             string                 `json:"id"`
+	OriginalEvent  WatchEvent             `json:"original_event"`
+	ProcessedAt    time.Time              `json:"processed_at"`
+	ProcessorID    string                 `json:"processor_id"`
+	ProcessingTime time.Duration          `json:"processing_time"`
+	Enrichments    map[string]interface{} `json:"enrichments"`
+	Severity       types.DriftSeverity    `json:"severity"`
+	Priority       int                    `json:"priority"`
+	Tags           []string               `json:"tags"`
+	Metadata       map[string]interface{} `json:"metadata"`
 }
 
 // ProcessingGroup represents a group of concurrent workers
 type ProcessingGroup struct {
-	ID            string                `json:"id"`
-	Workers       []*Worker             `json:"workers"`
-	InputChannel  chan WatchEvent       `json:"-"`
-	OutputChannel chan ProcessedEvent   `json:"-"`
-	ErrorChannel  chan error            `json:"-"`
-	Stats         ProcessingGroupStats  `json:"stats"`
-	Running       bool                  `json:"running"`
+	ID            string               `json:"id"`
+	Workers       []*Worker            `json:"workers"`
+	InputChannel  chan WatchEvent      `json:"-"`
+	OutputChannel chan ProcessedEvent  `json:"-"`
+	ErrorChannel  chan error           `json:"-"`
+	Stats         ProcessingGroupStats `json:"stats"`
+	Running       bool                 `json:"running"`
 	ctx           context.Context
 	cancel        context.CancelFunc
 	wg            sync.WaitGroup
@@ -79,11 +79,11 @@ type ProcessingGroup struct {
 
 // Worker represents a concurrent worker in the pipeline
 type Worker struct {
-	ID        string           `json:"id"`
-	GroupID   string           `json:"group_id"`
-	Processor EventProcessor   `json:"-"`
-	Stats     WorkerStats      `json:"stats"`
-	Running   bool             `json:"running"`
+	ID        string         `json:"id"`
+	GroupID   string         `json:"group_id"`
+	Processor EventProcessor `json:"-"`
+	Stats     WorkerStats    `json:"stats"`
+	Running   bool           `json:"running"`
 	ctx       context.Context
 	cancel    context.CancelFunc
 }
@@ -108,12 +108,12 @@ type EventRouter struct {
 
 // RoutingRule defines how to route events
 type RoutingRule struct {
-	ID         string                `json:"id"`
-	Name       string                `json:"name"`
-	Conditions []RoutingCondition    `json:"conditions"`
-	Target     string                `json:"target"`
-	Priority   int                   `json:"priority"`
-	Enabled    bool                  `json:"enabled"`
+	ID         string             `json:"id"`
+	Name       string             `json:"name"`
+	Conditions []RoutingCondition `json:"conditions"`
+	Target     string             `json:"target"`
+	Priority   int                `json:"priority"`
+	Enabled    bool               `json:"enabled"`
 }
 
 // RoutingCondition defines conditions for routing
@@ -142,57 +142,57 @@ type BackpressureCallback func(currentLoad float64, action string)
 
 // CircuitBreaker provides circuit breaker functionality
 type CircuitBreaker struct {
-	mu                sync.RWMutex
-	enabled           bool
-	failureThreshold  int
-	resetTimeout      time.Duration
-	state             CircuitBreakerState
-	failureCount      int
-	lastFailureTime   time.Time
-	successCount      int
-	totalRequests     int64
-	stats             CircuitBreakerStats
+	mu               sync.RWMutex
+	enabled          bool
+	failureThreshold int
+	resetTimeout     time.Duration
+	state            CircuitBreakerState
+	failureCount     int
+	lastFailureTime  time.Time
+	successCount     int
+	totalRequests    int64
+	stats            CircuitBreakerStats
 }
 
 // CircuitBreakerState represents the state of the circuit breaker
 type CircuitBreakerState string
 
 const (
-	CircuitBreakerClosed    CircuitBreakerState = "closed"
-	CircuitBreakerOpen      CircuitBreakerState = "open"
-	CircuitBreakerHalfOpen  CircuitBreakerState = "half_open"
+	CircuitBreakerClosed   CircuitBreakerState = "closed"
+	CircuitBreakerOpen     CircuitBreakerState = "open"
+	CircuitBreakerHalfOpen CircuitBreakerState = "half_open"
 )
 
 // Statistics structures
 type EventPipelineStats struct {
-	TotalProcessed      int64                            `json:"total_processed"`
-	ProcessingRate      float64                          `json:"processing_rate"`
-	AverageLatency      time.Duration                    `json:"average_latency"`
-	ErrorRate           float64                          `json:"error_rate"`
-	ThroughputPerSecond float64                          `json:"throughput_per_second"`
-	BackpressureEvents  int64                            `json:"backpressure_events"`
-	CircuitBreakerTrips int64                            `json:"circuit_breaker_trips"`
-	StageStats          map[string]PipelineStageStats    `json:"stage_stats"`
-	GroupStats          map[string]ProcessingGroupStats  `json:"group_stats"`
-	LastActivity        time.Time                        `json:"last_activity"`
+	TotalProcessed      int64                           `json:"total_processed"`
+	ProcessingRate      float64                         `json:"processing_rate"`
+	AverageLatency      time.Duration                   `json:"average_latency"`
+	ErrorRate           float64                         `json:"error_rate"`
+	ThroughputPerSecond float64                         `json:"throughput_per_second"`
+	BackpressureEvents  int64                           `json:"backpressure_events"`
+	CircuitBreakerTrips int64                           `json:"circuit_breaker_trips"`
+	StageStats          map[string]PipelineStageStats   `json:"stage_stats"`
+	GroupStats          map[string]ProcessingGroupStats `json:"group_stats"`
+	LastActivity        time.Time                       `json:"last_activity"`
 }
 
 type PipelineStageStats struct {
-	Processed       int64         `json:"processed"`
-	Errors          int64         `json:"errors"`
-	AverageLatency  time.Duration `json:"average_latency"`
-	Throughput      float64       `json:"throughput"`
-	LastActivity    time.Time     `json:"last_activity"`
+	Processed      int64         `json:"processed"`
+	Errors         int64         `json:"errors"`
+	AverageLatency time.Duration `json:"average_latency"`
+	Throughput     float64       `json:"throughput"`
+	LastActivity   time.Time     `json:"last_activity"`
 }
 
 type ProcessingGroupStats struct {
-	ActiveWorkers   int           `json:"active_workers"`
-	QueueSize       int           `json:"queue_size"`
-	Processed       int64         `json:"processed"`
-	Errors          int64         `json:"errors"`
-	AverageLatency  time.Duration `json:"average_latency"`
-	Throughput      float64       `json:"throughput"`
-	LastActivity    time.Time     `json:"last_activity"`
+	ActiveWorkers  int           `json:"active_workers"`
+	QueueSize      int           `json:"queue_size"`
+	Processed      int64         `json:"processed"`
+	Errors         int64         `json:"errors"`
+	AverageLatency time.Duration `json:"average_latency"`
+	Throughput     float64       `json:"throughput"`
+	LastActivity   time.Time     `json:"last_activity"`
 }
 
 type WorkerStats struct {
@@ -205,10 +205,10 @@ type WorkerStats struct {
 }
 
 type EventRouterStats struct {
-	TotalRouted    int64              `json:"total_routed"`
-	RoutingLatency time.Duration      `json:"routing_latency"`
-	RuleStats      map[string]int64   `json:"rule_stats"`
-	DefaultRouted  int64              `json:"default_routed"`
+	TotalRouted    int64            `json:"total_routed"`
+	RoutingLatency time.Duration    `json:"routing_latency"`
+	RuleStats      map[string]int64 `json:"rule_stats"`
+	DefaultRouted  int64            `json:"default_routed"`
 }
 
 type CircuitBreakerStats struct {
@@ -223,19 +223,19 @@ type CircuitBreakerStats struct {
 // NewEventPipeline creates a new event pipeline
 func NewEventPipeline(bufferSize, maxConcurrency int) *EventPipeline {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	return &EventPipeline{
-		stages:              []PipelineStage{},
-		inputChannel:        make(chan WatchEvent, bufferSize),
-		outputChannel:       make(chan ProcessedEvent, bufferSize),
-		errorChannel:        make(chan error, bufferSize),
-		processingGroups:    make(map[string]*ProcessingGroup),
-		bufferSize:          bufferSize,
-		maxConcurrency:      maxConcurrency,
-		running:             false,
-		ctx:                 ctx,
-		cancel:              cancel,
-		stats:               EventPipelineStats{
+		stages:           []PipelineStage{},
+		inputChannel:     make(chan WatchEvent, bufferSize),
+		outputChannel:    make(chan ProcessedEvent, bufferSize),
+		errorChannel:     make(chan error, bufferSize),
+		processingGroups: make(map[string]*ProcessingGroup),
+		bufferSize:       bufferSize,
+		maxConcurrency:   maxConcurrency,
+		running:          false,
+		ctx:              ctx,
+		cancel:           cancel,
+		stats: EventPipelineStats{
 			StageStats: make(map[string]PipelineStageStats),
 			GroupStats: make(map[string]ProcessingGroupStats),
 		},
@@ -250,7 +250,7 @@ func NewEventRouter() *EventRouter {
 	return &EventRouter{
 		rules:        []RoutingRule{},
 		defaultGroup: "default",
-		stats:        EventRouterStats{
+		stats: EventRouterStats{
 			RuleStats: make(map[string]int64),
 		},
 	}
@@ -288,27 +288,27 @@ func NewCircuitBreaker() *CircuitBreaker {
 func (ep *EventPipeline) Start() error {
 	ep.mu.Lock()
 	defer ep.mu.Unlock()
-	
+
 	if ep.running {
 		return fmt.Errorf("event pipeline is already running")
 	}
-	
+
 	// Start processing groups
 	for _, group := range ep.processingGroups {
 		if err := group.Start(); err != nil {
 			return fmt.Errorf("failed to start processing group %s: %w", group.ID, err)
 		}
 	}
-	
+
 	ep.running = true
-	
+
 	// Start main processing loop
 	ep.wg.Add(1)
 	go ep.processingLoop()
-	
+
 	// Start statistics collection
 	go ep.statsLoop()
-	
+
 	return nil
 }
 
@@ -316,27 +316,27 @@ func (ep *EventPipeline) Start() error {
 func (ep *EventPipeline) Stop() error {
 	ep.mu.Lock()
 	defer ep.mu.Unlock()
-	
+
 	if !ep.running {
 		return fmt.Errorf("event pipeline is not running")
 	}
-	
+
 	ep.cancel()
 	ep.running = false
-	
+
 	// Stop processing groups
 	for _, group := range ep.processingGroups {
 		group.Stop()
 	}
-	
+
 	// Wait for processing loop to finish
 	ep.wg.Wait()
-	
+
 	// Close channels
 	close(ep.inputChannel)
 	close(ep.outputChannel)
 	close(ep.errorChannel)
-	
+
 	return nil
 }
 
@@ -344,7 +344,7 @@ func (ep *EventPipeline) Stop() error {
 func (ep *EventPipeline) AddStage(stage PipelineStage) error {
 	ep.mu.Lock()
 	defer ep.mu.Unlock()
-	
+
 	// Create processing group for this stage
 	group := &ProcessingGroup{
 		ID:            stage.ID,
@@ -355,7 +355,7 @@ func (ep *EventPipeline) AddStage(stage PipelineStage) error {
 		Stats:         ProcessingGroupStats{},
 		Running:       false,
 	}
-	
+
 	// Create workers
 	for i := 0; i < stage.Concurrency; i++ {
 		worker := &Worker{
@@ -367,12 +367,12 @@ func (ep *EventPipeline) AddStage(stage PipelineStage) error {
 		}
 		group.Workers = append(group.Workers, worker)
 	}
-	
+
 	ep.stages = append(ep.stages, stage)
 	ep.processingGroups[stage.ID] = group
 	ep.stats.StageStats[stage.ID] = PipelineStageStats{}
 	ep.stats.GroupStats[stage.ID] = ProcessingGroupStats{}
-	
+
 	return nil
 }
 
@@ -382,13 +382,13 @@ func (ep *EventPipeline) SendEvent(event WatchEvent) error {
 	if !ep.circuitBreaker.AllowRequest() {
 		return fmt.Errorf("circuit breaker is open")
 	}
-	
+
 	// Check backpressure
 	if ep.backpressureManager.ShouldDrop() {
 		ep.backpressureManager.RecordDrop()
 		return fmt.Errorf("backpressure detected, dropping event")
 	}
-	
+
 	select {
 	case ep.inputChannel <- event:
 		return nil
@@ -413,19 +413,19 @@ func (ep *EventPipeline) ErrorChannel() <-chan error {
 func (ep *EventPipeline) GetStats() EventPipelineStats {
 	ep.mu.RLock()
 	defer ep.mu.RUnlock()
-	
+
 	// Update group stats
 	for groupID, group := range ep.processingGroups {
 		ep.stats.GroupStats[groupID] = group.Stats
 	}
-	
+
 	return ep.stats
 }
 
 // processingLoop is the main processing loop
 func (ep *EventPipeline) processingLoop() {
 	defer ep.wg.Done()
-	
+
 	for {
 		select {
 		case <-ep.ctx.Done():
@@ -434,12 +434,12 @@ func (ep *EventPipeline) processingLoop() {
 			if !ok {
 				return
 			}
-			
+
 			startTime := time.Now()
-			
+
 			// Route event to appropriate processing group
 			groupID := ep.eventRouter.RouteEvent(event)
-			
+
 			if group, exists := ep.processingGroups[groupID]; exists {
 				// Send to processing group
 				select {
@@ -461,12 +461,12 @@ func (ep *EventPipeline) processingLoop() {
 					// Error channel is full
 				}
 			}
-			
+
 			// Update stats
 			ep.mu.Lock()
 			ep.stats.TotalProcessed++
 			ep.stats.LastActivity = time.Now()
-			
+
 			latency := time.Since(startTime)
 			if ep.stats.AverageLatency == 0 {
 				ep.stats.AverageLatency = latency
@@ -482,7 +482,7 @@ func (ep *EventPipeline) processingLoop() {
 func (ep *EventPipeline) statsLoop() {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ep.ctx.Done():
@@ -497,7 +497,7 @@ func (ep *EventPipeline) statsLoop() {
 func (ep *EventPipeline) updateStats() {
 	ep.mu.Lock()
 	defer ep.mu.Unlock()
-	
+
 	// Update processing rate
 	if ep.stats.TotalProcessed > 0 && !ep.stats.LastActivity.IsZero() {
 		duration := time.Since(ep.stats.LastActivity)
@@ -505,13 +505,13 @@ func (ep *EventPipeline) updateStats() {
 			ep.stats.ProcessingRate = float64(ep.stats.TotalProcessed) / duration.Seconds()
 		}
 	}
-	
+
 	// Update throughput
 	ep.stats.ThroughputPerSecond = ep.stats.ProcessingRate
-	
+
 	// Update backpressure events
 	ep.stats.BackpressureEvents = ep.backpressureManager.GetDropCount()
-	
+
 	// Update circuit breaker stats
 	ep.stats.CircuitBreakerTrips = ep.circuitBreaker.GetTripCount()
 }
@@ -520,13 +520,13 @@ func (ep *EventPipeline) updateStats() {
 func (pg *ProcessingGroup) Start() error {
 	pg.ctx, pg.cancel = context.WithCancel(context.Background())
 	pg.Running = true
-	
+
 	// Start all workers
 	for _, worker := range pg.Workers {
 		pg.wg.Add(1)
 		go worker.Start(pg.ctx, pg.InputChannel, pg.OutputChannel, pg.ErrorChannel, &pg.wg)
 	}
-	
+
 	return nil
 }
 
@@ -535,10 +535,10 @@ func (pg *ProcessingGroup) Stop() {
 		pg.cancel()
 	}
 	pg.Running = false
-	
+
 	// Wait for all workers to finish
 	pg.wg.Wait()
-	
+
 	// Close channels
 	close(pg.InputChannel)
 	close(pg.OutputChannel)
@@ -548,11 +548,11 @@ func (pg *ProcessingGroup) Stop() {
 // Worker methods
 func (w *Worker) Start(ctx context.Context, input <-chan WatchEvent, output chan<- ProcessedEvent, errorChan chan<- error, wg *sync.WaitGroup) {
 	defer wg.Done()
-	
+
 	w.ctx, w.cancel = context.WithCancel(ctx)
 	w.Running = true
 	w.Stats.StartTime = time.Now()
-	
+
 	for {
 		select {
 		case <-w.ctx.Done():
@@ -561,9 +561,9 @@ func (w *Worker) Start(ctx context.Context, input <-chan WatchEvent, output chan
 			if !ok {
 				return
 			}
-			
+
 			startTime := time.Now()
-			
+
 			// Process the event
 			processed, err := w.Processor.Process(w.ctx, event)
 			if err != nil {
@@ -575,13 +575,13 @@ func (w *Worker) Start(ctx context.Context, input <-chan WatchEvent, output chan
 				}
 				continue
 			}
-			
+
 			// Send processed event
 			select {
 			case output <- processed:
 				w.Stats.Processed++
 				w.Stats.LastActivity = time.Now()
-				
+
 				// Update latency
 				latency := time.Since(startTime)
 				if w.Stats.AverageLatency == 0 {
@@ -601,19 +601,19 @@ func (w *Worker) Start(ctx context.Context, input <-chan WatchEvent, output chan
 func (er *EventRouter) RouteEvent(event WatchEvent) string {
 	er.mu.RLock()
 	defer er.mu.RUnlock()
-	
+
 	// Check routing rules
 	for _, rule := range er.rules {
 		if !rule.Enabled {
 			continue
 		}
-		
+
 		if er.evaluateRule(rule, event) {
 			er.stats.RuleStats[rule.ID]++
 			return rule.Target
 		}
 	}
-	
+
 	// No rule matched, use default
 	er.stats.DefaultRouted++
 	return er.defaultGroup
@@ -630,7 +630,7 @@ func (er *EventRouter) evaluateRule(rule RoutingRule, event WatchEvent) bool {
 
 func (er *EventRouter) evaluateCondition(condition RoutingCondition, event WatchEvent) bool {
 	var fieldValue interface{}
-	
+
 	switch condition.Field {
 	case "provider":
 		fieldValue = event.Provider
@@ -643,7 +643,7 @@ func (er *EventRouter) evaluateCondition(condition RoutingCondition, event Watch
 	case "resource.namespace":
 		fieldValue = event.Resource.Namespace
 	}
-	
+
 	switch condition.Operator {
 	case "equals":
 		return fieldValue == condition.Value
@@ -656,7 +656,7 @@ func (er *EventRouter) evaluateCondition(condition RoutingCondition, event Watch
 			}
 		}
 	}
-	
+
 	return false
 }
 
@@ -664,16 +664,16 @@ func (er *EventRouter) evaluateCondition(condition RoutingCondition, event Watch
 func (bm *BackpressureManager) ShouldDrop() bool {
 	bm.mu.RLock()
 	defer bm.mu.RUnlock()
-	
+
 	return bm.enabled && bm.currentLoad > bm.throttleThreshold
 }
 
 func (bm *BackpressureManager) RecordDrop() {
 	bm.mu.Lock()
 	defer bm.mu.Unlock()
-	
+
 	bm.dropCount++
-	
+
 	// Notify callbacks
 	for _, callback := range bm.backpressureCallbacks {
 		callback(bm.currentLoad, "drop")
@@ -690,13 +690,13 @@ func (bm *BackpressureManager) GetDropCount() int64 {
 func (cb *CircuitBreaker) AllowRequest() bool {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
-	
+
 	if !cb.enabled {
 		return true
 	}
-	
+
 	cb.totalRequests++
-	
+
 	switch cb.state {
 	case CircuitBreakerClosed:
 		return true
@@ -711,16 +711,16 @@ func (cb *CircuitBreaker) AllowRequest() bool {
 	case CircuitBreakerHalfOpen:
 		return true
 	}
-	
+
 	return false
 }
 
 func (cb *CircuitBreaker) RecordSuccess() {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
-	
+
 	cb.successCount++
-	
+
 	if cb.state == CircuitBreakerHalfOpen {
 		cb.state = CircuitBreakerClosed
 		cb.failureCount = 0
@@ -731,10 +731,10 @@ func (cb *CircuitBreaker) RecordSuccess() {
 func (cb *CircuitBreaker) RecordFailure() {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
-	
+
 	cb.failureCount++
 	cb.lastFailureTime = time.Now()
-	
+
 	if cb.failureCount >= cb.failureThreshold {
 		cb.state = CircuitBreakerOpen
 		cb.stats.LastStateChange = time.Now()
@@ -744,7 +744,7 @@ func (cb *CircuitBreaker) RecordFailure() {
 func (cb *CircuitBreaker) GetTripCount() int64 {
 	cb.mu.RLock()
 	defer cb.mu.RUnlock()
-	
+
 	// Simple implementation - count how many times we've been open
 	if cb.state == CircuitBreakerOpen {
 		return 1

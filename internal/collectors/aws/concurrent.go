@@ -46,7 +46,7 @@ func (c *ConcurrentAWSCollector) CollectConcurrent(ctx context.Context, config c
 	// Extract configuration
 	region := ""
 	profile := ""
-	
+
 	if config.Config != nil {
 		if r, ok := config.Config["region"].(string); ok {
 			region = r
@@ -55,18 +55,18 @@ func (c *ConcurrentAWSCollector) CollectConcurrent(ctx context.Context, config c
 			profile = p
 		}
 	}
-	
+
 	// Create AWS clients
 	clientConfig := ClientConfig{
 		Region:  region,
 		Profile: profile,
 	}
-	
+
 	clients, err := NewAWSClients(ctx, clientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AWS clients: %w", err)
 	}
-	
+
 	c.clients = clients
 	c.region = clients.GetRegion()
 	c.profile = profile
@@ -78,7 +78,7 @@ func (c *ConcurrentAWSCollector) CollectConcurrent(ctx context.Context, config c
 
 	// Results channel for concurrent operations
 	results := make(chan AWSResourceCollectionResult, 6) // 6 main AWS services
-	
+
 	// Wait group for tracking goroutines
 	var wg sync.WaitGroup
 
@@ -118,8 +118,8 @@ func (c *ConcurrentAWSCollector) CollectConcurrent(ctx context.Context, config c
 				cancel() // Cancel remaining operations
 				return nil, fmt.Errorf("authentication failed for %s service: %w", result.ServiceName, result.Error)
 			}
-			
-			collectionErrors = append(collectionErrors, 
+
+			collectionErrors = append(collectionErrors,
 				fmt.Errorf("%s collection failed: %w", result.ServiceName, result.Error))
 		} else {
 			allResources = append(allResources, result.Resources...)
@@ -179,18 +179,18 @@ func (c *ConcurrentAWSCollector) CollectEC2Resources(ctx context.Context) ([]typ
 
 	// Collect different EC2 resources concurrently
 	ec2ResourceTypes := []string{"instances", "volumes", "snapshots", "security_groups", "key_pairs"}
-	
+
 	for _, resourceType := range ec2ResourceTypes {
 		wg.Add(1)
 		go func(rType string) {
 			defer wg.Done()
-			
+
 			resources, err := c.collectEC2ResourceType(ctx, rType)
 			if err != nil {
 				// Log error but don't fail the entire collection
 				return
 			}
-			
+
 			mu.Lock()
 			allResources = append(allResources, resources...)
 			mu.Unlock()
@@ -317,12 +317,12 @@ func (c *ConcurrentAWSCollector) CollectS3Resources(ctx context.Context) ([]type
 
 	// Mock bucket list - in real implementation, this would list actual buckets
 	buckets := []string{"bucket1", "bucket2", "bucket3"}
-	
+
 	for _, bucket := range buckets {
 		wg.Add(1)
 		go func(bucketName string) {
 			defer wg.Done()
-			
+
 			resource := types.Resource{
 				ID:       fmt.Sprintf("s3-%s-%d", bucketName, time.Now().Unix()),
 				Type:     "s3_bucket",
@@ -332,7 +332,7 @@ func (c *ConcurrentAWSCollector) CollectS3Resources(ctx context.Context) ([]type
 					"region": c.region,
 				},
 			}
-			
+
 			mu.Lock()
 			allResources = append(allResources, resource)
 			mu.Unlock()
@@ -351,17 +351,17 @@ func (c *ConcurrentAWSCollector) CollectVPCResources(ctx context.Context) ([]typ
 
 	// Collect different VPC resources concurrently
 	vpcResourceTypes := []string{"vpcs", "subnets", "route_tables", "internet_gateways"}
-	
+
 	for _, resourceType := range vpcResourceTypes {
 		wg.Add(1)
 		go func(rType string) {
 			defer wg.Done()
-			
+
 			resources, err := c.collectVPCResourceType(ctx, rType)
 			if err != nil {
 				return // Skip failed resource types
 			}
-			
+
 			mu.Lock()
 			allResources = append(allResources, resources...)
 			mu.Unlock()
@@ -473,17 +473,17 @@ func (c *ConcurrentAWSCollector) CollectIAMResources(ctx context.Context) ([]typ
 
 	// Collect different IAM resources concurrently
 	iamResourceTypes := []string{"users", "roles", "policies"}
-	
+
 	for _, resourceType := range iamResourceTypes {
 		wg.Add(1)
 		go func(rType string) {
 			defer wg.Done()
-			
+
 			resources, err := c.collectIAMResourceType(ctx, rType)
 			if err != nil {
 				return // Skip failed resource types
 			}
-			
+
 			mu.Lock()
 			allResources = append(allResources, resources...)
 			mu.Unlock()

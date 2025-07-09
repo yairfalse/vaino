@@ -50,12 +50,12 @@ func (c *GCPCollector) Status() string {
 func (c *GCPCollector) Collect(ctx context.Context, config collectors.CollectorConfig) (*types.Snapshot, error) {
 	// Extract GCP configuration
 	gcpConfig := c.extractGCPConfig(config)
-	
+
 	// Validate credentials
 	if err := c.validateCredentials(gcpConfig); err != nil {
 		return nil, err
 	}
-	
+
 	snapshot := &types.Snapshot{
 		ID:        fmt.Sprintf("gcp-scan-%d", time.Now().Unix()),
 		Provider:  "gcp",
@@ -68,7 +68,7 @@ func (c *GCPCollector) Collect(ctx context.Context, config collectors.CollectorC
 			},
 		},
 	}
-	
+
 	// For now, return a basic snapshot indicating GCP scanning is functional
 	// This would be expanded to actually collect GCP resources
 	resources := []types.Resource{
@@ -196,7 +196,7 @@ func (c *GCPCollector) validateCredentials(config GCPConfig) error {
 			WithVerify("echo $GOOGLE_CLOUD_PROJECT").
 			WithHelp("wgo validate gcp")
 	}
-	
+
 	// Check if credentials file is specified and exists
 	if config.CredentialsFile != "" {
 		if _, err := os.Stat(config.CredentialsFile); os.IsNotExist(err) {
@@ -211,7 +211,7 @@ func (c *GCPCollector) validateCredentials(config GCPConfig) error {
 				WithVerify("ls -la \"$GOOGLE_APPLICATION_CREDENTIALS\"").
 				WithHelp("wgo validate gcp")
 		}
-		
+
 		// Try to read and parse the credentials file
 		content, err := os.ReadFile(config.CredentialsFile)
 		if err != nil {
@@ -225,13 +225,13 @@ func (c *GCPCollector) validateCredentials(config GCPConfig) error {
 				WithVerify("cat \"$GOOGLE_APPLICATION_CREDENTIALS\"").
 				WithHelp("wgo validate gcp")
 		}
-		
+
 		// Try to parse as JSON
 		var creds map[string]interface{}
 		if err := json.Unmarshal(content, &creds); err != nil {
 			return wgoerrors.New(wgoerrors.ErrorTypeAuthentication, wgoerrors.ProviderGCP,
 				"Invalid GCP service account credentials file format").
-				WithCause("Failed to parse JSON: " + err.Error()).
+				WithCause("Failed to parse JSON: "+err.Error()).
 				WithSolutions(
 					"Verify the credentials file is valid JSON",
 					"Download a fresh service account key from GCP Console",
@@ -240,7 +240,7 @@ func (c *GCPCollector) validateCredentials(config GCPConfig) error {
 				WithVerify("python -m json.tool \"$GOOGLE_APPLICATION_CREDENTIALS\"").
 				WithHelp("wgo validate gcp")
 		}
-		
+
 		// Validate required fields
 		requiredFields := []string{"type", "project_id", "private_key_id", "private_key"}
 		for _, field := range requiredFields {
@@ -256,7 +256,7 @@ func (c *GCPCollector) validateCredentials(config GCPConfig) error {
 					WithHelp("wgo validate gcp")
 			}
 		}
-		
+
 		// Check if the private key looks valid
 		if privateKey, ok := creds["private_key"].(string); ok {
 			if !strings.Contains(privateKey, "BEGIN PRIVATE KEY") {
@@ -283,6 +283,6 @@ func (c *GCPCollector) validateCredentials(config GCPConfig) error {
 			WithVerify("echo $GOOGLE_APPLICATION_CREDENTIALS").
 			WithHelp("wgo validate gcp")
 	}
-	
+
 	return nil
 }

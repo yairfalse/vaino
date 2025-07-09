@@ -103,10 +103,10 @@ func newAuthStatusCommand() *cobra.Command {
 
 func runAuthGCP(cmd *cobra.Command, args []string) error {
 	projectID, _ := cmd.Flags().GetString("project")
-	
+
 	fmt.Println("🔐 Setting up GCP Authentication")
 	fmt.Println("================================")
-	
+
 	authHelper := helpers.NewAuthHelper()
 	return authHelper.SetupGCPAuth(projectID)
 }
@@ -114,58 +114,58 @@ func runAuthGCP(cmd *cobra.Command, args []string) error {
 func runAuthAWS(cmd *cobra.Command, args []string) error {
 	fmt.Println("🔐 Setting up AWS Authentication")
 	fmt.Println("================================")
-	
+
 	authHelper := helpers.NewAuthHelper()
 	return authHelper.SetupAWSAuth()
 }
 
 func runAuthTest(cmd *cobra.Command, args []string) error {
 	provider, _ := cmd.Flags().GetString("provider")
-	
+
 	fmt.Println("🔍 Testing Authentication")
 	fmt.Println("========================")
-	
+
 	// TODO: Implement actual authentication testing
 	// For now, provide helpful information
-	
+
 	if provider == "" || provider == "gcp" {
 		fmt.Println("\n📋 GCP Authentication:")
 		testGCPAuth()
 	}
-	
+
 	if provider == "" || provider == "aws" {
 		fmt.Println("\n📋 AWS Authentication:")
 		testAWSAuth()
 	}
-	
+
 	if provider == "" || provider == "terraform" {
 		fmt.Println("\n📋 Terraform:")
 		testTerraformAuth()
 	}
-	
+
 	return nil
 }
 
 func runAuthStatus(cmd *cobra.Command, args []string) error {
 	fmt.Println("🔐 Authentication Status")
 	fmt.Println("=======================")
-	
+
 	// Check GCP
 	fmt.Println("\n📋 Google Cloud Platform:")
 	showGCPAuthStatus()
-	
-	// Check AWS  
+
+	// Check AWS
 	fmt.Println("\n📋 AWS:")
 	showAWSAuthStatus()
-	
+
 	// Check Terraform
 	fmt.Println("\n📋 Terraform:")
 	showTerraformStatus()
-	
+
 	fmt.Println("\n💡 Tips:")
 	fmt.Println("  • Run 'wgo auth <provider>' to set up authentication")
 	fmt.Println("  • Run 'wgo auth test' to verify your credentials work")
-	
+
 	return nil
 }
 

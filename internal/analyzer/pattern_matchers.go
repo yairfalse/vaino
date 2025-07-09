@@ -18,9 +18,9 @@ func (s *ScalingPatternMatcher) Match(changes []differ.SimpleChange) []ChangeGro
 
 	for _, change := range changes {
 		// Look for deployment/statefulset modifications with replica changes
-		if change.Type == "modified" && 
-		   (change.ResourceType == "deployment" || change.ResourceType == "statefulset") {
-			
+		if change.Type == "modified" &&
+			(change.ResourceType == "deployment" || change.ResourceType == "statefulset") {
+
 			// Check if replicas changed
 			var replicaChange *differ.SimpleFieldChange
 			for _, detail := range change.Details {
@@ -52,8 +52,8 @@ func (s *ScalingPatternMatcher) Match(changes []differ.SimpleChange) []ChangeGro
 
 				// Check for HPA triggers
 				for _, other := range changes {
-					if other.ResourceType == "horizontalpodautoscaler" && 
-					   other.ResourceName == change.ResourceName+"-hpa" {
+					if other.ResourceType == "horizontalpodautoscaler" &&
+						other.ResourceName == change.ResourceName+"-hpa" {
 						group.Changes = append(group.Changes, other)
 						group.Description += " (HPA triggered)"
 					}
@@ -96,10 +96,10 @@ func (c *ConfigUpdatePatternMatcher) Match(changes []differ.SimpleChange) []Chan
 		if used[change.ResourceID] {
 			continue
 		}
-		
-		if change.Type == "modified" && 
-		   (change.ResourceType == "configmap" || change.ResourceType == "secret") {
-			
+
+		if change.Type == "modified" &&
+			(change.ResourceType == "configmap" || change.ResourceType == "secret") {
+
 			group := ChangeGroup{
 				Timestamp:   change.Timestamp,
 				Title:       fmt.Sprintf("%s Update", change.ResourceName),
@@ -113,12 +113,12 @@ func (c *ConfigUpdatePatternMatcher) Match(changes []differ.SimpleChange) []Chan
 				if used[other.ResourceID] {
 					continue
 				}
-				
+
 				// Look for deployment restarts (generation changes)
 				if other.ResourceType == "deployment" && other.Type == "modified" {
 					// Check if this happened after config change
-					if other.Timestamp.After(change.Timestamp) && 
-					   other.Timestamp.Sub(change.Timestamp) <= 2*time.Minute {
+					if other.Timestamp.After(change.Timestamp) &&
+						other.Timestamp.Sub(change.Timestamp) <= 2*time.Minute {
 						// Check for generation change (indicates restart)
 						for _, detail := range other.Details {
 							if detail.Field == "generation" {
@@ -129,17 +129,17 @@ func (c *ConfigUpdatePatternMatcher) Match(changes []differ.SimpleChange) []Chan
 						}
 					}
 				}
-				
+
 				// Look for pod changes in same namespace
 				if other.ResourceType == "pod" && other.Type == "modified" &&
-				   other.Namespace == change.Namespace {
+					other.Namespace == change.Namespace {
 					// Check if this pod restart happened after config change
-					if other.Timestamp.After(change.Timestamp) && 
-					   other.Timestamp.Sub(change.Timestamp) <= 2*time.Minute {
+					if other.Timestamp.After(change.Timestamp) &&
+						other.Timestamp.Sub(change.Timestamp) <= 2*time.Minute {
 						// Check if pod has restart in its details
 						for _, detail := range other.Details {
-							if strings.Contains(detail.Field, "restart") || 
-							   detail.Field == "status.phase" {
+							if strings.Contains(detail.Field, "restart") ||
+								detail.Field == "status.phase" {
 								group.Changes = append(group.Changes, other)
 								break
 							}
@@ -182,7 +182,7 @@ func (s *ServiceDeploymentPatternMatcher) Match(changes []differ.SimpleChange) [
 		if used[change.ResourceID] {
 			continue
 		}
-		
+
 		if change.ResourceType == "service" && change.Type == "added" {
 			group := ChangeGroup{
 				Timestamp:   change.Timestamp,
@@ -198,16 +198,16 @@ func (s *ServiceDeploymentPatternMatcher) Match(changes []differ.SimpleChange) [
 				if used[other.ResourceID] || other.ResourceID == change.ResourceID {
 					continue
 				}
-				
+
 				// Must be in same namespace and created around same time
 				if other.Namespace == change.Namespace &&
-				   other.Type == "added" &&
-				   s.isWithinTimeWindow(change.Timestamp, other.Timestamp) {
+					other.Type == "added" &&
+					s.isWithinTimeWindow(change.Timestamp, other.Timestamp) {
 					// Check for exact base name match
 					if other.ResourceName == baseName ||
-					   other.ResourceName == baseName+"-deployment" ||
-					   other.ResourceName == baseName+"-configmap" ||
-					   strings.HasPrefix(other.ResourceName, baseName+"-") {
+						other.ResourceName == baseName+"-deployment" ||
+						other.ResourceName == baseName+"-configmap" ||
+						strings.HasPrefix(other.ResourceName, baseName+"-") {
 						group.Changes = append(group.Changes, other)
 					}
 				}
@@ -256,7 +256,7 @@ func (n *NetworkPatternMatcher) Match(changes []differ.SimpleChange) []ChangeGro
 		if used[change.ResourceID] {
 			continue
 		}
-		
+
 		if change.ResourceType == "ingress" && change.Type == "modified" {
 			group := ChangeGroup{
 				Timestamp:   change.Timestamp,
@@ -271,10 +271,10 @@ func (n *NetworkPatternMatcher) Match(changes []differ.SimpleChange) []ChangeGro
 				if used[other.ResourceID] || other.ResourceID == change.ResourceID {
 					continue
 				}
-				
-				if other.ResourceType == "service" && 
-				   other.Namespace == change.Namespace &&
-				   n.isWithinTimeWindow(change.Timestamp, other.Timestamp) {
+
+				if other.ResourceType == "service" &&
+					other.Namespace == change.Namespace &&
+					n.isWithinTimeWindow(change.Timestamp, other.Timestamp) {
 					group.Changes = append(group.Changes, other)
 					group.Description += fmt.Sprintf(", service %s updated", other.ResourceName)
 				}
@@ -322,7 +322,7 @@ func (s *StoragePatternMatcher) Match(changes []differ.SimpleChange) []ChangeGro
 		if used[change.ResourceID] {
 			continue
 		}
-		
+
 		if change.ResourceType == "persistentvolumeclaim" && change.Type == "added" {
 			group := ChangeGroup{
 				Timestamp:   change.Timestamp,
@@ -337,10 +337,10 @@ func (s *StoragePatternMatcher) Match(changes []differ.SimpleChange) []ChangeGro
 				if used[other.ResourceID] {
 					continue
 				}
-				
-				if other.ResourceType == "persistentvolume" && 
-				   other.Type == "added" &&
-				   s.isWithinTimeWindow(change.Timestamp, other.Timestamp) {
+
+				if other.ResourceType == "persistentvolume" &&
+					other.Type == "added" &&
+					s.isWithinTimeWindow(change.Timestamp, other.Timestamp) {
 					// Check if PV name matches PVC
 					if strings.Contains(other.ResourceName, "pvc-") {
 						group.Changes = append(group.Changes, other)
@@ -393,7 +393,7 @@ func (s *SecurityPatternMatcher) Match(changes []differ.SimpleChange) []ChangeGr
 		if used[change.ResourceID] {
 			continue
 		}
-		
+
 		if change.ResourceType == "secret" && change.Type == "modified" {
 			secretChanges[change.Namespace] = append(secretChanges[change.Namespace], change)
 		}
@@ -420,7 +420,7 @@ func (s *SecurityPatternMatcher) Match(changes []differ.SimpleChange) []ChangeGr
 					Reason:      "Coordinated secret rotation",
 				}
 				groups = append(groups, group)
-				
+
 				// Mark all changes in this group as used
 				for _, change := range secrets {
 					used[change.ResourceID] = true

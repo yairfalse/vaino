@@ -22,13 +22,13 @@ type EventMerger struct {
 
 // EventMergerStats holds statistics for the event merger
 type EventMergerStats struct {
-	TotalProcessed    int64                    `json:"total_processed"`
-	ProcessingRate    float64                  `json:"processing_rate"`
-	BufferUtilization float64                  `json:"buffer_utilization"`
-	DroppedEvents     int64                    `json:"dropped_events"`
-	SourceStats       map[string]SourceStats   `json:"source_stats"`
-	LastActivity      time.Time                `json:"last_activity"`
-	AverageLatency    time.Duration            `json:"average_latency"`
+	TotalProcessed    int64                  `json:"total_processed"`
+	ProcessingRate    float64                `json:"processing_rate"`
+	BufferUtilization float64                `json:"buffer_utilization"`
+	DroppedEvents     int64                  `json:"dropped_events"`
+	SourceStats       map[string]SourceStats `json:"source_stats"`
+	LastActivity      time.Time              `json:"last_activity"`
+	AverageLatency    time.Duration          `json:"average_latency"`
 }
 
 // SourceStats holds statistics for a specific event source
@@ -42,7 +42,7 @@ type SourceStats struct {
 // NewEventMerger creates a new event merger
 func NewEventMerger(bufferSize int) *EventMerger {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	return &EventMerger{
 		eventSources: make(map[string]<-chan WatchEvent),
 		mergedChan:   make(chan WatchEvent, bufferSize),
@@ -60,22 +60,22 @@ func NewEventMerger(bufferSize int) *EventMerger {
 func (em *EventMerger) Start() error {
 	em.mu.Lock()
 	defer em.mu.Unlock()
-	
+
 	if em.running {
 		return fmt.Errorf("event merger is already running")
 	}
-	
+
 	em.running = true
-	
+
 	// Start goroutine for each event source
 	for provider, eventChan := range em.eventSources {
 		em.wg.Add(1)
 		go em.processEventSource(provider, eventChan)
 	}
-	
+
 	// Start statistics collection
 	go em.statsCollectionLoop()
-	
+
 	return nil
 }
 
@@ -83,20 +83,20 @@ func (em *EventMerger) Start() error {
 func (em *EventMerger) Stop() error {
 	em.mu.Lock()
 	defer em.mu.Unlock()
-	
+
 	if !em.running {
 		return fmt.Errorf("event merger is not running")
 	}
-	
+
 	em.cancel()
 	em.running = false
-	
+
 	// Wait for all goroutines to finish
 	em.wg.Wait()
-	
+
 	// Close merged channel
 	close(em.mergedChan)
-	
+
 	return nil
 }
 
@@ -104,10 +104,10 @@ func (em *EventMerger) Stop() error {
 func (em *EventMerger) AddEventSource(provider string, eventChan <-chan WatchEvent) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
-	
+
 	em.eventSources[provider] = eventChan
 	em.stats.SourceStats[provider] = SourceStats{}
-	
+
 	// If we're already running, start processing this source
 	if em.running {
 		em.wg.Add(1)
@@ -119,7 +119,7 @@ func (em *EventMerger) AddEventSource(provider string, eventChan <-chan WatchEve
 func (em *EventMerger) RemoveEventSource(provider string) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
-	
+
 	delete(em.eventSources, provider)
 	delete(em.stats.SourceStats, provider)
 }
@@ -133,10 +133,10 @@ func (em *EventMerger) EventChannel() <-chan WatchEvent {
 func (em *EventMerger) GetStats() EventMergerStats {
 	em.mu.RLock()
 	defer em.mu.RUnlock()
-	
+
 	// Update buffer utilization
 	em.stats.BufferUtilization = float64(len(em.mergedChan)) / float64(em.bufferSize) * 100
-	
+
 	return em.stats
 }
 
@@ -144,12 +144,12 @@ func (em *EventMerger) GetStats() EventMergerStats {
 func (em *EventMerger) UpdateBufferSize(newSize int) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
-	
+
 	if em.running {
 		// Can't change buffer size while running
 		return
 	}
-	
+
 	em.bufferSize = newSize
 	em.mergedChan = make(chan WatchEvent, newSize)
 }
@@ -164,7 +164,7 @@ func (em *EventMerger) IsRunning() bool {
 // processEventSource processes events from a specific source
 func (em *EventMerger) processEventSource(provider string, eventChan <-chan WatchEvent) {
 	defer em.wg.Done()
-	
+
 	for {
 		select {
 		case <-em.ctx.Done():
@@ -174,9 +174,9 @@ func (em *EventMerger) processEventSource(provider string, eventChan <-chan Watc
 				// Channel closed
 				return
 			}
-			
+
 			startTime := time.Now()
-			
+
 			// Try to send event to merged channel
 			select {
 			case em.mergedChan <- event:
@@ -200,24 +200,24 @@ func (em *EventMerger) processEventSource(provider string, eventChan <-chan Watc
 func (em *EventMerger) updateSourceStats(provider string, startTime time.Time) {
 	em.mu.Lock()
 	defer em.mu.Unlock()
-	
+
 	latency := time.Since(startTime)
-	
+
 	stats := em.stats.SourceStats[provider]
 	stats.EventsProcessed++
 	stats.LastEvent = time.Now()
-	
+
 	// Update average latency
 	if stats.AverageLatency == 0 {
 		stats.AverageLatency = latency
 	} else {
 		stats.AverageLatency = time.Duration((int64(stats.AverageLatency) + int64(latency)) / 2)
 	}
-	
+
 	em.stats.SourceStats[provider] = stats
 	em.stats.TotalProcessed++
 	em.stats.LastActivity = time.Now()
-	
+
 	// Update overall average latency
 	if em.stats.AverageLatency == 0 {
 		em.stats.AverageLatency = latency
@@ -230,7 +230,7 @@ func (em *EventMerger) updateSourceStats(provider string, startTime time.Time) {
 func (em *EventMerger) statsCollectionLoop() {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-em.ctx.Done():
@@ -245,7 +245,7 @@ func (em *EventMerger) statsCollectionLoop() {
 func (em *EventMerger) updateProcessingRate() {
 	em.mu.Lock()
 	defer em.mu.Unlock()
-	
+
 	if em.stats.TotalProcessed > 0 && !em.stats.LastActivity.IsZero() {
 		duration := time.Since(em.stats.LastActivity)
 		if duration > 0 {
@@ -258,7 +258,7 @@ func (em *EventMerger) updateProcessingRate() {
 func (em *EventMerger) GetBufferUtilization() float64 {
 	em.mu.RLock()
 	defer em.mu.RUnlock()
-	
+
 	return float64(len(em.mergedChan)) / float64(em.bufferSize) * 100
 }
 
@@ -266,7 +266,7 @@ func (em *EventMerger) GetBufferUtilization() float64 {
 func (em *EventMerger) GetActiveSourceCount() int {
 	em.mu.RLock()
 	defer em.mu.RUnlock()
-	
+
 	return len(em.eventSources)
 }
 
@@ -274,9 +274,9 @@ func (em *EventMerger) GetActiveSourceCount() int {
 func (em *EventMerger) FlushEvents() []WatchEvent {
 	em.mu.Lock()
 	defer em.mu.Unlock()
-	
+
 	var events []WatchEvent
-	
+
 	// Drain the channel
 	for len(em.mergedChan) > 0 {
 		select {
@@ -286,7 +286,7 @@ func (em *EventMerger) FlushEvents() []WatchEvent {
 			break
 		}
 	}
-	
+
 	return events
 }
 
@@ -294,11 +294,11 @@ func (em *EventMerger) FlushEvents() []WatchEvent {
 func (em *EventMerger) GetProviderEventCount(provider string) int64 {
 	em.mu.RLock()
 	defer em.mu.RUnlock()
-	
+
 	if stats, exists := em.stats.SourceStats[provider]; exists {
 		return stats.EventsProcessed
 	}
-	
+
 	return 0
 }
 
@@ -306,7 +306,7 @@ func (em *EventMerger) GetProviderEventCount(provider string) int64 {
 func (em *EventMerger) GetHealthStatus() map[string]interface{} {
 	em.mu.RLock()
 	defer em.mu.RUnlock()
-	
+
 	health := map[string]interface{}{
 		"running":            em.running,
 		"buffer_utilization": em.GetBufferUtilization(),
@@ -316,7 +316,7 @@ func (em *EventMerger) GetHealthStatus() map[string]interface{} {
 		"processing_rate":    em.stats.ProcessingRate,
 		"average_latency":    em.stats.AverageLatency.String(),
 	}
-	
+
 	// Add health status based on metrics
 	if em.stats.DroppedEvents > 0 {
 		health["status"] = "warning"
@@ -331,7 +331,7 @@ func (em *EventMerger) GetHealthStatus() map[string]interface{} {
 		health["status"] = "stopped"
 		health["message"] = "Event merger is not running"
 	}
-	
+
 	return health
 }
 
@@ -340,7 +340,7 @@ func (em *EventMerger) PrioritizeEvents(events []WatchEvent) []WatchEvent {
 	// Sort events by priority (critical first, then by timestamp)
 	prioritized := make([]WatchEvent, len(events))
 	copy(prioritized, events)
-	
+
 	// Simple priority sorting - can be enhanced with more sophisticated logic
 	for i := 0; i < len(prioritized)-1; i++ {
 		for j := i + 1; j < len(prioritized); j++ {
@@ -349,7 +349,7 @@ func (em *EventMerger) PrioritizeEvents(events []WatchEvent) []WatchEvent {
 			}
 		}
 	}
-	
+
 	return prioritized
 }
 
@@ -362,14 +362,14 @@ func (em *EventMerger) shouldPrioritize(a, b WatchEvent) bool {
 		EventTypeResourceModified: 1,
 		EventTypeResourceMigrated: 1,
 	}
-	
+
 	priorityA := priorityOrder[a.Type]
 	priorityB := priorityOrder[b.Type]
-	
+
 	if priorityA != priorityB {
 		return priorityA > priorityB
 	}
-	
+
 	// If same priority, order by timestamp (newer first)
 	return a.Timestamp.After(b.Timestamp)
 }
@@ -377,21 +377,21 @@ func (em *EventMerger) shouldPrioritize(a, b WatchEvent) bool {
 // GetEventsByProvider returns events grouped by provider
 func (em *EventMerger) GetEventsByProvider(events []WatchEvent) map[string][]WatchEvent {
 	grouped := make(map[string][]WatchEvent)
-	
+
 	for _, event := range events {
 		grouped[event.Provider] = append(grouped[event.Provider], event)
 	}
-	
+
 	return grouped
 }
 
 // GetEventsByType returns events grouped by type
 func (em *EventMerger) GetEventsByType(events []WatchEvent) map[EventType][]WatchEvent {
 	grouped := make(map[EventType][]WatchEvent)
-	
+
 	for _, event := range events {
 		grouped[event.Type] = append(grouped[event.Type], event)
 	}
-	
+
 	return grouped
 }

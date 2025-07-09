@@ -16,7 +16,7 @@ import (
 func BenchmarkSequentialVsConcurrentScanning(b *testing.B) {
 	// Test sequential vs concurrent scanning performance
 	ctx := context.Background()
-	
+
 	// Create mock configuration
 	config := collectors.CollectorConfig{
 		Config: map[string]interface{}{
@@ -26,13 +26,13 @@ func BenchmarkSequentialVsConcurrentScanning(b *testing.B) {
 
 	b.Run("Sequential", func(b *testing.B) {
 		b.ResetTimer()
-		
+
 		for i := 0; i < b.N; i++ {
 			// Simulate sequential collection
 			awsCollector := aws.NewAWSCollector()
 			gcpCollector := gcp.NewGCPCollector()
 			k8sCollector := kubernetes.NewKubernetesCollector()
-			
+
 			// Sequential execution
 			_, _ = awsCollector.Collect(ctx, config)
 			_, _ = gcpCollector.Collect(ctx, config)
@@ -61,7 +61,7 @@ func BenchmarkSequentialVsConcurrentScanning(b *testing.B) {
 		}
 
 		b.ResetTimer()
-		
+
 		for i := 0; i < b.N; i++ {
 			_, _ = scanner.ScanAllProviders(ctx, scanConfig)
 		}
@@ -71,7 +71,7 @@ func BenchmarkSequentialVsConcurrentScanning(b *testing.B) {
 func BenchmarkConcurrentGCPCollection(b *testing.B) {
 	// Test concurrent GCP collection performance
 	ctx := context.Background()
-	
+
 	config := collectors.CollectorConfig{
 		Config: map[string]interface{}{
 			"project_id": "test-project",
@@ -81,7 +81,7 @@ func BenchmarkConcurrentGCPCollection(b *testing.B) {
 
 	b.Run("Standard_GCP", func(b *testing.B) {
 		collector := gcp.NewGCPCollector()
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, _ = collector.Collect(ctx, config)
@@ -90,7 +90,7 @@ func BenchmarkConcurrentGCPCollection(b *testing.B) {
 
 	b.Run("Concurrent_GCP", func(b *testing.B) {
 		collector := gcp.NewConcurrentGCPCollector(8, 5*time.Minute)
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, _ = collector.Collect(ctx, config)
@@ -101,7 +101,7 @@ func BenchmarkConcurrentGCPCollection(b *testing.B) {
 func BenchmarkConcurrentAWSCollection(b *testing.B) {
 	// Test concurrent AWS collection performance
 	ctx := context.Background()
-	
+
 	config := collectors.CollectorConfig{
 		Config: map[string]interface{}{
 			"region":  "us-east-1",
@@ -111,7 +111,7 @@ func BenchmarkConcurrentAWSCollection(b *testing.B) {
 
 	b.Run("Standard_AWS", func(b *testing.B) {
 		collector := aws.NewAWSCollector()
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, _ = collector.Collect(ctx, config)
@@ -120,7 +120,7 @@ func BenchmarkConcurrentAWSCollection(b *testing.B) {
 
 	b.Run("Concurrent_AWS", func(b *testing.B) {
 		collector := aws.NewConcurrentAWSCollector(6, 5*time.Minute)
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, _ = collector.Collect(ctx, config)
@@ -131,7 +131,7 @@ func BenchmarkConcurrentAWSCollection(b *testing.B) {
 func BenchmarkConcurrentKubernetesCollection(b *testing.B) {
 	// Test concurrent Kubernetes collection performance
 	ctx := context.Background()
-	
+
 	config := collectors.CollectorConfig{
 		Namespaces: []string{"default", "kube-system"},
 		Config: map[string]interface{}{
@@ -141,7 +141,7 @@ func BenchmarkConcurrentKubernetesCollection(b *testing.B) {
 
 	b.Run("Standard_Kubernetes", func(b *testing.B) {
 		collector := kubernetes.NewKubernetesCollector()
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, _ = collector.Collect(ctx, config)
@@ -150,7 +150,7 @@ func BenchmarkConcurrentKubernetesCollection(b *testing.B) {
 
 	b.Run("Concurrent_Kubernetes", func(b *testing.B) {
 		collector := kubernetes.NewConcurrentKubernetesCollector(8, 5*time.Minute)
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, _ = collector.Collect(ctx, config)
@@ -187,9 +187,9 @@ func BenchmarkResourceMerging(b *testing.B) {
 	}
 
 	ctx := context.Background()
-	
+
 	b.ResetTimer()
-	
+
 	for i := 0; i < b.N; i++ {
 		result, err := scanner.ScanAllProviders(ctx, config)
 		if err != nil {
@@ -204,7 +204,7 @@ func BenchmarkResourceMerging(b *testing.B) {
 func BenchmarkConnectionPooling(b *testing.B) {
 	// Test connection pool performance
 	ctx := context.Background()
-	
+
 	b.Run("Without_Pool", func(b *testing.B) {
 		// Create new clients each time
 		b.ResetTimer()
@@ -224,7 +224,7 @@ func BenchmarkConnectionPooling(b *testing.B) {
 		// Reuse connections via pool
 		pool := scanner.NewProviderClientPool(100)
 		defer pool.Close()
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			// Simulate reusing connections
@@ -237,7 +237,7 @@ func BenchmarkConnectionPooling(b *testing.B) {
 func BenchmarkConcurrentScanner_Scalability(b *testing.B) {
 	// Test scalability with different numbers of workers
 	ctx := context.Background()
-	
+
 	// Create multiple providers
 	providers := make(map[string]collectors.CollectorConfig)
 	for i := 0; i < 10; i++ {
@@ -248,7 +248,7 @@ func BenchmarkConcurrentScanner_Scalability(b *testing.B) {
 	}
 
 	workerCounts := []int{1, 2, 4, 8, 16}
-	
+
 	for _, workerCount := range workerCounts {
 		b.Run(fmt.Sprintf("Workers_%d", workerCount), func(b *testing.B) {
 			scanner := scanner.NewConcurrentScanner(workerCount, 30*time.Second)
@@ -269,7 +269,7 @@ func BenchmarkConcurrentScanner_Scalability(b *testing.B) {
 			}
 
 			b.ResetTimer()
-			
+
 			for i := 0; i < b.N; i++ {
 				_, err := scanner.ScanAllProviders(ctx, config)
 				if err != nil {
@@ -283,9 +283,9 @@ func BenchmarkConcurrentScanner_Scalability(b *testing.B) {
 func BenchmarkConcurrentScanner_LargeResourceCounts(b *testing.B) {
 	// Test performance with large numbers of resources
 	ctx := context.Background()
-	
+
 	resourceCounts := []int{100, 1000, 10000, 100000}
-	
+
 	for _, resourceCount := range resourceCounts {
 		b.Run(fmt.Sprintf("Resources_%d", resourceCount), func(b *testing.B) {
 			scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
@@ -305,7 +305,7 @@ func BenchmarkConcurrentScanner_LargeResourceCounts(b *testing.B) {
 			}
 
 			b.ResetTimer()
-			
+
 			for i := 0; i < b.N; i++ {
 				result, err := scanner.ScanAllProviders(ctx, config)
 				if err != nil {
@@ -322,7 +322,7 @@ func BenchmarkConcurrentScanner_LargeResourceCounts(b *testing.B) {
 func BenchmarkConcurrentScanner_MemoryUsage(b *testing.B) {
 	// Test memory usage patterns
 	ctx := context.Background()
-	
+
 	scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
 	defer scanner.Close()
 
@@ -343,7 +343,7 @@ func BenchmarkConcurrentScanner_MemoryUsage(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	
+
 	for i := 0; i < b.N; i++ {
 		result, err := scanner.ScanAllProviders(ctx, config)
 		if err != nil {
@@ -356,7 +356,7 @@ func BenchmarkConcurrentScanner_MemoryUsage(b *testing.B) {
 func BenchmarkConcurrentScanner_ErrorHandling(b *testing.B) {
 	// Test error handling performance
 	ctx := context.Background()
-	
+
 	scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
 	defer scanner.Close()
 
@@ -379,7 +379,7 @@ func BenchmarkConcurrentScanner_ErrorHandling(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	
+
 	for i := 0; i < b.N; i++ {
 		result, err := scanner.ScanAllProviders(ctx, config)
 		if err != nil {

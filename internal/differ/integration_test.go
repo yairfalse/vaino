@@ -101,7 +101,7 @@ func TestDifferEngine_FullWorkflow(t *testing.T) {
 			// Web server - instance type changed (CRITICAL)
 			{
 				ID:       "i-web-server-1",
-				Type:     "instance", 
+				Type:     "instance",
 				Name:     "web-server-1",
 				Provider: "aws",
 				Region:   "us-east-1",
@@ -111,7 +111,7 @@ func TestDifferEngine_FullWorkflow(t *testing.T) {
 					"security_group_ids": []interface{}{"sg-web-123"},
 					"subnet_id":          "subnet-public-1",
 					"public_ip":          "52.1.2.4", // MEDIUM: IP changed
-					"monitoring_enabled": false,       // HIGH: Monitoring disabled
+					"monitoring_enabled": false,      // HIGH: Monitoring disabled
 				},
 				Tags: map[string]string{
 					"Environment": "production",
@@ -182,9 +182,9 @@ func TestDifferEngine_FullWorkflow(t *testing.T) {
 				Provider: "aws",
 				Region:   "us-east-1",
 				Configuration: map[string]interface{}{
-					"scheme":          "internet-facing",
+					"scheme":             "internet-facing",
 					"load_balancer_type": "application",
-					"subnets":         []interface{}{"subnet-public-1", "subnet-public-2"},
+					"subnets":            []interface{}{"subnet-public-1", "subnet-public-2"},
 				},
 				Tags: map[string]string{
 					"Environment": "production",
@@ -200,14 +200,14 @@ func TestDifferEngine_FullWorkflow(t *testing.T) {
 
 	// Test different diff options
 	testCases := []struct {
-		name            string
-		options         DiffOptions
-		expectCritical  int
-		expectHigh      int
-		expectMedium    int
-		expectLow       int
-		expectAdded     int
-		expectModified  int
+		name           string
+		options        DiffOptions
+		expectCritical int
+		expectHigh     int
+		expectMedium   int
+		expectLow      int
+		expectAdded    int
+		expectModified int
 	}{
 		{
 			name:           "full comparison",
@@ -248,12 +248,12 @@ func TestDifferEngine_FullWorkflow(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			engine := NewDifferEngine(tc.options)
-			
+
 			report, err := engine.Compare(baseline, current)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			
+
 			// Verify basic report structure
 			if report.BaselineID != baseline.ID {
 				t.Errorf("expected BaselineID %s, got %s", baseline.ID, report.BaselineID)
@@ -261,7 +261,7 @@ func TestDifferEngine_FullWorkflow(t *testing.T) {
 			if report.CurrentID != current.ID {
 				t.Errorf("expected CurrentID %s, got %s", current.ID, report.CurrentID)
 			}
-			
+
 			// Verify summary counts
 			if report.Summary.AddedResources != tc.expectAdded {
 				t.Errorf("expected %d added resources, got %d", tc.expectAdded, report.Summary.AddedResources)
@@ -269,7 +269,7 @@ func TestDifferEngine_FullWorkflow(t *testing.T) {
 			if report.Summary.ModifiedResources != tc.expectModified {
 				t.Errorf("expected %d modified resources, got %d", tc.expectModified, report.Summary.ModifiedResources)
 			}
-			
+
 			// Verify severity distribution
 			if report.Summary.ChangesBySeverity[RiskLevelCritical] != tc.expectCritical {
 				t.Errorf("expected %d critical changes, got %d", tc.expectCritical, report.Summary.ChangesBySeverity[RiskLevelCritical])
@@ -283,7 +283,7 @@ func TestDifferEngine_FullWorkflow(t *testing.T) {
 			if report.Summary.ChangesBySeverity[RiskLevelLow] != tc.expectLow {
 				t.Errorf("expected %d low changes, got %d", tc.expectLow, report.Summary.ChangesBySeverity[RiskLevelLow])
 			}
-			
+
 			// Verify category distribution
 			expectedCategories := []DriftCategory{
 				DriftCategoryConfig,   // instance_type, team tag
@@ -291,7 +291,7 @@ func TestDifferEngine_FullWorkflow(t *testing.T) {
 				DriftCategoryNetwork,  // public_ip
 				DriftCategoryState,    // monitoring_enabled
 			}
-			
+
 			for _, category := range expectedCategories {
 				if count, exists := report.Summary.ChangesByCategory[category]; !exists || count == 0 {
 					// Only check if we expect changes in this category for this test case
@@ -300,18 +300,18 @@ func TestDifferEngine_FullWorkflow(t *testing.T) {
 					}
 				}
 			}
-			
+
 			// Verify overall risk assessment
 			if report.Summary.OverallRisk == RiskLevelLow {
 				t.Error("expected overall risk to be higher than low with critical security changes")
 			}
-			
+
 			// Verify specific resource changes
 			foundWebServer := false
 			foundDatabase := false
 			foundSecurityGroup := false
 			foundLoadBalancer := false
-			
+
 			for _, resourceChange := range report.ResourceChanges {
 				switch resourceChange.ResourceID {
 				case "i-web-server-1":
@@ -336,7 +336,7 @@ func TestDifferEngine_FullWorkflow(t *testing.T) {
 					}
 				}
 			}
-			
+
 			if !foundWebServer {
 				t.Error("expected to find web server changes")
 			}
@@ -384,7 +384,7 @@ func TestDifferEngine_RealWorldScenarios(t *testing.T) {
 						Type:     "deployment",
 						Provider: "kubernetes",
 						Configuration: map[string]interface{}{
-							"replicas": 5, // Scaled up
+							"replicas": 5,            // Scaled up
 							"image":    "nginx:1.21", // Image updated
 						},
 					},
@@ -410,11 +410,11 @@ func TestDifferEngine_RealWorldScenarios(t *testing.T) {
 						Type:     "s3_bucket",
 						Provider: "aws",
 						Configuration: map[string]interface{}{
-							"versioning_enabled":        true,
-							"public_read_prevented":     true,
-							"public_write_prevented":    true,
-							"public_access_blocked":     true,
-							"restrict_public_buckets":   true,
+							"versioning_enabled":      true,
+							"public_read_prevented":   true,
+							"public_write_prevented":  true,
+							"public_access_blocked":   true,
+							"restrict_public_buckets": true,
 						},
 					},
 				},
@@ -427,11 +427,11 @@ func TestDifferEngine_RealWorldScenarios(t *testing.T) {
 						Type:     "s3_bucket",
 						Provider: "aws",
 						Configuration: map[string]interface{}{
-							"versioning_enabled":        true,
-							"public_read_prevented":     false, // CRITICAL: Public read allowed
-							"public_write_prevented":    true,
-							"public_access_blocked":     true,
-							"restrict_public_buckets":   true,
+							"versioning_enabled":      true,
+							"public_read_prevented":   false, // CRITICAL: Public read allowed
+							"public_write_prevented":  true,
+							"public_access_blocked":   true,
+							"restrict_public_buckets": true,
 						},
 					},
 				},
@@ -458,7 +458,7 @@ func TestDifferEngine_RealWorldScenarios(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			
+
 			tt.validate(t, report)
 		})
 	}

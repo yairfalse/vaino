@@ -48,7 +48,7 @@ func (c *AWSCollector) Validate(config collectors.CollectorConfig) error {
 	// Extract configuration
 	region := ""
 	profile := ""
-	
+
 	if config.Config != nil {
 		if r, ok := config.Config["region"].(string); ok {
 			region = r
@@ -57,24 +57,24 @@ func (c *AWSCollector) Validate(config collectors.CollectorConfig) error {
 			profile = p
 		}
 	}
-	
+
 	// Test AWS client creation
 	ctx := context.Background()
 	clientConfig := ClientConfig{
 		Region:  region,
 		Profile: profile,
 	}
-	
+
 	clients, err := NewAWSClients(ctx, clientConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create AWS clients: %w", err)
 	}
-	
+
 	// Test credentials
 	if err := clients.ValidateCredentials(ctx); err != nil {
 		return fmt.Errorf("AWS credentials validation failed: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -83,7 +83,7 @@ func (c *AWSCollector) Collect(ctx context.Context, config collectors.CollectorC
 	// Extract configuration
 	region := ""
 	profile := ""
-	
+
 	if config.Config != nil {
 		if r, ok := config.Config["region"].(string); ok {
 			region = r
@@ -92,28 +92,28 @@ func (c *AWSCollector) Collect(ctx context.Context, config collectors.CollectorC
 			profile = p
 		}
 	}
-	
+
 	// Create AWS clients
 	clientConfig := ClientConfig{
 		Region:  region,
 		Profile: profile,
 	}
-	
+
 	clients, err := NewAWSClients(ctx, clientConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create AWS clients: %w", err)
 	}
-	
+
 	c.clients = clients
 	c.region = clients.GetRegion()
 	c.profile = profile
 	c.normalizer = NewNormalizer(c.region)
-	
+
 	// Generate snapshot ID
 	snapshotID := fmt.Sprintf("aws-%d", time.Now().Unix())
-	
+
 	var allResources []types.Resource
-	
+
 	// Collect resources from different services
 	services := []struct {
 		name      string
@@ -126,13 +126,13 @@ func (c *AWSCollector) Collect(ctx context.Context, config collectors.CollectorC
 		{"Lambda", c.CollectLambdaResources},
 		{"IAM", c.CollectIAMResources},
 	}
-	
+
 	for _, service := range services {
 		resources, err := service.collector(ctx)
 		if err != nil {
 			// Return authentication errors immediately, don't continue
 			if isAuthenticationError(err) {
-				return nil, wgoerrors.New(wgoerrors.ErrorTypeAuthentication, wgoerrors.ProviderAWS, 
+				return nil, wgoerrors.New(wgoerrors.ErrorTypeAuthentication, wgoerrors.ProviderAWS,
 					fmt.Sprintf("Authentication failed for %s service", service.name)).
 					WithCause(err.Error()).
 					WithSolutions(
@@ -144,14 +144,14 @@ func (c *AWSCollector) Collect(ctx context.Context, config collectors.CollectorC
 					WithVerify("aws sts get-caller-identity").
 					WithHelp("wgo validate aws")
 			}
-			
+
 			// For other errors, log and continue
 			fmt.Printf("Warning: Failed to collect %s resources: %v\n", service.name, err)
 			continue
 		}
 		allResources = append(allResources, resources...)
 	}
-	
+
 	// Create snapshot
 	snapshot := &types.Snapshot{
 		ID:        snapshotID,
@@ -167,7 +167,7 @@ func (c *AWSCollector) Collect(ctx context.Context, config collectors.CollectorC
 			},
 		},
 	}
-	
+
 	return snapshot, nil
 }
 
@@ -214,13 +214,13 @@ func isAuthenticationError(err error) bool {
 	if err == nil {
 		return false
 	}
-	
+
 	errStr := err.Error()
-	
+
 	// Common AWS authentication error patterns
 	authErrorPatterns := []string{
 		"UnauthorizedOperation",
-		"InvalidUserID.NotFound", 
+		"InvalidUserID.NotFound",
 		"AuthFailure",
 		"SignatureDoesNotMatch",
 		"TokenRefreshRequired",
@@ -233,12 +233,12 @@ func isAuthenticationError(err error) bool {
 		"unable to load AWS config",
 		"NoCredentialProviders",
 	}
-	
+
 	for _, pattern := range authErrorPatterns {
 		if strings.Contains(errStr, pattern) {
 			return true
 		}
 	}
-	
+
 	return false
 }

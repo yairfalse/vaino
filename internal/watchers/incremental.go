@@ -14,18 +14,18 @@ import (
 
 // IncrementalScanner implements smart change detection with incremental scanning
 type IncrementalScanner struct {
-	mu                sync.RWMutex
-	provider          string
-	collector         collectors.EnhancedCollector
-	config            collectors.CollectorConfig
-	resourceIndex     map[string]ResourceSnapshot
-	hashIndex         map[string]string
-	changeDetector    *ChangeDetector
-	scanHistory       []ScanResult
-	maxHistorySize    int
-	scanningStrategy  ScanningStrategy
-	enabled           bool
-	stats             IncrementalScannerStats
+	mu               sync.RWMutex
+	provider         string
+	collector        collectors.EnhancedCollector
+	config           collectors.CollectorConfig
+	resourceIndex    map[string]ResourceSnapshot
+	hashIndex        map[string]string
+	changeDetector   *ChangeDetector
+	scanHistory      []ScanResult
+	maxHistorySize   int
+	scanningStrategy ScanningStrategy
+	enabled          bool
+	stats            IncrementalScannerStats
 }
 
 // ResourceSnapshot represents a snapshot of a resource at a point in time
@@ -42,17 +42,17 @@ type ResourceSnapshot struct {
 
 // ScanResult represents the result of an incremental scan
 type ScanResult struct {
-	ScanID        string                 `json:"scan_id"`
-	Timestamp     time.Time              `json:"timestamp"`
-	Duration      time.Duration          `json:"duration"`
-	ResourceCount int                    `json:"resource_count"`
-	ChangesFound  int                    `json:"changes_found"`
-	NewResources  int                    `json:"new_resources"`
-	DeletedResources int                 `json:"deleted_resources"`
-	ModifiedResources int                `json:"modified_resources"`
-	ErrorCount    int                    `json:"error_count"`
-	ScanType      ScanType               `json:"scan_type"`
-	Metadata      map[string]interface{} `json:"metadata"`
+	ScanID            string                 `json:"scan_id"`
+	Timestamp         time.Time              `json:"timestamp"`
+	Duration          time.Duration          `json:"duration"`
+	ResourceCount     int                    `json:"resource_count"`
+	ChangesFound      int                    `json:"changes_found"`
+	NewResources      int                    `json:"new_resources"`
+	DeletedResources  int                    `json:"deleted_resources"`
+	ModifiedResources int                    `json:"modified_resources"`
+	ErrorCount        int                    `json:"error_count"`
+	ScanType          ScanType               `json:"scan_type"`
+	Metadata          map[string]interface{} `json:"metadata"`
 }
 
 // ScanType represents the type of scan performed
@@ -67,13 +67,13 @@ const (
 
 // ScanningStrategy defines the strategy for incremental scanning
 type ScanningStrategy struct {
-	DefaultScanType    ScanType      `json:"default_scan_type"`
-	FullScanInterval   time.Duration `json:"full_scan_interval"`
+	DefaultScanType     ScanType      `json:"default_scan_type"`
+	FullScanInterval    time.Duration `json:"full_scan_interval"`
 	IncrementalInterval time.Duration `json:"incremental_interval"`
-	TargetedThreshold  int           `json:"targeted_threshold"`
-	DeltaChangeRatio   float64       `json:"delta_change_ratio"`
-	EnablePredictive   bool          `json:"enable_predictive"`
-	EnableOptimization bool          `json:"enable_optimization"`
+	TargetedThreshold   int           `json:"targeted_threshold"`
+	DeltaChangeRatio    float64       `json:"delta_change_ratio"`
+	EnablePredictive    bool          `json:"enable_predictive"`
+	EnableOptimization  bool          `json:"enable_optimization"`
 }
 
 // IncrementalScannerStats holds statistics for the incremental scanner
@@ -95,50 +95,50 @@ type IncrementalScannerStats struct {
 
 // ChangeDetector implements smart change detection algorithms
 type ChangeDetector struct {
-	mu               sync.RWMutex
-	changePatterns   map[string]ChangePattern
-	predictionModel  *PredictionModel
+	mu                sync.RWMutex
+	changePatterns    map[string]ChangePattern
+	predictionModel   *PredictionModel
 	optimizationRules []OptimizationRule
-	enabled          bool
+	enabled           bool
 }
 
 // ChangePattern represents a pattern of changes
 type ChangePattern struct {
-	ID          string            `json:"id"`
-	Provider    string            `json:"provider"`
-	ResourceType string           `json:"resource_type"`
-	ChangeType  types.ChangeType  `json:"change_type"`
-	Frequency   time.Duration     `json:"frequency"`
-	Confidence  float64           `json:"confidence"`
-	LastSeen    time.Time         `json:"last_seen"`
-	Metadata    map[string]interface{} `json:"metadata"`
+	ID           string                 `json:"id"`
+	Provider     string                 `json:"provider"`
+	ResourceType string                 `json:"resource_type"`
+	ChangeType   types.ChangeType       `json:"change_type"`
+	Frequency    time.Duration          `json:"frequency"`
+	Confidence   float64                `json:"confidence"`
+	LastSeen     time.Time              `json:"last_seen"`
+	Metadata     map[string]interface{} `json:"metadata"`
 }
 
 // PredictionModel predicts when resources are likely to change
 type PredictionModel struct {
-	mu                sync.RWMutex
+	mu                  sync.RWMutex
 	resourcePredictions map[string]ResourcePrediction
-	enabled           bool
+	enabled             bool
 }
 
 // ResourcePrediction represents a prediction for a resource
 type ResourcePrediction struct {
-	ResourceID       string    `json:"resource_id"`
-	NextChangeTime   time.Time `json:"next_change_time"`
-	ChangeProbability float64   `json:"change_probability"`
-	ChangeType       types.ChangeType `json:"change_type"`
-	Confidence       float64   `json:"confidence"`
-	LastUpdated      time.Time `json:"last_updated"`
+	ResourceID        string           `json:"resource_id"`
+	NextChangeTime    time.Time        `json:"next_change_time"`
+	ChangeProbability float64          `json:"change_probability"`
+	ChangeType        types.ChangeType `json:"change_type"`
+	Confidence        float64          `json:"confidence"`
+	LastUpdated       time.Time        `json:"last_updated"`
 }
 
 // OptimizationRule defines rules for scan optimization
 type OptimizationRule struct {
-	ID          string                 `json:"id"`
-	Name        string                 `json:"name"`
-	Conditions  []OptimizationCondition `json:"conditions"`
-	Actions     []OptimizationAction   `json:"actions"`
-	Priority    int                    `json:"priority"`
-	Enabled     bool                   `json:"enabled"`
+	ID         string                  `json:"id"`
+	Name       string                  `json:"name"`
+	Conditions []OptimizationCondition `json:"conditions"`
+	Actions    []OptimizationAction    `json:"actions"`
+	Priority   int                     `json:"priority"`
+	Enabled    bool                    `json:"enabled"`
 }
 
 // OptimizationCondition defines conditions for optimization
@@ -202,21 +202,21 @@ func NewPredictionModel() *PredictionModel {
 func (is *IncrementalScanner) PerformScan(ctx context.Context) (*ScanResult, error) {
 	is.mu.Lock()
 	defer is.mu.Unlock()
-	
+
 	if !is.enabled {
 		return nil, fmt.Errorf("incremental scanner is disabled")
 	}
-	
+
 	startTime := time.Now()
 	scanID := fmt.Sprintf("%s-%d", is.provider, startTime.UnixNano())
-	
+
 	// Determine scan type
 	scanType := is.determineScanType()
-	
+
 	// Perform scan based on type
 	var result *ScanResult
 	var err error
-	
+
 	switch scanType {
 	case ScanTypeFull:
 		result, err = is.performFullScan(ctx, scanID)
@@ -229,39 +229,39 @@ func (is *IncrementalScanner) PerformScan(ctx context.Context) (*ScanResult, err
 	default:
 		result, err = is.performIncrementalScan(ctx, scanID)
 	}
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform %s scan: %w", scanType, err)
 	}
-	
+
 	// Update statistics
 	is.updateStats(result)
-	
+
 	// Add to history
 	is.addToHistory(*result)
-	
+
 	return result, nil
 }
 
 // determineScanType determines the type of scan to perform
 func (is *IncrementalScanner) determineScanType() ScanType {
 	now := time.Now()
-	
+
 	// Check if we need a full scan
 	if is.stats.LastFullScan.IsZero() || now.Sub(is.stats.LastFullScan) > is.scanningStrategy.FullScanInterval {
 		return ScanTypeFull
 	}
-	
+
 	// Check if we should do targeted scan
 	if is.scanningStrategy.EnableOptimization && is.shouldDoTargetedScan() {
 		return ScanTypeTargeted
 	}
-	
+
 	// Check if we should do delta scan
 	if is.scanningStrategy.EnableOptimization && is.shouldDoDeltaScan() {
 		return ScanTypeDelta
 	}
-	
+
 	// Default to incremental
 	return ScanTypeIncremental
 }
@@ -269,23 +269,23 @@ func (is *IncrementalScanner) determineScanType() ScanType {
 // performFullScan performs a full scan
 func (is *IncrementalScanner) performFullScan(ctx context.Context, scanID string) (*ScanResult, error) {
 	startTime := time.Now()
-	
+
 	// Collect all resources
 	snapshot, err := is.collector.Collect(ctx, is.config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to collect resources: %w", err)
 	}
-	
+
 	// Process resources
 	newResources := 0
 	modifiedResources := 0
 	deletedResources := 0
-	
+
 	currentResourceIDs := make(map[string]bool)
-	
+
 	for _, resource := range snapshot.Resources {
 		currentResourceIDs[resource.ID] = true
-		
+
 		if existing, exists := is.resourceIndex[resource.ID]; exists {
 			// Check if modified
 			if is.resourceChanged(existing.Resource, resource) {
@@ -298,7 +298,7 @@ func (is *IncrementalScanner) performFullScan(ctx context.Context, scanID string
 			is.addResourceSnapshot(resource, scanID)
 		}
 	}
-	
+
 	// Check for deleted resources
 	for resourceID := range is.resourceIndex {
 		if !currentResourceIDs[resourceID] {
@@ -307,7 +307,7 @@ func (is *IncrementalScanner) performFullScan(ctx context.Context, scanID string
 			delete(is.hashIndex, resourceID)
 		}
 	}
-	
+
 	result := &ScanResult{
 		ScanID:            scanID,
 		Timestamp:         startTime,
@@ -321,45 +321,45 @@ func (is *IncrementalScanner) performFullScan(ctx context.Context, scanID string
 		ScanType:          ScanTypeFull,
 		Metadata: map[string]interface{}{
 			"total_resources_indexed": len(is.resourceIndex),
-			"cache_hit_rate":         is.calculateCacheHitRate(),
+			"cache_hit_rate":          is.calculateCacheHitRate(),
 		},
 	}
-	
+
 	is.stats.LastFullScan = time.Now()
-	
+
 	return result, nil
 }
 
 // performIncrementalScan performs an incremental scan
 func (is *IncrementalScanner) performIncrementalScan(ctx context.Context, scanID string) (*ScanResult, error) {
 	startTime := time.Now()
-	
+
 	// Use prediction model to determine resources to check
 	var resourcesToCheck []string
-	
+
 	if is.changeDetector.predictionModel.enabled {
 		resourcesToCheck = is.changeDetector.predictionModel.getPredictedChanges()
 	}
-	
+
 	// If no predictions, fall back to checking recently changed resources
 	if len(resourcesToCheck) == 0 {
 		resourcesToCheck = is.getRecentlyChangedResources()
 	}
-	
+
 	// Perform targeted collection if possible
 	var snapshot *types.Snapshot
 	var err error
-	
+
 	if len(resourcesToCheck) > 0 && len(resourcesToCheck) < is.scanningStrategy.TargetedThreshold {
 		snapshot, err = is.performTargetedCollection(ctx, resourcesToCheck)
 	} else {
 		snapshot, err = is.collector.Collect(ctx, is.config)
 	}
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to collect resources: %w", err)
 	}
-	
+
 	// Process only changed resources
 	changesFound := 0
 	for _, resource := range snapshot.Resources {
@@ -370,7 +370,7 @@ func (is *IncrementalScanner) performIncrementalScan(ctx context.Context, scanID
 			}
 		}
 	}
-	
+
 	result := &ScanResult{
 		ScanID:            scanID,
 		Timestamp:         startTime,
@@ -383,30 +383,30 @@ func (is *IncrementalScanner) performIncrementalScan(ctx context.Context, scanID
 		ErrorCount:        0,
 		ScanType:          ScanTypeIncremental,
 		Metadata: map[string]interface{}{
-			"resources_checked":       len(resourcesToCheck),
-			"prediction_model_used":   is.changeDetector.predictionModel.enabled,
-			"cache_hit_rate":         is.calculateCacheHitRate(),
+			"resources_checked":     len(resourcesToCheck),
+			"prediction_model_used": is.changeDetector.predictionModel.enabled,
+			"cache_hit_rate":        is.calculateCacheHitRate(),
 		},
 	}
-	
+
 	is.stats.LastIncrementalScan = time.Now()
-	
+
 	return result, nil
 }
 
 // performTargetedScan performs a targeted scan on specific resources
 func (is *IncrementalScanner) performTargetedScan(ctx context.Context, scanID string) (*ScanResult, error) {
 	startTime := time.Now()
-	
+
 	// Get resources to target
 	targetResources := is.getTargetedResources()
-	
+
 	// Perform targeted collection
 	snapshot, err := is.performTargetedCollection(ctx, targetResources)
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform targeted collection: %w", err)
 	}
-	
+
 	// Process results
 	changesFound := 0
 	for _, resource := range snapshot.Resources {
@@ -417,7 +417,7 @@ func (is *IncrementalScanner) performTargetedScan(ctx context.Context, scanID st
 			}
 		}
 	}
-	
+
 	result := &ScanResult{
 		ScanID:            scanID,
 		Timestamp:         startTime,
@@ -431,26 +431,26 @@ func (is *IncrementalScanner) performTargetedScan(ctx context.Context, scanID st
 		ScanType:          ScanTypeTargeted,
 		Metadata: map[string]interface{}{
 			"targeted_resources": len(targetResources),
-			"cache_hit_rate":    is.calculateCacheHitRate(),
+			"cache_hit_rate":     is.calculateCacheHitRate(),
 		},
 	}
-	
+
 	return result, nil
 }
 
 // performDeltaScan performs a delta scan
 func (is *IncrementalScanner) performDeltaScan(ctx context.Context, scanID string) (*ScanResult, error) {
 	startTime := time.Now()
-	
+
 	// Get resources that have changed since last scan
 	deltaResources := is.getDeltaResources()
-	
+
 	// Perform collection only on delta resources
 	snapshot, err := is.performTargetedCollection(ctx, deltaResources)
 	if err != nil {
 		return nil, fmt.Errorf("failed to perform delta collection: %w", err)
 	}
-	
+
 	// Process results
 	changesFound := 0
 	for _, resource := range snapshot.Resources {
@@ -461,7 +461,7 @@ func (is *IncrementalScanner) performDeltaScan(ctx context.Context, scanID strin
 			}
 		}
 	}
-	
+
 	result := &ScanResult{
 		ScanID:            scanID,
 		Timestamp:         startTime,
@@ -478,7 +478,7 @@ func (is *IncrementalScanner) performDeltaScan(ctx context.Context, scanID strin
 			"cache_hit_rate":  is.calculateCacheHitRate(),
 		},
 	}
-	
+
 	return result, nil
 }
 
@@ -486,7 +486,7 @@ func (is *IncrementalScanner) performDeltaScan(ctx context.Context, scanID strin
 func (is *IncrementalScanner) resourceChanged(oldResource, newResource types.Resource) bool {
 	oldHash := is.calculateResourceHash(oldResource)
 	newHash := is.calculateResourceHash(newResource)
-	
+
 	return oldHash != newHash
 }
 
@@ -506,7 +506,7 @@ func (is *IncrementalScanner) calculateResourceHash(resource types.Resource) str
 		Configuration: resource.Configuration,
 		Tags:          resource.Tags,
 	}
-	
+
 	data, _ := json.Marshal(hashData)
 	hash := md5.Sum(data)
 	return fmt.Sprintf("%x", hash)
@@ -523,7 +523,7 @@ func (is *IncrementalScanner) addResourceSnapshot(resource types.Resource, scanI
 		LastModified:  time.Now(),
 		ChecksumValid: true,
 	}
-	
+
 	is.resourceIndex[resource.ID] = snapshot
 	is.hashIndex[resource.ID] = snapshot.Hash
 }
@@ -531,7 +531,7 @@ func (is *IncrementalScanner) addResourceSnapshot(resource types.Resource, scanI
 // updateResourceSnapshot updates a resource snapshot
 func (is *IncrementalScanner) updateResourceSnapshot(resource types.Resource, scanID string) {
 	existing := is.resourceIndex[resource.ID]
-	
+
 	snapshot := ResourceSnapshot{
 		Resource:      resource,
 		Hash:          is.calculateResourceHash(resource),
@@ -541,7 +541,7 @@ func (is *IncrementalScanner) updateResourceSnapshot(resource types.Resource, sc
 		LastModified:  time.Now(),
 		ChecksumValid: true,
 	}
-	
+
 	is.resourceIndex[resource.ID] = snapshot
 	is.hashIndex[resource.ID] = snapshot.Hash
 }
@@ -557,23 +557,23 @@ func (is *IncrementalScanner) shouldDoDeltaScan() bool {
 	if len(is.scanHistory) < 2 {
 		return false
 	}
-	
+
 	lastScan := is.scanHistory[len(is.scanHistory)-1]
 	changeRate := float64(lastScan.ChangesFound) / float64(lastScan.ResourceCount)
-	
+
 	return changeRate < is.scanningStrategy.DeltaChangeRatio
 }
 
 func (is *IncrementalScanner) getRecentlyChangedResources() []string {
 	var resources []string
 	cutoff := time.Now().Add(-is.scanningStrategy.IncrementalInterval)
-	
+
 	for id, snapshot := range is.resourceIndex {
 		if snapshot.LastModified.After(cutoff) {
 			resources = append(resources, id)
 		}
 	}
-	
+
 	return resources
 }
 
@@ -582,7 +582,7 @@ func (is *IncrementalScanner) getTargetedResources() []string {
 	if is.changeDetector.predictionModel.enabled {
 		return is.changeDetector.predictionModel.getPredictedChanges()
 	}
-	
+
 	// Fall back to high-change resources
 	return is.getHighChangeResources()
 }
@@ -590,33 +590,33 @@ func (is *IncrementalScanner) getTargetedResources() []string {
 func (is *IncrementalScanner) getHighChangeResources() []string {
 	var resources []string
 	threshold := 3 // Resources with more than 3 changes
-	
+
 	for id, snapshot := range is.resourceIndex {
 		if snapshot.ChangeCount > threshold {
 			resources = append(resources, id)
 		}
 	}
-	
+
 	return resources
 }
 
 func (is *IncrementalScanner) getDeltaResources() []string {
 	// Get resources that have changed since last scan
 	var resources []string
-	
+
 	if len(is.scanHistory) == 0 {
 		return resources
 	}
-	
+
 	lastScan := is.scanHistory[len(is.scanHistory)-1]
 	cutoff := lastScan.Timestamp
-	
+
 	for id, snapshot := range is.resourceIndex {
 		if snapshot.LastModified.After(cutoff) {
 			resources = append(resources, id)
 		}
 	}
-	
+
 	return resources
 }
 
@@ -631,7 +631,7 @@ func (is *IncrementalScanner) calculateCacheHitRate() float64 {
 	if len(is.resourceIndex) == 0 {
 		return 0.0
 	}
-	
+
 	// This is a placeholder - in a real implementation, you'd track actual cache hits
 	return 0.85
 }
@@ -639,7 +639,7 @@ func (is *IncrementalScanner) calculateCacheHitRate() float64 {
 func (is *IncrementalScanner) updateStats(result *ScanResult) {
 	is.stats.TotalScans++
 	is.stats.TotalChangesDetected += int64(result.ChangesFound)
-	
+
 	// Update scan type counters
 	switch result.ScanType {
 	case ScanTypeFull:
@@ -651,19 +651,19 @@ func (is *IncrementalScanner) updateStats(result *ScanResult) {
 	case ScanTypeDelta:
 		is.stats.DeltaScans++
 	}
-	
+
 	// Update average scan time
 	if is.stats.AverageScanTime == 0 {
 		is.stats.AverageScanTime = result.Duration
 	} else {
 		is.stats.AverageScanTime = time.Duration((int64(is.stats.AverageScanTime) + int64(result.Duration)) / 2)
 	}
-	
+
 	// Update change detection rate
 	if is.stats.TotalScans > 0 {
 		is.stats.ChangeDetectionRate = float64(is.stats.TotalChangesDetected) / float64(is.stats.TotalScans)
 	}
-	
+
 	// Update scan efficiency (changes per second)
 	if result.Duration > 0 {
 		currentEfficiency := float64(result.ChangesFound) / result.Duration.Seconds()
@@ -677,7 +677,7 @@ func (is *IncrementalScanner) updateStats(result *ScanResult) {
 
 func (is *IncrementalScanner) addToHistory(result ScanResult) {
 	is.scanHistory = append(is.scanHistory, result)
-	
+
 	// Limit history size
 	if len(is.scanHistory) > is.maxHistorySize {
 		is.scanHistory = is.scanHistory[len(is.scanHistory)-is.maxHistorySize:]
@@ -688,20 +688,20 @@ func (is *IncrementalScanner) addToHistory(result ScanResult) {
 func (pm *PredictionModel) getPredictedChanges() []string {
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
-	
+
 	if !pm.enabled {
 		return []string{}
 	}
-	
+
 	var predicted []string
 	now := time.Now()
-	
+
 	for resourceID, prediction := range pm.resourcePredictions {
 		if prediction.NextChangeTime.Before(now) && prediction.ChangeProbability > 0.5 {
 			predicted = append(predicted, resourceID)
 		}
 	}
-	
+
 	return predicted
 }
 
@@ -709,7 +709,7 @@ func (pm *PredictionModel) getPredictedChanges() []string {
 func (is *IncrementalScanner) GetStats() IncrementalScannerStats {
 	is.mu.RLock()
 	defer is.mu.RUnlock()
-	
+
 	is.stats.ResourceCacheHitRate = is.calculateCacheHitRate()
 	return is.stats
 }
@@ -718,7 +718,7 @@ func (is *IncrementalScanner) GetStats() IncrementalScannerStats {
 func (is *IncrementalScanner) GetScanHistory() []ScanResult {
 	is.mu.RLock()
 	defer is.mu.RUnlock()
-	
+
 	history := make([]ScanResult, len(is.scanHistory))
 	copy(history, is.scanHistory)
 	return history

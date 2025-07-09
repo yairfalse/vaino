@@ -15,52 +15,52 @@ import (
 // MemoryOptimizationConfig configures memory optimization strategies
 type MemoryOptimizationConfig struct {
 	// Memory limits
-	MaxMemoryUsage       int64         `yaml:"max_memory_usage"`
-	GCThreshold          int64         `yaml:"gc_threshold"`
-	BackpressureThreshold int64        `yaml:"backpressure_threshold"`
-	
+	MaxMemoryUsage        int64 `yaml:"max_memory_usage"`
+	GCThreshold           int64 `yaml:"gc_threshold"`
+	BackpressureThreshold int64 `yaml:"backpressure_threshold"`
+
 	// Object pooling
-	EnableObjectPooling  bool          `yaml:"enable_object_pooling"`
+	EnableObjectPooling bool          `yaml:"enable_object_pooling"`
 	PoolSize            int           `yaml:"pool_size"`
 	PoolCleanupInterval time.Duration `yaml:"pool_cleanup_interval"`
-	
+
 	// Memory management
 	EnableMemoryMonitoring bool          `yaml:"enable_memory_monitoring"`
-	MonitoringInterval    time.Duration `yaml:"monitoring_interval"`
-	MemoryProfileEnabled  bool          `yaml:"memory_profile_enabled"`
-	
+	MonitoringInterval     time.Duration `yaml:"monitoring_interval"`
+	MemoryProfileEnabled   bool          `yaml:"memory_profile_enabled"`
+
 	// Streaming
-	StreamingThreshold   int64         `yaml:"streaming_threshold"`
-	ChunkSize           int64         `yaml:"chunk_size"`
-	BufferSize          int           `yaml:"buffer_size"`
-	
+	StreamingThreshold int64 `yaml:"streaming_threshold"`
+	ChunkSize          int64 `yaml:"chunk_size"`
+	BufferSize         int   `yaml:"buffer_size"`
+
 	// Garbage collection
-	GCPercent           int           `yaml:"gc_percent"`
-	ForceGCInterval     time.Duration `yaml:"force_gc_interval"`
-	
+	GCPercent       int           `yaml:"gc_percent"`
+	ForceGCInterval time.Duration `yaml:"force_gc_interval"`
+
 	// Resource limits
-	MaxResourcesInMemory int           `yaml:"max_resources_in_memory"`
-	ResourceBatchSize    int           `yaml:"resource_batch_size"`
+	MaxResourcesInMemory int `yaml:"max_resources_in_memory"`
+	ResourceBatchSize    int `yaml:"resource_batch_size"`
 }
 
 // MemoryOptimizer manages memory optimization strategies
 type MemoryOptimizer struct {
-	config             MemoryOptimizationConfig
-	memoryMonitor      *MemoryMonitor
-	objectPools        *ObjectPoolManager
-	streamingManager   *StreamingManager
-	gcManager          *GCManager
-	resourceBatching   *ResourceBatchingManager
-	
+	config           MemoryOptimizationConfig
+	memoryMonitor    *MemoryMonitor
+	objectPools      *ObjectPoolManager
+	streamingManager *StreamingManager
+	gcManager        *GCManager
+	resourceBatching *ResourceBatchingManager
+
 	// State
-	ctx               context.Context
-	cancel            context.CancelFunc
-	running           int32
-	mu                sync.RWMutex
-	
+	ctx     context.Context
+	cancel  context.CancelFunc
+	running int32
+	mu      sync.RWMutex
+
 	// Statistics
-	stats             MemoryOptimizationStats
-	
+	stats MemoryOptimizationStats
+
 	// Backpressure
 	backpressureActive int32
 	backpressureSignal chan struct{}
@@ -68,56 +68,56 @@ type MemoryOptimizer struct {
 
 // MemoryOptimizationStats tracks memory optimization metrics
 type MemoryOptimizationStats struct {
-	TotalMemoryUsage     int64     `json:"total_memory_usage"`
-	HeapMemoryUsage      int64     `json:"heap_memory_usage"`
-	StackMemoryUsage     int64     `json:"stack_memory_usage"`
-	GoroutineCount       int       `json:"goroutine_count"`
-	GCRuns               int64     `json:"gc_runs"`
-	GCPauseTime          int64     `json:"gc_pause_time"`
-	ObjectPoolHits       int64     `json:"object_pool_hits"`
-	ObjectPoolMisses     int64     `json:"object_pool_misses"`
-	StreamingOperations  int64     `json:"streaming_operations"`
-	BackpressureEvents   int64     `json:"backpressure_events"`
-	LastUpdated          time.Time `json:"last_updated"`
+	TotalMemoryUsage    int64     `json:"total_memory_usage"`
+	HeapMemoryUsage     int64     `json:"heap_memory_usage"`
+	StackMemoryUsage    int64     `json:"stack_memory_usage"`
+	GoroutineCount      int       `json:"goroutine_count"`
+	GCRuns              int64     `json:"gc_runs"`
+	GCPauseTime         int64     `json:"gc_pause_time"`
+	ObjectPoolHits      int64     `json:"object_pool_hits"`
+	ObjectPoolMisses    int64     `json:"object_pool_misses"`
+	StreamingOperations int64     `json:"streaming_operations"`
+	BackpressureEvents  int64     `json:"backpressure_events"`
+	LastUpdated         time.Time `json:"last_updated"`
 }
 
 // MemoryMonitor monitors memory usage and triggers optimizations
 type MemoryMonitor struct {
-	optimizer         *MemoryOptimizer
-	interval          time.Duration
-	lastMemoryUsage   int64
-	ticker            *time.Ticker
-	stopChan          chan struct{}
-	mu                sync.RWMutex
+	optimizer       *MemoryOptimizer
+	interval        time.Duration
+	lastMemoryUsage int64
+	ticker          *time.Ticker
+	stopChan        chan struct{}
+	mu              sync.RWMutex
 }
 
 // ObjectPoolManager manages object pools for memory efficiency
 type ObjectPoolManager struct {
-	resourcePool      *sync.Pool
-	snapshotPool      *sync.Pool
-	changePool        *sync.Pool
-	bufferPool        *sync.Pool
-	
+	resourcePool *sync.Pool
+	snapshotPool *sync.Pool
+	changePool   *sync.Pool
+	bufferPool   *sync.Pool
+
 	// Statistics
-	hits              int64
-	misses            int64
-	
+	hits   int64
+	misses int64
+
 	// Configuration
-	maxPoolSize       int
-	cleanupInterval   time.Duration
-	
+	maxPoolSize     int
+	cleanupInterval time.Duration
+
 	// Cleanup
-	cleanupTicker     *time.Ticker
-	stopChan          chan struct{}
+	cleanupTicker *time.Ticker
+	stopChan      chan struct{}
 }
 
 // StreamingManager handles streaming operations for large datasets
 type StreamingManager struct {
-	threshold         int64
-	chunkSize         int64
-	bufferSize        int
-	activeStreams     map[string]*StreamingContext
-	mu                sync.RWMutex
+	threshold     int64
+	chunkSize     int64
+	bufferSize    int
+	activeStreams map[string]*StreamingContext
+	mu            sync.RWMutex
 }
 
 // StreamingContext represents an active streaming operation
@@ -134,34 +134,34 @@ type StreamingContext struct {
 
 // GCManager manages garbage collection optimization
 type GCManager struct {
-	gcPercent        int
-	forceGCInterval  time.Duration
-	lastGCTime       time.Time
-	gcTicker         *time.Ticker
-	stopChan         chan struct{}
-	
+	gcPercent       int
+	forceGCInterval time.Duration
+	lastGCTime      time.Time
+	gcTicker        *time.Ticker
+	stopChan        chan struct{}
+
 	// Statistics
-	gcRuns           int64
-	totalGCTime      int64
-	mu               sync.RWMutex
+	gcRuns      int64
+	totalGCTime int64
+	mu          sync.RWMutex
 }
 
 // ResourceBatchingManager manages resource processing in batches
 type ResourceBatchingManager struct {
-	maxInMemory       int
-	batchSize         int
-	activeBatches     map[string]*ResourceBatch
-	mu                sync.RWMutex
+	maxInMemory   int
+	batchSize     int
+	activeBatches map[string]*ResourceBatch
+	mu            sync.RWMutex
 }
 
 // ResourceBatch represents a batch of resources being processed
 type ResourceBatch struct {
-	ID            string
-	Resources     []types.Resource
-	Size          int
-	MaxSize       int
-	ProcessedAt   time.Time
-	Status        BatchStatus
+	ID          string
+	Resources   []types.Resource
+	Size        int
+	MaxSize     int
+	ProcessedAt time.Time
+	Status      BatchStatus
 }
 
 // BatchStatus represents the status of a resource batch
@@ -210,23 +210,23 @@ func NewMemoryOptimizer(config MemoryOptimizationConfig) *MemoryOptimizer {
 	if config.ResourceBatchSize <= 0 {
 		config.ResourceBatchSize = 100
 	}
-	
+
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	mo := &MemoryOptimizer{
 		config:             config,
 		ctx:                ctx,
 		cancel:             cancel,
 		backpressureSignal: make(chan struct{}, 1),
 	}
-	
+
 	// Initialize components
 	mo.memoryMonitor = NewMemoryMonitor(mo, config.MonitoringInterval)
 	mo.objectPools = NewObjectPoolManager(config.PoolSize, config.PoolCleanupInterval)
 	mo.streamingManager = NewStreamingManager(config.StreamingThreshold, config.ChunkSize, config.BufferSize)
 	mo.gcManager = NewGCManager(config.GCPercent, config.ForceGCInterval)
 	mo.resourceBatching = NewResourceBatchingManager(config.MaxResourcesInMemory, config.ResourceBatchSize)
-	
+
 	return mo
 }
 
@@ -235,18 +235,18 @@ func (mo *MemoryOptimizer) Start(ctx context.Context) error {
 	if !atomic.CompareAndSwapInt32(&mo.running, 0, 1) {
 		return fmt.Errorf("memory optimizer is already running")
 	}
-	
+
 	// Start components
 	if mo.config.EnableMemoryMonitoring {
 		mo.memoryMonitor.Start(ctx)
 	}
-	
+
 	if mo.config.EnableObjectPooling {
 		mo.objectPools.Start(ctx)
 	}
-	
+
 	mo.gcManager.Start(ctx)
-	
+
 	return nil
 }
 
@@ -255,14 +255,14 @@ func (mo *MemoryOptimizer) Stop() error {
 	if !atomic.CompareAndSwapInt32(&mo.running, 1, 0) {
 		return fmt.Errorf("memory optimizer is not running")
 	}
-	
+
 	mo.cancel()
-	
+
 	// Stop components
 	mo.memoryMonitor.Stop()
 	mo.objectPools.Stop()
 	mo.gcManager.Stop()
-	
+
 	return nil
 }
 
@@ -316,7 +316,7 @@ func (mo *MemoryOptimizer) WaitForBackpressure(ctx context.Context) error {
 	if !mo.IsBackpressureActive() {
 		return nil
 	}
-	
+
 	select {
 	case <-mo.backpressureSignal:
 		return nil
@@ -336,10 +336,10 @@ func (mo *MemoryOptimizer) CreateResourceBatch(id string) *ResourceBatch {
 func (mo *MemoryOptimizer) GetStats() MemoryOptimizationStats {
 	mo.mu.RLock()
 	defer mo.mu.RUnlock()
-	
+
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	
+
 	mo.stats.TotalMemoryUsage = int64(m.Alloc)
 	mo.stats.HeapMemoryUsage = int64(m.HeapAlloc)
 	mo.stats.StackMemoryUsage = int64(m.StackInuse)
@@ -349,7 +349,7 @@ func (mo *MemoryOptimizer) GetStats() MemoryOptimizationStats {
 	mo.stats.ObjectPoolHits = atomic.LoadInt64(&mo.objectPools.hits)
 	mo.stats.ObjectPoolMisses = atomic.LoadInt64(&mo.objectPools.misses)
 	mo.stats.LastUpdated = time.Now()
-	
+
 	return mo.stats
 }
 
@@ -365,10 +365,10 @@ func NewMemoryMonitor(optimizer *MemoryOptimizer, interval time.Duration) *Memor
 // Start starts the memory monitor
 func (mm *MemoryMonitor) Start(ctx context.Context) {
 	mm.ticker = time.NewTicker(mm.interval)
-	
+
 	go func() {
 		defer mm.ticker.Stop()
-		
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -391,10 +391,10 @@ func (mm *MemoryMonitor) Stop() {
 func (mm *MemoryMonitor) checkMemoryUsage() {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	
+
 	currentUsage := int64(m.Alloc)
 	config := mm.optimizer.config
-	
+
 	// Check for backpressure threshold
 	if currentUsage > config.BackpressureThreshold {
 		atomic.StoreInt32(&mm.optimizer.backpressureActive, 1)
@@ -409,12 +409,12 @@ func (mm *MemoryMonitor) checkMemoryUsage() {
 			}
 		}
 	}
-	
+
 	// Check for GC threshold
 	if currentUsage > config.GCThreshold {
 		mm.optimizer.gcManager.ForceGC()
 	}
-	
+
 	// Update last usage
 	mm.mu.Lock()
 	mm.lastMemoryUsage = currentUsage
@@ -428,42 +428,42 @@ func NewObjectPoolManager(poolSize int, cleanupInterval time.Duration) *ObjectPo
 		cleanupInterval: cleanupInterval,
 		stopChan:        make(chan struct{}),
 	}
-	
+
 	// Initialize pools
 	opm.resourcePool = &sync.Pool{
 		New: func() interface{} {
 			return &types.Resource{}
 		},
 	}
-	
+
 	opm.snapshotPool = &sync.Pool{
 		New: func() interface{} {
 			return &types.Snapshot{}
 		},
 	}
-	
+
 	opm.changePool = &sync.Pool{
 		New: func() interface{} {
 			return &types.Change{}
 		},
 	}
-	
+
 	opm.bufferPool = &sync.Pool{
 		New: func() interface{} {
 			return make([]byte, 64*1024) // 64KB buffer
 		},
 	}
-	
+
 	return opm
 }
 
 // Start starts the object pool manager
 func (opm *ObjectPoolManager) Start(ctx context.Context) {
 	opm.cleanupTicker = time.NewTicker(opm.cleanupInterval)
-	
+
 	go func() {
 		defer opm.cleanupTicker.Stop()
-		
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -542,7 +542,7 @@ func NewStreamingManager(threshold, chunkSize int64, bufferSize int) *StreamingM
 func (sm *StreamingManager) CreateContext(id string, totalSize int64) *StreamingContext {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	
+
 	ctx := &StreamingContext{
 		ID:        id,
 		TotalSize: totalSize,
@@ -552,7 +552,7 @@ func (sm *StreamingManager) CreateContext(id string, totalSize int64) *Streaming
 		ErrorChan: make(chan error, 1),
 		DoneChan:  make(chan struct{}),
 	}
-	
+
 	sm.activeStreams[id] = ctx
 	return ctx
 }
@@ -570,12 +570,12 @@ func NewGCManager(gcPercent int, forceGCInterval time.Duration) *GCManager {
 func (gcm *GCManager) Start(ctx context.Context) {
 	// Set GC percent
 	debug.SetGCPercent(gcm.gcPercent)
-	
+
 	gcm.gcTicker = time.NewTicker(gcm.forceGCInterval)
-	
+
 	go func() {
 		defer gcm.gcTicker.Stop()
-		
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -598,11 +598,11 @@ func (gcm *GCManager) Stop() {
 func (gcm *GCManager) ForceGC() {
 	gcm.mu.Lock()
 	defer gcm.mu.Unlock()
-	
+
 	startTime := time.Now()
 	runtime.GC()
 	gcTime := time.Since(startTime)
-	
+
 	atomic.AddInt64(&gcm.gcRuns, 1)
 	atomic.AddInt64(&gcm.totalGCTime, gcTime.Nanoseconds())
 	gcm.lastGCTime = time.Now()
@@ -621,7 +621,7 @@ func NewResourceBatchingManager(maxInMemory, batchSize int) *ResourceBatchingMan
 func (rbm *ResourceBatchingManager) CreateBatch(id string, maxSize int) *ResourceBatch {
 	rbm.mu.Lock()
 	defer rbm.mu.Unlock()
-	
+
 	batch := &ResourceBatch{
 		ID:          id,
 		Resources:   make([]types.Resource, 0, maxSize),
@@ -629,7 +629,7 @@ func (rbm *ResourceBatchingManager) CreateBatch(id string, maxSize int) *Resourc
 		ProcessedAt: time.Now(),
 		Status:      BatchStatusPending,
 	}
-	
+
 	rbm.activeBatches[id] = batch
 	return batch
 }
@@ -638,7 +638,7 @@ func (rbm *ResourceBatchingManager) CreateBatch(id string, maxSize int) *Resourc
 func (rbm *ResourceBatchingManager) GetBatch(id string) *ResourceBatch {
 	rbm.mu.RLock()
 	defer rbm.mu.RUnlock()
-	
+
 	return rbm.activeBatches[id]
 }
 
@@ -646,21 +646,20 @@ func (rbm *ResourceBatchingManager) GetBatch(id string) *ResourceBatch {
 func DefaultMemoryOptimizationConfig() MemoryOptimizationConfig {
 	return MemoryOptimizationConfig{
 		MaxMemoryUsage:         500 * 1024 * 1024, // 500MB
-		GCThreshold:           350 * 1024 * 1024, // 350MB
-		BackpressureThreshold: 400 * 1024 * 1024, // 400MB
-		EnableObjectPooling:   true,
-		PoolSize:             1000,
-		PoolCleanupInterval:  5 * time.Minute,
+		GCThreshold:            350 * 1024 * 1024, // 350MB
+		BackpressureThreshold:  400 * 1024 * 1024, // 400MB
+		EnableObjectPooling:    true,
+		PoolSize:               1000,
+		PoolCleanupInterval:    5 * time.Minute,
 		EnableMemoryMonitoring: true,
-		MonitoringInterval:    5 * time.Second,
-		MemoryProfileEnabled:  false,
-		StreamingThreshold:    50 * 1024 * 1024, // 50MB
-		ChunkSize:            1024 * 1024,       // 1MB
-		BufferSize:           100,
-		GCPercent:            100,
-		ForceGCInterval:      30 * time.Second,
-		MaxResourcesInMemory: 10000,
-		ResourceBatchSize:    100,
+		MonitoringInterval:     5 * time.Second,
+		MemoryProfileEnabled:   false,
+		StreamingThreshold:     50 * 1024 * 1024, // 50MB
+		ChunkSize:              1024 * 1024,      // 1MB
+		BufferSize:             100,
+		GCPercent:              100,
+		ForceGCInterval:        30 * time.Second,
+		MaxResourcesInMemory:   10000,
+		ResourceBatchSize:      100,
 	}
 }
-

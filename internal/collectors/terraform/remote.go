@@ -30,7 +30,7 @@ func (h *RemoteStateHandler) CollectFromRemoteState(ctx context.Context, stateUR
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse remote state URL: %w", err)
 	}
-	
+
 	// Fetch state based on backend type
 	switch backend {
 	case "s3":
@@ -50,9 +50,9 @@ func (h *RemoteStateHandler) parseRemoteStateURL(stateURL string) (string, map[s
 	if err != nil {
 		return "", nil, fmt.Errorf("invalid URL: %w", err)
 	}
-	
+
 	config := make(map[string]string)
-	
+
 	switch u.Scheme {
 	case "s3":
 		// s3://bucket-name/path/to/terraform.tfstate
@@ -62,7 +62,7 @@ func (h *RemoteStateHandler) parseRemoteStateURL(stateURL string) (string, map[s
 			config["region"] = region
 		}
 		return "s3", config, nil
-		
+
 	case "azurerm":
 		// azurerm://storageaccount/container/terraform.tfstate
 		config["storage_account_name"] = u.Host
@@ -74,13 +74,13 @@ func (h *RemoteStateHandler) parseRemoteStateURL(stateURL string) (string, map[s
 			config["key"] = strings.Join(pathParts[1:], "/")
 		}
 		return "azurerm", config, nil
-		
+
 	case "gcs":
 		// gcs://bucket-name/path/to/terraform.tfstate
 		config["bucket"] = u.Host
 		config["prefix"] = strings.TrimPrefix(u.Path, "/")
 		return "gcs", config, nil
-		
+
 	default:
 		return "", nil, fmt.Errorf("unsupported scheme: %s", u.Scheme)
 	}
@@ -93,8 +93,8 @@ func (h *RemoteStateHandler) collectFromS3State(ctx context.Context, config map[
 	// 1. Set up AWS SDK client
 	// 2. Download the state file from S3
 	// 3. Parse and normalize the resources
-	
-	return nil, fmt.Errorf("S3 remote state collection requires AWS credentials and SDK setup - not implemented yet. Bucket: %s, Key: %s", 
+
+	return nil, fmt.Errorf("S3 remote state collection requires AWS credentials and SDK setup - not implemented yet. Bucket: %s, Key: %s",
 		config["bucket"], config["key"])
 }
 
@@ -105,8 +105,8 @@ func (h *RemoteStateHandler) collectFromAzureState(ctx context.Context, config m
 	// 1. Set up Azure SDK client
 	// 2. Download the state file from Azure Storage
 	// 3. Parse and normalize the resources
-	
-	return nil, fmt.Errorf("Azure remote state collection requires Azure credentials and SDK setup - not implemented yet. Storage Account: %s, Container: %s", 
+
+	return nil, fmt.Errorf("Azure remote state collection requires Azure credentials and SDK setup - not implemented yet. Storage Account: %s, Container: %s",
 		config["storage_account_name"], config["container_name"])
 }
 
@@ -117,8 +117,8 @@ func (h *RemoteStateHandler) collectFromGCSState(ctx context.Context, config map
 	// 1. Set up GCS SDK client
 	// 2. Download the state file from GCS
 	// 3. Parse and normalize the resources
-	
-	return nil, fmt.Errorf("GCS remote state collection requires GCP credentials and SDK setup - not implemented yet. Bucket: %s, Prefix: %s", 
+
+	return nil, fmt.Errorf("GCS remote state collection requires GCP credentials and SDK setup - not implemented yet. Bucket: %s, Prefix: %s",
 		config["bucket"], config["prefix"])
 }
 
@@ -137,7 +137,7 @@ func (h *RemoteStateHandler) ValidateRemoteConfig(backend string, config map[str
 		if config["key"] == "" {
 			return fmt.Errorf("S3 key is required")
 		}
-		
+
 	case "azurerm":
 		if config["storage_account_name"] == "" {
 			return fmt.Errorf("Azure storage account name is required")
@@ -148,7 +148,7 @@ func (h *RemoteStateHandler) ValidateRemoteConfig(backend string, config map[str
 		if config["key"] == "" {
 			return fmt.Errorf("Azure blob key is required")
 		}
-		
+
 	case "gcs":
 		if config["bucket"] == "" {
 			return fmt.Errorf("GCS bucket is required")
@@ -156,11 +156,11 @@ func (h *RemoteStateHandler) ValidateRemoteConfig(backend string, config map[str
 		if config["prefix"] == "" {
 			return fmt.Errorf("GCS object prefix is required")
 		}
-		
+
 	default:
 		return fmt.Errorf("unsupported backend: %s", backend)
 	}
-	
+
 	return nil
 }
 
@@ -170,13 +170,13 @@ func (h *RemoteStateHandler) GetRemoteStateInfo(stateURL string) (map[string]int
 	if err != nil {
 		return nil, err
 	}
-	
+
 	info := map[string]interface{}{
 		"backend": backend,
 		"config":  config,
 		"status":  "configured",
 	}
-	
+
 	// Add backend-specific information
 	switch backend {
 	case "s3":
@@ -184,13 +184,13 @@ func (h *RemoteStateHandler) GetRemoteStateInfo(stateURL string) (map[string]int
 		if region, exists := config["region"]; exists {
 			info["region"] = region
 		}
-		
+
 	case "azurerm":
 		info["description"] = fmt.Sprintf("Azure Storage %s, container %s", config["storage_account_name"], config["container_name"])
-		
+
 	case "gcs":
 		info["description"] = fmt.Sprintf("Google Cloud Storage bucket %s", config["bucket"])
 	}
-	
+
 	return info, nil
 }

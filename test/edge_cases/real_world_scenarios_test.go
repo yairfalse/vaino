@@ -43,11 +43,11 @@ func TestCloudProviderMaintenanceWindows(t *testing.T) {
 	defer maintenanceServer.Close()
 
 	tests := []struct {
-		name           string
-		endpoint       string
-		expectError    bool
-		retryAttempts  int
-		description    string
+		name          string
+		endpoint      string
+		expectError   bool
+		retryAttempts int
+		description   string
 	}{
 		{
 			name:          "planned_maintenance_503",
@@ -75,34 +75,34 @@ func TestCloudProviderMaintenanceWindows(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &http.Client{Timeout: 5 * time.Second}
-			
+
 			var lastErr error
 			successCount := 0
-			
+
 			for attempt := 0; attempt < tt.retryAttempts; attempt++ {
 				resp, err := client.Get(maintenanceServer.URL + tt.endpoint)
 				if err != nil {
 					lastErr = err
 					continue
 				}
-				
+
 				if resp.StatusCode == http.StatusOK {
 					successCount++
 				} else {
 					lastErr = fmt.Errorf("HTTP %d", resp.StatusCode)
 				}
 				resp.Body.Close()
-				
+
 				// Brief delay between retries
 				time.Sleep(100 * time.Millisecond)
 			}
-			
+
 			if tt.expectError && successCount == tt.retryAttempts {
 				t.Errorf("Expected some failures for %s but all succeeded", tt.description)
 			} else if !tt.expectError && successCount == 0 {
 				t.Errorf("Expected some successes for %s but all failed. Last error: %v", tt.description, lastErr)
 			}
-			
+
 			t.Logf("%s: %d/%d requests succeeded", tt.description, successCount, tt.retryAttempts)
 		})
 	}
@@ -115,7 +115,7 @@ func TestMassiveInfrastructureScans(t *testing.T) {
 		// Generate large response based on query parameters
 		sizeParam := r.URL.Query().Get("size")
 		size := 100 // default
-		
+
 		switch sizeParam {
 		case "small":
 			size = 10
@@ -126,26 +126,26 @@ func TestMassiveInfrastructureScans(t *testing.T) {
 		case "xlarge":
 			size = 50000
 		}
-		
+
 		instances := make([]map[string]interface{}, size)
 		for i := 0; i < size; i++ {
 			instances[i] = map[string]interface{}{
-				"id":           fmt.Sprintf("i-%08d", i),
-				"type":         "t3.micro",
-				"state":        "running",
-				"launch_time":  time.Now().Add(-time.Duration(i)*time.Hour).Format(time.RFC3339),
-				"tags":         map[string]string{"Name": fmt.Sprintf("instance-%d", i)},
-				"vpc_id":       fmt.Sprintf("vpc-%08d", i%100),
-				"subnet_id":    fmt.Sprintf("subnet-%08d", i%1000),
+				"id":              fmt.Sprintf("i-%08d", i),
+				"type":            "t3.micro",
+				"state":           "running",
+				"launch_time":     time.Now().Add(-time.Duration(i) * time.Hour).Format(time.RFC3339),
+				"tags":            map[string]string{"Name": fmt.Sprintf("instance-%d", i)},
+				"vpc_id":          fmt.Sprintf("vpc-%08d", i%100),
+				"subnet_id":       fmt.Sprintf("subnet-%08d", i%1000),
 				"security_groups": []string{fmt.Sprintf("sg-%08d", i%50)},
 			}
 		}
-		
+
 		response := map[string]interface{}{
 			"instances": instances,
 			"count":     size,
 		}
-		
+
 		json.NewEncoder(w).Encode(response)
 	}))
 	defer largeDataServer.Close()
@@ -166,7 +166,7 @@ func TestMassiveInfrastructureScans(t *testing.T) {
 		},
 		{
 			name:        "medium_infrastructure",
-			size:        "medium", 
+			size:        "medium",
 			timeout:     10 * time.Second,
 			expectError: false,
 			description: "Medium infrastructure scan (1K resources)",
@@ -198,30 +198,30 @@ func TestMassiveInfrastructureScans(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), tt.timeout)
 			defer cancel()
-			
+
 			client := &http.Client{Timeout: tt.timeout}
-			
+
 			url := fmt.Sprintf("%s?size=%s", largeDataServer.URL, tt.size)
 			req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 			if err != nil {
 				t.Fatalf("Failed to create request: %v", err)
 			}
-			
+
 			start := time.Now()
 			resp, err := client.Do(req)
 			duration := time.Since(start)
-			
+
 			if tt.expectError && err == nil {
 				resp.Body.Close()
 				t.Errorf("Expected timeout error for %s but request succeeded", tt.description)
 			} else if !tt.expectError && err != nil {
 				t.Errorf("Expected success for %s but got error: %v", tt.description, err)
 			}
-			
+
 			if resp != nil {
 				resp.Body.Close()
 			}
-			
+
 			t.Logf("%s completed in %v", tt.description, duration)
 		})
 	}
@@ -231,26 +231,26 @@ func TestMassiveInfrastructureScans(t *testing.T) {
 func TestConcurrentCollectorFailures(t *testing.T) {
 	// Mock servers with different failure patterns
 	servers := make([]*httptest.Server, 3)
-	
+
 	// Server 1: Always fails with 500
 	servers[0] = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(`{"error": "Internal server error"}`))
 	}))
-	
+
 	// Server 2: Fails with auth error
 	servers[1] = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte(`{"error": "Authentication failed"}`))
 	}))
-	
+
 	// Server 3: Times out (slow response)
 	servers[2] = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(10 * time.Second) // Will timeout
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"instances": []}`))
 	}))
-	
+
 	defer func() {
 		for _, server := range servers {
 			server.Close()
@@ -260,35 +260,35 @@ func TestConcurrentCollectorFailures(t *testing.T) {
 	t.Run("concurrent_collector_failures", func(t *testing.T) {
 		var wg sync.WaitGroup
 		errors := make(chan error, len(servers))
-		
+
 		// Start concurrent requests to each failing server
 		for i, server := range servers {
 			wg.Add(1)
 			go func(serverIndex int, serverURL string) {
 				defer wg.Done()
-				
+
 				client := &http.Client{Timeout: 3 * time.Second}
 				resp, err := client.Get(serverURL)
-				
+
 				if err != nil {
 					errors <- fmt.Errorf("server %d: %v", serverIndex, err)
 					return
 				}
 				defer resp.Body.Close()
-				
+
 				if resp.StatusCode != http.StatusOK {
 					errors <- fmt.Errorf("server %d: HTTP %d", serverIndex, resp.StatusCode)
 					return
 				}
-				
+
 				errors <- nil // Success
 			}(i, server.URL)
 		}
-		
+
 		// Wait for all requests to complete
 		wg.Wait()
 		close(errors)
-		
+
 		// Collect all errors
 		var allErrors []error
 		for err := range errors {
@@ -296,12 +296,12 @@ func TestConcurrentCollectorFailures(t *testing.T) {
 				allErrors = append(allErrors, err)
 			}
 		}
-		
+
 		// We expect all requests to fail in different ways
 		if len(allErrors) != len(servers) {
 			t.Errorf("Expected %d errors but got %d: %v", len(servers), len(allErrors), allErrors)
 		}
-		
+
 		t.Logf("Concurrent failures: %v", allErrors)
 	})
 }
@@ -310,13 +310,13 @@ func TestConcurrentCollectorFailures(t *testing.T) {
 func TestResourcesChangingDuringScan(t *testing.T) {
 	resourceCounter := 0
 	var mutex sync.Mutex
-	
+
 	dynamicServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mutex.Lock()
 		resourceCounter++
 		currentCount := resourceCounter
 		mutex.Unlock()
-		
+
 		// Simulate resources being added/removed during scan
 		instances := make([]map[string]interface{}, currentCount%10)
 		for i := 0; i < len(instances); i++ {
@@ -326,20 +326,20 @@ func TestResourcesChangingDuringScan(t *testing.T) {
 				"state": "running",
 			}
 		}
-		
+
 		response := map[string]interface{}{
 			"instances": instances,
 			"timestamp": time.Now().Unix(),
 			"scan_id":   currentCount,
 		}
-		
+
 		json.NewEncoder(w).Encode(response)
 	}))
 	defer dynamicServer.Close()
 
 	t.Run("resources_changing_during_scan", func(t *testing.T) {
 		client := &http.Client{Timeout: 5 * time.Second}
-		
+
 		// Make multiple requests simulating a scan
 		var results []map[string]interface{}
 		for i := 0; i < 5; i++ {
@@ -348,7 +348,7 @@ func TestResourcesChangingDuringScan(t *testing.T) {
 				t.Errorf("Request %d failed: %v", i, err)
 				continue
 			}
-			
+
 			var result map[string]interface{}
 			if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 				t.Errorf("Failed to decode response %d: %v", i, err)
@@ -356,19 +356,19 @@ func TestResourcesChangingDuringScan(t *testing.T) {
 				continue
 			}
 			resp.Body.Close()
-			
+
 			results = append(results, result)
-			
+
 			// Brief delay between requests
 			time.Sleep(100 * time.Millisecond)
 		}
-		
+
 		// Verify that we got different results (resources changed)
 		if len(results) < 2 {
 			t.Error("Not enough results to compare")
 			return
 		}
-		
+
 		changesDetected := false
 		for i := 1; i < len(results); i++ {
 			if results[i]["scan_id"] != results[i-1]["scan_id"] {
@@ -376,7 +376,7 @@ func TestResourcesChangingDuringScan(t *testing.T) {
 				break
 			}
 		}
-		
+
 		if !changesDetected {
 			t.Error("Expected to detect changes in resources during scan")
 		} else {
@@ -405,20 +405,20 @@ func TestMemoryAndCPUExhaustion(t *testing.T) {
 						"metadata":      make(map[string]string),
 					}
 				}
-				
+
 				// Marshal and unmarshal to simulate real workload
 				jsonData, err := json.Marshal(largeData)
 				if err != nil {
 					t.Errorf("Failed to marshal large data: %v", err)
 					return
 				}
-				
+
 				var parsed map[string]interface{}
 				if err := json.Unmarshal(jsonData, &parsed); err != nil {
 					t.Errorf("Failed to unmarshal large data: %v", err)
 					return
 				}
-				
+
 				t.Logf("Successfully processed large JSON: %d bytes", len(jsonData))
 			},
 			description: "Large JSON parsing under memory pressure",
@@ -428,39 +428,39 @@ func TestMemoryAndCPUExhaustion(t *testing.T) {
 			scenario: func(t *testing.T) {
 				var wg sync.WaitGroup
 				errors := make(chan error, 10)
-				
+
 				// Start multiple CPU-intensive operations
 				for i := 0; i < 10; i++ {
 					wg.Add(1)
 					go func(id int) {
 						defer wg.Done()
-						
+
 						// CPU-intensive task
 						data := make([]string, 10000)
 						for j := range data {
 							data[j] = fmt.Sprintf("heavy-computation-%d-%d", id, j)
 						}
-						
+
 						// Simulate JSON processing
 						jsonData, err := json.Marshal(data)
 						if err != nil {
 							errors <- fmt.Errorf("goroutine %d marshal error: %v", id, err)
 							return
 						}
-						
+
 						var parsed []string
 						if err := json.Unmarshal(jsonData, &parsed); err != nil {
 							errors <- fmt.Errorf("goroutine %d unmarshal error: %v", id, err)
 							return
 						}
-						
+
 						errors <- nil
 					}(i)
 				}
-				
+
 				wg.Wait()
 				close(errors)
-				
+
 				// Check for errors
 				var allErrors []error
 				for err := range errors {
@@ -468,7 +468,7 @@ func TestMemoryAndCPUExhaustion(t *testing.T) {
 						allErrors = append(allErrors, err)
 					}
 				}
-				
+
 				if len(allErrors) > 0 {
 					t.Errorf("Got %d errors during concurrent operations: %v", len(allErrors), allErrors)
 				} else {
@@ -562,7 +562,7 @@ func TestCorruptedCloudResponses(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &http.Client{Timeout: 10 * time.Second}
-			
+
 			resp, err := client.Get(corruptedServer.URL + tt.endpoint)
 			if err != nil {
 				if !tt.expectError {
@@ -571,17 +571,17 @@ func TestCorruptedCloudResponses(t *testing.T) {
 				return
 			}
 			defer resp.Body.Close()
-			
+
 			// Try to parse response as JSON
 			var result map[string]interface{}
 			err = json.NewDecoder(resp.Body).Decode(&result)
-			
+
 			if tt.expectError && err == nil {
 				t.Errorf("Expected parsing error for %s but got none", tt.description)
 			} else if !tt.expectError && err != nil {
 				t.Errorf("Expected successful parsing for %s but got: %v", tt.description, err)
 			}
-			
+
 			if err != nil {
 				t.Logf("Got expected error for %s: %v", tt.description, err)
 			}
@@ -592,11 +592,11 @@ func TestCorruptedCloudResponses(t *testing.T) {
 // TestMultiRegionFailures tests scenarios where some regions are accessible and others are not
 func TestMultiRegionFailures(t *testing.T) {
 	regions := []string{"us-east-1", "us-west-2", "eu-west-1", "ap-southeast-1"}
-	
+
 	// Mock server that simulates region-specific issues
 	regionServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		region := r.Header.Get("X-Region")
-		
+
 		switch region {
 		case "us-east-1":
 			// Working region
@@ -623,27 +623,27 @@ func TestMultiRegionFailures(t *testing.T) {
 
 	t.Run("multi_region_partial_failures", func(t *testing.T) {
 		client := &http.Client{Timeout: 5 * time.Second}
-		
+
 		var results []struct {
 			region string
 			err    error
 			data   map[string]interface{}
 		}
-		
+
 		for _, region := range regions {
 			req, err := http.NewRequest("GET", regionServer.URL, nil)
 			if err != nil {
 				t.Fatalf("Failed to create request for region %s: %v", region, err)
 			}
 			req.Header.Set("X-Region", region)
-			
+
 			resp, err := client.Do(req)
 			result := struct {
 				region string
 				err    error
 				data   map[string]interface{}
 			}{region: region}
-			
+
 			if err != nil {
 				result.err = err
 			} else {
@@ -659,14 +659,14 @@ func TestMultiRegionFailures(t *testing.T) {
 					result.err = fmt.Errorf("HTTP %d", resp.StatusCode)
 				}
 			}
-			
+
 			results = append(results, result)
 		}
-		
+
 		// Analyze results
 		successCount := 0
 		failureCount := 0
-		
+
 		for _, result := range results {
 			if result.err == nil {
 				successCount++
@@ -676,7 +676,7 @@ func TestMultiRegionFailures(t *testing.T) {
 				t.Logf("Region %s: FAILED - %v", result.region, result.err)
 			}
 		}
-		
+
 		// We expect mixed results - some regions working, some failing
 		if successCount == 0 {
 			t.Error("Expected at least one region to succeed")
@@ -684,7 +684,7 @@ func TestMultiRegionFailures(t *testing.T) {
 		if failureCount == 0 {
 			t.Error("Expected at least one region to fail")
 		}
-		
+
 		t.Logf("Multi-region scan: %d successful, %d failed", successCount, failureCount)
 	})
 }
@@ -701,12 +701,12 @@ func TestRealWorldWeirdScenarios(t *testing.T) {
 			name: "config_file_replaced_during_read",
 			scenario: func(t *testing.T) {
 				configFile := filepath.Join(tempDir, "config.yaml")
-				
+
 				// Start with one config
 				original := `storage:
   base_path: /tmp/original`
 				os.WriteFile(configFile, []byte(original), 0644)
-				
+
 				// Read file in background
 				go func() {
 					time.Sleep(50 * time.Millisecond)
@@ -715,7 +715,7 @@ func TestRealWorldWeirdScenarios(t *testing.T) {
   base_path: /tmp/replaced`
 					os.WriteFile(configFile, []byte(replacement), 0644)
 				}()
-				
+
 				// This might catch the file mid-replacement
 				content, err := os.ReadFile(configFile)
 				if err != nil {
@@ -730,12 +730,12 @@ func TestRealWorldWeirdScenarios(t *testing.T) {
 			scenario: func(t *testing.T) {
 				// Simulate time-based operations during clock changes
 				timestamps := make([]time.Time, 10)
-				
+
 				for i := range timestamps {
 					timestamps[i] = time.Now()
 					time.Sleep(10 * time.Millisecond)
 				}
-				
+
 				// Verify timestamps are monotonic
 				for i := 1; i < len(timestamps); i++ {
 					if timestamps[i].Before(timestamps[i-1]) {
@@ -752,7 +752,7 @@ func TestRealWorldWeirdScenarios(t *testing.T) {
 				for i := 0; i < 100; i++ {
 					deepPath = filepath.Join(deepPath, fmt.Sprintf("level%d", i))
 				}
-				
+
 				err := os.MkdirAll(deepPath, 0755)
 				if err != nil {
 					t.Logf("Failed to create extremely deep directory (expected on some systems): %v", err)
@@ -783,26 +783,26 @@ func TestRealWorldWeirdScenarios(t *testing.T) {
 					"control-chars-\x7F\x80\x81",
 					strings.Repeat("very-long-name-", 1000),
 				}
-				
+
 				for _, name := range weirdNames {
 					// Test JSON marshal/unmarshal with weird names
 					data := map[string]interface{}{
 						"name": name,
 						"id":   "test-id",
 					}
-					
+
 					jsonData, err := json.Marshal(data)
 					if err != nil {
 						t.Logf("Failed to marshal name '%s': %v", name, err)
 						continue
 					}
-					
+
 					var parsed map[string]interface{}
 					if err := json.Unmarshal(jsonData, &parsed); err != nil {
 						t.Logf("Failed to unmarshal name '%s': %v", name, err)
 						continue
 					}
-					
+
 					if parsed["name"] != name {
 						t.Logf("Name changed during JSON round-trip: '%s' -> '%s'", name, parsed["name"])
 					}

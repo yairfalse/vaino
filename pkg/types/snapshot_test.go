@@ -7,7 +7,7 @@ import (
 
 func TestSnapshot_Validate(t *testing.T) {
 	baseTime := time.Now()
-	
+
 	tests := []struct {
 		name     string
 		snapshot Snapshot

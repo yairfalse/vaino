@@ -24,7 +24,7 @@ func TestEnhancedTableRenderer_RenderDriftReport(t *testing.T) {
 			RemovedResources:  0,
 			ModifiedResources: 2,
 			OverallRisk:       differ.RiskLevelHigh,
-			RiskScore:        0.75,
+			RiskScore:         0.75,
 			ChangesBySeverity: map[differ.RiskLevel]int{
 				differ.RiskLevelCritical: 1,
 				differ.RiskLevelHigh:     1,
@@ -144,10 +144,10 @@ func TestEnhancedTableRenderer_RenderResourceList(t *testing.T) {
 			Region:   "us-east-1",
 		},
 		{
-			ID:       "deploy-web",
-			Type:     "deployment",
-			Name:     "web-deployment",
-			Provider: "kubernetes",
+			ID:        "deploy-web",
+			Type:      "deployment",
+			Name:      "web-deployment",
+			Provider:  "kubernetes",
 			Namespace: "default",
 		},
 	}
@@ -188,7 +188,7 @@ func TestExportManager_ExportDriftReport(t *testing.T) {
 			TotalResources:   3,
 			ChangedResources: 1,
 			OverallRisk:      differ.RiskLevelMedium,
-			RiskScore:       0.5,
+			RiskScore:        0.5,
 		},
 		ResourceChanges: []differ.ResourceDiff{
 			{
@@ -265,7 +265,7 @@ func TestProgressBar_Basic(t *testing.T) {
 
 func TestSpinner_Basic(t *testing.T) {
 	spinner := NewSpinner("Testing...", true)
-	
+
 	spinner.Start()
 	spinner.Update("Still testing...")
 	spinner.Stop()
@@ -277,13 +277,13 @@ func TestStepProgress_Basic(t *testing.T) {
 	steps := []string{
 		"Initialize",
 		"Scan resources",
-		"Compare states", 
+		"Compare states",
 		"Generate report",
 		"Complete",
 	}
 
 	progress := NewStepProgress("Drift Detection", steps, true)
-	
+
 	progress.NextStep() // Initialize
 	progress.NextStep() // Scan resources
 	progress.SetStep(4) // Jump to Complete

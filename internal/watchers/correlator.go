@@ -11,15 +11,15 @@ import (
 
 // ConcurrentCorrelator correlates events across different providers
 type ConcurrentCorrelator struct {
-	mu               sync.RWMutex
-	correlationRules []CorrelationRule
-	eventHistory     []WatchEvent
-	maxHistorySize   int
+	mu                sync.RWMutex
+	correlationRules  []CorrelationRule
+	eventHistory      []WatchEvent
+	maxHistorySize    int
 	correlationWindow time.Duration
-	running          bool
-	ctx              context.Context
-	cancel           context.CancelFunc
-	stats            CorrelatorStats
+	running           bool
+	ctx               context.Context
+	cancel            context.CancelFunc
+	stats             CorrelatorStats
 }
 
 // CorrelationRule defines how to correlate events
@@ -37,11 +37,11 @@ type CorrelationRule struct {
 
 // CorrelationCondition defines conditions for correlation
 type CorrelationCondition struct {
-	Type        string      `json:"type"`
-	Field       string      `json:"field"`
-	Operator    string      `json:"operator"`
-	Value       interface{} `json:"value"`
-	CaseSensitive bool      `json:"case_sensitive"`
+	Type          string      `json:"type"`
+	Field         string      `json:"field"`
+	Operator      string      `json:"operator"`
+	Value         interface{} `json:"value"`
+	CaseSensitive bool        `json:"case_sensitive"`
 }
 
 // CorrelationAction defines actions to take when correlation is found
@@ -52,28 +52,28 @@ type CorrelationAction struct {
 
 // CorrelatedEvent represents a correlated event
 type CorrelatedEvent struct {
-	ID             string       `json:"id"`
-	Type           EventType    `json:"type"`
-	Timestamp      time.Time    `json:"timestamp"`
-	Provider       string       `json:"provider"`
-	Resource       types.Resource `json:"resource"`
-	CorrelationID  string       `json:"correlation_id"`
-	RelatedEvents  []string     `json:"related_events"`
-	Confidence     float64      `json:"confidence"`
-	Severity       types.DriftSeverity `json:"severity"`
-	Description    string       `json:"description"`
-	Metadata       map[string]interface{} `json:"metadata"`
+	ID            string                 `json:"id"`
+	Type          EventType              `json:"type"`
+	Timestamp     time.Time              `json:"timestamp"`
+	Provider      string                 `json:"provider"`
+	Resource      types.Resource         `json:"resource"`
+	CorrelationID string                 `json:"correlation_id"`
+	RelatedEvents []string               `json:"related_events"`
+	Confidence    float64                `json:"confidence"`
+	Severity      types.DriftSeverity    `json:"severity"`
+	Description   string                 `json:"description"`
+	Metadata      map[string]interface{} `json:"metadata"`
 }
 
 // CorrelatorStats holds statistics for the correlator
 type CorrelatorStats struct {
-	TotalProcessed     int64                       `json:"total_processed"`
-	CorrelationsFound  int64                       `json:"correlations_found"`
-	CorrelationRate    float64                     `json:"correlation_rate"`
-	AverageProcessTime time.Duration               `json:"average_process_time"`
-	RuleStats          map[string]RuleStats        `json:"rule_stats"`
-	LastActivity       time.Time                   `json:"last_activity"`
-	ErrorCount         int64                       `json:"error_count"`
+	TotalProcessed     int64                `json:"total_processed"`
+	CorrelationsFound  int64                `json:"correlations_found"`
+	CorrelationRate    float64              `json:"correlation_rate"`
+	AverageProcessTime time.Duration        `json:"average_process_time"`
+	RuleStats          map[string]RuleStats `json:"rule_stats"`
+	LastActivity       time.Time            `json:"last_activity"`
+	ErrorCount         int64                `json:"error_count"`
 }
 
 // RuleStats holds statistics for a specific rule
@@ -87,7 +87,7 @@ type RuleStats struct {
 // NewConcurrentCorrelator creates a new concurrent correlator
 func NewConcurrentCorrelator() *ConcurrentCorrelator {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	cc := &ConcurrentCorrelator{
 		correlationRules:  []CorrelationRule{},
 		eventHistory:      []WatchEvent{},
@@ -100,10 +100,10 @@ func NewConcurrentCorrelator() *ConcurrentCorrelator {
 			RuleStats: make(map[string]RuleStats),
 		},
 	}
-	
+
 	// Add default correlation rules
 	cc.addDefaultRules()
-	
+
 	return cc
 }
 
@@ -111,16 +111,16 @@ func NewConcurrentCorrelator() *ConcurrentCorrelator {
 func (cc *ConcurrentCorrelator) Start() error {
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
-	
+
 	if cc.running {
 		return fmt.Errorf("correlator is already running")
 	}
-	
+
 	cc.running = true
-	
+
 	// Start cleanup goroutine
 	go cc.cleanupLoop()
-	
+
 	return nil
 }
 
@@ -128,14 +128,14 @@ func (cc *ConcurrentCorrelator) Start() error {
 func (cc *ConcurrentCorrelator) Stop() error {
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
-	
+
 	if !cc.running {
 		return fmt.Errorf("correlator is not running")
 	}
-	
+
 	cc.cancel()
 	cc.running = false
-	
+
 	return nil
 }
 
@@ -143,31 +143,31 @@ func (cc *ConcurrentCorrelator) Stop() error {
 func (cc *ConcurrentCorrelator) ProcessEvent(event WatchEvent) []WatchEvent {
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
-	
+
 	startTime := time.Now()
-	
+
 	// Add event to history
 	cc.addToHistory(event)
-	
+
 	// Find correlations
 	correlatedEvents := cc.findCorrelations(event)
-	
+
 	// Update stats
 	cc.stats.TotalProcessed++
 	cc.stats.LastActivity = time.Now()
-	
+
 	processTime := time.Since(startTime)
 	if cc.stats.AverageProcessTime == 0 {
 		cc.stats.AverageProcessTime = processTime
 	} else {
 		cc.stats.AverageProcessTime = time.Duration((int64(cc.stats.AverageProcessTime) + int64(processTime)) / 2)
 	}
-	
+
 	if len(correlatedEvents) > 0 {
 		cc.stats.CorrelationsFound++
 		cc.stats.CorrelationRate = float64(cc.stats.CorrelationsFound) / float64(cc.stats.TotalProcessed) * 100
 	}
-	
+
 	return correlatedEvents
 }
 
@@ -175,15 +175,15 @@ func (cc *ConcurrentCorrelator) ProcessEvent(event WatchEvent) []WatchEvent {
 func (cc *ConcurrentCorrelator) AddRule(rule CorrelationRule) error {
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
-	
+
 	// Validate rule
 	if err := cc.validateRule(rule); err != nil {
 		return fmt.Errorf("invalid correlation rule: %w", err)
 	}
-	
+
 	cc.correlationRules = append(cc.correlationRules, rule)
 	cc.stats.RuleStats[rule.ID] = RuleStats{}
-	
+
 	return nil
 }
 
@@ -191,7 +191,7 @@ func (cc *ConcurrentCorrelator) AddRule(rule CorrelationRule) error {
 func (cc *ConcurrentCorrelator) RemoveRule(ruleID string) error {
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
-	
+
 	for i, rule := range cc.correlationRules {
 		if rule.ID == ruleID {
 			cc.correlationRules = append(cc.correlationRules[:i], cc.correlationRules[i+1:]...)
@@ -199,7 +199,7 @@ func (cc *ConcurrentCorrelator) RemoveRule(ruleID string) error {
 			return nil
 		}
 	}
-	
+
 	return fmt.Errorf("rule with ID %s not found", ruleID)
 }
 
@@ -207,7 +207,7 @@ func (cc *ConcurrentCorrelator) RemoveRule(ruleID string) error {
 func (cc *ConcurrentCorrelator) GetRules() []CorrelationRule {
 	cc.mu.RLock()
 	defer cc.mu.RUnlock()
-	
+
 	rules := make([]CorrelationRule, len(cc.correlationRules))
 	copy(rules, cc.correlationRules)
 	return rules
@@ -230,7 +230,7 @@ func (cc *ConcurrentCorrelator) IsRunning() bool {
 // addToHistory adds an event to the history
 func (cc *ConcurrentCorrelator) addToHistory(event WatchEvent) {
 	cc.eventHistory = append(cc.eventHistory, event)
-	
+
 	// Limit history size
 	if len(cc.eventHistory) > cc.maxHistorySize {
 		cc.eventHistory = cc.eventHistory[len(cc.eventHistory)-cc.maxHistorySize:]
@@ -240,34 +240,34 @@ func (cc *ConcurrentCorrelator) addToHistory(event WatchEvent) {
 // findCorrelations finds correlations for an event
 func (cc *ConcurrentCorrelator) findCorrelations(event WatchEvent) []WatchEvent {
 	var correlatedEvents []WatchEvent
-	
+
 	for _, rule := range cc.correlationRules {
 		if !rule.Enabled {
 			continue
 		}
-		
+
 		// Update rule stats
 		stats := cc.stats.RuleStats[rule.ID]
 		stats.TriggeredCount++
 		stats.LastTriggered = time.Now()
-		
+
 		// Check if rule applies to this event
 		if cc.ruleApplies(rule, event) {
 			// Find related events
 			relatedEvents := cc.findRelatedEvents(rule, event)
-			
+
 			if len(relatedEvents) > 0 {
 				// Create correlated event
 				correlatedEvent := cc.createCorrelatedEvent(rule, event, relatedEvents)
 				correlatedEvents = append(correlatedEvents, correlatedEvent)
-				
+
 				stats.SuccessCount++
 			}
 		}
-		
+
 		cc.stats.RuleStats[rule.ID] = stats
 	}
-	
+
 	return correlatedEvents
 }
 
@@ -284,7 +284,7 @@ func (cc *ConcurrentCorrelator) ruleApplies(rule CorrelationRule, event WatchEve
 	if !providerMatch {
 		return false
 	}
-	
+
 	// Check event type
 	eventTypeMatch := false
 	for _, eventType := range rule.EventTypes {
@@ -296,21 +296,21 @@ func (cc *ConcurrentCorrelator) ruleApplies(rule CorrelationRule, event WatchEve
 	if !eventTypeMatch {
 		return false
 	}
-	
+
 	// Check conditions
 	for _, condition := range rule.Conditions {
 		if !cc.evaluateCondition(condition, event) {
 			return false
 		}
 	}
-	
+
 	return true
 }
 
 // evaluateCondition evaluates a correlation condition
 func (cc *ConcurrentCorrelator) evaluateCondition(condition CorrelationCondition, event WatchEvent) bool {
 	var fieldValue interface{}
-	
+
 	// Get field value
 	switch condition.Field {
 	case "resource.type":
@@ -331,7 +331,7 @@ func (cc *ConcurrentCorrelator) evaluateCondition(condition CorrelationCondition
 			fieldValue = event.Resource.Configuration[condition.Field]
 		}
 	}
-	
+
 	// Evaluate condition
 	switch condition.Operator {
 	case "equals":
@@ -360,37 +360,37 @@ func (cc *ConcurrentCorrelator) evaluateCondition(condition CorrelationCondition
 			}
 		}
 	}
-	
+
 	return false
 }
 
 // findRelatedEvents finds events related to the current event
 func (cc *ConcurrentCorrelator) findRelatedEvents(rule CorrelationRule, event WatchEvent) []WatchEvent {
 	var relatedEvents []WatchEvent
-	
+
 	// Look for events within the time window
 	timeWindow := rule.TimeWindow
 	if timeWindow == 0 {
 		timeWindow = cc.correlationWindow
 	}
-	
+
 	cutoff := event.Timestamp.Add(-timeWindow)
-	
+
 	for _, histEvent := range cc.eventHistory {
 		if histEvent.ID == event.ID {
 			continue // Skip the same event
 		}
-		
+
 		if histEvent.Timestamp.Before(cutoff) {
 			continue // Too old
 		}
-		
+
 		// Check if this event is related
 		if cc.eventsRelated(event, histEvent) {
 			relatedEvents = append(relatedEvents, histEvent)
 		}
 	}
-	
+
 	return relatedEvents
 }
 
@@ -400,24 +400,24 @@ func (cc *ConcurrentCorrelator) eventsRelated(event1, event2 WatchEvent) bool {
 	if event1.Resource.ID == event2.Resource.ID {
 		return true
 	}
-	
+
 	// Same resource type and name
-	if event1.Resource.Type == event2.Resource.Type && 
-	   event1.Resource.Name == event2.Resource.Name {
+	if event1.Resource.Type == event2.Resource.Type &&
+		event1.Resource.Name == event2.Resource.Name {
 		return true
 	}
-	
+
 	// Same namespace/region
-	if event1.Resource.Namespace != "" && 
-	   event1.Resource.Namespace == event2.Resource.Namespace {
+	if event1.Resource.Namespace != "" &&
+		event1.Resource.Namespace == event2.Resource.Namespace {
 		return true
 	}
-	
-	if event1.Resource.Region != "" && 
-	   event1.Resource.Region == event2.Resource.Region {
+
+	if event1.Resource.Region != "" &&
+		event1.Resource.Region == event2.Resource.Region {
 		return true
 	}
-	
+
 	return false
 }
 
@@ -427,7 +427,7 @@ func (cc *ConcurrentCorrelator) createCorrelatedEvent(rule CorrelationRule, prim
 	for _, event := range relatedEvents {
 		relatedEventIDs = append(relatedEventIDs, event.ID)
 	}
-	
+
 	correlatedEvent := WatchEvent{
 		ID:        fmt.Sprintf("corr-%s-%d", primaryEvent.ID, time.Now().UnixNano()),
 		Type:      primaryEvent.Type,
@@ -443,7 +443,7 @@ func (cc *ConcurrentCorrelator) createCorrelatedEvent(rule CorrelationRule, prim
 			"confidence":        cc.calculateConfidence(primaryEvent, relatedEvents),
 		},
 	}
-	
+
 	return correlatedEvent
 }
 
@@ -452,23 +452,23 @@ func (cc *ConcurrentCorrelator) calculateConfidence(primaryEvent WatchEvent, rel
 	if len(relatedEvents) == 0 {
 		return 0.0
 	}
-	
+
 	confidence := 0.5 // Base confidence
-	
+
 	// Increase confidence based on number of related events
 	confidence += float64(len(relatedEvents)) * 0.1
-	
+
 	// Increase confidence if events are from different providers
 	providers := make(map[string]bool)
 	providers[primaryEvent.Provider] = true
-	
+
 	for _, event := range relatedEvents {
 		if !providers[event.Provider] {
 			providers[event.Provider] = true
 			confidence += 0.15
 		}
 	}
-	
+
 	// Increase confidence if events happened close in time
 	for _, event := range relatedEvents {
 		timeDiff := primaryEvent.Timestamp.Sub(event.Timestamp)
@@ -476,12 +476,12 @@ func (cc *ConcurrentCorrelator) calculateConfidence(primaryEvent WatchEvent, rel
 			confidence += 0.1
 		}
 	}
-	
+
 	// Cap confidence at 1.0
 	if confidence > 1.0 {
 		confidence = 1.0
 	}
-	
+
 	return confidence
 }
 
@@ -490,19 +490,19 @@ func (cc *ConcurrentCorrelator) validateRule(rule CorrelationRule) error {
 	if rule.ID == "" {
 		return fmt.Errorf("rule ID is required")
 	}
-	
+
 	if rule.Name == "" {
 		return fmt.Errorf("rule name is required")
 	}
-	
+
 	if len(rule.Providers) == 0 {
 		return fmt.Errorf("at least one provider is required")
 	}
-	
+
 	if len(rule.EventTypes) == 0 {
 		return fmt.Errorf("at least one event type is required")
 	}
-	
+
 	return nil
 }
 
@@ -525,7 +525,7 @@ func (cc *ConcurrentCorrelator) addDefaultRules() {
 		},
 		Enabled: true,
 	})
-	
+
 	// Namespace-based correlation for Kubernetes
 	cc.correlationRules = append(cc.correlationRules, CorrelationRule{
 		ID:          "kubernetes-namespace",
@@ -543,7 +543,7 @@ func (cc *ConcurrentCorrelator) addDefaultRules() {
 		},
 		Enabled: true,
 	})
-	
+
 	// Region-based correlation for cloud providers
 	cc.correlationRules = append(cc.correlationRules, CorrelationRule{
 		ID:          "cloud-region",
@@ -567,7 +567,7 @@ func (cc *ConcurrentCorrelator) addDefaultRules() {
 func (cc *ConcurrentCorrelator) cleanupLoop() {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-cc.ctx.Done():
@@ -582,15 +582,15 @@ func (cc *ConcurrentCorrelator) cleanupLoop() {
 func (cc *ConcurrentCorrelator) cleanupOldEvents() {
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
-	
+
 	cutoff := time.Now().Add(-cc.correlationWindow * 2)
-	
+
 	var newHistory []WatchEvent
 	for _, event := range cc.eventHistory {
 		if event.Timestamp.After(cutoff) {
 			newHistory = append(newHistory, event)
 		}
 	}
-	
+
 	cc.eventHistory = newHistory
 }

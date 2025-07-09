@@ -76,8 +76,8 @@ func (s *LocalStorage) SaveBaseline(baseline *types.Baseline) error {
 		return fmt.Errorf("invalid baseline: %w", err)
 	}
 
-	filename := fmt.Sprintf("%s-%s.json", 
-		sanitizeFilename(baseline.Name), 
+	filename := fmt.Sprintf("%s-%s.json",
+		sanitizeFilename(baseline.Name),
 		baseline.CreatedAt.Format("2006-01-02"))
 	filepath := filepath.Join(s.baselines, filename)
 
@@ -164,8 +164,8 @@ func (s *LocalStorage) DeleteBaseline(id string) error {
 		return err
 	}
 
-	filename := fmt.Sprintf("%s-%s.json", 
-		sanitizeFilename(baseline.Name), 
+	filename := fmt.Sprintf("%s-%s.json",
+		sanitizeFilename(baseline.Name),
 		baseline.CreatedAt.Format("2006-01-02"))
 	filepath := filepath.Join(s.baselines, filename)
 

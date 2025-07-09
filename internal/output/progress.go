@@ -113,7 +113,7 @@ func (p *ProgressBar) render() {
 
 	// Build progress bar
 	var bar strings.Builder
-	
+
 	// Add title
 	if p.title != "" {
 		bar.WriteString(p.colorize(p.title+" ", color.FgCyan))
@@ -121,17 +121,17 @@ func (p *ProgressBar) render() {
 
 	// Add progress bar
 	bar.WriteString("[")
-	
+
 	// Filled portion
 	if filled > 0 {
 		bar.WriteString(p.colorize(strings.Repeat("█", filled), color.FgGreen))
 	}
-	
+
 	// Empty portion
 	if filled < p.width {
 		bar.WriteString(strings.Repeat("░", p.width-filled))
 	}
-	
+
 	bar.WriteString("]")
 
 	// Add percentage
@@ -140,7 +140,7 @@ func (p *ProgressBar) render() {
 	}
 
 	// Add current/total
-	bar.WriteString(fmt.Sprintf(" %s/%s", 
+	bar.WriteString(fmt.Sprintf(" %s/%s",
 		p.colorize(formatNumber(p.current), color.FgWhite, color.Bold),
 		p.colorize(formatNumber(p.total), color.FgWhite)))
 
@@ -150,7 +150,7 @@ func (p *ProgressBar) render() {
 		rate := float64(p.current) / elapsed.Seconds()
 		remaining := float64(p.total-p.current) / rate
 		eta := time.Duration(remaining) * time.Second
-		
+
 		bar.WriteString(fmt.Sprintf(" ETA: %s", p.colorize(formatDuration(eta), color.FgYellow)))
 	}
 
@@ -175,15 +175,15 @@ func (p *ProgressBar) colorize(text string, attrs ...color.Attribute) string {
 
 // Spinner represents a spinning progress indicator
 type Spinner struct {
-	mu       sync.Mutex
-	writer   io.Writer
-	title    string
-	chars    []string
-	index    int
-	active   bool
-	ticker   *time.Ticker
-	done     chan bool
-	noColor  bool
+	mu      sync.Mutex
+	writer  io.Writer
+	title   string
+	chars   []string
+	index   int
+	active  bool
+	ticker  *time.Ticker
+	done    chan bool
+	noColor bool
 }
 
 // NewSpinner creates a new spinner
@@ -275,11 +275,11 @@ func (s *Spinner) colorize(text string, attrs ...color.Attribute) string {
 
 // MultiProgressBar manages multiple progress bars
 type MultiProgressBar struct {
-	mu          sync.Mutex
-	writer      io.Writer
-	bars        []*ProgressBar
-	lines       int
-	noColor     bool
+	mu      sync.Mutex
+	writer  io.Writer
+	bars    []*ProgressBar
+	lines   int
+	noColor bool
 }
 
 // NewMultiProgressBar creates a new multi-progress bar manager
@@ -297,11 +297,11 @@ func (m *MultiProgressBar) AddBar(config ProgressBarConfig) *ProgressBar {
 
 	config.Writer = &lineWriter{parent: m, lineIndex: len(m.bars)}
 	config.NoColor = m.noColor
-	
+
 	bar := NewProgressBar(config)
 	m.bars = append(m.bars, bar)
 	m.lines = len(m.bars)
-	
+
 	return bar
 }
 
@@ -313,7 +313,7 @@ func (m *MultiProgressBar) Finish() {
 	for _, bar := range m.bars {
 		bar.Finish()
 	}
-	
+
 	// Move cursor down past all bars
 	for i := 0; i < m.lines; i++ {
 		fmt.Fprintln(m.writer)
@@ -335,13 +335,13 @@ func (w *lineWriter) Write(p []byte) (n int, err error) {
 
 // StepProgress represents a step-based progress indicator
 type StepProgress struct {
-	mu       sync.Mutex
-	writer   io.Writer
-	title    string
-	steps    []string
-	current  int
-	total    int
-	noColor  bool
+	mu      sync.Mutex
+	writer  io.Writer
+	title   string
+	steps   []string
+	current int
+	total   int
+	noColor bool
 }
 
 // NewStepProgress creates a new step progress indicator
@@ -390,14 +390,14 @@ func (s *StepProgress) Finish() {
 // render renders the step progress
 func (s *StepProgress) render() {
 	var output strings.Builder
-	
+
 	if s.title != "" {
 		output.WriteString(s.colorize(s.title+":\n", color.FgCyan, color.Bold))
 	}
 
 	for i, step := range s.steps {
 		var icon, stepColor string
-		
+
 		if i < s.current {
 			icon = "✅"
 			stepColor = s.colorize(step, color.FgGreen)
@@ -408,7 +408,7 @@ func (s *StepProgress) render() {
 			icon = "⏳"
 			stepColor = s.colorize(step, color.FgWhite)
 		}
-		
+
 		output.WriteString(fmt.Sprintf("%s %s\n", icon, stepColor))
 	}
 

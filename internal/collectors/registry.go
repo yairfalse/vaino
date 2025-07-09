@@ -40,19 +40,19 @@ func (r *CollectorRegistry) Register(collector Collector) {
 func (r *CollectorRegistry) List() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	names := make([]string, 0, len(r.collectors))
 	for name := range r.collectors {
 		names = append(names, name)
 	}
-	
+
 	return names
 }
 
 func (r *CollectorRegistry) Get(name string) (Collector, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	collector, exists := r.collectors[name]
 	return collector, exists
 }

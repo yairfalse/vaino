@@ -317,9 +317,9 @@ func TestGetSlackColor(t *testing.T) {
 	watcher := &Watcher{}
 
 	tests := []struct {
-		name           string
-		event          *WatchEvent
-		expectedColor  string
+		name          string
+		event         *WatchEvent
+		expectedColor string
 	}{
 		{
 			name: "high confidence changes",

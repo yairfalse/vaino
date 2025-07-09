@@ -46,12 +46,12 @@ OUTPUT FORMATS:
 }
 
 var (
-	watchProviders    []string
-	watchInterval     time.Duration
-	watchFormat       string
-	watchQuiet        bool
-	watchWebhook      string
-	watchHighConf     bool
+	watchProviders []string
+	watchInterval  time.Duration
+	watchFormat    string
+	watchQuiet     bool
+	watchWebhook   string
+	watchHighConf  bool
 )
 
 func init() {
@@ -63,10 +63,10 @@ func init() {
 	watchCmd.Flags().DurationVarP(&watchInterval, "interval", "i", 30*time.Second,
 		"watch interval (minimum 5s)")
 
-	// Output configuration  
+	// Output configuration
 	watchCmd.Flags().StringVarP(&watchFormat, "format", "f", "table",
 		"output format (table, json, quiet)")
-	
+
 	watchCmd.Flags().BoolVarP(&watchQuiet, "quiet", "q", false,
 		"quiet mode - only show changes")
 

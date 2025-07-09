@@ -27,7 +27,7 @@ func TestWatchModeIntegration(t *testing.T) {
 
 	// Create test infrastructure
 	testDir := t.TempDir()
-	
+
 	// Create a mock Terraform state file
 	terraformState := `{
 		"version": 4,
@@ -52,7 +52,7 @@ func TestWatchModeIntegration(t *testing.T) {
 			}
 		]
 	}`
-	
+
 	stateFile := fmt.Sprintf("%s/terraform.tfstate", testDir)
 	err := os.WriteFile(stateFile, []byte(terraformState), 0644)
 	if err != nil {
@@ -230,7 +230,7 @@ func TestWatchModeMultipleProviders(t *testing.T) {
 
 	// Set up mock collectors
 	registry := collectors.NewEnhancedRegistry()
-	
+
 	// Mock Terraform collector
 	terraformCollector := &mockCollector{
 		name: "terraform",
@@ -251,10 +251,10 @@ func TestWatchModeMultipleProviders(t *testing.T) {
 		name: "kubernetes",
 		resources: []types.Resource{
 			{
-				ID:       "k8s-1",
-				Type:     "deployment",
-				Provider: "kubernetes",
-				Name:     "nginx",
+				ID:        "k8s-1",
+				Type:      "deployment",
+				Provider:  "kubernetes",
+				Name:      "nginx",
 				Namespace: "default",
 			},
 		},
@@ -314,12 +314,12 @@ func TestWatchModeConcurrentWebhooks(t *testing.T) {
 	// Track webhook calls
 	var mu sync.Mutex
 	webhookCount := 0
-	
+
 	webhookServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		mu.Lock()
 		webhookCount++
 		mu.Unlock()
-		
+
 		// Simulate slow webhook processing
 		time.Sleep(100 * time.Millisecond)
 		w.WriteHeader(http.StatusOK)

@@ -55,7 +55,7 @@ func TestExpiredCredentials(t *testing.T) {
 				invalidKeyFile := filepath.Join(tempDir, "invalid-key.json")
 				invalidKey := `{"type": "service_account", "project_id": "fake", "private_key": "invalid"}`
 				os.WriteFile(invalidKeyFile, []byte(invalidKey), 0644)
-				
+
 				original := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 				os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", invalidKeyFile)
 				return func() {
@@ -93,7 +93,7 @@ users:
   user:
     token: invalid-token`
 				os.WriteFile(corruptedConfig, []byte(corruptedContent), 0644)
-				
+
 				original := os.Getenv("KUBECONFIG")
 				os.Setenv("KUBECONFIG", corruptedConfig)
 				return func() {
@@ -347,14 +347,14 @@ func TestCredentialRotation(t *testing.T) {
 	rotationCount := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rotationCount++
-		
+
 		// First few requests fail with invalid credentials
 		if rotationCount <= 2 {
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(`{"error": "invalid credentials - rotation in progress"}`))
 			return
 		}
-		
+
 		// After rotation completes, requests succeed
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"instances": []}`))
@@ -363,7 +363,7 @@ func TestCredentialRotation(t *testing.T) {
 
 	t.Run("credential_rotation_scenario", func(t *testing.T) {
 		client := &http.Client{Timeout: 5 * time.Second}
-		
+
 		// Simulate multiple requests during rotation
 		for i := 0; i < 5; i++ {
 			resp, err := client.Get(server.URL)
@@ -371,7 +371,7 @@ func TestCredentialRotation(t *testing.T) {
 				t.Errorf("Request %d failed: %v", i, err)
 				continue
 			}
-			
+
 			if i < 2 {
 				// Expect failure during rotation
 				if resp.StatusCode != http.StatusUnauthorized {
@@ -384,7 +384,7 @@ func TestCredentialRotation(t *testing.T) {
 				}
 			}
 			resp.Body.Close()
-			
+
 			// Brief delay between requests
 			time.Sleep(100 * time.Millisecond)
 		}
@@ -407,10 +407,10 @@ func TestMalformedCredentials(t *testing.T) {
 				malformedFile := filepath.Join(tempDir, "malformed.json")
 				malformedContent := `{"type": "service_account", "project_id": "test", invalid json}`
 				os.WriteFile(malformedFile, []byte(malformedContent), 0644)
-				
+
 				original := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 				os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", malformedFile)
-				
+
 				return malformedFile, func() {
 					if original != "" {
 						os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", original)
@@ -434,10 +434,10 @@ clusters:
     server: https://test
   name: [invalid yaml structure`
 				os.WriteFile(malformedFile, []byte(malformedContent), 0644)
-				
+
 				original := os.Getenv("KUBECONFIG")
 				os.Setenv("KUBECONFIG", malformedFile)
-				
+
 				return malformedFile, func() {
 					if original != "" {
 						os.Setenv("KUBECONFIG", original)
@@ -455,10 +455,10 @@ clusters:
 				tempDir := t.TempDir()
 				emptyFile := filepath.Join(tempDir, "empty.json")
 				os.WriteFile(emptyFile, []byte(""), 0644)
-				
+
 				original := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 				os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", emptyFile)
-				
+
 				return emptyFile, func() {
 					if original != "" {
 						os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", original)
@@ -489,7 +489,7 @@ clusters:
 			if filepath.Ext(file) == ".json" {
 				var parsed map[string]interface{}
 				err = json.Unmarshal(content, &parsed)
-				
+
 				if tt.expectError && err == nil {
 					t.Error("Expected JSON parsing to fail but it succeeded")
 				} else if !tt.expectError && err != nil {
@@ -512,21 +512,21 @@ func TestConcurrentAuthRequests(t *testing.T) {
 		if concurrentRequests > maxConcurrent {
 			maxConcurrent = concurrentRequests
 		}
-		
+
 		// Simulate processing time
 		time.Sleep(100 * time.Millisecond)
-		
+
 		// Return success
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"instances": []}`))
-		
+
 		concurrentRequests--
 	}))
 	defer server.Close()
 
 	t.Run("concurrent_authentication", func(t *testing.T) {
 		client := &http.Client{Timeout: 10 * time.Second}
-		
+
 		// Make multiple concurrent requests
 		done := make(chan error, 10)
 		for i := 0; i < 10; i++ {
@@ -537,23 +537,23 @@ func TestConcurrentAuthRequests(t *testing.T) {
 					return
 				}
 				resp.Body.Close()
-				
+
 				if resp.StatusCode != http.StatusOK {
 					done <- fmt.Errorf("request %d got status %d", requestID, resp.StatusCode)
 					return
 				}
-				
+
 				done <- nil
 			}(i)
 		}
-		
+
 		// Wait for all requests to complete
 		for i := 0; i < 10; i++ {
 			if err := <-done; err != nil {
 				t.Error(err)
 			}
 		}
-		
+
 		t.Logf("Max concurrent requests handled: %d", maxConcurrent)
 		if maxConcurrent == 0 {
 			t.Error("No concurrent requests detected")

@@ -29,7 +29,7 @@ func BenchmarkWatcherThroughput(b *testing.B) {
 
 	// Create test changes
 	changes := generateChanges(100)
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		// Simulate processing changes through the watcher
@@ -58,7 +58,7 @@ func BenchmarkWatcherMemoryUsage(b *testing.B) {
 		if err != nil {
 			b.Fatalf("Failed to create watcher: %v", err)
 		}
-		
+
 		// Simulate a watch cycle using public API
 		ctx := context.Background()
 		_ = ctx // Use context to prevent unused variable warning
@@ -172,11 +172,11 @@ func TestWatcherConcurrency(t *testing.T) {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
-			
+
 			for j := 0; j < iterations; j++ {
 				// Generate unique changes for each worker
 				changes := generateChangesWithPrefix(10, fmt.Sprintf("worker-%d", workerID))
-				
+
 				// Process changes
 				event := &watcher.WatchEvent{
 					Timestamp:  time.Now(),
@@ -186,7 +186,7 @@ func TestWatcherConcurrency(t *testing.T) {
 				if len(event.RawChanges) == 0 {
 					errors <- fmt.Errorf("worker %d: no changes in event", workerID)
 				}
-				
+
 				// Small delay to simulate realistic timing
 				time.Sleep(time.Millisecond)
 			}
@@ -249,17 +249,17 @@ func TestWatcherMemoryStability(t *testing.T) {
 		case <-ticker.C:
 			runtime.GC() // Force GC to get accurate readings
 			runtime.ReadMemStats(&memStats)
-			
+
 			heapIncrease := memStats.HeapAlloc - startHeap
 			if heapIncrease > maxHeapIncrease {
 				maxHeapIncrease = heapIncrease
 			}
 			samples++
-			
+
 		case <-ctx.Done():
 			// Check final memory state
 			avgIncreasePerSample := maxHeapIncrease / uint64(samples)
-			
+
 			// Allow 1MB per sample as reasonable overhead
 			allowedIncrease := uint64(1024 * 1024 * samples)
 			if maxHeapIncrease > allowedIncrease {

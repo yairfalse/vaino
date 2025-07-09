@@ -27,7 +27,7 @@ func (w *Watcher) displayChanges(event *WatchEvent) {
 // displayTableFormat shows changes in a human-readable table format
 func (w *Watcher) displayTableFormat(event *WatchEvent) {
 	timestamp := event.Timestamp.Format("15:04:05")
-	
+
 	// Summary line
 	fmt.Printf("[%s] %d changes detected (%d added, %d modified, %d removed)\n",
 		timestamp,
@@ -39,7 +39,7 @@ func (w *Watcher) displayTableFormat(event *WatchEvent) {
 	// Show correlated groups if available
 	if len(event.CorrelatedGroups) > 0 {
 		fmt.Printf("┌─ 🔗 Correlated Changes:\n")
-		
+
 		for _, group := range event.CorrelatedGroups {
 			// Skip low confidence groups if only showing high confidence
 			if w.onlyHighConf && group.Confidence != "high" {
@@ -59,7 +59,7 @@ func (w *Watcher) displayTableFormat(event *WatchEvent) {
 				if i == len(group.Changes)-1 {
 					prefix = "└──"
 				}
-				
+
 				fmt.Printf("│  %s %s %s/%s\n",
 					prefix,
 					w.getChangeTypeIcon(change.Type),
@@ -76,7 +76,7 @@ func (w *Watcher) displayTableFormat(event *WatchEvent) {
 			if i == len(event.RawChanges)-1 {
 				prefix = "└─"
 			}
-			
+
 			fmt.Printf("%s %s %s/%s in %s\n",
 				prefix,
 				w.getChangeTypeIcon(change.Type),
@@ -85,7 +85,7 @@ func (w *Watcher) displayTableFormat(event *WatchEvent) {
 				change.Namespace)
 		}
 	}
-	
+
 	fmt.Printf("\n")
 }
 
@@ -111,14 +111,14 @@ func (w *Watcher) displayJSONFormat(event *WatchEvent) {
 // displayQuietFormat shows minimal output for scripts
 func (w *Watcher) displayQuietFormat(event *WatchEvent) {
 	timestamp := event.Timestamp.Format("15:04:05")
-	
+
 	// Only show high-confidence correlated changes in quiet mode
 	for _, group := range event.CorrelatedGroups {
 		if group.Confidence == "high" {
 			fmt.Printf("[%s] %s\n", timestamp, group.Title)
 		}
 	}
-	
+
 	// If no high-confidence correlations, show summary
 	if len(event.CorrelatedGroups) == 0 {
 		fmt.Printf("[%s] %d changes\n", timestamp, event.Summary.Total)
@@ -164,15 +164,15 @@ func (w *Watcher) displayWatchHeader() {
 	fmt.Printf("Monitoring: %s\n", strings.Join(w.providers, ", "))
 	fmt.Printf("Interval: %v\n", w.interval)
 	fmt.Printf("Output: %s\n", w.outputFormat)
-	
+
 	if w.onlyHighConf {
 		fmt.Printf("Filter: High confidence only\n")
 	}
-	
+
 	if w.webhookURL != "" {
 		fmt.Printf("Webhook: Enabled\n")
 	}
-	
+
 	fmt.Printf("\nPress Ctrl+C to stop watching\n")
 	fmt.Printf(strings.Repeat("─", 50) + "\n\n")
 }

@@ -107,11 +107,11 @@ func runBaselineCreate(cmd *cobra.Command, args []string) error {
 	name, _ := cmd.Flags().GetString("name")
 	description, _ := cmd.Flags().GetString("description")
 	fromSnapshot, _ := cmd.Flags().GetString("from-snapshot")
-	
+
 	// Check if any snapshots exist
 	// TODO: Actually check for snapshots
 	hasSnapshots := false
-	
+
 	if !hasSnapshots && fromSnapshot == "" {
 		fmt.Println("❌ No Infrastructure Snapshots Found")
 		fmt.Println("=====================================")
@@ -135,10 +135,10 @@ func runBaselineCreate(cmd *cobra.Command, args []string) error {
 		fmt.Println("💡 TIP: Having auth issues? Run 'wgo auth status'")
 		return nil
 	}
-	
+
 	fmt.Println("📋 Creating Baseline")
 	fmt.Println("===================")
-	
+
 	fmt.Printf("🏷️  Name: %s\n", name)
 	if description != "" {
 		fmt.Printf("📝 Description: %s\n", description)
@@ -146,41 +146,41 @@ func runBaselineCreate(cmd *cobra.Command, args []string) error {
 	if fromSnapshot != "" {
 		fmt.Printf("📊 From snapshot: %s\n", fromSnapshot)
 	}
-	
+
 	fmt.Println("\n⚠️  Baseline creation not yet implemented")
-	
+
 	return nil
 }
 
 func runBaselineList(cmd *cobra.Command, args []string) error {
 	fmt.Println("📋 Infrastructure Baselines")
 	fmt.Println("===========================")
-	
+
 	fmt.Println("\n⚠️  Baseline listing not yet implemented")
 	fmt.Println("This command will show:")
 	fmt.Println("  • Baseline name and description")
 	fmt.Println("  • Creation and update timestamps")
 	fmt.Println("  • Resource counts by provider")
 	fmt.Println("  • Associated tags")
-	
+
 	return nil
 }
 
 func runBaselineShow(cmd *cobra.Command, args []string) error {
 	baselineName := args[0]
-	
+
 	fmt.Printf("📋 Baseline Details: %s\n", baselineName)
 	fmt.Println("================================")
-	
+
 	fmt.Println("\n⚠️  Baseline show not yet implemented")
-	
+
 	return nil
 }
 
 func runBaselineDelete(cmd *cobra.Command, args []string) error {
 	baselineName := args[0]
 	force, _ := cmd.Flags().GetBool("force")
-	
+
 	if !force {
 		fmt.Printf("Are you sure you want to delete baseline '%s'? (y/N): ", baselineName)
 		var response string
@@ -190,9 +190,9 @@ func runBaselineDelete(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 	}
-	
+
 	fmt.Printf("🗑️  Deleting baseline: %s\n", baselineName)
 	fmt.Println("\n⚠️  Baseline deletion not yet implemented")
-	
+
 	return nil
 }

@@ -16,19 +16,19 @@ const (
 	ResourceTypeDeployment  ResourceType = "deployment"
 	ResourceTypeStatefulSet ResourceType = "statefulset"
 	ResourceTypeDaemonSet   ResourceType = "daemonset"
-	
+
 	// Service resources
 	ResourceTypeService ResourceType = "service"
 	ResourceTypeIngress ResourceType = "ingress"
-	
+
 	// Config resources
 	ResourceTypeConfigMap ResourceType = "configmap"
 	ResourceTypeSecret    ResourceType = "secret"
-	
+
 	// Storage resources
 	ResourceTypePersistentVolume      ResourceType = "persistentvolume"
 	ResourceTypePersistentVolumeClaim ResourceType = "persistentvolumeclaim"
-	
+
 	// Security resources
 	ResourceTypeServiceAccount ResourceType = "serviceaccount"
 	ResourceTypeRole           ResourceType = "role"
@@ -78,11 +78,11 @@ func GetAllSupportedResourceTypes() []ResourceType {
 
 // ResourceCollectionStats holds statistics about resource collection
 type ResourceCollectionStats struct {
-	TotalResources      int                        `json:"total_resources"`
-	ResourcesByType     map[ResourceType]int       `json:"resources_by_type"`
-	ResourcesByGroup    map[string]int             `json:"resources_by_group"`
+	TotalResources       int                       `json:"total_resources"`
+	ResourcesByType      map[ResourceType]int      `json:"resources_by_type"`
+	ResourcesByGroup     map[string]int            `json:"resources_by_group"`
 	ResourcesByNamespace map[string]int            `json:"resources_by_namespace"`
-	CollectionErrors    []ResourceCollectionError  `json:"collection_errors,omitempty"`
+	CollectionErrors     []ResourceCollectionError `json:"collection_errors,omitempty"`
 }
 
 // ResourceCollectionError represents an error that occurred during resource collection
@@ -97,32 +97,32 @@ func (k *KubernetesCollector) CollectResourcesInParallel(ctx context.Context, na
 	if len(namespaces) == 0 {
 		namespaces = []string{""} // Default to all namespaces
 	}
-	
+
 	if len(resourceTypes) == 0 {
 		resourceTypes = GetAllSupportedResourceTypes()
 	}
-	
+
 	stats := &ResourceCollectionStats{
 		ResourcesByType:      make(map[ResourceType]int),
 		ResourcesByGroup:     make(map[string]int),
 		ResourcesByNamespace: make(map[string]int),
 		CollectionErrors:     []ResourceCollectionError{},
 	}
-	
+
 	var (
 		allResources []types.Resource
 		mu           sync.Mutex
 		wg           sync.WaitGroup
 	)
-	
+
 	// Collect resources for each namespace in parallel
 	for _, namespace := range namespaces {
 		wg.Add(1)
 		go func(ns string) {
 			defer wg.Done()
-			
+
 			nsResources, nsErrors := k.collectResourcesForNamespace(ctx, ns, resourceTypes)
-			
+
 			mu.Lock()
 			allResources = append(allResources, nsResources...)
 			stats.CollectionErrors = append(stats.CollectionErrors, nsErrors...)
@@ -130,15 +130,15 @@ func (k *KubernetesCollector) CollectResourcesInParallel(ctx context.Context, na
 			mu.Unlock()
 		}(namespace)
 	}
-	
+
 	wg.Wait()
-	
+
 	// Calculate statistics
 	stats.TotalResources = len(allResources)
 	for _, resource := range allResources {
 		resourceType := ResourceType(resource.Type)
 		stats.ResourcesByType[resourceType]++
-		
+
 		// Find which group this resource belongs to
 		for _, group := range GetSupportedResourceGroups() {
 			for _, groupResourceType := range group.Resources {
@@ -149,7 +149,7 @@ func (k *KubernetesCollector) CollectResourcesInParallel(ctx context.Context, na
 			}
 		}
 	}
-	
+
 	return allResources, stats, nil
 }
 
@@ -159,7 +159,7 @@ func (k *KubernetesCollector) collectResourcesForNamespace(ctx context.Context, 
 		resources []types.Resource
 		errors    []ResourceCollectionError
 	)
-	
+
 	for _, resourceType := range resourceTypes {
 		switch resourceType {
 		case ResourceTypeDeployment:
@@ -175,7 +175,7 @@ func (k *KubernetesCollector) collectResourcesForNamespace(ctx context.Context, 
 					resources = append(resources, resource)
 				}
 			}
-			
+
 		case ResourceTypeStatefulSet:
 			if statefulSets, err := k.client.GetStatefulSets(ctx, namespace); err != nil {
 				errors = append(errors, ResourceCollectionError{
@@ -189,7 +189,7 @@ func (k *KubernetesCollector) collectResourcesForNamespace(ctx context.Context, 
 					resources = append(resources, resource)
 				}
 			}
-			
+
 		case ResourceTypeDaemonSet:
 			if daemonSets, err := k.client.GetDaemonSets(ctx, namespace); err != nil {
 				errors = append(errors, ResourceCollectionError{
@@ -203,7 +203,7 @@ func (k *KubernetesCollector) collectResourcesForNamespace(ctx context.Context, 
 					resources = append(resources, resource)
 				}
 			}
-			
+
 		case ResourceTypeService:
 			if services, err := k.client.GetServices(ctx, namespace); err != nil {
 				errors = append(errors, ResourceCollectionError{
@@ -217,7 +217,7 @@ func (k *KubernetesCollector) collectResourcesForNamespace(ctx context.Context, 
 					resources = append(resources, resource)
 				}
 			}
-			
+
 		case ResourceTypeIngress:
 			if ingresses, err := k.client.GetIngresses(ctx, namespace); err != nil {
 				errors = append(errors, ResourceCollectionError{
@@ -231,7 +231,7 @@ func (k *KubernetesCollector) collectResourcesForNamespace(ctx context.Context, 
 					resources = append(resources, resource)
 				}
 			}
-			
+
 		case ResourceTypeConfigMap:
 			if configMaps, err := k.client.GetConfigMaps(ctx, namespace); err != nil {
 				errors = append(errors, ResourceCollectionError{
@@ -245,7 +245,7 @@ func (k *KubernetesCollector) collectResourcesForNamespace(ctx context.Context, 
 					resources = append(resources, resource)
 				}
 			}
-			
+
 		case ResourceTypeSecret:
 			if secrets, err := k.client.GetSecrets(ctx, namespace); err != nil {
 				errors = append(errors, ResourceCollectionError{
@@ -259,7 +259,7 @@ func (k *KubernetesCollector) collectResourcesForNamespace(ctx context.Context, 
 					resources = append(resources, resource)
 				}
 			}
-			
+
 		case ResourceTypePersistentVolume:
 			// PVs are cluster-wide, only collect once
 			if namespace == "" || namespace == "default" {
@@ -275,7 +275,7 @@ func (k *KubernetesCollector) collectResourcesForNamespace(ctx context.Context, 
 					}
 				}
 			}
-			
+
 		case ResourceTypePersistentVolumeClaim:
 			if pvcs, err := k.client.GetPersistentVolumeClaims(ctx, namespace); err != nil {
 				errors = append(errors, ResourceCollectionError{
@@ -289,7 +289,7 @@ func (k *KubernetesCollector) collectResourcesForNamespace(ctx context.Context, 
 					resources = append(resources, resource)
 				}
 			}
-			
+
 		case ResourceTypeServiceAccount:
 			if serviceAccounts, err := k.client.GetServiceAccounts(ctx, namespace); err != nil {
 				errors = append(errors, ResourceCollectionError{
@@ -303,7 +303,7 @@ func (k *KubernetesCollector) collectResourcesForNamespace(ctx context.Context, 
 					resources = append(resources, resource)
 				}
 			}
-			
+
 		case ResourceTypeRole:
 			if roles, err := k.client.GetRoles(ctx, namespace); err != nil {
 				errors = append(errors, ResourceCollectionError{
@@ -317,7 +317,7 @@ func (k *KubernetesCollector) collectResourcesForNamespace(ctx context.Context, 
 					resources = append(resources, resource)
 				}
 			}
-			
+
 		case ResourceTypeRoleBinding:
 			if roleBindings, err := k.client.GetRoleBindings(ctx, namespace); err != nil {
 				errors = append(errors, ResourceCollectionError{
@@ -333,7 +333,7 @@ func (k *KubernetesCollector) collectResourcesForNamespace(ctx context.Context, 
 			}
 		}
 	}
-	
+
 	return resources, errors
 }
 
@@ -342,7 +342,7 @@ func FilterResourcesByLabels(resources []types.Resource, labelSelector map[strin
 	if len(labelSelector) == 0 {
 		return resources
 	}
-	
+
 	var filtered []types.Resource
 	for _, resource := range resources {
 		matches := true
@@ -356,14 +356,14 @@ func FilterResourcesByLabels(resources []types.Resource, labelSelector map[strin
 			filtered = append(filtered, resource)
 		}
 	}
-	
+
 	return filtered
 }
 
 // GroupResourcesByNamespace groups resources by their namespace
 func GroupResourcesByNamespace(resources []types.Resource) map[string][]types.Resource {
 	grouped := make(map[string][]types.Resource)
-	
+
 	for _, resource := range resources {
 		namespace := resource.Namespace
 		if namespace == "" {
@@ -371,18 +371,18 @@ func GroupResourcesByNamespace(resources []types.Resource) map[string][]types.Re
 		}
 		grouped[namespace] = append(grouped[namespace], resource)
 	}
-	
+
 	return grouped
 }
 
 // GroupResourcesByType groups resources by their type
 func GroupResourcesByType(resources []types.Resource) map[string][]types.Resource {
 	grouped := make(map[string][]types.Resource)
-	
+
 	for _, resource := range resources {
 		grouped[resource.Type] = append(grouped[resource.Type], resource)
 	}
-	
+
 	return grouped
 }
 
@@ -403,12 +403,12 @@ func ValidateResourceTypes(resourceTypes []string) error {
 	for _, t := range supportedTypes {
 		supportedMap[string(t)] = true
 	}
-	
+
 	for _, resourceType := range resourceTypes {
 		if !supportedMap[resourceType] {
 			return fmt.Errorf("unsupported resource type: %s", resourceType)
 		}
 	}
-	
+
 	return nil
 }

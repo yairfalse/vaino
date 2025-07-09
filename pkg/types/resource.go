@@ -51,17 +51,17 @@ func (r Resource) Validate() error {
 func (r Resource) String() string {
 	var parts []string
 	parts = append(parts, fmt.Sprintf("%s:%s:%s", r.Provider, r.Type, r.ID))
-	
+
 	if r.Name != "" {
 		parts = append(parts, fmt.Sprintf("(%s)", r.Name))
 	}
-	
+
 	if r.Region != "" {
 		parts = append(parts, fmt.Sprintf("in %s", r.Region))
 	} else if r.Namespace != "" {
 		parts = append(parts, fmt.Sprintf("in %s", r.Namespace))
 	}
-	
+
 	return strings.Join(parts, " ")
 }
 
@@ -70,11 +70,11 @@ func (r Resource) Equals(other Resource) bool {
 	if r.ID != other.ID || r.Type != other.Type || r.Provider != other.Provider {
 		return false
 	}
-	
+
 	if r.Name != other.Name || r.Region != other.Region || r.Namespace != other.Namespace {
 		return false
 	}
-	
+
 	// Compare configuration maps
 	if len(r.Configuration) != len(other.Configuration) {
 		return false
@@ -84,7 +84,7 @@ func (r Resource) Equals(other Resource) bool {
 			return false
 		}
 	}
-	
+
 	// Compare tags
 	if len(r.Tags) != len(other.Tags) {
 		return false
@@ -94,7 +94,7 @@ func (r Resource) Equals(other Resource) bool {
 			return false
 		}
 	}
-	
+
 	return true
 }
 
@@ -119,20 +119,20 @@ func (r Resource) Hash() string {
 		Configuration: r.Configuration,
 		Tags:          r.Tags,
 	})
-	
+
 	hash := sha256.Sum256(data)
 	return fmt.Sprintf("%x", hash)
 }
 
 // DriftResult represents the result of comparing two resources
 type DriftResult struct {
-	ResourceID  string                 `json:"resource_id"`
-	DriftType   DriftType              `json:"drift_type"`
-	Severity    DriftSeverity          `json:"severity"`
-	Changes     []Change               `json:"changes,omitempty"`
-	RiskScore   float64                `json:"risk_score"`
-	Description string                 `json:"description"`
-	Timestamp   time.Time              `json:"timestamp"`
+	ResourceID  string        `json:"resource_id"`
+	DriftType   DriftType     `json:"drift_type"`
+	Severity    DriftSeverity `json:"severity"`
+	Changes     []Change      `json:"changes,omitempty"`
+	RiskScore   float64       `json:"risk_score"`
+	Description string        `json:"description"`
+	Timestamp   time.Time     `json:"timestamp"`
 }
 
 // DriftType represents the type of drift detected
@@ -154,4 +154,3 @@ const (
 	DriftSeverityHigh     DriftSeverity = "high"
 	DriftSeverityCritical DriftSeverity = "critical"
 )
-
