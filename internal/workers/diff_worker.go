@@ -298,7 +298,6 @@ func (dw *DiffWorker) stop() {
 		// Normal shutdown
 	case <-time.After(10 * time.Second):
 		// Force shutdown
-		fmt.Println("Warning: Diff worker shutdown timed out")
 	}
 }
 

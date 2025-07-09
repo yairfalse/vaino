@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -325,20 +326,41 @@ func runDiff(cmd *cobra.Command, args []string) error {
 				if providerName == "terraform" {
 					scanArgs = append(scanArgs, "--auto-discover")
 				}
-
 				scanCmd.SetArgs(scanArgs)
 				scanCmd.SetOutput(io.Discard) // Suppress output
-				if err := scanCmd.Execute(); err != nil {
-					// Check if it's a known error type
-					if wgoErr, ok := err.(*wgoerrors.WGOError); ok {
-						return wgoErr
+
+				// Add timeout for scan execution
+				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+				defer cancel()
+
+				done := make(chan error, 1)
+				go func() {
+					done <- scanCmd.Execute()
+				}()
+
+				select {
+				case err := <-done:
+					if err != nil {
+						// Check if it's a known error type
+						if wgoErr, ok := err.(*wgoerrors.WGOError); ok {
+							return wgoErr
+						}
+						return wgoerrors.New(wgoerrors.ErrorTypeProvider, wgoerrors.Provider(providerName),
+							"Failed to scan current infrastructure").
+							WithCause(err.Error()).
+							WithSolutions(
+								fmt.Sprintf("Run 'wgo scan --provider %s' manually to debug", providerName),
+								"Check provider authentication with 'wgo check-config'",
+							).
+							WithHelp("wgo check-config")
 					}
-					return wgoerrors.New(wgoerrors.ErrorTypeProvider, wgoerrors.Provider(providerName),
-						"Failed to scan current infrastructure").
-						WithCause(err.Error()).
+				case <-ctx.Done():
+					return wgoerrors.New(wgoerrors.ErrorTypeNetwork, wgoerrors.Provider(providerName),
+						"Scan operation timed out after 30 seconds").
 						WithSolutions(
-							fmt.Sprintf("Run 'wgo scan --provider %s' manually to debug", providerName),
-							"Check provider authentication with 'wgo check-config'",
+							"Try limiting the scan scope with specific namespaces",
+							"Run 'wgo scan --provider kubernetes --namespace test-workloads' for targeted scanning",
+							"Check cluster connectivity with 'kubectl get nodes'",
 						).
 						WithHelp("wgo check-config")
 				}

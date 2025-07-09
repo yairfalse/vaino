@@ -226,7 +226,6 @@ func (p *ResourceProcessor) Stop() error {
 		// Normal shutdown
 	case <-time.After(10 * time.Second):
 		// Force shutdown
-		fmt.Println("Warning: Processor shutdown timed out")
 	}
 
 	// Stop rate limiter

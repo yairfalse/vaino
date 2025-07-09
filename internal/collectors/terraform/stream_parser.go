@@ -63,8 +63,6 @@ func (sp *StreamingParser) parseStandardMode(file *os.File, filename string) (*T
 
 // parseStreamingMode handles large files with streaming JSON parsing
 func (sp *StreamingParser) parseStreamingMode(file *os.File, filename string, fileSize int64) (*TerraformState, error) {
-	fmt.Printf("⚠️  Large state file detected (%d MB). Using streaming parser...\n", fileSize/(1024*1024))
-
 	// Read file in chunks to find the structure
 	reader := bufio.NewReaderSize(file, 64*1024) // 64KB buffer
 

@@ -1,4 +1,4 @@
-# WGO 🔍 - "Whats going on?"
+# WGO 🔍 - "What's Going On?"
 
 **AI-powered infrastructure drift detection made simple**
 
@@ -37,12 +37,12 @@ brew install wgo
 
 **Direct Download:**
 ```bash
-curl -sSL https://github.com/yourusername/wgo/releases/latest/download/install.sh | bash
+curl -sSL https://github.com/yairfalse/wgo/releases/latest/download/install.sh | bash
 ```
 
 **Go Install:**
 ```bash
-go install github.com/yourusername/wgo/cmd/wgo@latest
+go install github.com/yairfalse/wgo/cmd/wgo@latest
 ```
 
 ### 2. Scan Your Infrastructure
@@ -115,10 +115,30 @@ Changes:
 |------------|--------|-----------|
 | Terraform  | ✅ Ready | All state file resources |  
 | GCP        | ✅ Ready | Compute, Storage, Networking, IAM |
-| AWS        | 🔄 Coming Soon | EC2, S3, VPC, Lambda, RDS |
-| Kubernetes | 🔄 Coming Soon | Workloads, Services, Config |
+| AWS        | ✅ Ready | EC2, S3, VPC, Lambda, RDS |
+| Kubernetes | ✅ Ready | Workloads, Services, Config |
 
-## Configuration
+## Documentation
+
+**📖 Complete Documentation:**
+- [Getting Started Guide](docs/getting-started.md) - Your first scan in 5 minutes
+- [Installation Guide](docs/installation.md) - All installation methods
+- [Configuration Reference](docs/configuration.md) - Complete configuration options
+- [Commands Reference](docs/commands.md) - All commands and options
+- [Troubleshooting Guide](docs/troubleshooting.md) - Common issues and solutions
+- [Best Practices](docs/best-practices.md) - Production deployment guidance
+
+**🎯 Real-world Examples:**
+- [Kubernetes Monitoring](docs/examples/kubernetes-monitoring.md)
+- [Multi-Cloud Setup](docs/examples/multi-cloud-setup.md)
+- [Terraform Drift Detection](docs/examples/terraform-drift.md)
+
+**⚡ Performance & Advanced Features:**
+- [Concurrent Scanning](docs/concurrent-scanning.md) - High-performance scanning
+- [Performance Analysis](docs/performance/) - Benchmarks and optimization
+- [Unix-style Output](docs/unix-style-output-examples.md) - Integration patterns
+
+## Quick Configuration
 
 WGO works out of the box with zero configuration. For advanced usage:
 
@@ -139,33 +159,7 @@ output:
   color: true
 ```
 
-## Common Workflows
-
-### Daily Drift Monitoring
-```bash
-# Morning infrastructure health check
-wgo scan
-wgo check --baseline yesterday
-```
-
-### Team Collaboration
-```bash
-# Share baselines across team
-wgo baseline create --name "release-v1.2.0"
-wgo baseline list
-wgo check --baseline "release-v1.2.0" --format json > drift-report.json
-```
-
-### CI/CD Integration
-```bash
-# In your deployment pipeline
-wgo scan --provider terraform
-wgo baseline create --name "pre-deploy-$(date +%Y%m%d)"
-# ... deploy changes ...
-wgo check --baseline "pre-deploy-$(date +%Y%m%d)" --format json
-```
-
-## Commands Reference
+## Common Commands
 
 ### Core Commands
 - `wgo scan` - Discover and scan infrastructure
@@ -177,100 +171,29 @@ wgo check --baseline "pre-deploy-$(date +%Y%m%d)" --format json
 ### Providers
 - `--provider terraform` - Scan Terraform state files
 - `--provider gcp` - Scan Google Cloud resources
-- `--provider aws` - Scan AWS resources (coming soon)
-- `--provider kubernetes` - Scan Kubernetes cluster (coming soon)
+- `--provider aws` - Scan AWS resources
+- `--provider kubernetes` - Scan Kubernetes cluster
 
 ### Output Formats  
 - `--format table` - Human-readable table (default)
 - `--format json` - Machine-readable JSON
 - `--format markdown` - Documentation-friendly markdown
 
-### Baseline Management
-- `wgo baseline list` - Show all saved baselines
-- `wgo baseline delete --name <name>` - Remove baseline
-- `wgo baseline show --name <name>` - View baseline details
-
-## Installation Options
-
-### Package Managers
-
-**Homebrew (macOS/Linux):**
-```bash
-brew install wgo
-```
-
-**Chocolatey (Windows):**
-```bash
-choco install wgo
-```
-
-**Scoop (Windows):**
-```bash
-scoop bucket add wgo https://github.com/yourusername/scoop-wgo
-scoop install wgo
-```
-
-### Direct Downloads
-
-Download binaries from [GitHub Releases](https://github.com/yourusername/wgo/releases)
-
-**Linux/macOS:**
-```bash
-curl -sSL https://github.com/yourusername/wgo/releases/latest/download/install.sh | bash
-```
-
-**Manual Installation:**
-1. Download binary for your platform
-2. Extract and place in PATH
-3. Run `wgo --help` to verify
-
-### Docker
-```bash
-docker run --rm -v $(pwd):/workspace wgo/wgo:latest scan
-```
-
-## Authentication
-
-### GCP
-```bash
-# Install gcloud CLI
-brew install google-cloud-sdk
-
-# Authenticate
-gcloud auth login
-gcloud auth application-default login
-gcloud config set project your-project-id
-```
-
-### AWS (Coming Soon)
-```bash
-# Configure AWS CLI
-aws configure
-# or use IAM roles, environment variables
-```
-
-### Kubernetes (Coming Soon)
-```bash
-# Uses your current kubectl context
-kubectl config current-context
-```
-
 ## Contributing
 
 We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for details.
 
 **Areas we need help:**
-- AWS provider implementation
-- Kubernetes provider enhancement  
-- Additional output formats
+- Additional provider implementations
 - Performance optimizations
 - Documentation improvements
+- Testing and quality assurance
 
 ## Support
 
-- 📖 **Documentation:** [docs.wgo.sh](https://docs.wgo.sh)
-- 💬 **Discussions:** [GitHub Discussions](https://github.com/yourusername/wgo/discussions)
-- 🐛 **Issues:** [GitHub Issues](https://github.com/yourusername/wgo/issues)
+- 📖 **Documentation:** [Complete docs](docs/)
+- 💬 **Discussions:** [GitHub Discussions](https://github.com/yairfalse/wgo/discussions)
+- 🐛 **Issues:** [GitHub Issues](https://github.com/yairfalse/wgo/issues)
 - 📧 **Email:** support@wgo.sh
 
 ## License
