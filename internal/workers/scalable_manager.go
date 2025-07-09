@@ -3,139 +3,136 @@ package workers
 import (
 	"context"
 	"fmt"
-	"math"
 	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/yairfalse/wgo/pkg/types"
 )
 
 // ScalableWorkerManager provides dynamic scaling of worker pools
 type ScalableWorkerManager struct {
-	config            ScalableWorkerConfig
-	pools             map[string]*ScalableWorkerPool
-	loadBalancer      *LoadBalancer
-	autoscaler        *AutoScaler
-	resourceMonitor   *ResourceMonitor
+	config             ScalableWorkerConfig
+	pools              map[string]*ScalableWorkerPool
+	loadBalancer       *LoadBalancer
+	autoscaler         *AutoScaler
+	resourceMonitor    *ResourceMonitor
 	performanceMetrics *PerformanceMetrics
-	
+
 	// State management
-	ctx               context.Context
-	cancel            context.CancelFunc
-	mu                sync.RWMutex
-	running           int32
-	
+	ctx     context.Context
+	cancel  context.CancelFunc
+	mu      sync.RWMutex
+	running int32
+
 	// Monitoring
-	metricsCollector  *ScalableMetricsCollector
-	alertManager      *AlertManager
-	
+	metricsCollector *ScalableMetricsCollector
+	alertManager     *AlertManager
+
 	// Load distribution
-	workDispatcher    *WorkDispatcher
-	failureDetector   *FailureDetector
+	workDispatcher  *WorkDispatcher
+	failureDetector *FailureDetector
 }
 
 // ScalableWorkerConfig configures the scalable worker manager
 type ScalableWorkerConfig struct {
 	// Pool configuration
-	InitialWorkerCount    int           `yaml:"initial_worker_count"`
-	MinWorkerCount        int           `yaml:"min_worker_count"`
-	MaxWorkerCount        int           `yaml:"max_worker_count"`
-	
+	InitialWorkerCount int `yaml:"initial_worker_count"`
+	MinWorkerCount     int `yaml:"min_worker_count"`
+	MaxWorkerCount     int `yaml:"max_worker_count"`
+
 	// Scaling configuration
-	ScaleUpThreshold      float64       `yaml:"scale_up_threshold"`
-	ScaleDownThreshold    float64       `yaml:"scale_down_threshold"`
-	ScaleUpCooldown       time.Duration `yaml:"scale_up_cooldown"`
-	ScaleDownCooldown     time.Duration `yaml:"scale_down_cooldown"`
-	
+	ScaleUpThreshold   float64       `yaml:"scale_up_threshold"`
+	ScaleDownThreshold float64       `yaml:"scale_down_threshold"`
+	ScaleUpCooldown    time.Duration `yaml:"scale_up_cooldown"`
+	ScaleDownCooldown  time.Duration `yaml:"scale_down_cooldown"`
+
 	// Load balancing
 	LoadBalancingStrategy string        `yaml:"load_balancing_strategy"`
 	HealthCheckInterval   time.Duration `yaml:"health_check_interval"`
-	
+
 	// Resource monitoring
-	CPUThreshold          float64       `yaml:"cpu_threshold"`
-	MemoryThreshold       float64       `yaml:"memory_threshold"`
-	QueueSizeThreshold    int           `yaml:"queue_size_threshold"`
-	
+	CPUThreshold       float64 `yaml:"cpu_threshold"`
+	MemoryThreshold    float64 `yaml:"memory_threshold"`
+	QueueSizeThreshold int     `yaml:"queue_size_threshold"`
+
 	// Performance optimization
-	WorkStealingEnabled   bool          `yaml:"work_stealing_enabled"`
-	PreemptiveScaling     bool          `yaml:"preemptive_scaling"`
-	PredictiveScaling     bool          `yaml:"predictive_scaling"`
-	
+	WorkStealingEnabled bool `yaml:"work_stealing_enabled"`
+	PreemptiveScaling   bool `yaml:"preemptive_scaling"`
+	PredictiveScaling   bool `yaml:"predictive_scaling"`
+
 	// Monitoring
-	MetricsEnabled        bool          `yaml:"metrics_enabled"`
-	MetricsInterval       time.Duration `yaml:"metrics_interval"`
-	AlertingEnabled       bool          `yaml:"alerting_enabled"`
+	MetricsEnabled  bool          `yaml:"metrics_enabled"`
+	MetricsInterval time.Duration `yaml:"metrics_interval"`
+	AlertingEnabled bool          `yaml:"alerting_enabled"`
 }
 
 // ScalableWorkerPool represents a dynamically scalable worker pool
 type ScalableWorkerPool struct {
-	id                string
-	poolType          PoolType
-	workers           []*ScalableWorker
-	workQueue         chan WorkItem
-	resultQueue       chan WorkResult
-	
+	id          string
+	poolType    PoolType
+	workers     []*ScalableWorker
+	workQueue   chan WorkItem
+	resultQueue chan WorkResult
+
 	// Scaling state
 	currentWorkerCount int32
 	targetWorkerCount  int32
 	lastScaleTime      time.Time
-	
+
 	// Performance metrics
-	metrics           *PoolMetrics
-	
+	metrics *PoolMetrics
+
 	// Configuration
-	config            ScalableWorkerConfig
-	
+	config ScalableWorkerConfig
+
 	// State management
-	mu                sync.RWMutex
-	ctx               context.Context
-	cancel            context.CancelFunc
-	wg                sync.WaitGroup
-	
+	mu     sync.RWMutex
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
+
 	// Load balancing
-	loadBalancer      *PoolLoadBalancer
-	
+	loadBalancer *PoolLoadBalancer
+
 	// Health monitoring
-	healthChecker     *PoolHealthChecker
+	healthChecker *PoolHealthChecker
 }
 
 // ScalableWorker represents a worker that can be dynamically managed
 type ScalableWorker struct {
-	id            string
-	poolID        string
-	workerType    WorkerType
-	state         WorkerState
-	metrics       *WorkerMetrics
-	processor     WorkerProcessor
-	
+	id         string
+	poolID     string
+	workerType WorkerType
+	state      WorkerState
+	metrics    *WorkerMetrics
+	processor  WorkerProcessor
+
 	// State management
-	ctx           context.Context
-	cancel        context.CancelFunc
-	wg            sync.WaitGroup
-	
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
+
 	// Work processing
-	workChan      chan WorkItem
-	resultChan    chan WorkResult
-	
+	workChan   chan WorkItem
+	resultChan chan WorkResult
+
 	// Health monitoring
-	lastActivity  time.Time
-	isHealthy     bool
-	mu            sync.RWMutex
+	lastActivity time.Time
+	isHealthy    bool
+	mu           sync.RWMutex
 }
 
 // WorkItem represents a unit of work to be processed
 type WorkItem struct {
-	ID          string
-	Type        WorkType
-	Priority    int
-	Data        interface{}
-	Timeout     time.Duration
-	Retries     int
-	MaxRetries  int
-	CreatedAt   time.Time
-	Context     context.Context
+	ID         string
+	Type       WorkType
+	Priority   int
+	Data       interface{}
+	Timeout    time.Duration
+	Retries    int
+	MaxRetries int
+	CreatedAt  time.Time
+	Context    context.Context
 }
 
 // WorkResult represents the result of processed work
@@ -193,21 +190,21 @@ const (
 
 // LoadBalancer manages load distribution across worker pools
 type LoadBalancer struct {
-	strategy     LoadBalancingStrategy
-	pools        []*ScalableWorkerPool
-	metrics      *LoadBalancerMetrics
-	
+	strategy LoadBalancingStrategy
+	pools    []*ScalableWorkerPool
+	metrics  *LoadBalancerMetrics
+
 	// Round-robin state
 	roundRobinIndex int32
-	
+
 	// Weighted round-robin state
-	weights         map[string]int
-	currentWeights  map[string]int
-	
+	weights        map[string]int
+	currentWeights map[string]int
+
 	// Least connections state
-	connections     map[string]int32
-	
-	mu              sync.RWMutex
+	connections map[string]int32
+
+	mu sync.RWMutex
 }
 
 // LoadBalancingStrategy defines load balancing strategies
@@ -223,27 +220,27 @@ const (
 
 // AutoScaler manages automatic scaling of worker pools
 type AutoScaler struct {
-	config          ScalableWorkerConfig
-	pools           map[string]*ScalableWorkerPool
-	scalingHistory  []ScalingEvent
-	predictor       *LoadPredictor
-	
+	config         ScalableWorkerConfig
+	pools          map[string]*ScalableWorkerPool
+	scalingHistory []ScalingEvent
+	predictor      *LoadPredictor
+
 	// State
-	lastScaleCheck  time.Time
-	scalingEnabled  bool
-	
-	mu              sync.RWMutex
+	lastScaleCheck time.Time
+	scalingEnabled bool
+
+	mu sync.RWMutex
 }
 
 // ScalingEvent represents a scaling event
 type ScalingEvent struct {
-	PoolID       string
-	Timestamp    time.Time
-	Action       ScalingAction
-	OldCount     int
-	NewCount     int
-	Reason       string
-	Metrics      ScalingMetrics
+	PoolID    string
+	Timestamp time.Time
+	Action    ScalingAction
+	OldCount  int
+	NewCount  int
+	Reason    string
+	Metrics   ScalingMetrics
 }
 
 // ScalingAction defines scaling actions
@@ -257,25 +254,25 @@ const (
 
 // ScalingMetrics captures metrics at scaling decision time
 type ScalingMetrics struct {
-	CPUUsage       float64
-	MemoryUsage    float64
-	QueueSize      int
-	Throughput     float64
-	ResponseTime   time.Duration
-	ErrorRate      float64
+	CPUUsage     float64
+	MemoryUsage  float64
+	QueueSize    int
+	Throughput   float64
+	ResponseTime time.Duration
+	ErrorRate    float64
 }
 
 // LoadPredictor predicts future load based on historical data
 type LoadPredictor struct {
-	history        []LoadSample
-	model          PredictionModel
-	accuracy       float64
-	
+	history  []LoadSample
+	model    PredictionModel
+	accuracy float64
+
 	// Configuration
 	windowSize     int
 	updateInterval time.Duration
-	
-	mu             sync.RWMutex
+
+	mu sync.RWMutex
 }
 
 // LoadSample represents a load measurement
@@ -299,18 +296,18 @@ const (
 
 // PerformanceMetrics tracks performance across the system
 type PerformanceMetrics struct {
-	totalProcessed   int64
-	totalErrors      int64
-	avgResponseTime  time.Duration
-	throughput       float64
-	
+	totalProcessed  int64
+	totalErrors     int64
+	avgResponseTime time.Duration
+	throughput      float64
+
 	// Per-pool metrics
-	poolMetrics     map[string]*PoolMetrics
-	
+	poolMetrics map[string]*PoolMetrics
+
 	// System metrics
-	systemMetrics   *SystemMetrics
-	
-	mu              sync.RWMutex
+	systemMetrics *SystemMetrics
+
+	mu sync.RWMutex
 }
 
 // PoolMetrics tracks metrics for a specific pool
@@ -321,13 +318,13 @@ type PoolMetrics struct {
 	queueSize       int32
 	activeWorkers   int32
 	idleWorkers     int32
-	
+
 	// Health metrics
-	healthyWorkers  int32
+	healthyWorkers   int32
 	unhealthyWorkers int32
-	
-	lastUpdated     time.Time
-	mu              sync.RWMutex
+
+	lastUpdated time.Time
+	mu          sync.RWMutex
 }
 
 // WorkerMetrics tracks metrics for a specific worker
@@ -337,12 +334,12 @@ type WorkerMetrics struct {
 	avgResponseTime time.Duration
 	uptime          time.Duration
 	lastActivity    time.Time
-	
+
 	// Health metrics
-	healthScore     float64
-	failureCount    int
-	
-	mu              sync.RWMutex
+	healthScore  float64
+	failureCount int
+
+	mu sync.RWMutex
 }
 
 // NewScalableWorkerManager creates a new scalable worker manager
@@ -384,34 +381,34 @@ func NewScalableWorkerManager(config ScalableWorkerConfig) *ScalableWorkerManage
 	if config.MetricsInterval <= 0 {
 		config.MetricsInterval = 30 * time.Second
 	}
-	
+
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	swm := &ScalableWorkerManager{
-		config:            config,
-		pools:             make(map[string]*ScalableWorkerPool),
-		ctx:               ctx,
-		cancel:            cancel,
+		config: config,
+		pools:  make(map[string]*ScalableWorkerPool),
+		ctx:    ctx,
+		cancel: cancel,
 		performanceMetrics: &PerformanceMetrics{
 			poolMetrics: make(map[string]*PoolMetrics),
 		},
 	}
-	
+
 	// Initialize components
 	swm.loadBalancer = NewLoadBalancer(LoadBalanceResourceBased)
 	swm.autoscaler = NewAutoScaler(config)
 	swm.resourceMonitor = NewResourceMonitor(config.MetricsInterval)
 	swm.workDispatcher = NewWorkDispatcher()
 	swm.failureDetector = NewFailureDetector()
-	
+
 	if config.MetricsEnabled {
 		swm.metricsCollector = NewScalableMetricsCollector(config.MetricsInterval)
 	}
-	
+
 	if config.AlertingEnabled {
 		swm.alertManager = NewAlertManager()
 	}
-	
+
 	return swm
 }
 
@@ -420,24 +417,24 @@ func (swm *ScalableWorkerManager) Start(ctx context.Context) error {
 	if !atomic.CompareAndSwapInt32(&swm.running, 0, 1) {
 		return fmt.Errorf("scalable worker manager is already running")
 	}
-	
+
 	// Start components
 	swm.autoscaler.Start(ctx)
 	swm.resourceMonitor.Start(ctx)
 	swm.workDispatcher.Start(ctx)
 	swm.failureDetector.Start(ctx)
-	
+
 	if swm.metricsCollector != nil {
 		swm.metricsCollector.Start(ctx)
 	}
-	
+
 	if swm.alertManager != nil {
 		swm.alertManager.Start(ctx)
 	}
-	
+
 	// Start monitoring and scaling loop
 	go swm.monitoringLoop(ctx)
-	
+
 	return nil
 }
 
@@ -446,17 +443,17 @@ func (swm *ScalableWorkerManager) Stop() error {
 	if !atomic.CompareAndSwapInt32(&swm.running, 1, 0) {
 		return fmt.Errorf("scalable worker manager is not running")
 	}
-	
+
 	// Stop all pools
 	swm.mu.RLock()
 	for _, pool := range swm.pools {
 		pool.Stop()
 	}
 	swm.mu.RUnlock()
-	
+
 	// Cancel context
 	swm.cancel()
-	
+
 	return nil
 }
 
@@ -464,20 +461,20 @@ func (swm *ScalableWorkerManager) Stop() error {
 func (swm *ScalableWorkerManager) CreatePool(id string, poolType PoolType) (*ScalableWorkerPool, error) {
 	swm.mu.Lock()
 	defer swm.mu.Unlock()
-	
+
 	if _, exists := swm.pools[id]; exists {
 		return nil, fmt.Errorf("pool %s already exists", id)
 	}
-	
+
 	pool := NewScalableWorkerPool(id, poolType, swm.config)
 	swm.pools[id] = pool
-	
+
 	// Register with load balancer
 	swm.loadBalancer.RegisterPool(pool)
-	
+
 	// Initialize metrics
 	swm.performanceMetrics.poolMetrics[id] = &PoolMetrics{}
-	
+
 	return pool, nil
 }
 
@@ -488,7 +485,7 @@ func (swm *ScalableWorkerManager) SubmitWork(workItem WorkItem) error {
 	if err != nil {
 		return fmt.Errorf("failed to select pool: %w", err)
 	}
-	
+
 	// Submit work to selected pool
 	return pool.SubmitWork(workItem)
 }
@@ -497,7 +494,7 @@ func (swm *ScalableWorkerManager) SubmitWork(workItem WorkItem) error {
 func (swm *ScalableWorkerManager) GetPerformanceMetrics() *PerformanceMetrics {
 	swm.performanceMetrics.mu.RLock()
 	defer swm.performanceMetrics.mu.RUnlock()
-	
+
 	// Create a copy of metrics
 	metrics := &PerformanceMetrics{
 		totalProcessed:  atomic.LoadInt64(&swm.performanceMetrics.totalProcessed),
@@ -506,22 +503,22 @@ func (swm *ScalableWorkerManager) GetPerformanceMetrics() *PerformanceMetrics {
 		throughput:      swm.performanceMetrics.throughput,
 		poolMetrics:     make(map[string]*PoolMetrics),
 	}
-	
+
 	// Copy pool metrics
 	for id, poolMetrics := range swm.performanceMetrics.poolMetrics {
 		metrics.poolMetrics[id] = &PoolMetrics{
-			processed:       atomic.LoadInt64(&poolMetrics.processed),
-			errors:          atomic.LoadInt64(&poolMetrics.errors),
-			avgResponseTime: poolMetrics.avgResponseTime,
-			queueSize:       atomic.LoadInt32(&poolMetrics.queueSize),
-			activeWorkers:   atomic.LoadInt32(&poolMetrics.activeWorkers),
-			idleWorkers:     atomic.LoadInt32(&poolMetrics.idleWorkers),
-			healthyWorkers:  atomic.LoadInt32(&poolMetrics.healthyWorkers),
+			processed:        atomic.LoadInt64(&poolMetrics.processed),
+			errors:           atomic.LoadInt64(&poolMetrics.errors),
+			avgResponseTime:  poolMetrics.avgResponseTime,
+			queueSize:        atomic.LoadInt32(&poolMetrics.queueSize),
+			activeWorkers:    atomic.LoadInt32(&poolMetrics.activeWorkers),
+			idleWorkers:      atomic.LoadInt32(&poolMetrics.idleWorkers),
+			healthyWorkers:   atomic.LoadInt32(&poolMetrics.healthyWorkers),
 			unhealthyWorkers: atomic.LoadInt32(&poolMetrics.unhealthyWorkers),
-			lastUpdated:     poolMetrics.lastUpdated,
+			lastUpdated:      poolMetrics.lastUpdated,
 		}
 	}
-	
+
 	return metrics
 }
 
@@ -529,7 +526,7 @@ func (swm *ScalableWorkerManager) GetPerformanceMetrics() *PerformanceMetrics {
 func (swm *ScalableWorkerManager) monitoringLoop(ctx context.Context) {
 	ticker := time.NewTicker(swm.config.MetricsInterval)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -546,7 +543,7 @@ func (swm *ScalableWorkerManager) monitoringLoop(ctx context.Context) {
 func (swm *ScalableWorkerManager) checkScaling() {
 	swm.mu.RLock()
 	defer swm.mu.RUnlock()
-	
+
 	for _, pool := range swm.pools {
 		swm.autoscaler.CheckScaling(pool)
 	}
@@ -556,11 +553,11 @@ func (swm *ScalableWorkerManager) checkScaling() {
 func (swm *ScalableWorkerManager) updateMetrics() {
 	swm.performanceMetrics.mu.Lock()
 	defer swm.performanceMetrics.mu.Unlock()
-	
+
 	// Update system-level metrics
 	var totalProcessed int64
 	var totalErrors int64
-	
+
 	swm.mu.RLock()
 	for _, pool := range swm.pools {
 		poolMetrics := swm.performanceMetrics.poolMetrics[pool.id]
@@ -570,7 +567,7 @@ func (swm *ScalableWorkerManager) updateMetrics() {
 		}
 	}
 	swm.mu.RUnlock()
-	
+
 	atomic.StoreInt64(&swm.performanceMetrics.totalProcessed, totalProcessed)
 	atomic.StoreInt64(&swm.performanceMetrics.totalErrors, totalErrors)
 }
@@ -579,7 +576,7 @@ func (swm *ScalableWorkerManager) updateMetrics() {
 func (swm *ScalableWorkerManager) checkHealth() {
 	swm.mu.RLock()
 	defer swm.mu.RUnlock()
-	
+
 	for _, pool := range swm.pools {
 		pool.CheckHealth()
 	}
@@ -588,29 +585,29 @@ func (swm *ScalableWorkerManager) checkHealth() {
 // NewScalableWorkerPool creates a new scalable worker pool
 func NewScalableWorkerPool(id string, poolType PoolType, config ScalableWorkerConfig) *ScalableWorkerPool {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	pool := &ScalableWorkerPool{
-		id:                id,
-		poolType:          poolType,
-		workQueue:         make(chan WorkItem, 1000),
-		resultQueue:       make(chan WorkResult, 1000),
+		id:                 id,
+		poolType:           poolType,
+		workQueue:          make(chan WorkItem, 1000),
+		resultQueue:        make(chan WorkResult, 1000),
 		currentWorkerCount: int32(config.InitialWorkerCount),
-		targetWorkerCount: int32(config.InitialWorkerCount),
-		config:            config,
-		ctx:               ctx,
-		cancel:            cancel,
-		metrics:           &PoolMetrics{},
+		targetWorkerCount:  int32(config.InitialWorkerCount),
+		config:             config,
+		ctx:                ctx,
+		cancel:             cancel,
+		metrics:            &PoolMetrics{},
 	}
-	
+
 	// Initialize workers
 	pool.workers = make([]*ScalableWorker, config.InitialWorkerCount)
 	for i := 0; i < config.InitialWorkerCount; i++ {
 		pool.workers[i] = NewScalableWorker(fmt.Sprintf("%s-worker-%d", id, i), id, WorkerTypeGeneric)
 	}
-	
+
 	pool.loadBalancer = NewPoolLoadBalancer(pool)
 	pool.healthChecker = NewPoolHealthChecker(pool)
-	
+
 	return pool
 }
 
@@ -634,10 +631,10 @@ func (pool *ScalableWorkerPool) Start(ctx context.Context) error {
 		pool.wg.Add(1)
 		go worker.Start(ctx, pool.workQueue, pool.resultQueue, &pool.wg)
 	}
-	
+
 	// Start health checker
 	pool.healthChecker.Start(ctx)
-	
+
 	return nil
 }
 
@@ -645,16 +642,16 @@ func (pool *ScalableWorkerPool) Start(ctx context.Context) error {
 func (pool *ScalableWorkerPool) Stop() error {
 	// Cancel context
 	pool.cancel()
-	
+
 	// Close work queue
 	close(pool.workQueue)
-	
+
 	// Wait for workers to finish
 	pool.wg.Wait()
-	
+
 	// Close result queue
 	close(pool.resultQueue)
-	
+
 	return nil
 }
 
@@ -662,29 +659,29 @@ func (pool *ScalableWorkerPool) Stop() error {
 func (pool *ScalableWorkerPool) ScaleUp(count int) error {
 	pool.mu.Lock()
 	defer pool.mu.Unlock()
-	
+
 	currentCount := int(atomic.LoadInt32(&pool.currentWorkerCount))
 	newCount := currentCount + count
-	
+
 	if newCount > pool.config.MaxWorkerCount {
 		newCount = pool.config.MaxWorkerCount
 		count = newCount - currentCount
 	}
-	
+
 	// Create new workers
 	for i := 0; i < count; i++ {
 		workerID := fmt.Sprintf("%s-worker-%d", pool.id, currentCount+i)
 		worker := NewScalableWorker(workerID, pool.id, WorkerTypeGeneric)
 		pool.workers = append(pool.workers, worker)
-		
+
 		// Start worker
 		pool.wg.Add(1)
 		go worker.Start(pool.ctx, pool.workQueue, pool.resultQueue, &pool.wg)
 	}
-	
+
 	atomic.StoreInt32(&pool.currentWorkerCount, int32(newCount))
 	pool.lastScaleTime = time.Now()
-	
+
 	return nil
 }
 
@@ -692,15 +689,15 @@ func (pool *ScalableWorkerPool) ScaleUp(count int) error {
 func (pool *ScalableWorkerPool) ScaleDown(count int) error {
 	pool.mu.Lock()
 	defer pool.mu.Unlock()
-	
+
 	currentCount := int(atomic.LoadInt32(&pool.currentWorkerCount))
 	newCount := currentCount - count
-	
+
 	if newCount < pool.config.MinWorkerCount {
 		newCount = pool.config.MinWorkerCount
 		count = currentCount - newCount
 	}
-	
+
 	// Stop workers
 	for i := 0; i < count; i++ {
 		if len(pool.workers) > 0 {
@@ -709,10 +706,10 @@ func (pool *ScalableWorkerPool) ScaleDown(count int) error {
 			worker.Stop()
 		}
 	}
-	
+
 	atomic.StoreInt32(&pool.currentWorkerCount, int32(newCount))
 	pool.lastScaleTime = time.Now()
-	
+
 	return nil
 }
 
@@ -724,7 +721,7 @@ func (pool *ScalableWorkerPool) CheckHealth() {
 // NewScalableWorker creates a new scalable worker
 func NewScalableWorker(id, poolID string, workerType WorkerType) *ScalableWorker {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	return &ScalableWorker{
 		id:           id,
 		poolID:       poolID,
@@ -743,7 +740,7 @@ func NewScalableWorker(id, poolID string, workerType WorkerType) *ScalableWorker
 // Start starts the worker
 func (worker *ScalableWorker) Start(ctx context.Context, workQueue <-chan WorkItem, resultQueue chan<- WorkResult, wg *sync.WaitGroup) {
 	defer wg.Done()
-	
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -754,7 +751,7 @@ func (worker *ScalableWorker) Start(ctx context.Context, workQueue <-chan WorkIt
 			if !ok {
 				return
 			}
-			
+
 			worker.processWork(workItem, resultQueue)
 		}
 	}
@@ -766,14 +763,14 @@ func (worker *ScalableWorker) processWork(workItem WorkItem, resultQueue chan<- 
 	worker.state = WorkerStateBusy
 	worker.lastActivity = time.Now()
 	worker.mu.Unlock()
-	
+
 	startTime := time.Now()
-	
+
 	// Process the work (this would be implemented based on work type)
 	result := worker.processor.Process(workItem)
-	
+
 	duration := time.Since(startTime)
-	
+
 	// Update metrics
 	worker.metrics.mu.Lock()
 	worker.metrics.processed++
@@ -782,7 +779,7 @@ func (worker *ScalableWorker) processWork(workItem WorkItem, resultQueue chan<- 
 	}
 	worker.metrics.avgResponseTime = (worker.metrics.avgResponseTime + duration) / 2
 	worker.metrics.mu.Unlock()
-	
+
 	// Send result
 	select {
 	case resultQueue <- WorkResult{
@@ -797,7 +794,7 @@ func (worker *ScalableWorker) processWork(workItem WorkItem, resultQueue chan<- 
 	default:
 		// Result queue is full, log or handle appropriately
 	}
-	
+
 	worker.mu.Lock()
 	worker.state = WorkerStateIdle
 	worker.mu.Unlock()
@@ -835,11 +832,11 @@ func (dwp *DefaultWorkerProcessor) Process(workItem WorkItem) WorkResult {
 // Additional helper functions for creating components
 func NewLoadBalancer(strategy LoadBalancingStrategy) *LoadBalancer {
 	return &LoadBalancer{
-		strategy:        strategy,
-		pools:           make([]*ScalableWorkerPool, 0),
-		weights:         make(map[string]int),
-		currentWeights:  make(map[string]int),
-		connections:     make(map[string]int32),
+		strategy:       strategy,
+		pools:          make([]*ScalableWorkerPool, 0),
+		weights:        make(map[string]int),
+		currentWeights: make(map[string]int),
+		connections:    make(map[string]int32),
 	}
 }
 
@@ -899,13 +896,13 @@ type PoolHealthChecker struct{ pool *ScalableWorkerPool }
 type LoadBalancerMetrics struct{}
 
 // Placeholder methods for components
-func (rm *ResourceMonitor) Start(ctx context.Context) {}
-func (wd *WorkDispatcher) Start(ctx context.Context) {}
-func (fd *FailureDetector) Start(ctx context.Context) {}
+func (rm *ResourceMonitor) Start(ctx context.Context)           {}
+func (wd *WorkDispatcher) Start(ctx context.Context)            {}
+func (fd *FailureDetector) Start(ctx context.Context)           {}
 func (smc *ScalableMetricsCollector) Start(ctx context.Context) {}
-func (am *AlertManager) Start(ctx context.Context) {}
-func (as *AutoScaler) Start(ctx context.Context) {}
-func (lb *LoadBalancer) RegisterPool(pool *ScalableWorkerPool) {}
+func (am *AlertManager) Start(ctx context.Context)              {}
+func (as *AutoScaler) Start(ctx context.Context)                {}
+func (lb *LoadBalancer) RegisterPool(pool *ScalableWorkerPool)  {}
 func (lb *LoadBalancer) SelectPool(workItem WorkItem) (*ScalableWorkerPool, error) {
 	if len(lb.pools) == 0 {
 		return nil, fmt.Errorf("no pools available")
@@ -913,8 +910,8 @@ func (lb *LoadBalancer) SelectPool(workItem WorkItem) (*ScalableWorkerPool, erro
 	return lb.pools[0], nil
 }
 func (as *AutoScaler) CheckScaling(pool *ScalableWorkerPool) {}
-func (phc *PoolHealthChecker) Start(ctx context.Context) {}
-func (phc *PoolHealthChecker) CheckHealth() {}
+func (phc *PoolHealthChecker) Start(ctx context.Context)     {}
+func (phc *PoolHealthChecker) CheckHealth()                  {}
 
 // DefaultScalableWorkerConfig returns a default configuration
 func DefaultScalableWorkerConfig() ScalableWorkerConfig {

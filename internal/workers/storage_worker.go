@@ -39,27 +39,27 @@ const (
 
 // StorageOptions configures storage behavior
 type StorageOptions struct {
-	Compression   bool
-	Encryption    bool
-	Validation    bool
-	Backup        bool
-	Checksum      bool
-	Timeout       time.Duration
-	RetryCount    int
-	BufferSize    int
-	ChunkSize     int64
+	Compression bool
+	Encryption  bool
+	Validation  bool
+	Backup      bool
+	Checksum    bool
+	Timeout     time.Duration
+	RetryCount  int
+	BufferSize  int
+	ChunkSize   int64
 }
 
 // StorageResult holds the result of a storage operation
 type StorageResult struct {
-	Operation   StorageOperation
-	Success     bool
-	Error       error
-	BytesRead   int64
+	Operation    StorageOperation
+	Success      bool
+	Error        error
+	BytesRead    int64
 	BytesWritten int64
-	Duration    time.Duration
-	WorkerID    int
-	Checksum    string
+	Duration     time.Duration
+	WorkerID     int
+	Checksum     string
 }
 
 // StorageJob represents a storage job
@@ -71,37 +71,37 @@ type StorageJob struct {
 
 // ConcurrentStorageManager manages concurrent storage operations
 type ConcurrentStorageManager struct {
-	workerCount     int
-	jobChan         chan StorageJob
-	workers         []*storageWorker
-	
+	workerCount int
+	jobChan     chan StorageJob
+	workers     []*storageWorker
+
 	// Configuration
-	bufferSize      int
+	bufferSize       int
 	operationTimeout time.Duration
-	maxFileSize     int64
-	
+	maxFileSize      int64
+
 	// State management
-	ctx             context.Context
-	cancel          context.CancelFunc
-	wg              sync.WaitGroup
-	
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
+
 	// Metrics
 	totalOperations int64
 	totalBytes      int64
 	totalErrors     int64
 	totalTime       time.Duration
 	mu              sync.RWMutex
-	
+
 	// Storage components
-	compressor      *FileCompressor
-	encryptor       *FileEncryptor
-	validator       *FileValidator
-	cleaner         *StorageCleaner
-	
+	compressor *FileCompressor
+	encryptor  *FileEncryptor
+	validator  *FileValidator
+	cleaner    *StorageCleaner
+
 	// Performance optimization
-	fileCache       *FileCache
-	operationPool   *OperationPool
-	bufferPool      *BufferPool
+	fileCache     *FileCache
+	operationPool *OperationPool
+	bufferPool    *BufferPool
 }
 
 // storageWorker represents a single storage worker
@@ -200,18 +200,18 @@ func NewConcurrentStorageManager(opts ...StorageManagerOption) *ConcurrentStorag
 		operationPool:    NewOperationPool(),
 		bufferPool:       NewBufferPool(64 * 1024), // 64KB buffers
 	}
-	
+
 	// Apply options
 	for _, opt := range opts {
 		opt(csm)
 	}
-	
+
 	// Initialize channels
 	csm.jobChan = make(chan StorageJob, csm.bufferSize)
-	
+
 	// Create context
 	csm.ctx, csm.cancel = context.WithCancel(context.Background())
-	
+
 	// Initialize workers
 	csm.workers = make([]*storageWorker, csm.workerCount)
 	for i := 0; i < csm.workerCount; i++ {
@@ -226,7 +226,7 @@ func NewConcurrentStorageManager(opts ...StorageManagerOption) *ConcurrentStorag
 			},
 		}
 	}
-	
+
 	return csm
 }
 
@@ -270,12 +270,12 @@ func (csm *ConcurrentStorageManager) SaveSnapshotConcurrent(snapshot *types.Snap
 	if snapshot == nil {
 		return fmt.Errorf("snapshot cannot be nil")
 	}
-	
+
 	// Start manager if not already running
 	if err := csm.start(); err != nil {
 		return fmt.Errorf("failed to start storage manager: %w", err)
 	}
-	
+
 	// Create save operation
 	filePath := filepath.Join("snapshots", fmt.Sprintf("%s.json", snapshot.ID))
 	operation := StorageOperation{
@@ -293,20 +293,20 @@ func (csm *ConcurrentStorageManager) SaveSnapshotConcurrent(snapshot *types.Snap
 			ChunkSize:   1024 * 1024,
 		},
 	}
-	
+
 	// Execute operation
 	result, err := csm.executeOperation(operation)
 	if err != nil {
 		return fmt.Errorf("failed to save snapshot: %w", err)
 	}
-	
+
 	if !result.Success {
 		return fmt.Errorf("save operation failed: %v", result.Error)
 	}
-	
+
 	// Start background cleanup
 	csm.scheduleCleanup()
-	
+
 	return nil
 }
 
@@ -315,12 +315,12 @@ func (csm *ConcurrentStorageManager) LoadSnapshotConcurrent(snapshotID string) (
 	if snapshotID == "" {
 		return nil, fmt.Errorf("snapshot ID cannot be empty")
 	}
-	
+
 	// Start manager if not already running
 	if err := csm.start(); err != nil {
 		return nil, fmt.Errorf("failed to start storage manager: %w", err)
 	}
-	
+
 	// Create load operation
 	filePath := filepath.Join("snapshots", fmt.Sprintf("%s.json", snapshotID))
 	operation := StorageOperation{
@@ -334,23 +334,23 @@ func (csm *ConcurrentStorageManager) LoadSnapshotConcurrent(snapshotID string) (
 			BufferSize:  64 * 1024,
 		},
 	}
-	
+
 	// Execute operation
 	result, err := csm.executeOperation(operation)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load snapshot: %w", err)
 	}
-	
+
 	if !result.Success {
 		return nil, fmt.Errorf("load operation failed: %v", result.Error)
 	}
-	
+
 	// Extract snapshot from result
 	snapshot, ok := result.Operation.Data.(*types.Snapshot)
 	if !ok {
 		return nil, fmt.Errorf("invalid snapshot data type")
 	}
-	
+
 	return snapshot, nil
 }
 
@@ -361,10 +361,10 @@ func (csm *ConcurrentStorageManager) start() error {
 		csm.wg.Add(1)
 		go csm.worker(i)
 	}
-	
+
 	// Start background cleaner
 	csm.cleaner.Start(csm.ctx)
-	
+
 	return nil
 }
 
@@ -372,17 +372,17 @@ func (csm *ConcurrentStorageManager) start() error {
 func (csm *ConcurrentStorageManager) stop() {
 	// Cancel context
 	csm.cancel()
-	
+
 	// Close job channel
 	close(csm.jobChan)
-	
+
 	// Wait for workers to finish
 	done := make(chan struct{})
 	go func() {
 		csm.wg.Wait()
 		close(done)
 	}()
-	
+
 	// Wait for completion or timeout
 	select {
 	case <-done:
@@ -391,7 +391,7 @@ func (csm *ConcurrentStorageManager) stop() {
 		// Force shutdown
 		fmt.Println("Warning: Storage manager shutdown timed out")
 	}
-	
+
 	// Stop cleaner
 	csm.cleaner.Stop()
 }
@@ -399,9 +399,9 @@ func (csm *ConcurrentStorageManager) stop() {
 // worker processes storage jobs
 func (csm *ConcurrentStorageManager) worker(workerID int) {
 	defer csm.wg.Done()
-	
+
 	worker := csm.workers[workerID]
-	
+
 	for {
 		select {
 		case <-csm.ctx.Done():
@@ -410,13 +410,13 @@ func (csm *ConcurrentStorageManager) worker(workerID int) {
 			if !ok {
 				return
 			}
-			
+
 			// Process the job
 			result := csm.processStorageJob(job, workerID)
-			
+
 			// Update worker stats
 			worker.updateStats(result)
-			
+
 			// Send result
 			select {
 			case job.ResultChan <- result:
@@ -430,54 +430,54 @@ func (csm *ConcurrentStorageManager) worker(workerID int) {
 // processStorageJob processes a single storage job
 func (csm *ConcurrentStorageManager) processStorageJob(job StorageJob, workerID int) StorageResult {
 	startTime := time.Now()
-	
+
 	result := StorageResult{
 		Operation: job.Operation,
 		WorkerID:  workerID,
 		Duration:  0,
 	}
-	
+
 	// Execute operation with timeout
 	ctx, cancel := context.WithTimeout(csm.ctx, job.Operation.Options.Timeout)
 	defer cancel()
-	
+
 	worker := csm.workers[workerID]
 	success, bytesRead, bytesWritten, checksum, err := worker.executor.Execute(ctx, job.Operation)
-	
+
 	result.Duration = time.Since(startTime)
 	result.Success = success
 	result.BytesRead = bytesRead
 	result.BytesWritten = bytesWritten
 	result.Checksum = checksum
 	result.Error = err
-	
+
 	// Update metrics
 	atomic.AddInt64(&csm.totalOperations, 1)
 	atomic.AddInt64(&csm.totalBytes, bytesRead+bytesWritten)
 	if err != nil {
 		atomic.AddInt64(&csm.totalErrors, 1)
 	}
-	
+
 	return result
 }
 
 // executeOperation executes a storage operation
 func (csm *ConcurrentStorageManager) executeOperation(operation StorageOperation) (StorageResult, error) {
 	resultChan := make(chan StorageResult, 1)
-	
+
 	job := StorageJob{
 		Operation:  operation,
 		ResultChan: resultChan,
 		Priority:   100,
 	}
-	
+
 	// Submit job
 	select {
 	case csm.jobChan <- job:
 	case <-csm.ctx.Done():
 		return StorageResult{}, fmt.Errorf("storage manager context cancelled")
 	}
-	
+
 	// Wait for result
 	select {
 	case result := <-resultChan:
@@ -496,20 +496,20 @@ func (csm *ConcurrentStorageManager) scheduleCleanup() {
 				Timeout: 30 * time.Second,
 			},
 		}
-		
+
 		resultChan := make(chan StorageResult, 1)
 		job := StorageJob{
 			Operation:  cleanupOp,
 			ResultChan: resultChan,
 			Priority:   10, // Low priority
 		}
-		
+
 		select {
 		case csm.jobChan <- job:
 		case <-csm.ctx.Done():
 			return
 		}
-		
+
 		// Wait for cleanup to complete
 		<-resultChan
 	}()
@@ -541,7 +541,7 @@ func (oe *OperationExecutor) executeSave(ctx context.Context, operation StorageO
 	if err := os.MkdirAll(filepath.Dir(operation.FilePath), 0755); err != nil {
 		return false, 0, 0, "", fmt.Errorf("failed to create directory: %w", err)
 	}
-	
+
 	// Create temporary file
 	tempFile := operation.FilePath + ".tmp"
 	file, err := os.Create(tempFile)
@@ -549,29 +549,29 @@ func (oe *OperationExecutor) executeSave(ctx context.Context, operation StorageO
 		return false, 0, 0, "", fmt.Errorf("failed to create temp file: %w", err)
 	}
 	defer file.Close()
-	
+
 	var writer io.Writer = file
 	var bytesWritten int64
-	
+
 	// Apply compression if requested
 	if operation.Options.Compression {
 		gzipWriter := gzip.NewWriter(file)
 		defer gzipWriter.Close()
 		writer = gzipWriter
 	}
-	
+
 	// Serialize data
 	encoder := json.NewEncoder(writer)
 	if err := encoder.Encode(operation.Data); err != nil {
 		os.Remove(tempFile)
 		return false, 0, 0, "", fmt.Errorf("failed to encode data: %w", err)
 	}
-	
+
 	// Get file size
 	if info, err := file.Stat(); err == nil {
 		bytesWritten = info.Size()
 	}
-	
+
 	// Calculate checksum if requested
 	var checksum string
 	if operation.Options.Checksum {
@@ -583,10 +583,10 @@ func (oe *OperationExecutor) executeSave(ctx context.Context, operation StorageO
 		}
 		checksum = fmt.Sprintf("%x", hash.Sum(nil))
 	}
-	
+
 	// Close file
 	file.Close()
-	
+
 	// Create backup if requested
 	if operation.Options.Backup {
 		if _, err := os.Stat(operation.FilePath); err == nil {
@@ -597,13 +597,13 @@ func (oe *OperationExecutor) executeSave(ctx context.Context, operation StorageO
 			}
 		}
 	}
-	
+
 	// Atomic rename
 	if err := os.Rename(tempFile, operation.FilePath); err != nil {
 		os.Remove(tempFile)
 		return false, 0, 0, "", fmt.Errorf("failed to rename temp file: %w", err)
 	}
-	
+
 	return true, 0, bytesWritten, checksum, nil
 }
 
@@ -615,15 +615,15 @@ func (oe *OperationExecutor) executeLoad(ctx context.Context, operation StorageO
 		return false, 0, 0, "", fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
-	
+
 	var reader io.Reader = file
 	var bytesRead int64
-	
+
 	// Get file size
 	if info, err := file.Stat(); err == nil {
 		bytesRead = info.Size()
 	}
-	
+
 	// Handle compression
 	if operation.Options.Compression {
 		gzipReader, err := gzip.NewReader(file)
@@ -633,17 +633,17 @@ func (oe *OperationExecutor) executeLoad(ctx context.Context, operation StorageO
 		defer gzipReader.Close()
 		reader = gzipReader
 	}
-	
+
 	// Deserialize data
 	decoder := json.NewDecoder(reader)
 	var snapshot types.Snapshot
 	if err := decoder.Decode(&snapshot); err != nil {
 		return false, 0, 0, "", fmt.Errorf("failed to decode data: %w", err)
 	}
-	
+
 	// Store loaded data back in operation
 	operation.Data = &snapshot
-	
+
 	return true, bytesRead, 0, "", nil
 }
 
@@ -652,7 +652,7 @@ func (oe *OperationExecutor) executeDelete(ctx context.Context, operation Storag
 	if err := os.Remove(operation.FilePath); err != nil {
 		return false, 0, 0, "", fmt.Errorf("failed to delete file: %w", err)
 	}
-	
+
 	return true, 0, 0, "", nil
 }
 
@@ -678,12 +678,12 @@ func (oe *OperationExecutor) executeValidate(ctx context.Context, operation Stor
 func (w *storageWorker) updateStats(result StorageResult) {
 	w.stats.mu.Lock()
 	defer w.stats.mu.Unlock()
-	
+
 	w.stats.lastActive = time.Now()
 	w.stats.totalTime += result.Duration
 	w.stats.operationsCompleted++
 	w.stats.bytesProcessed += result.BytesRead + result.BytesWritten
-	
+
 	if result.Error != nil {
 		w.stats.errors++
 	}
@@ -693,7 +693,7 @@ func (w *storageWorker) updateStats(result StorageResult) {
 func (csm *ConcurrentStorageManager) GetStats() StorageManagerStats {
 	csm.mu.RLock()
 	defer csm.mu.RUnlock()
-	
+
 	stats := StorageManagerStats{
 		TotalOperations: atomic.LoadInt64(&csm.totalOperations),
 		TotalBytes:      atomic.LoadInt64(&csm.totalBytes),
@@ -701,7 +701,7 @@ func (csm *ConcurrentStorageManager) GetStats() StorageManagerStats {
 		WorkerCount:     csm.workerCount,
 		WorkerStats:     make([]StorageWorkerStats, len(csm.workers)),
 	}
-	
+
 	for i, worker := range csm.workers {
 		worker.stats.mu.RLock()
 		stats.WorkerStats[i] = StorageWorkerStats{
@@ -714,7 +714,7 @@ func (csm *ConcurrentStorageManager) GetStats() StorageManagerStats {
 		}
 		worker.stats.mu.RUnlock()
 	}
-	
+
 	return stats
 }
 

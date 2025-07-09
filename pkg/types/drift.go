@@ -2,6 +2,16 @@ package types
 
 import "time"
 
+// ChangeType represents the type of change
+type ChangeType string
+
+const (
+	ChangeTypeAdded    ChangeType = "added"
+	ChangeTypeModified ChangeType = "modified"
+	ChangeTypeDeleted  ChangeType = "deleted"
+	ChangeTypeRemoved  ChangeType = "removed"
+)
+
 // Change represents a specific configuration change
 type Change struct {
 	Field       string      `json:"field"`
@@ -10,6 +20,7 @@ type Change struct {
 	Severity    string      `json:"severity"`
 	Path        string      `json:"path"`
 	Description string      `json:"description"`
+	ChangeType  ChangeType  `json:"change_type"`
 }
 
 // DriftReport represents the result of comparing infrastructure states
@@ -45,9 +56,9 @@ type Analysis struct {
 
 // Insight represents an AI-generated insight about infrastructure changes
 type Insight struct {
-	Type        string  `json:"type"`        // "warning", "info", "critical"
+	Type        string  `json:"type"` // "warning", "info", "critical"
 	Title       string  `json:"title"`
 	Description string  `json:"description"`
-	Confidence  float64 `json:"confidence"`  // 0.0 - 1.0
+	Confidence  float64 `json:"confidence"` // 0.0 - 1.0
 	Action      string  `json:"action,omitempty"`
 }

@@ -1,0 +1,231 @@
+{
+  "id": "aws-mock-1234567890",
+  "timestamp": "2024-01-08T10:00:00Z",
+  "provider": "aws",
+  "resources": [
+    {
+      "id": "i-1234567890abcdef0",
+      "type": "aws_instance",
+      "provider": "aws",
+      "name": "web-server-1",
+      "region": "us-east-1",
+      "configuration": {
+        "instance_type": "t2.micro",
+        "state": "running",
+        "vpc_id": "vpc-12345678",
+        "subnet_id": "subnet-12345678",
+        "availability_zone": "us-east-1a",
+        "private_ip_address": "10.0.1.10",
+        "public_ip_address": "54.123.45.67",
+        "image_id": "ami-0abcdef1234567890",
+        "key_name": "my-key-pair",
+        "monitoring": true
+      },
+      "tags": {
+        "Name": "web-server-1",
+        "Environment": "production",
+        "Team": "platform"
+      },
+      "metadata": {
+        "updated_at": "2024-01-08T09:00:00Z"
+      }
+    },
+    {
+      "id": "sg-0123456789abcdef0",
+      "type": "aws_security_group",
+      "provider": "aws",
+      "name": "web-server-sg",
+      "region": "us-east-1",
+      "configuration": {
+        "name": "web-server-sg",
+        "description": "Security group for web servers",
+        "vpc_id": "vpc-12345678",
+        "ingress": [
+          {
+            "ip_protocol": "tcp",
+            "from_port": 80,
+            "to_port": 80,
+            "cidr_blocks": ["0.0.0.0/0"]
+          },
+          {
+            "ip_protocol": "tcp",
+            "from_port": 443,
+            "to_port": 443,
+            "cidr_blocks": ["0.0.0.0/0"]
+          }
+        ],
+        "egress": [
+          {
+            "ip_protocol": "-1",
+            "cidr_blocks": ["0.0.0.0/0"]
+          }
+        ]
+      },
+      "tags": {
+        "Name": "web-server-sg"
+      },
+      "metadata": {
+        "updated_at": "2024-01-08T09:00:00Z"
+      }
+    },
+    {
+      "id": "my-app-bucket",
+      "type": "aws_s3_bucket",
+      "provider": "aws",
+      "name": "my-app-bucket",
+      "region": "us-east-1",
+      "configuration": {
+        "bucket": "my-app-bucket",
+        "versioning": {
+          "enabled": true,
+          "mfa_delete": false
+        },
+        "server_side_encryption": {
+          "enabled": true,
+          "rules": [
+            {
+              "sse_algorithm": "AES256"
+            }
+          ]
+        }
+      },
+      "tags": {
+        "Name": "my-app-bucket",
+        "Environment": "production"
+      },
+      "metadata": {
+        "created_at": "2023-06-15T12:00:00Z"
+      }
+    },
+    {
+      "id": "mydb-instance",
+      "type": "aws_db_instance",
+      "provider": "aws",
+      "name": "mydb-instance",
+      "region": "us-east-1",
+      "configuration": {
+        "db_instance_identifier": "mydb-instance",
+        "db_instance_class": "db.t3.micro",
+        "engine": "mysql",
+        "engine_version": "8.0.28",
+        "db_name": "mydatabase",
+        "username": "admin",
+        "allocated_storage": 20,
+        "storage_type": "gp2",
+        "storage_encrypted": true,
+        "multi_az": false,
+        "publicly_accessible": false,
+        "backup_retention_period": 7,
+        "db_subnet_group_name": "default-vpc-12345678",
+        "vpc_security_group_ids": ["sg-12345678"]
+      },
+      "tags": {
+        "Name": "mydb-instance",
+        "Environment": "production"
+      },
+      "metadata": {
+        "created_at": "2023-08-20T14:30:00Z"
+      }
+    },
+    {
+      "id": "arn:aws:lambda:us-east-1:123456789012:function:process-orders",
+      "type": "aws_lambda_function",
+      "provider": "aws",
+      "name": "process-orders",
+      "region": "us-east-1",
+      "configuration": {
+        "function_name": "process-orders",
+        "role": "arn:aws:iam::123456789012:role/lambda-execution-role",
+        "handler": "index.handler",
+        "runtime": "nodejs18.x",
+        "timeout": 30,
+        "memory_size": 256,
+        "description": "Process incoming orders",
+        "environment": {
+          "variables": {
+            "QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/123456789012/orders"
+          }
+        }
+      },
+      "tags": {
+        "Name": "process-orders",
+        "Environment": "production"
+      },
+      "metadata": {
+        "updated_at": "2024-01-07T16:45:00Z"
+      }
+    },
+    {
+      "id": "vpc-12345678",
+      "type": "aws_vpc",
+      "provider": "aws",
+      "name": "main-vpc",
+      "region": "us-east-1",
+      "configuration": {
+        "cidr_block": "10.0.0.0/16",
+        "state": "available",
+        "dhcp_options_id": "dopt-12345678",
+        "instance_tenancy": "default",
+        "enable_dns_hostnames": true,
+        "enable_dns_support": true
+      },
+      "tags": {
+        "Name": "main-vpc",
+        "Environment": "production"
+      },
+      "metadata": {
+        "updated_at": "2024-01-08T09:00:00Z"
+      }
+    },
+    {
+      "id": "subnet-12345678",
+      "type": "aws_subnet",
+      "provider": "aws",
+      "name": "public-subnet-1a",
+      "region": "us-east-1",
+      "configuration": {
+        "vpc_id": "vpc-12345678",
+        "cidr_block": "10.0.1.0/24",
+        "availability_zone": "us-east-1a",
+        "availability_zone_id": "use1-az1",
+        "state": "available",
+        "map_public_ip_on_launch": true,
+        "assign_ipv6_address_on_creation": false
+      },
+      "tags": {
+        "Name": "public-subnet-1a",
+        "Type": "public"
+      },
+      "metadata": {
+        "updated_at": "2024-01-08T09:00:00Z"
+      }
+    },
+    {
+      "id": "arn:aws:iam::123456789012:role/app-execution-role",
+      "type": "aws_iam_role",
+      "provider": "aws",
+      "name": "app-execution-role",
+      "region": "global",
+      "configuration": {
+        "name": "app-execution-role",
+        "path": "/",
+        "assume_role_policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ec2.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}",
+        "description": "Role for application execution",
+        "max_session_duration": 3600
+      },
+      "tags": {
+        "Name": "app-execution-role",
+        "Purpose": "application"
+      },
+      "metadata": {
+        "created_at": "2023-05-10T11:00:00Z"
+      }
+    }
+  ],
+  "metadata": {
+    "collector_version": "1.0.0",
+    "profile": "default",
+    "region": "us-east-1",
+    "resource_count": 8
+  }
+}

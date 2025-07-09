@@ -78,7 +78,7 @@ func (c *DefaultComparer) CompareConfiguration(basePath string, baseline, curren
 	// Check for removed keys
 	for key, baselineValue := range baseline {
 		path := c.buildPath(basePath, key)
-		
+
 		if c.shouldIgnoreField(path) {
 			continue
 		}
@@ -102,7 +102,7 @@ func (c *DefaultComparer) CompareConfiguration(basePath string, baseline, curren
 	// Check for added keys
 	for key, currentValue := range current {
 		path := c.buildPath(basePath, key)
-		
+
 		if c.shouldIgnoreField(path) {
 			continue
 		}
@@ -306,9 +306,9 @@ func (c *DefaultComparer) filterIgnoredFields(changes []Change) []Change {
 
 // SmartComparer is an enhanced comparer with context-aware comparison
 type SmartComparer struct {
-	options           DiffOptions
-	typeComparers     map[string]TypeComparer
-	fieldComparers    map[string]FieldComparer
+	options        DiffOptions
+	typeComparers  map[string]TypeComparer
+	fieldComparers map[string]FieldComparer
 }
 
 // TypeComparer defines resource-type-specific comparison logic
@@ -363,7 +363,7 @@ func (c *SmartComparer) CompareConfiguration(basePath string, baseline, current 
 
 	for key, baselineValue := range baseline {
 		path := c.buildPath(basePath, key)
-		
+
 		if fieldComparer, exists := c.fieldComparers[key]; exists {
 			if currentValue, exists := current[key]; exists {
 				fieldChanges := fieldComparer.CompareField(path, key, baselineValue, currentValue)
@@ -421,14 +421,14 @@ func (c *EC2InstanceComparer) CompareResources(baseline, current types.Resource)
 	// Implement EC2-specific comparison logic
 	defaultComparer := &DefaultComparer{}
 	changes := defaultComparer.CompareResources(baseline, current)
-	
+
 	// Add EC2-specific logic, like marking instance type changes as high severity
 	for i := range changes {
 		if changes[i].Path == "configuration.instance_type" {
 			changes[i].Impact = "Instance type change may affect performance and cost"
 		}
 	}
-	
+
 	return changes
 }
 
@@ -442,14 +442,14 @@ type SecurityGroupComparer struct{}
 func (c *SecurityGroupComparer) CompareResources(baseline, current types.Resource) []Change {
 	defaultComparer := &DefaultComparer{}
 	changes := defaultComparer.CompareResources(baseline, current)
-	
+
 	// Mark all security group changes as potentially high risk
 	for i := range changes {
 		if strings.Contains(changes[i].Path, "ingress") || strings.Contains(changes[i].Path, "egress") {
 			changes[i].Impact = "Security rule change may affect network access"
 		}
 	}
-	
+
 	return changes
 }
 
@@ -463,14 +463,14 @@ type KubernetesDeploymentComparer struct{}
 func (c *KubernetesDeploymentComparer) CompareResources(baseline, current types.Resource) []Change {
 	defaultComparer := &DefaultComparer{}
 	changes := defaultComparer.CompareResources(baseline, current)
-	
+
 	// Add Kubernetes-specific logic
 	for i := range changes {
 		if changes[i].Path == "configuration.spec.replicas" {
 			changes[i].Impact = "Replica count change affects availability and resource usage"
 		}
 	}
-	
+
 	return changes
 }
 

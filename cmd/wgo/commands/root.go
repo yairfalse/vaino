@@ -81,8 +81,13 @@ func init() {
 	rootCmd.AddCommand(newExplainCommand())
 	rootCmd.AddCommand(newDiffCommand())
 	rootCmd.AddCommand(newSimpleDiffCommand()) // New simple changes command
+	rootCmd.AddCommand(newWatchCommand())      // Real-time watch mode
 	rootCmd.AddCommand(newAuthCommand())
 	rootCmd.AddCommand(newVersionCommand())
+	rootCmd.AddCommand(newConfigureCommand())   // Configuration wizard
+	rootCmd.AddCommand(newStatusCommand())      // System status
+	rootCmd.AddCommand(newCheckConfigCommand()) // Configuration validation
+	rootCmd.AddCommand(newHelpCommand())        // Help topics
 }
 
 // initConfig reads in config file and ENV variables if set.

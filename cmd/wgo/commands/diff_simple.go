@@ -121,13 +121,13 @@ func runSimpleDiff(cmd *cobra.Command, args []string) error {
 			// Show timeline view
 			correlator := analyzer.NewCorrelator()
 			groups := correlator.GroupChanges(report.Changes)
-			
+
 			// Calculate duration from report
 			var duration time.Duration
 			if fromSnapshot != nil && toSnapshot != nil {
 				duration = toSnapshot.Timestamp.Sub(fromSnapshot.Timestamp)
 			}
-			
+
 			fmt.Print(analyzer.FormatChangeTimeline(groups, duration))
 		} else if correlated {
 			// Group related changes
@@ -146,7 +146,7 @@ func runSimpleDiff(cmd *cobra.Command, args []string) error {
 // Helper to get current infrastructure state
 func getCurrentSnapshot(provider string) (*types.Snapshot, error) {
 	fmt.Println("📸 Capturing current state...")
-	
+
 	// Create temp file for scan output
 	tempFile, err := os.CreateTemp("", "wgo-current-*.json")
 	if err != nil {
@@ -163,7 +163,7 @@ func getCurrentSnapshot(provider string) (*types.Snapshot, error) {
 		args = append(args, "--provider", provider)
 	}
 	scanCmd.SetArgs(args)
-	
+
 	if err := scanCmd.Execute(); err != nil {
 		return nil, fmt.Errorf("failed to scan current state: %w", err)
 	}
@@ -199,17 +199,17 @@ func findSnapshotFromTime(targetTime time.Time, provider string) (*types.Snapsho
 	}
 
 	matches, _ := filepath.Glob(filepath.Join(historyDir, pattern))
-	
+
 	// Find the closest snapshot to target time
 	var closestPath string
 	var closestDiff time.Duration
-	
+
 	for _, path := range matches {
 		snapshot, err := loadSnapshot(path)
 		if err != nil {
 			continue
 		}
-		
+
 		diff := targetTime.Sub(snapshot.Timestamp).Abs()
 		if closestPath == "" || diff < closestDiff {
 			closestPath = path
@@ -236,7 +236,7 @@ func findRecentSnapshots(provider string, count int) ([]*types.Snapshot, error) 
 	}
 
 	matches, _ := filepath.Glob(filepath.Join(historyDir, pattern))
-	
+
 	// Load and sort by timestamp
 	var snapshots []*types.Snapshot
 	for _, path := range matches {

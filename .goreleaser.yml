@@ -1,0 +1,278 @@
+# GoReleaser configuration for WGO
+# This handles multi-platform builds and package manager distributions
+
+project_name: wgo
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - id: wgo
+    main: ./cmd/wgo
+    binary: wgo
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - 7
+    ignore:
+      - goos: windows
+        goarch: arm64
+      - goos: windows
+        goarch: arm
+    ldflags:
+      - -s -w 
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.buildTime={{.Date}}
+      - -X main.builtBy=goreleaser
+
+archives:
+  - id: default
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE
+      - docs/*
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - Merge pull request
+      - Merge branch
+
+# Homebrew Formula
+brews:
+  - name: wgo
+    tap:
+      owner: yairfalse
+      name: homebrew-wgo
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    
+    homepage: "https://github.com/yairfalse/wgo"
+    description: "Git diff for infrastructure - simple drift detection"
+    license: "MIT"
+    
+    dependencies:
+      - name: git
+        type: optional
+    
+    install: |
+      bin.install "wgo"
+      bash_completion.install "completions/wgo.bash" => "wgo"
+      zsh_completion.install "completions/wgo.zsh" => "_wgo"
+      fish_completion.install "completions/wgo.fish"
+    
+    test: |
+      system "#{bin}/wgo", "version"
+
+# Scoop Manifest
+scoops:
+  - repository:
+      owner: yairfalse
+      name: scoop-wgo
+      branch: main
+      token: "{{ .Env.SCOOP_GITHUB_TOKEN }}"
+    
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    
+    commit_msg_template: "Scoop update for {{ .ProjectName }} version {{ .Tag }}"
+    
+    homepage: "https://github.com/yairfalse/wgo"
+    description: "Git diff for infrastructure - simple drift detection"
+    license: MIT
+
+# Linux Packages
+nfpms:
+  - id: packages
+    package_name: wgo
+    vendor: WGO Contributors
+    homepage: https://github.com/yairfalse/wgo
+    maintainer: Yair <yair@example.com>
+    description: |-
+      Git diff for infrastructure - simple drift detection.
+      WGO detects infrastructure drift in a simple, familiar way.
+    license: MIT
+    formats:
+      - deb
+      - rpm
+      - apk
+    
+    dependencies:
+      - git
+    
+    recommends:
+      - terraform
+      - aws-cli
+    
+    contents:
+      - src: ./completions/wgo.bash
+        dst: /usr/share/bash-completion/completions/wgo
+        file_info:
+          mode: 0644
+      
+      - src: ./completions/wgo.zsh
+        dst: /usr/share/zsh/site-functions/_wgo
+        file_info:
+          mode: 0644
+      
+      - src: ./completions/wgo.fish
+        dst: /usr/share/fish/vendor_completions.d/wgo.fish
+        file_info:
+          mode: 0644
+      
+      - src: ./README.md
+        dst: /usr/share/doc/wgo/README.md
+        file_info:
+          mode: 0644
+      
+      - src: ./LICENSE
+        dst: /usr/share/doc/wgo/LICENSE
+        file_info:
+          mode: 0644
+    
+    scripts:
+      postinstall: |
+        #!/bin/bash
+        echo "WGO installed successfully!"
+        echo "Run 'wgo version' to verify installation"
+      
+      postremove: |
+        #!/bin/bash
+        echo "WGO has been removed"
+
+# Snapcraft
+snapcrafts:
+  - name: wgo
+    summary: Git diff for infrastructure
+    description: |
+      WGO (What's Going On) is a comprehensive infrastructure drift detection tool
+      that helps you track changes in your infrastructure over time.
+    
+    grade: stable
+    confinement: strict
+    base: core20
+    
+    license: MIT
+    
+    apps:
+      wgo:
+        command: wgo
+        plugs:
+          - home
+          - network
+          - personal-files
+
+# Docker Images
+dockers:
+  - image_templates:
+      - "yairfalse/wgo:{{ .Tag }}-amd64"
+      - "yairfalse/wgo:latest-amd64"
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+    dockerfile: Dockerfile
+    
+  - image_templates:
+      - "yairfalse/wgo:{{ .Tag }}-arm64"
+      - "yairfalse/wgo:latest-arm64"
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64"
+    dockerfile: Dockerfile
+
+# Docker Manifests for multi-arch
+docker_manifests:
+  - name_template: "yairfalse/wgo:{{ .Tag }}"
+    image_templates:
+      - "yairfalse/wgo:{{ .Tag }}-amd64"
+      - "yairfalse/wgo:{{ .Tag }}-arm64"
+  
+  - name_template: "yairfalse/wgo:latest"
+    image_templates:
+      - "yairfalse/wgo:latest-amd64"
+      - "yairfalse/wgo:latest-arm64"
+
+# GitHub Release
+release:
+  github:
+    owner: yairfalse
+    name: wgo
+  
+  name_template: "v{{.Version}}"
+  
+  header: |
+    ## WGO v{{.Version}} Release Notes
+    
+    Git diff for infrastructure - simple drift detection
+    
+  footer: |
+    ## Installation
+    
+    ### macOS/Linux
+    ```bash
+    brew install yairfalse/wgo/wgo
+    ```
+    
+    ### Ubuntu/Debian
+    ```bash
+    curl -L https://github.com/yairfalse/wgo/releases/download/v{{.Version}}/wgo_{{.Version}}_linux_amd64.deb -o wgo.deb
+    sudo dpkg -i wgo.deb
+    ```
+    
+    ### Universal Script
+    ```bash
+    curl -sSL https://install.wgo.sh | bash
+    ```
+    
+    **Full Documentation**: https://github.com/yairfalse/wgo
+
+# Announce releases
+announce:
+  twitter:
+    enabled: true
+    message_template: |
+      WGO {{.Tag}} is out! 🚀
+      
+      Git diff for infrastructure - detect drift in your cloud resources.
+      
+      https://github.com/yairfalse/wgo/releases/tag/{{.Tag}}
+      
+      #infrastructure #devops #cloud #aws #terraform

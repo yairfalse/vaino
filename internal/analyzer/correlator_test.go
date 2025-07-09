@@ -12,7 +12,7 @@ func TestCorrelator_NewCorrelator(t *testing.T) {
 	if correlator == nil {
 		t.Fatal("NewCorrelator returned nil")
 	}
-	
+
 	expected := 30 * time.Second
 	if correlator.timeWindow != expected {
 		t.Errorf("Expected time window %v, got %v", expected, correlator.timeWindow)
@@ -22,9 +22,9 @@ func TestCorrelator_NewCorrelator(t *testing.T) {
 func TestCorrelator_GroupChanges_EmptyInput(t *testing.T) {
 	correlator := NewCorrelator()
 	changes := []differ.SimpleChange{}
-	
+
 	groups := correlator.GroupChanges(changes)
-	
+
 	if groups != nil {
 		t.Errorf("Expected nil for empty input, got %v", groups)
 	}
@@ -33,7 +33,7 @@ func TestCorrelator_GroupChanges_EmptyInput(t *testing.T) {
 func TestCorrelator_GroupChanges_SingleChange(t *testing.T) {
 	correlator := NewCorrelator()
 	now := time.Now()
-	
+
 	changes := []differ.SimpleChange{
 		{
 			Type:         "modified",
@@ -47,22 +47,22 @@ func TestCorrelator_GroupChanges_SingleChange(t *testing.T) {
 			},
 		},
 	}
-	
+
 	groups := correlator.GroupChanges(changes)
-	
+
 	if len(groups) != 1 {
 		t.Fatalf("Expected 1 group, got %d", len(groups))
 	}
-	
+
 	group := groups[0]
 	if group.Title != "Other Changes" {
 		t.Errorf("Expected 'Other Changes', got '%s'", group.Title)
 	}
-	
+
 	if group.Confidence != "low" {
 		t.Errorf("Expected confidence 'low', got '%s'", group.Confidence)
 	}
-	
+
 	if len(group.Changes) != 1 {
 		t.Errorf("Expected 1 change in group, got %d", len(group.Changes))
 	}
@@ -71,7 +71,7 @@ func TestCorrelator_GroupChanges_SingleChange(t *testing.T) {
 func TestCorrelator_DetectScalingGroup(t *testing.T) {
 	correlator := NewCorrelator()
 	now := time.Now()
-	
+
 	changes := []differ.SimpleChange{
 		{
 			Type:         "modified",
@@ -93,26 +93,26 @@ func TestCorrelator_DetectScalingGroup(t *testing.T) {
 			Timestamp:    now.Add(5 * time.Second),
 		},
 	}
-	
+
 	groups := correlator.GroupChanges(changes)
-	
+
 	if len(groups) != 1 {
 		t.Fatalf("Expected 1 group, got %d", len(groups))
 	}
-	
+
 	group := groups[0]
 	if group.Title != "frontend Scaling" {
 		t.Errorf("Expected 'frontend Scaling', got '%s'", group.Title)
 	}
-	
+
 	if group.Confidence != "high" {
 		t.Errorf("Expected confidence 'high', got '%s'", group.Confidence)
 	}
-	
+
 	if group.Description != "Scaled from 3 to 5 replicas" {
 		t.Errorf("Unexpected description: %s", group.Description)
 	}
-	
+
 	if len(group.Changes) != 2 {
 		t.Errorf("Expected 2 changes in scaling group, got %d", len(group.Changes))
 	}
@@ -121,7 +121,7 @@ func TestCorrelator_DetectScalingGroup(t *testing.T) {
 func TestCorrelator_DetectServiceGroup(t *testing.T) {
 	correlator := NewCorrelator()
 	now := time.Now()
-	
+
 	changes := []differ.SimpleChange{
 		{
 			Type:         "added",
@@ -148,9 +148,9 @@ func TestCorrelator_DetectServiceGroup(t *testing.T) {
 			Timestamp:    now.Add(3 * time.Second),
 		},
 	}
-	
+
 	groups := correlator.GroupChanges(changes)
-	
+
 	// Should find service group
 	var serviceGroup *ChangeGroup
 	for _, group := range groups {
@@ -159,15 +159,15 @@ func TestCorrelator_DetectServiceGroup(t *testing.T) {
 			break
 		}
 	}
-	
+
 	if serviceGroup == nil {
 		t.Fatal("Service group not found")
 	}
-	
+
 	if serviceGroup.Confidence != "medium" {
 		t.Errorf("Expected confidence 'medium', got '%s'", serviceGroup.Confidence)
 	}
-	
+
 	if len(serviceGroup.Changes) < 2 {
 		t.Errorf("Expected at least 2 changes in service group, got %d", len(serviceGroup.Changes))
 	}
@@ -176,7 +176,7 @@ func TestCorrelator_DetectServiceGroup(t *testing.T) {
 func TestCorrelator_DetectConfigUpdateGroup(t *testing.T) {
 	correlator := NewCorrelator()
 	now := time.Now()
-	
+
 	changes := []differ.SimpleChange{
 		{
 			Type:         "modified",
@@ -201,9 +201,9 @@ func TestCorrelator_DetectConfigUpdateGroup(t *testing.T) {
 			},
 		},
 	}
-	
+
 	groups := correlator.GroupChanges(changes)
-	
+
 	// Should find config update group
 	var configGroup *ChangeGroup
 	for _, group := range groups {
@@ -212,15 +212,15 @@ func TestCorrelator_DetectConfigUpdateGroup(t *testing.T) {
 			break
 		}
 	}
-	
+
 	if configGroup == nil {
 		t.Fatal("Config update group not found")
 	}
-	
+
 	if configGroup.Confidence != "high" {
 		t.Errorf("Expected confidence 'high', got '%s'", configGroup.Confidence)
 	}
-	
+
 	if len(configGroup.Changes) != 2 {
 		t.Errorf("Expected 2 changes in config group, got %d", len(configGroup.Changes))
 	}
@@ -229,7 +229,7 @@ func TestCorrelator_DetectConfigUpdateGroup(t *testing.T) {
 func TestCorrelator_DetectSecretRotation(t *testing.T) {
 	correlator := NewCorrelator()
 	now := time.Now()
-	
+
 	changes := []differ.SimpleChange{
 		{
 			Type:         "modified",
@@ -256,9 +256,9 @@ func TestCorrelator_DetectSecretRotation(t *testing.T) {
 			Timestamp:    now.Add(10 * time.Second),
 		},
 	}
-	
+
 	groups := correlator.GroupChanges(changes)
-	
+
 	// Should find secret rotation group
 	var secretGroup *ChangeGroup
 	for _, group := range groups {
@@ -267,15 +267,15 @@ func TestCorrelator_DetectSecretRotation(t *testing.T) {
 			break
 		}
 	}
-	
+
 	if secretGroup == nil {
 		t.Fatal("Secret rotation group not found")
 	}
-	
+
 	if secretGroup.Confidence != "high" {
 		t.Errorf("Expected confidence 'high', got '%s'", secretGroup.Confidence)
 	}
-	
+
 	if len(secretGroup.Changes) != 3 {
 		t.Errorf("Expected 3 changes in secret rotation group, got %d", len(secretGroup.Changes))
 	}
@@ -284,7 +284,7 @@ func TestCorrelator_DetectSecretRotation(t *testing.T) {
 func TestCorrelator_AvoidFalseCorrelations(t *testing.T) {
 	correlator := NewCorrelator()
 	now := time.Now()
-	
+
 	// Changes that should NOT be correlated
 	changes := []differ.SimpleChange{
 		{
@@ -311,22 +311,22 @@ func TestCorrelator_AvoidFalseCorrelations(t *testing.T) {
 			ResourceID:   "secret/unrelated-secret",
 			ResourceType: "secret",
 			ResourceName: "unrelated-secret",
-			Namespace:    "other", // Different namespace
+			Namespace:    "other",                  // Different namespace
 			Timestamp:    now.Add(2 * time.Minute), // Outside time window
 		},
 	}
-	
+
 	groups := correlator.GroupChanges(changes)
-	
+
 	// Should have one scaling group and one other changes group
 	if len(groups) != 2 {
 		t.Fatalf("Expected 2 groups (scaling + other), got %d", len(groups))
 	}
-	
+
 	// Check that scaling is detected correctly
 	var scalingGroup *ChangeGroup
 	var otherGroup *ChangeGroup
-	
+
 	for _, group := range groups {
 		if group.Title == "frontend Scaling" {
 			scalingGroup = &group
@@ -334,13 +334,13 @@ func TestCorrelator_AvoidFalseCorrelations(t *testing.T) {
 			otherGroup = &group
 		}
 	}
-	
+
 	if scalingGroup == nil {
 		t.Error("Scaling group should be detected")
 	} else if len(scalingGroup.Changes) != 1 {
 		t.Errorf("Scaling group should have 1 change, got %d", len(scalingGroup.Changes))
 	}
-	
+
 	if otherGroup == nil {
 		t.Error("Other changes group should exist")
 	} else if len(otherGroup.Changes) != 2 {
@@ -351,7 +351,7 @@ func TestCorrelator_AvoidFalseCorrelations(t *testing.T) {
 func TestCorrelator_TimeWindowRespected(t *testing.T) {
 	correlator := NewCorrelator()
 	now := time.Now()
-	
+
 	changes := []differ.SimpleChange{
 		{
 			Type:         "modified",
@@ -373,18 +373,18 @@ func TestCorrelator_TimeWindowRespected(t *testing.T) {
 			},
 		},
 	}
-	
+
 	groups := correlator.GroupChanges(changes)
-	
+
 	// Should NOT correlate due to time window
 	if len(groups) != 1 {
 		t.Fatalf("Expected 1 group (other changes), got %d", len(groups))
 	}
-	
+
 	if groups[0].Title != "Other Changes" {
 		t.Errorf("Expected 'Other Changes', got '%s'", groups[0].Title)
 	}
-	
+
 	if len(groups[0].Changes) != 2 {
 		t.Errorf("Expected 2 uncorrelated changes, got %d", len(groups[0].Changes))
 	}
@@ -393,7 +393,7 @@ func TestCorrelator_TimeWindowRespected(t *testing.T) {
 func TestCorrelator_isWithinTimeWindow(t *testing.T) {
 	correlator := NewCorrelator()
 	now := time.Now()
-	
+
 	tests := []struct {
 		name     string
 		t1       time.Time
@@ -437,7 +437,7 @@ func TestCorrelator_isWithinTimeWindow(t *testing.T) {
 			expected: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := correlator.isWithinTimeWindow(tt.t1, tt.t2)

@@ -1,0 +1,794 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>watcher: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/yairfalse/wgo/internal/watcher/display.go (10.8%)</option>
+				
+				<option value="file1">github.com/yairfalse/wgo/internal/watcher/watcher.go (64.1%)</option>
+				
+				<option value="file2">github.com/yairfalse/wgo/internal/watcher/webhook.go (61.9%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package watcher
+
+import (
+        "encoding/json"
+        "fmt"
+        "os"
+        "strings"
+        "time"
+
+        "github.com/yairfalse/wgo/internal/analyzer"
+)
+
+// displayChanges shows detected changes in the configured format
+func (w *Watcher) displayChanges(event *WatchEvent) <span class="cov8" title="1">{
+        switch w.outputFormat </span>{
+        case "table":<span class="cov8" title="1">
+                w.displayTableFormat(event)</span>
+        case "json":<span class="cov0" title="0">
+                w.displayJSONFormat(event)</span>
+        case "quiet":<span class="cov0" title="0">
+                w.displayQuietFormat(event)</span>
+        default:<span class="cov0" title="0">
+                w.displayTableFormat(event)</span>
+        }
+}
+
+// displayTableFormat shows changes in a human-readable table format
+func (w *Watcher) displayTableFormat(event *WatchEvent) <span class="cov8" title="1">{
+        timestamp := event.Timestamp.Format("15:04:05")
+        
+        // Summary line
+        fmt.Printf("[%s] 📊 %d changes detected (%d added, %d modified, %d removed)\n",
+                timestamp,
+                event.Summary.Total,
+                event.Summary.Added,
+                event.Summary.Modified,
+                event.Summary.Removed)
+
+        // Show correlated groups if available
+        if len(event.CorrelatedGroups) &gt; 0 </span><span class="cov0" title="0">{
+                fmt.Printf("┌─ 🔗 Correlated Changes:\n")
+                
+                for _, group := range event.CorrelatedGroups </span><span class="cov0" title="0">{
+                        // Skip low confidence groups if only showing high confidence
+                        if w.onlyHighConf &amp;&amp; group.Confidence != "high" </span><span class="cov0" title="0">{
+                                continue</span>
+                        }
+
+                        <span class="cov0" title="0">confidence := w.getConfidenceIndicator(group.Confidence)
+                        fmt.Printf("├─ %s %s %s (%d changes)\n",
+                                confidence,
+                                group.Title,
+                                group.Description,
+                                len(group.Changes))
+
+                        // Show individual changes in the group
+                        for i, change := range group.Changes </span><span class="cov0" title="0">{
+                                prefix := "├──"
+                                if i == len(group.Changes)-1 </span><span class="cov0" title="0">{
+                                        prefix = "└──"
+                                }</span>
+                                
+                                <span class="cov0" title="0">fmt.Printf("│  %s %s %s/%s\n",
+                                        prefix,
+                                        w.getChangeTypeIcon(change.Type),
+                                        change.ResourceType,
+                                        change.ResourceName)</span>
+                        }
+                }
+                <span class="cov0" title="0">fmt.Printf("└─\n")</span>
+        } else<span class="cov8" title="1"> {
+                // Show individual changes if no correlation
+                fmt.Printf("┌─ 📋 Individual Changes:\n")
+                for i, change := range event.RawChanges </span><span class="cov0" title="0">{
+                        prefix := "├─"
+                        if i == len(event.RawChanges)-1 </span><span class="cov0" title="0">{
+                                prefix = "└─"
+                        }</span>
+                        
+                        <span class="cov0" title="0">fmt.Printf("%s %s %s/%s in %s\n",
+                                prefix,
+                                w.getChangeTypeIcon(change.Type),
+                                change.ResourceType,
+                                change.ResourceName,
+                                change.Namespace)</span>
+                }
+        }
+        
+        <span class="cov8" title="1">fmt.Printf("\n")</span>
+}
+
+// displayJSONFormat outputs changes as JSON for automation
+func (w *Watcher) displayJSONFormat(event *WatchEvent) <span class="cov0" title="0">{
+        // Filter groups by confidence if needed
+        filteredEvent := *event
+        if w.onlyHighConf </span><span class="cov0" title="0">{
+                var filteredGroups []analyzer.ChangeGroup
+                for _, group := range event.CorrelatedGroups </span><span class="cov0" title="0">{
+                        if group.Confidence == "high" </span><span class="cov0" title="0">{
+                                filteredGroups = append(filteredGroups, group)
+                        }</span>
+                }
+                <span class="cov0" title="0">filteredEvent.CorrelatedGroups = filteredGroups</span>
+        }
+
+        <span class="cov0" title="0">encoder := json.NewEncoder(os.Stdout)
+        encoder.SetIndent("", "  ")
+        encoder.Encode(filteredEvent)</span>
+}
+
+// displayQuietFormat shows minimal output for scripts
+func (w *Watcher) displayQuietFormat(event *WatchEvent) <span class="cov0" title="0">{
+        timestamp := event.Timestamp.Format("15:04:05")
+        
+        // Only show high-confidence correlated changes in quiet mode
+        for _, group := range event.CorrelatedGroups </span><span class="cov0" title="0">{
+                if group.Confidence == "high" </span><span class="cov0" title="0">{
+                        fmt.Printf("[%s] %s\n", timestamp, group.Title)
+                }</span>
+        }
+        
+        // If no high-confidence correlations, show summary
+        <span class="cov0" title="0">if len(event.CorrelatedGroups) == 0 </span><span class="cov0" title="0">{
+                fmt.Printf("[%s] %d changes\n", timestamp, event.Summary.Total)
+        }</span>
+}
+
+// getConfidenceIndicator returns a visual indicator for confidence level
+func (w *Watcher) getConfidenceIndicator(confidence string) string <span class="cov0" title="0">{
+        switch confidence </span>{
+        case "high":<span class="cov0" title="0">
+                return "●"</span> // High confidence - solid circle
+        case "medium":<span class="cov0" title="0">
+                return "◐"</span> // Medium confidence - half circle
+        case "low":<span class="cov0" title="0">
+                return "○"</span> // Low confidence - empty circle
+        default:<span class="cov0" title="0">
+                return "?"</span>
+        }
+}
+
+// getChangeTypeIcon returns an icon for the change type
+func (w *Watcher) getChangeTypeIcon(changeType string) string <span class="cov0" title="0">{
+        switch changeType </span>{
+        case "added":<span class="cov0" title="0">
+                return "+"</span>
+        case "removed":<span class="cov0" title="0">
+                return "-"</span>
+        case "modified":<span class="cov0" title="0">
+                return "~"</span>
+        default:<span class="cov0" title="0">
+                return "?"</span>
+        }
+}
+
+// displayWatchHeader shows initial watch information
+func (w *Watcher) displayWatchHeader() <span class="cov0" title="0">{
+        if w.quiet </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov0" title="0">fmt.Printf("🔍 WGO Watch Mode\n")
+        fmt.Printf("================\n")
+        fmt.Printf("Monitoring: %s\n", strings.Join(w.providers, ", "))
+        fmt.Printf("Interval: %v\n", w.interval)
+        fmt.Printf("Output: %s\n", w.outputFormat)
+        
+        if w.onlyHighConf </span><span class="cov0" title="0">{
+                fmt.Printf("Filter: High confidence only\n")
+        }</span>
+        
+        <span class="cov0" title="0">if w.webhookURL != "" </span><span class="cov0" title="0">{
+                fmt.Printf("Webhook: Enabled\n")
+        }</span>
+        
+        <span class="cov0" title="0">fmt.Printf("\nPress Ctrl+C to stop watching\n")
+        fmt.Printf(strings.Repeat("─", 50) + "\n\n")</span>
+}
+
+// displayStatistics shows periodic statistics (called every N intervals)
+func (w *Watcher) displayStatistics(totalChecks, totalChanges int) <span class="cov0" title="0">{
+        if w.quiet </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov0" title="0">fmt.Printf("📈 Statistics: %d checks performed, %d change events detected\n\n",
+                totalChecks, totalChanges)</span>
+}
+
+// formatDuration formats a duration for display
+func formatDuration(d time.Duration) string <span class="cov0" title="0">{
+        if d &lt; time.Minute </span><span class="cov0" title="0">{
+                return fmt.Sprintf("%.0fs", d.Seconds())
+        }</span>
+        <span class="cov0" title="0">if d &lt; time.Hour </span><span class="cov0" title="0">{
+                return fmt.Sprintf("%.1fm", d.Minutes())
+        }</span>
+        <span class="cov0" title="0">return fmt.Sprintf("%.1fh", d.Hours())</span>
+}</pre>
+		
+		<pre class="file" id="file1" style="display: none">package watcher
+
+import (
+        "context"
+        "fmt"
+        "log"
+        "time"
+
+        "github.com/yairfalse/wgo/internal/analyzer"
+        "github.com/yairfalse/wgo/internal/collectors"
+        "github.com/yairfalse/wgo/internal/differ"
+        "github.com/yairfalse/wgo/pkg/types"
+)
+
+// Watcher provides real-time infrastructure monitoring
+type Watcher struct {
+        providers      []string
+        interval       time.Duration
+        lastSnapshot   *types.Snapshot
+        correlator     *analyzer.Correlator
+        differ         *differ.SimpleDiffer
+        quiet          bool
+        outputFormat   string
+        webhookURL     string
+        registry       *collectors.EnhancedRegistry
+        onlyHighConf   bool
+        changeCallback func(*WatchEvent)
+}
+
+// WatchEvent represents a real-time change event
+type WatchEvent struct {
+        Timestamp        time.Time                  `json:"timestamp"`
+        CorrelatedGroups []analyzer.ChangeGroup     `json:"correlated_groups"`
+        RawChanges       []differ.SimpleChange      `json:"raw_changes"`
+        Summary          differ.ChangeSummary       `json:"summary"`
+        Source           string                     `json:"source"`
+}
+
+// WatcherConfig holds configuration for the watcher
+type WatcherConfig struct {
+        Providers      []string
+        Interval       time.Duration
+        OutputFormat   string
+        Quiet          bool
+        OnlyHighConf   bool
+        WebhookURL     string
+        ChangeCallback func(*WatchEvent)
+}
+
+// NewWatcher creates a new infrastructure watcher
+func NewWatcher(config WatcherConfig) (*Watcher, error) <span class="cov8" title="1">{
+        if config.Interval &lt; 5*time.Second </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("minimum watch interval is 5 seconds")
+        }</span>
+
+        <span class="cov8" title="1">if config.OutputFormat == "" </span><span class="cov8" title="1">{
+                config.OutputFormat = "table"
+        }</span>
+
+        <span class="cov8" title="1">correlator := analyzer.NewCorrelator()
+        differ := differ.NewSimpleDiffer()
+        
+        // Get registry (this would normally be injected)
+        registry := collectors.NewEnhancedRegistry()
+
+        return &amp;Watcher{
+                providers:      config.Providers,
+                interval:       config.Interval,
+                correlator:     correlator,
+                differ:         differ,
+                quiet:          config.Quiet,
+                outputFormat:   config.OutputFormat,
+                webhookURL:     config.WebhookURL,
+                onlyHighConf:   config.OnlyHighConf,
+                changeCallback: config.ChangeCallback,
+                registry:       registry,
+        }, nil</span>
+}
+
+// Start begins real-time monitoring
+func (w *Watcher) Start(ctx context.Context) error <span class="cov8" title="1">{
+        if !w.quiet </span><span class="cov0" title="0">{
+                fmt.Printf("🔍 Starting infrastructure watch mode\n")
+                fmt.Printf("   Providers: %v\n", w.providers)
+                fmt.Printf("   Interval: %v\n", w.interval)
+                fmt.Printf("   Format: %s\n", w.outputFormat)
+                if w.webhookURL != "" </span><span class="cov0" title="0">{
+                        fmt.Printf("   Webhook: enabled\n")
+                }</span>
+                <span class="cov0" title="0">fmt.Printf("   Press Ctrl+C to stop\n\n")</span>
+        }
+
+        // Take initial snapshot
+        <span class="cov8" title="1">if err := w.takeInitialSnapshot(ctx); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to take initial snapshot: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">ticker := time.NewTicker(w.interval)
+        defer ticker.Stop()
+
+        for </span><span class="cov8" title="1">{
+                select </span>{
+                case &lt;-ticker.C:<span class="cov8" title="1">
+                        if err := w.checkForChanges(ctx); err != nil </span><span class="cov0" title="0">{
+                                if !w.quiet </span><span class="cov0" title="0">{
+                                        log.Printf("Watch error: %v", err)
+                                }</span>
+                                // Continue watching even if there are errors
+                        }
+                case &lt;-ctx.Done():<span class="cov8" title="1">
+                        if !w.quiet </span><span class="cov0" title="0">{
+                                fmt.Printf("\n🛑 Watch mode stopped\n")
+                        }</span>
+                        <span class="cov8" title="1">return ctx.Err()</span>
+                }
+        }
+}
+
+// takeInitialSnapshot captures the first snapshot
+func (w *Watcher) takeInitialSnapshot(ctx context.Context) error <span class="cov8" title="1">{
+        snapshot, err := w.takeSnapshot(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">w.lastSnapshot = snapshot
+        
+        if !w.quiet </span><span class="cov8" title="1">{
+                fmt.Printf("📊 Initial snapshot captured (%d resources)\n", len(snapshot.Resources))
+                fmt.Printf("⏰ Watching for changes every %v...\n\n", w.interval)
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+// checkForChanges compares current state with last snapshot
+func (w *Watcher) checkForChanges(ctx context.Context) error <span class="cov8" title="1">{
+        // Take new snapshot
+        currentSnapshot, err := w.takeSnapshot(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to take snapshot: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">if w.lastSnapshot == nil </span><span class="cov8" title="1">{
+                w.lastSnapshot = currentSnapshot
+                return nil
+        }</span>
+
+        // Detect changes using simple differ
+        <span class="cov8" title="1">report, err := w.differ.Compare(w.lastSnapshot, currentSnapshot)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to compare snapshots: %w", err)
+        }</span>
+
+        // If no changes, continue silently
+        <span class="cov8" title="1">if len(report.Changes) == 0 </span><span class="cov8" title="1">{
+                w.lastSnapshot = currentSnapshot
+                return nil
+        }</span>
+
+        // Correlate changes using the brilliant correlation engine
+        <span class="cov0" title="0">correlatedGroups := w.correlator.GroupChanges(report.Changes)
+
+        // Create watch event
+        event := &amp;WatchEvent{
+                Timestamp:        time.Now(),
+                CorrelatedGroups: correlatedGroups,
+                RawChanges:       report.Changes,
+                Summary:          report.Summary,
+                Source:           "wgo-watch",
+        }
+
+        // Display changes
+        w.displayChanges(event)
+
+        // Send webhook if configured
+        if w.webhookURL != "" </span><span class="cov0" title="0">{
+                go w.sendWebhook(event) // Non-blocking
+        }</span>
+
+        // Call custom callback if provided
+        <span class="cov0" title="0">if w.changeCallback != nil </span><span class="cov0" title="0">{
+                go w.changeCallback(event) // Non-blocking
+        }</span>
+
+        // Update last snapshot
+        <span class="cov0" title="0">w.lastSnapshot = currentSnapshot
+
+        return nil</span>
+}
+
+// takeSnapshot captures current infrastructure state
+func (w *Watcher) takeSnapshot(ctx context.Context) (*types.Snapshot, error) <span class="cov8" title="1">{
+        // This is a simplified version - in reality we'd iterate through providers
+        // and use the collector registry to gather resources
+        
+        snapshot := &amp;types.Snapshot{
+                ID:        fmt.Sprintf("watch-%d", time.Now().Unix()),
+                Timestamp: time.Now(),
+                Provider:  "multi", // Multiple providers
+                Resources: []types.Resource{},
+        }
+
+        // In a real implementation, we'd:
+        // 1. Iterate through w.providers
+        // 2. Use w.registry.GetCollector(provider) 
+        // 3. Collect resources from each provider
+        // 4. Merge results into snapshot.Resources
+        
+        // For now, return empty snapshot to avoid build errors
+        // This would be replaced with actual collection logic
+        
+        return snapshot, nil
+}</span>
+
+// GetStatus returns current watcher status
+func (w *Watcher) GetStatus() map[string]interface{} <span class="cov8" title="1">{
+        status := map[string]interface{}{
+                "active":         true,
+                "interval":       w.interval.String(),
+                "providers":      w.providers,
+                "output_format":  w.outputFormat,
+                "webhook_url":    w.webhookURL != "",
+                "quiet_mode":     w.quiet,
+                "only_high_conf": w.onlyHighConf,
+        }
+
+        if w.lastSnapshot != nil </span><span class="cov8" title="1">{
+                status["last_snapshot_time"] = w.lastSnapshot.Timestamp
+                status["last_resource_count"] = len(w.lastSnapshot.Resources)
+        }</span>
+
+        <span class="cov8" title="1">return status</span>
+}
+
+// Stop gracefully stops the watcher (used for testing)
+func (w *Watcher) Stop() {<span class="cov0" title="0">
+        // This method exists for testing purposes
+        // The actual stopping is handled by context cancellation in Start()
+}</pre>
+		
+		<pre class="file" id="file2" style="display: none">package watcher
+
+import (
+        "bytes"
+        "encoding/json"
+        "fmt"
+        "net/http"
+        "strings"
+        "time"
+)
+
+// WebhookPayload represents the payload sent to webhooks
+type WebhookPayload struct {
+        Timestamp   time.Time            `json:"timestamp"`
+        Source      string               `json:"source"`
+        Summary     WebhookSummary       `json:"summary"`
+        Groups      []WebhookGroup       `json:"groups,omitempty"`
+        RawChanges  []WebhookChange      `json:"raw_changes,omitempty"`
+        Metadata    WebhookMetadata      `json:"metadata"`
+}
+
+// WebhookSummary provides a summary of changes
+type WebhookSummary struct {
+        Total     int `json:"total"`
+        Added     int `json:"added"`
+        Modified  int `json:"modified"`
+        Removed   int `json:"removed"`
+        HighConf  int `json:"high_confidence_groups"`
+        MediumConf int `json:"medium_confidence_groups"`
+        LowConf   int `json:"low_confidence_groups"`
+}
+
+// WebhookGroup represents a correlated group for webhooks
+type WebhookGroup struct {
+        Title       string          `json:"title"`
+        Description string          `json:"description"`
+        Confidence  string          `json:"confidence"`
+        ChangeCount int             `json:"change_count"`
+        Changes     []WebhookChange `json:"changes"`
+        Reason      string          `json:"reason"`
+}
+
+// WebhookChange represents an individual change for webhooks
+type WebhookChange struct {
+        Type         string    `json:"type"`
+        ResourceType string    `json:"resource_type"`
+        ResourceName string    `json:"resource_name"`
+        Namespace    string    `json:"namespace,omitempty"`
+        Timestamp    time.Time `json:"timestamp"`
+}
+
+// WebhookMetadata provides additional context
+type WebhookMetadata struct {
+        WatchInterval string   `json:"watch_interval"`
+        Providers     []string `json:"providers"`
+        Version       string   `json:"version"`
+}
+
+// sendWebhook sends change notification to configured webhook URL
+func (w *Watcher) sendWebhook(event *WatchEvent) error <span class="cov8" title="1">{
+        if w.webhookURL == "" </span><span class="cov8" title="1">{
+                return nil
+        }</span>
+
+        <span class="cov8" title="1">payload := w.buildWebhookPayload(event)
+        
+        jsonData, err := json.Marshal(payload)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to marshal webhook payload: %w", err)
+        }</span>
+
+        // Send with timeout
+        <span class="cov8" title="1">client := &amp;http.Client{
+                Timeout: 30 * time.Second,
+        }
+
+        resp, err := client.Post(w.webhookURL, "application/json", bytes.NewBuffer(jsonData))
+        if err != nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("failed to send webhook: %w", err)
+        }</span>
+        <span class="cov8" title="1">defer resp.Body.Close()
+
+        if resp.StatusCode &gt;= 400 </span><span class="cov8" title="1">{
+                return fmt.Errorf("webhook returned error status: %d", resp.StatusCode)
+        }</span>
+
+        <span class="cov8" title="1">if !w.quiet </span><span class="cov0" title="0">{
+                fmt.Printf("📡 Webhook sent successfully (%d)\n", resp.StatusCode)
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+// buildWebhookPayload converts a WatchEvent to webhook format
+func (w *Watcher) buildWebhookPayload(event *WatchEvent) WebhookPayload <span class="cov8" title="1">{
+        // Build summary with confidence counts
+        summary := WebhookSummary{
+                Total:    event.Summary.Total,
+                Added:    event.Summary.Added,
+                Modified: event.Summary.Modified,
+                Removed:  event.Summary.Removed,
+        }
+
+        // Count confidence levels
+        for _, group := range event.CorrelatedGroups </span><span class="cov8" title="1">{
+                switch group.Confidence </span>{
+                case "high":<span class="cov8" title="1">
+                        summary.HighConf++</span>
+                case "medium":<span class="cov8" title="1">
+                        summary.MediumConf++</span>
+                case "low":<span class="cov0" title="0">
+                        summary.LowConf++</span>
+                }
+        }
+
+        // Convert correlated groups
+        <span class="cov8" title="1">var webhookGroups []WebhookGroup
+        for _, group := range event.CorrelatedGroups </span><span class="cov8" title="1">{
+                webhookGroup := WebhookGroup{
+                        Title:       group.Title,
+                        Description: group.Description,
+                        Confidence:  group.Confidence,
+                        ChangeCount: len(group.Changes),
+                        Reason:      group.Reason,
+                }
+
+                // Convert changes in the group
+                for _, change := range group.Changes </span><span class="cov8" title="1">{
+                        webhookGroup.Changes = append(webhookGroup.Changes, WebhookChange{
+                                Type:         change.Type,
+                                ResourceType: change.ResourceType,
+                                ResourceName: change.ResourceName,
+                                Namespace:    change.Namespace,
+                                Timestamp:    change.Timestamp,
+                        })
+                }</span>
+
+                <span class="cov8" title="1">webhookGroups = append(webhookGroups, webhookGroup)</span>
+        }
+
+        // Convert raw changes (for ungrouped changes)
+        <span class="cov8" title="1">var rawChanges []WebhookChange
+        for _, change := range event.RawChanges </span><span class="cov8" title="1">{
+                rawChanges = append(rawChanges, WebhookChange{
+                        Type:         change.Type,
+                        ResourceType: change.ResourceType,
+                        ResourceName: change.ResourceName,
+                        Namespace:    change.Namespace,
+                        Timestamp:    change.Timestamp,
+                })
+        }</span>
+
+        <span class="cov8" title="1">return WebhookPayload{
+                Timestamp:  event.Timestamp,
+                Source:     event.Source,
+                Summary:    summary,
+                Groups:     webhookGroups,
+                RawChanges: rawChanges,
+                Metadata: WebhookMetadata{
+                        WatchInterval: w.interval.String(),
+                        Providers:     w.providers,
+                        Version:       "1.0.0", // This would come from build info
+                },
+        }</span>
+}
+
+// sendSlackWebhook sends a Slack-formatted webhook
+func (w *Watcher) sendSlackWebhook(event *WatchEvent) error <span class="cov0" title="0">{
+        if w.webhookURL == "" </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+
+        // Build Slack-specific payload
+        <span class="cov0" title="0">payload := map[string]interface{}{
+                "text": fmt.Sprintf("🔍 Infrastructure changes detected at %s",
+                        event.Timestamp.Format("15:04:05")),
+                "attachments": []map[string]interface{}{
+                        {
+                                "color": w.getSlackColor(event),
+                                "fields": []map[string]interface{}{
+                                        {
+                                                "title": "Summary",
+                                                "value": fmt.Sprintf("%d total changes (%d added, %d modified, %d removed)",
+                                                        event.Summary.Total,
+                                                        event.Summary.Added,
+                                                        event.Summary.Modified,
+                                                        event.Summary.Removed),
+                                                "short": false,
+                                        },
+                                },
+                        },
+                },
+        }
+
+        // Add correlated groups as fields
+        if len(event.CorrelatedGroups) &gt; 0 </span><span class="cov0" title="0">{
+                var groupTexts []string
+                for _, group := range event.CorrelatedGroups </span><span class="cov0" title="0">{
+                        confidence := w.getConfidenceIndicator(group.Confidence)
+                        groupTexts = append(groupTexts, fmt.Sprintf("%s %s (%d changes)",
+                                confidence, group.Title, len(group.Changes)))
+                }</span>
+
+                <span class="cov0" title="0">attachment := payload["attachments"].([]map[string]interface{})[0]
+                fields := attachment["fields"].([]map[string]interface{})
+                fields = append(fields, map[string]interface{}{
+                        "title": "Correlated Changes",
+                        "value": fmt.Sprintf("```\n%s\n```", strings.Join(groupTexts, "\n")),
+                        "short": false,
+                })
+                attachment["fields"] = fields</span>
+        }
+
+        <span class="cov0" title="0">jsonData, err := json.Marshal(payload)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to marshal Slack payload: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">client := &amp;http.Client{Timeout: 30 * time.Second}
+        resp, err := client.Post(w.webhookURL, "application/json", bytes.NewBuffer(jsonData))
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to send Slack webhook: %w", err)
+        }</span>
+        <span class="cov0" title="0">defer resp.Body.Close()
+
+        return nil</span>
+}
+
+// getSlackColor returns appropriate color for Slack attachments
+func (w *Watcher) getSlackColor(event *WatchEvent) string <span class="cov8" title="1">{
+        // Determine color based on change types and confidence
+        hasHighConf := false
+        for _, group := range event.CorrelatedGroups </span><span class="cov8" title="1">{
+                if group.Confidence == "high" </span><span class="cov8" title="1">{
+                        hasHighConf = true
+                        break</span>
+                }
+        }
+
+        <span class="cov8" title="1">if hasHighConf || event.Summary.Removed &gt; 0 </span><span class="cov8" title="1">{
+                return "danger" // Red for high confidence or deletions
+        }</span> else<span class="cov8" title="1"> if event.Summary.Added &gt; 0 </span><span class="cov8" title="1">{
+                return "good" // Green for additions
+        }</span> else<span class="cov8" title="1"> {
+                return "warning" // Yellow for modifications
+        }</span>
+}</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

@@ -15,9 +15,9 @@ import (
 
 // ExportManager handles exporting data to various formats
 type ExportManager struct {
-	atomicWriter *storage.AtomicWriter
+	atomicWriter  *storage.AtomicWriter
 	tableRenderer *EnhancedTableRenderer
-	noColor      bool
+	noColor       bool
 }
 
 // NewExportManager creates a new export manager
@@ -25,7 +25,7 @@ func NewExportManager(atomicWriter *storage.AtomicWriter, noColor bool) *ExportM
 	return &ExportManager{
 		atomicWriter:  atomicWriter,
 		tableRenderer: NewEnhancedTableRenderer(noColor, 120),
-		noColor:      noColor,
+		noColor:       noColor,
 	}
 }
 
@@ -112,11 +112,11 @@ func (e *ExportManager) filterReport(report *differ.DriftReport, filterLevel str
 
 	// Create filtered copy
 	filtered := &differ.DriftReport{
-		ID:        report.ID,
+		ID:         report.ID,
 		BaselineID: report.BaselineID,
-		CurrentID: report.CurrentID,
-		Timestamp: report.Timestamp,
-		Metadata:  report.Metadata,
+		CurrentID:  report.CurrentID,
+		Timestamp:  report.Timestamp,
+		Metadata:   report.Metadata,
 	}
 
 	// Filter resource changes
@@ -182,7 +182,7 @@ func (e *ExportManager) exportToMarkdown(report *differ.DriftReport) ([]byte, er
 	// Detailed changes
 	if len(report.ResourceChanges) > 0 {
 		md.WriteString("## Detailed Changes\n\n")
-		
+
 		// Group by severity
 		bySeverity := make(map[differ.RiskLevel][]differ.ResourceDiff)
 		for _, change := range report.ResourceChanges {
@@ -295,7 +295,7 @@ func (e *ExportManager) exportToHTML(report *differ.DriftReport) ([]byte, error)
         <h2>Summary</h2>
         <table>
             <tr><th>Metric</th><th>Count</th></tr>`)
-	
+
 	html.WriteString(fmt.Sprintf(`
             <tr><td>Total Resources</td><td>%d</td></tr>
             <tr><td>Changed Resources</td><td>%d</td></tr>
@@ -307,7 +307,7 @@ func (e *ExportManager) exportToHTML(report *differ.DriftReport) ([]byte, error)
 		report.Summary.AddedResources,
 		report.Summary.RemovedResources,
 		report.Summary.ModifiedResources))
-	
+
 	html.WriteString(`
         </table>
     </div>`)
@@ -462,7 +462,7 @@ func (e *ExportManager) recalculateSummary(changes []differ.ResourceDiff) differ
 
 	for _, change := range changes {
 		summary.ChangedResources++
-		
+
 		switch change.DriftType {
 		case differ.ChangeTypeAdded:
 			summary.AddedResources++

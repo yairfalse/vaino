@@ -23,12 +23,12 @@ type TerraformStateFile struct {
 
 // ParseResult holds the result of parsing a Terraform state file
 type ParseResult struct {
-	FilePath   string
-	Resources  []types.Resource
-	StateInfo  StateInfo
-	Error      error
-	ParseTime  time.Duration
-	WorkerID   int
+	FilePath  string
+	Resources []types.Resource
+	StateInfo StateInfo
+	Error     error
+	ParseTime time.Duration
+	WorkerID  int
 }
 
 // StateInfo holds information about the Terraform state
@@ -62,26 +62,26 @@ type ConcurrentTerraformParser struct {
 	jobChan         chan TerraformParseJob
 	workers         []*terraformWorker
 	resultCollector *ResultCollector
-	
+
 	// Configuration
-	maxFileSize   int64
-	bufferSize    int
-	parseTimeout  time.Duration
-	
+	maxFileSize  int64
+	bufferSize   int
+	parseTimeout time.Duration
+
 	// State management
-	ctx           context.Context
-	cancel        context.CancelFunc
-	wg            sync.WaitGroup
-	
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
+
 	// Metrics
-	totalParsed   int64
-	totalErrors   int64
-	totalTime     time.Duration
-	mu            sync.RWMutex
-	
+	totalParsed int64
+	totalErrors int64
+	totalTime   time.Duration
+	mu          sync.RWMutex
+
 	// Memory management
-	memoryPool    *MemoryPool
-	resourcePool  *ResourcePool
+	memoryPool   *MemoryPool
+	resourcePool *ResourcePool
 }
 
 // terraformWorker represents a single parser worker
@@ -93,20 +93,20 @@ type terraformWorker struct {
 
 // terraformWorkerStats holds statistics for a parser worker
 type terraformWorkerStats struct {
-	filesParsed   int64
+	filesParsed    int64
 	resourcesFound int64
-	errors        int64
-	totalTime     time.Duration
-	lastActive    time.Time
-	mu            sync.RWMutex
+	errors         int64
+	totalTime      time.Duration
+	lastActive     time.Time
+	mu             sync.RWMutex
 }
 
 // ResultCollector aggregates parsing results
 type ResultCollector struct {
-	results       []ParseResult
-	errors        []error
+	results        []ParseResult
+	errors         []error
 	totalResources int
-	mu            sync.RWMutex
+	mu             sync.RWMutex
 }
 
 // MemoryPool manages memory allocation for parsing
@@ -132,18 +132,18 @@ func NewConcurrentTerraformParser(opts ...TerraformParserOption) *ConcurrentTerr
 		memoryPool:      NewMemoryPool(32, 1024*1024), // 32 buffers of 1MB each
 		resourcePool:    NewResourcePool(),
 	}
-	
+
 	// Apply options
 	for _, opt := range opts {
 		opt(parser)
 	}
-	
+
 	// Initialize channels
 	parser.jobChan = make(chan TerraformParseJob, parser.bufferSize)
-	
+
 	// Create context
 	parser.ctx, parser.cancel = context.WithCancel(context.Background())
-	
+
 	// Initialize workers
 	parser.workers = make([]*terraformWorker, parser.workerCount)
 	for i := 0; i < parser.workerCount; i++ {
@@ -152,7 +152,7 @@ func NewConcurrentTerraformParser(opts ...TerraformParserOption) *ConcurrentTerr
 			parser: parser,
 		}
 	}
-	
+
 	return parser
 }
 
@@ -196,13 +196,13 @@ func (p *ConcurrentTerraformParser) ParseStatesConcurrent(statePaths []string) (
 	if len(statePaths) == 0 {
 		return nil, fmt.Errorf("no state paths provided")
 	}
-	
+
 	// Start workers
 	if err := p.start(); err != nil {
 		return nil, fmt.Errorf("failed to start parser: %w", err)
 	}
 	defer p.stop()
-	
+
 	// Create state files with metadata
 	stateFiles := make([]TerraformStateFile, 0, len(statePaths))
 	for _, path := range statePaths {
@@ -213,23 +213,23 @@ func (p *ConcurrentTerraformParser) ParseStatesConcurrent(statePaths []string) (
 		}
 		stateFiles = append(stateFiles, stateFile)
 	}
-	
+
 	if len(stateFiles) == 0 {
 		return nil, fmt.Errorf("no valid state files found")
 	}
-	
+
 	// Sort by priority (larger files first for better load balancing)
 	p.sortStateFilesByPriority(stateFiles)
-	
+
 	// Create result channel
 	resultChan := make(chan ParseResult, len(stateFiles))
-	
+
 	// Submit parse jobs
 	for _, stateFile := range stateFiles {
 		job := TerraformParseJob{
 			StateFile: stateFile,
 			ParseOptions: ParseOptions{
-				MaxResourceSize: 10 * 1024 * 1024, // 10MB per resource
+				MaxResourceSize: 10 * 1024 * 1024,              // 10MB per resource
 				StreamingMode:   stateFile.Size > 50*1024*1024, // Stream if > 50MB
 				ValidationMode:  true,
 				Timeout:         p.parseTimeout,
@@ -237,18 +237,18 @@ func (p *ConcurrentTerraformParser) ParseStatesConcurrent(statePaths []string) (
 			},
 			ResultChan: resultChan,
 		}
-		
+
 		select {
 		case p.jobChan <- job:
 		case <-p.ctx.Done():
 			return nil, fmt.Errorf("parser context cancelled")
 		}
 	}
-	
+
 	// Collect results
 	var allResources []types.Resource
 	var errors []error
-	
+
 	for i := 0; i < len(stateFiles); i++ {
 		select {
 		case result := <-resultChan:
@@ -262,12 +262,12 @@ func (p *ConcurrentTerraformParser) ParseStatesConcurrent(statePaths []string) (
 			break
 		}
 	}
-	
+
 	// Return results even if some files failed
 	if len(errors) > 0 && len(allResources) == 0 {
 		return nil, fmt.Errorf("all state files failed to parse: %v", errors)
 	}
-	
+
 	return allResources, nil
 }
 
@@ -278,7 +278,7 @@ func (p *ConcurrentTerraformParser) start() error {
 		p.wg.Add(1)
 		go p.worker(i)
 	}
-	
+
 	return nil
 }
 
@@ -286,17 +286,17 @@ func (p *ConcurrentTerraformParser) start() error {
 func (p *ConcurrentTerraformParser) stop() {
 	// Cancel context
 	p.cancel()
-	
+
 	// Close job channel
 	close(p.jobChan)
-	
+
 	// Wait for workers to finish
 	done := make(chan struct{})
 	go func() {
 		p.wg.Wait()
 		close(done)
 	}()
-	
+
 	// Wait for completion or timeout
 	select {
 	case <-done:
@@ -310,9 +310,9 @@ func (p *ConcurrentTerraformParser) stop() {
 // worker processes parsing jobs
 func (p *ConcurrentTerraformParser) worker(workerID int) {
 	defer p.wg.Done()
-	
+
 	worker := p.workers[workerID]
-	
+
 	for {
 		select {
 		case <-p.ctx.Done():
@@ -321,13 +321,13 @@ func (p *ConcurrentTerraformParser) worker(workerID int) {
 			if !ok {
 				return
 			}
-			
+
 			// Process the job
 			result := p.processParseJob(job, workerID)
-			
+
 			// Update worker stats
 			worker.updateStats(result)
-			
+
 			// Send result
 			select {
 			case job.ResultChan <- result:
@@ -341,31 +341,31 @@ func (p *ConcurrentTerraformParser) worker(workerID int) {
 // processParseJob processes a single parsing job
 func (p *ConcurrentTerraformParser) processParseJob(job TerraformParseJob, workerID int) ParseResult {
 	startTime := time.Now()
-	
+
 	result := ParseResult{
 		FilePath:  job.StateFile.Path,
 		WorkerID:  workerID,
 		ParseTime: 0,
 	}
-	
+
 	// Check file size
 	if job.StateFile.Size > p.maxFileSize {
 		result.Error = fmt.Errorf("file size %d exceeds maximum %d", job.StateFile.Size, p.maxFileSize)
 		return result
 	}
-	
+
 	// Parse with timeout
 	ctx, cancel := context.WithTimeout(p.ctx, job.ParseOptions.Timeout)
 	defer cancel()
-	
+
 	// Parse the file
 	resources, stateInfo, err := p.parseStateFile(ctx, job.StateFile, job.ParseOptions)
-	
+
 	result.ParseTime = time.Since(startTime)
 	result.Resources = resources
 	result.StateInfo = stateInfo
 	result.Error = err
-	
+
 	return result
 }
 
@@ -377,11 +377,11 @@ func (p *ConcurrentTerraformParser) parseStateFile(ctx context.Context, stateFil
 		return nil, StateInfo{}, fmt.Errorf("failed to open state file: %w", err)
 	}
 	defer file.Close()
-	
+
 	// Get buffer from pool
 	buffer := p.memoryPool.Get()
 	defer p.memoryPool.Put(buffer)
-	
+
 	// Choose parsing strategy based on file size
 	if opts.StreamingMode {
 		return p.parseStreamingMode(ctx, file, stateFile, opts)
@@ -397,42 +397,42 @@ func (p *ConcurrentTerraformParser) parseStandardMode(ctx context.Context, file 
 	if err != nil {
 		return nil, StateInfo{}, fmt.Errorf("failed to read state file: %w", err)
 	}
-	
+
 	// Parse JSON
 	var tfState struct {
 		Version          int    `json:"version"`
 		TerraformVersion string `json:"terraform_version"`
 		Serial           int64  `json:"serial"`
 		Resources        []struct {
-			Type      string                 `json:"type"`
-			Name      string                 `json:"name"`
-			Provider  string                 `json:"provider"`
+			Type      string                   `json:"type"`
+			Name      string                   `json:"name"`
+			Provider  string                   `json:"provider"`
 			Instances []map[string]interface{} `json:"instances"`
 		} `json:"resources"`
 		Outputs map[string]interface{} `json:"outputs"`
 	}
-	
+
 	if err := json.Unmarshal(data, &tfState); err != nil {
 		return nil, StateInfo{}, fmt.Errorf("failed to parse JSON: %w", err)
 	}
-	
+
 	// Convert to resources
 	resources := make([]types.Resource, 0, len(tfState.Resources)*2)
 	for _, tfResource := range tfState.Resources {
 		for i, instance := range tfResource.Instances {
 			resource := p.resourcePool.Get()
-			
+
 			// Set basic fields
 			resource.ID = fmt.Sprintf("%s.%s[%d]", tfResource.Type, tfResource.Name, i)
 			resource.Type = tfResource.Type
 			resource.Name = tfResource.Name
 			resource.Provider = "terraform"
-			
+
 			// Set configuration from instance
 			if attributes, ok := instance["attributes"].(map[string]interface{}); ok {
 				resource.Configuration = attributes
 			}
-			
+
 			// Set metadata
 			resource.Metadata = types.ResourceMetadata{
 				StateFile:      stateFile.Path,
@@ -441,7 +441,7 @@ func (p *ConcurrentTerraformParser) parseStandardMode(ctx context.Context, file 
 			}
 			resource.Metadata.AdditionalData["terraform_version"] = tfState.TerraformVersion
 			resource.Metadata.AdditionalData["serial"] = tfState.Serial
-			
+
 			// Validate if requested
 			if opts.ValidationMode {
 				if err := resource.Validate(); err != nil {
@@ -449,12 +449,12 @@ func (p *ConcurrentTerraformParser) parseStandardMode(ctx context.Context, file 
 					continue
 				}
 			}
-			
+
 			resources = append(resources, *resource)
 			p.resourcePool.Put(resource)
 		}
 	}
-	
+
 	stateInfo := StateInfo{
 		Version:          tfState.Version,
 		TerraformVersion: tfState.TerraformVersion,
@@ -462,14 +462,14 @@ func (p *ConcurrentTerraformParser) parseStandardMode(ctx context.Context, file 
 		ResourceCount:    len(resources),
 		OutputCount:      len(tfState.Outputs),
 	}
-	
+
 	return resources, stateInfo, nil
 }
 
 // parseStreamingMode parses using streaming JSON decoder
 func (p *ConcurrentTerraformParser) parseStreamingMode(ctx context.Context, file *os.File, stateFile TerraformStateFile, opts ParseOptions) ([]types.Resource, StateInfo, error) {
-	decoder := json.NewDecoder(file)
-	
+	_ = json.NewDecoder(file)
+
 	// For streaming mode, we need to implement a streaming JSON parser
 	// This is a simplified version - in production, you'd want to use a proper streaming parser
 	return p.parseStandardMode(ctx, file, stateFile, opts)
@@ -481,12 +481,12 @@ func (p *ConcurrentTerraformParser) createStateFile(path string) (TerraformState
 	if err != nil {
 		return TerraformStateFile{}, err
 	}
-	
+
 	priority := 100
 	if info.Size() > 100*1024*1024 { // Files > 100MB get higher priority
 		priority = 200
 	}
-	
+
 	return TerraformStateFile{
 		Path:     path,
 		Size:     info.Size(),
@@ -511,11 +511,11 @@ func (p *ConcurrentTerraformParser) sortStateFilesByPriority(stateFiles []Terraf
 func (w *terraformWorker) updateStats(result ParseResult) {
 	w.stats.mu.Lock()
 	defer w.stats.mu.Unlock()
-	
+
 	w.stats.lastActive = time.Now()
 	w.stats.totalTime += result.ParseTime
 	w.stats.filesParsed++
-	
+
 	if result.Error != nil {
 		w.stats.errors++
 	} else {
@@ -527,12 +527,12 @@ func (w *terraformWorker) updateStats(result ParseResult) {
 func (p *ConcurrentTerraformParser) GetStats() TerraformParsingStats {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	
+
 	stats := TerraformParsingStats{
 		WorkerCount: p.workerCount,
 		WorkerStats: make([]TerraformWorkerStats, len(p.workers)),
 	}
-	
+
 	for i, worker := range p.workers {
 		worker.stats.mu.RLock()
 		stats.WorkerStats[i] = TerraformWorkerStats{
@@ -545,7 +545,7 @@ func (p *ConcurrentTerraformParser) GetStats() TerraformParsingStats {
 		}
 		worker.stats.mu.RUnlock()
 	}
-	
+
 	return stats
 }
 
@@ -572,12 +572,12 @@ func NewMemoryPool(capacity int, size int) *MemoryPool {
 		capacity: capacity,
 		size:     size,
 	}
-	
+
 	// Pre-allocate buffers
 	for i := 0; i < capacity; i++ {
 		pool.buffers <- make([]byte, size)
 	}
-	
+
 	return pool
 }
 

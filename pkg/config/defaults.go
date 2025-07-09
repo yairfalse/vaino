@@ -53,20 +53,20 @@ func (dm *DefaultsManager) GenerateSmartDefaults() (*Config, error) {
 func (dm *DefaultsManager) getDefaultStoragePath() string {
 	// Check if we're in a project directory (has .git, go.mod, etc.)
 	projectMarkers := []string{".git", "go.mod", "package.json", "terraform.tf", "main.tf"}
-	
+
 	for _, marker := range projectMarkers {
 		if _, err := os.Stat(filepath.Join(dm.workingDir, marker)); err == nil {
 			// Use project-local storage
 			return filepath.Join(dm.workingDir, ".wgo")
 		}
 	}
-	
+
 	// Use user home directory
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "./.wgo" // Fallback to current directory
 	}
-	
+
 	return filepath.Join(homeDir, ".wgo")
 }
 
@@ -179,7 +179,7 @@ func (dm *DefaultsManager) getDefaultAWSRegions() []string {
 func (dm *DefaultsManager) GenerateAutoName(prefix string) string {
 	// Get directory name
 	dirName := filepath.Base(dm.workingDir)
-	
+
 	// Clean up the name
 	if dirName == "." || dirName == "/" {
 		dirName = "wgo"
@@ -187,7 +187,7 @@ func (dm *DefaultsManager) GenerateAutoName(prefix string) string {
 
 	// Add timestamp
 	timestamp := time.Now().Format("2006-01-02-15-04")
-	
+
 	return fmt.Sprintf("%s-%s-%s", prefix, dirName, timestamp)
 }
 
@@ -217,7 +217,7 @@ func (dm *DefaultsManager) GetUserFriendlyFeedback(config *Config) []string {
 	var feedback []string
 
 	feedback = append(feedback, fmt.Sprintf("📁 Storage location: %s", config.Storage.BasePath))
-	
+
 	var enabledProviders []string
 	if config.Collectors.Terraform.Enabled {
 		enabledProviders = append(enabledProviders, "terraform")
@@ -228,7 +228,7 @@ func (dm *DefaultsManager) GetUserFriendlyFeedback(config *Config) []string {
 	if config.Collectors.Kubernetes.Enabled {
 		enabledProviders = append(enabledProviders, "kubernetes")
 	}
-	
+
 	if len(enabledProviders) > 0 {
 		feedback = append(feedback, "🔍 Auto-detected providers:")
 		for _, provider := range enabledProviders {

@@ -20,13 +20,13 @@ func NewFileStorage(dataDir string) (*FileStorage, error) {
 		filepath.Join(dataDir, "baselines"),
 		filepath.Join(dataDir, "history", "drift-reports"),
 	}
-	
+
 	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return nil, err
 		}
 	}
-	
+
 	return &FileStorage{dataDir: dataDir}, nil
 }
 
@@ -48,7 +48,7 @@ func (fs *FileStorage) ListSnapshots() ([]SnapshotInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var snapshots []SnapshotInfo
 	for _, entry := range entries {
 		if !entry.IsDir() && filepath.Ext(entry.Name()) == ".json" {
@@ -57,7 +57,7 @@ func (fs *FileStorage) ListSnapshots() ([]SnapshotInfo, error) {
 			if err != nil {
 				continue // Skip invalid files
 			}
-			
+
 			stat, _ := entry.Info()
 			info := SnapshotInfo{
 				ID:            snapshot.ID,
@@ -70,7 +70,7 @@ func (fs *FileStorage) ListSnapshots() ([]SnapshotInfo, error) {
 			snapshots = append(snapshots, info)
 		}
 	}
-	
+
 	return snapshots, nil
 }
 
@@ -97,7 +97,7 @@ func (fs *FileStorage) ListBaselines() ([]BaselineInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var baselines []BaselineInfo
 	for _, entry := range entries {
 		if !entry.IsDir() && filepath.Ext(entry.Name()) == ".json" {
@@ -106,7 +106,7 @@ func (fs *FileStorage) ListBaselines() ([]BaselineInfo, error) {
 			if err != nil {
 				continue // Skip invalid files
 			}
-			
+
 			stat, _ := entry.Info()
 			info := BaselineInfo{
 				ID:          baseline.ID,
@@ -122,7 +122,7 @@ func (fs *FileStorage) ListBaselines() ([]BaselineInfo, error) {
 			baselines = append(baselines, info)
 		}
 	}
-	
+
 	return baselines, nil
 }
 
@@ -152,7 +152,7 @@ func (fs *FileStorage) ListDriftReports() ([]DriftReportInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var reports []DriftReportInfo
 	for _, entry := range entries {
 		if !entry.IsDir() && filepath.Ext(entry.Name()) == ".json" {
@@ -161,7 +161,7 @@ func (fs *FileStorage) ListDriftReports() ([]DriftReportInfo, error) {
 			if err != nil {
 				continue // Skip invalid files
 			}
-			
+
 			stat, _ := entry.Info()
 			info := DriftReportInfo{
 				ID:          report.ID,
@@ -175,7 +175,7 @@ func (fs *FileStorage) ListDriftReports() ([]DriftReportInfo, error) {
 			reports = append(reports, info)
 		}
 	}
-	
+
 	return reports, nil
 }
 
@@ -191,7 +191,7 @@ func (fs *FileStorage) saveJSON(filename string, data interface{}) error {
 		return err
 	}
 	defer file.Close()
-	
+
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(data)
@@ -203,6 +203,6 @@ func (fs *FileStorage) loadJSON(filename string, data interface{}) error {
 		return err
 	}
 	defer file.Close()
-	
+
 	return json.NewDecoder(file).Decode(data)
 }

@@ -32,13 +32,13 @@ func NewResourceNormalizer() *ResourceNormalizer {
 // NormalizeResources converts a Terraform state to WGO resources
 func (n *ResourceNormalizer) NormalizeResources(tfState *TerraformState) ([]types.Resource, error) {
 	var resources []types.Resource
-	
+
 	for _, tfResource := range tfState.Resources {
 		// Skip data sources, only process managed resources
 		if tfResource.Mode != "managed" {
 			continue
 		}
-		
+
 		// Process each instance of the resource
 		for i, instance := range tfResource.Instances {
 			resource, err := n.normalizeResource(tfResource, instance, i)
@@ -49,7 +49,7 @@ func (n *ResourceNormalizer) NormalizeResources(tfState *TerraformState) ([]type
 			resources = append(resources, resource)
 		}
 	}
-	
+
 	return resources, nil
 }
 
@@ -57,19 +57,19 @@ func (n *ResourceNormalizer) NormalizeResources(tfState *TerraformState) ([]type
 func (n *ResourceNormalizer) normalizeResource(tfResource TerraformResource, instance TerraformInstance, instanceIndex int) (types.Resource, error) {
 	// Get type info for normalization
 	typeInfo := n.getTypeInfo(tfResource.Type)
-	
+
 	// Generate resource ID
 	resourceID := n.generateResourceID(tfResource, instance, instanceIndex, typeInfo)
-	
+
 	// Extract resource name
 	resourceName := n.extractResourceName(tfResource, instance, typeInfo)
-	
+
 	// Extract region
 	region := n.extractRegion(instance, typeInfo)
-	
+
 	// Extract tags
 	tags := n.extractTags(instance, typeInfo)
-	
+
 	// Create metadata
 	metadata := types.ResourceMetadata{
 		CreatedAt:    n.extractCreatedAt(instance),
@@ -78,7 +78,7 @@ func (n *ResourceNormalizer) normalizeResource(tfResource TerraformResource, ins
 		Dependencies: instance.Dependencies,
 		Checksum:     n.generateChecksum(instance.Attributes),
 	}
-	
+
 	resource := types.Resource{
 		ID:            resourceID,
 		Type:          tfResource.Type,
@@ -89,7 +89,7 @@ func (n *ResourceNormalizer) normalizeResource(tfResource TerraformResource, ins
 		Metadata:      metadata,
 		Tags:          tags,
 	}
-	
+
 	return resource, nil
 }
 
@@ -103,7 +103,7 @@ func (n *ResourceNormalizer) generateResourceID(tfResource TerraformResource, in
 			}
 		}
 	}
-	
+
 	// Try common ID fields
 	idFields := []string{"id", "arn", "name", "identifier"}
 	for _, field := range idFields {
@@ -113,18 +113,18 @@ func (n *ResourceNormalizer) generateResourceID(tfResource TerraformResource, in
 			}
 		}
 	}
-	
+
 	// Fallback: use Terraform address
 	address := tfResource.Type + "." + tfResource.Name
 	if tfResource.Module != "" {
 		address = "module." + tfResource.Module + "." + address
 	}
-	
+
 	// Add instance index for count/for_each resources
 	if instanceIndex > 0 || len(tfResource.Instances) > 1 {
 		address += fmt.Sprintf("[%d]", instanceIndex)
 	}
-	
+
 	return address
 }
 
@@ -138,7 +138,7 @@ func (n *ResourceNormalizer) extractResourceName(tfResource TerraformResource, i
 			}
 		}
 	}
-	
+
 	// Try common name fields
 	nameFields := []string{"name", "display_name", "title", "identifier"}
 	for _, field := range nameFields {
@@ -148,7 +148,7 @@ func (n *ResourceNormalizer) extractResourceName(tfResource TerraformResource, i
 			}
 		}
 	}
-	
+
 	// Fallback to Terraform resource name
 	return tfResource.Name
 }
@@ -163,7 +163,7 @@ func (n *ResourceNormalizer) extractRegion(instance TerraformInstance, typeInfo 
 			}
 		}
 	}
-	
+
 	// Try common region/location fields
 	regionFields := []string{"region", "location", "zone", "availability_zone", "placement"}
 	for _, field := range regionFields {
@@ -173,22 +173,22 @@ func (n *ResourceNormalizer) extractRegion(instance TerraformInstance, typeInfo 
 			}
 		}
 	}
-	
+
 	return ""
 }
 
 // extractTags gets tags/labels from the resource
 func (n *ResourceNormalizer) extractTags(instance TerraformInstance, typeInfo ResourceTypeInfo) map[string]string {
 	tags := make(map[string]string)
-	
+
 	// Try configured tags field
 	tagsField := typeInfo.TagsField
 	if tagsField == "" {
 		tagsField = "tags"
 	}
-	
+
 	tagFields := []string{tagsField, "tags", "labels", "metadata"}
-	
+
 	for _, field := range tagFields {
 		if tagData, exists := instance.Attributes[field]; exists {
 			if tagMap, ok := tagData.(map[string]interface{}); ok {
@@ -200,14 +200,14 @@ func (n *ResourceNormalizer) extractTags(instance TerraformInstance, typeInfo Re
 			}
 		}
 	}
-	
+
 	return tags
 }
 
 // extractCreatedAt attempts to find creation timestamp
 func (n *ResourceNormalizer) extractCreatedAt(instance TerraformInstance) time.Time {
 	timeFields := []string{"created_time", "creation_date", "create_time", "created_at", "time_created"}
-	
+
 	for _, field := range timeFields {
 		if timeVal, exists := instance.Attributes[field]; exists {
 			if timeStr, ok := timeVal.(string); ok {
@@ -228,14 +228,14 @@ func (n *ResourceNormalizer) extractCreatedAt(instance TerraformInstance) time.T
 			}
 		}
 	}
-	
+
 	return time.Time{}
 }
 
 // extractUpdatedAt attempts to find last modification timestamp
 func (n *ResourceNormalizer) extractUpdatedAt(instance TerraformInstance) time.Time {
 	timeFields := []string{"last_modified", "updated_time", "modification_date", "updated_at", "time_updated"}
-	
+
 	for _, field := range timeFields {
 		if timeVal, exists := instance.Attributes[field]; exists {
 			if timeStr, ok := timeVal.(string); ok {
@@ -245,14 +245,14 @@ func (n *ResourceNormalizer) extractUpdatedAt(instance TerraformInstance) time.T
 			}
 		}
 	}
-	
+
 	return time.Time{}
 }
 
 // extractVersion attempts to find resource version
 func (n *ResourceNormalizer) extractVersion(instance TerraformInstance) string {
 	versionFields := []string{"version", "resource_version", "etag", "revision"}
-	
+
 	for _, field := range versionFields {
 		if version, exists := instance.Attributes[field]; exists {
 			if versionStr, ok := version.(string); ok && versionStr != "" {
@@ -260,7 +260,7 @@ func (n *ResourceNormalizer) extractVersion(instance TerraformInstance) string {
 			}
 		}
 	}
-	
+
 	return ""
 }
 
@@ -273,38 +273,38 @@ func (n *ResourceNormalizer) generateChecksum(attributes map[string]interface{})
 // sanitizeConfiguration removes sensitive fields from configuration
 func (n *ResourceNormalizer) sanitizeConfiguration(attributes map[string]interface{}) map[string]interface{} {
 	sanitized := make(map[string]interface{})
-	
+
 	// List of sensitive fields to exclude
 	sensitiveFields := map[string]bool{
-		"password":        true,
-		"secret":          true,
-		"private_key":     true,
-		"access_key":      true,
-		"secret_key":      true,
-		"token":           true,
-		"api_key":         true,
+		"password":          true,
+		"secret":            true,
+		"private_key":       true,
+		"access_key":        true,
+		"secret_key":        true,
+		"token":             true,
+		"api_key":           true,
 		"connection_string": true,
 	}
-	
+
 	for k, v := range attributes {
 		// Skip sensitive fields
 		if sensitiveFields[strings.ToLower(k)] {
 			sanitized[k] = "[REDACTED]"
 			continue
 		}
-		
+
 		// Skip fields that contain sensitive keywords
 		lowerKey := strings.ToLower(k)
-		if strings.Contains(lowerKey, "password") || 
-		   strings.Contains(lowerKey, "secret") || 
-		   strings.Contains(lowerKey, "key") && strings.Contains(lowerKey, "private") {
+		if strings.Contains(lowerKey, "password") ||
+			strings.Contains(lowerKey, "secret") ||
+			strings.Contains(lowerKey, "key") && strings.Contains(lowerKey, "private") {
 			sanitized[k] = "[REDACTED]"
 			continue
 		}
-		
+
 		sanitized[k] = v
 	}
-	
+
 	return sanitized
 }
 
@@ -313,7 +313,7 @@ func (n *ResourceNormalizer) getTypeInfo(resourceType string) ResourceTypeInfo {
 	if info, exists := n.typeMapping[resourceType]; exists {
 		return info
 	}
-	
+
 	// Return default mapping
 	return ResourceTypeInfo{
 		Category:    "unknown",
@@ -370,7 +370,7 @@ func initializeTypeMappings() map[string]ResourceTypeInfo {
 			RegionField: "region",
 			TagsField:   "tags",
 		},
-		
+
 		// Azure Resources
 		"azurerm_virtual_machine": {
 			Category:    "compute",
@@ -386,7 +386,7 @@ func initializeTypeMappings() map[string]ResourceTypeInfo {
 			RegionField: "location",
 			TagsField:   "tags",
 		},
-		
+
 		// Google Cloud Resources
 		"google_compute_instance": {
 			Category:    "compute",
@@ -402,7 +402,7 @@ func initializeTypeMappings() map[string]ResourceTypeInfo {
 			RegionField: "location",
 			TagsField:   "labels",
 		},
-		
+
 		// Kubernetes Resources
 		"kubernetes_deployment": {
 			Category:    "workload",

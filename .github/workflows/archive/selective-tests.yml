@@ -1,0 +1,479 @@
+name: Selective Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  GO_VERSION: '1.23'
+
+jobs:
+  # Determine which components changed
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      terraform: ${{ steps.changes.outputs.terraform }}
+      gcp: ${{ steps.changes.outputs.gcp }}
+      aws: ${{ steps.changes.outputs.aws }}
+      kubernetes: ${{ steps.changes.outputs.kubernetes }}
+      commands: ${{ steps.changes.outputs.commands }}
+      config: ${{ steps.changes.outputs.config }}
+      core: ${{ steps.changes.outputs.core }}
+      docs: ${{ steps.changes.outputs.docs }}
+      deps: ${{ steps.changes.outputs.deps }}
+      workflows: ${{ steps.changes.outputs.workflows }}
+      performance: ${{ steps.changes.outputs.performance }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Detect file changes
+      uses: dorny/paths-filter@v3
+      id: changes
+      with:
+        filters: |
+          terraform:
+            - 'internal/collectors/terraform/**'
+            - 'test/fixtures/terraform/**'
+          gcp:
+            - 'internal/collectors/gcp/**'
+          aws:
+            - 'internal/collectors/aws/**'
+            - 'test/e2e/aws_drift_detection_test.go'
+          kubernetes:
+            - 'internal/collectors/kubernetes/**'
+          commands:
+            - 'cmd/wgo/commands/**'
+            - 'cmd/wgo/main.go'
+          config:
+            - 'pkg/config/**'
+            - 'internal/config/**'
+            - 'examples/config.yaml'
+          core:
+            - 'internal/analyzer/**'
+            - 'internal/differ/**'
+            - 'internal/output/**'
+            - 'internal/storage/**'
+            - 'internal/watcher/**'
+            - 'pkg/types/**'
+          docs:
+            - 'docs/**'
+            - '*.md'
+            - 'examples/**'
+          deps:
+            - 'go.mod'
+            - 'go.sum'
+          workflows:
+            - '.github/workflows/**'
+          performance:
+            - 'internal/collectors/**'
+            - 'internal/differ/**'
+            - 'internal/analyzer/**'
+            - 'pkg/types/**'
+
+  # Fast component-specific tests
+  test-terraform:
+    name: Test Terraform Collector
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.terraform == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Run Terraform collector tests
+      run: |
+        echo "🔧 Testing Terraform collector..."
+        make test-terraform
+
+    - name: Run Terraform benchmarks
+      run: |
+        echo "📊 Running Terraform benchmarks..."
+        go test -bench=. -benchmem ./internal/collectors/terraform/...
+
+  test-gcp:
+    name: Test GCP Collector
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.gcp == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Run GCP collector tests
+      run: |
+        echo "☁️ Testing GCP collector..."
+        make test-gcp
+
+  test-aws:
+    name: Test AWS Collector
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.aws == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Run AWS collector tests
+      run: |
+        echo "☁️ Testing AWS collector..."
+        make test-aws
+
+  test-kubernetes:
+    name: Test Kubernetes Collector
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.kubernetes == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Run Kubernetes collector tests
+      run: |
+        echo "☸️ Testing Kubernetes collector..."
+        make test-kubernetes
+
+  test-commands:
+    name: Test CLI Commands
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.commands == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Run CLI command tests
+      run: |
+        echo "💻 Testing CLI commands..."
+        make test-commands
+
+    - name: Test CLI binary functionality
+      run: |
+        echo "🔧 Testing CLI binary..."
+        make build
+        ./build/wgo --help
+        ./build/wgo status
+        ./build/wgo configure --help
+
+  test-config:
+    name: Test Configuration System
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.config == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Run configuration tests
+      run: |
+        echo "⚙️ Testing configuration system..."
+        make test-config
+
+  test-core:
+    name: Test Core Components
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.core == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Run core component tests
+      run: |
+        echo "🔧 Testing core components..."
+        go test -v -timeout 10m ./internal/analyzer/...
+        go test -v -timeout 10m ./internal/differ/...
+        go test -v -timeout 10m ./internal/output/...
+        go test -v -timeout 10m ./internal/storage/...
+        go test -v -timeout 10m ./internal/watcher/...
+        go test -v -timeout 10m ./pkg/types/...
+
+  # Fast lint for changed Go files only
+  lint-changed:
+    name: Lint Changed Files
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.terraform == 'true' ||
+      needs.detect-changes.outputs.gcp == 'true' ||
+      needs.detect-changes.outputs.aws == 'true' ||
+      needs.detect-changes.outputs.kubernetes == 'true' ||
+      needs.detect-changes.outputs.commands == 'true' ||
+      needs.detect-changes.outputs.config == 'true' ||
+      needs.detect-changes.outputs.core == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: latest
+        args: --timeout=5m --new-from-rev=HEAD~1
+
+  # Dependency validation
+  validate-deps:
+    name: Validate Dependencies
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.deps == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Validate dependencies
+      run: |
+        echo "📦 Validating dependencies..."
+        make check-deps
+        
+    - name: Check for vulnerabilities
+      run: |
+        echo "🔒 Checking for vulnerabilities..."
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        govulncheck ./...
+
+  # Quick build verification
+  build-verification:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.terraform == 'true' ||
+      needs.detect-changes.outputs.gcp == 'true' ||
+      needs.detect-changes.outputs.aws == 'true' ||
+      needs.detect-changes.outputs.kubernetes == 'true' ||
+      needs.detect-changes.outputs.commands == 'true' ||
+      needs.detect-changes.outputs.config == 'true' ||
+      needs.detect-changes.outputs.core == 'true' ||
+      needs.detect-changes.outputs.deps == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Quick build verification
+      run: |
+        echo "🔨 Quick build verification..."
+        make build
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: wgo-binary-${{ github.sha }}
+        path: wgo
+        retention-days: 1
+
+  # Parallel integration test (only if multiple collectors changed)
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      (needs.detect-changes.outputs.terraform == 'true' && needs.detect-changes.outputs.aws == 'true') ||
+      (needs.detect-changes.outputs.terraform == 'true' && needs.detect-changes.outputs.gcp == 'true') ||
+      (needs.detect-changes.outputs.aws == 'true' && needs.detect-changes.outputs.gcp == 'true') ||
+      needs.detect-changes.outputs.core == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Run integration tests
+      run: |
+        echo "🔗 Running integration tests..."
+        make test-integration
+
+  # Summary job
+  selective-test-summary:
+    name: Selective Test Summary
+    runs-on: ubuntu-latest
+    needs: [
+      detect-changes,
+      test-terraform,
+      test-gcp,
+      test-aws,
+      test-kubernetes,
+      test-commands,
+      test-config,
+      test-core,
+      lint-changed,
+      validate-deps,
+      build-verification
+    ]
+    if: always()
+    steps:
+    - name: Generate test summary
+      run: |
+        echo "## 📊 Selective Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Check which components were tested
+        if [[ "${{ needs.detect-changes.outputs.terraform }}" == "true" ]]; then
+          echo "🔧 **Terraform Collector**: ${{ needs.test-terraform.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [[ "${{ needs.detect-changes.outputs.gcp }}" == "true" ]]; then
+          echo "☁️ **GCP Collector**: ${{ needs.test-gcp.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [[ "${{ needs.detect-changes.outputs.aws }}" == "true" ]]; then
+          echo "☁️ **AWS Collector**: ${{ needs.test-aws.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [[ "${{ needs.detect-changes.outputs.kubernetes }}" == "true" ]]; then
+          echo "☸️ **Kubernetes Collector**: ${{ needs.test-kubernetes.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [[ "${{ needs.detect-changes.outputs.commands }}" == "true" ]]; then
+          echo "💻 **CLI Commands**: ${{ needs.test-commands.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [[ "${{ needs.detect-changes.outputs.config }}" == "true" ]]; then
+          echo "⚙️ **Configuration**: ${{ needs.test-config.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [[ "${{ needs.detect-changes.outputs.core }}" == "true" ]]; then
+          echo "🔧 **Core Components**: ${{ needs.test-core.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Build**: ${{ needs.build-verification.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Lint**: ${{ needs.lint-changed.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Dependencies**: ${{ needs.validate-deps.result || 'Skipped' }}" >> $GITHUB_STEP_SUMMARY
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "⚡ **Performance**: Selective testing saved time by only testing changed components!" >> $GITHUB_STEP_SUMMARY
+
+    - name: Check for failures
+      if: |
+        needs.test-terraform.result == 'failure' ||
+        needs.test-gcp.result == 'failure' ||
+        needs.test-aws.result == 'failure' ||
+        needs.test-kubernetes.result == 'failure' ||
+        needs.test-commands.result == 'failure' ||
+        needs.test-config.result == 'failure' ||
+        needs.test-core.result == 'failure' ||
+        needs.lint-changed.result == 'failure' ||
+        needs.validate-deps.result == 'failure' ||
+        needs.build-verification.result == 'failure'
+      run: |
+        echo "❌ Some tests failed!"
+        exit 1
+
+  # Performance regression check for critical components
+  performance-regression-check:
+    name: Performance Regression Check
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.performance == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        cache: true
+
+    - name: Run performance regression check
+      run: |
+        echo "🔍 Running performance regression check for critical components..."
+        chmod +x scripts/run-performance-tests.sh
+        ./scripts/run-performance-tests.sh quick --ci
+
+    - name: Upload regression check results
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-regression-check-${{ github.sha }}
+        path: performance-results/
+        retention-days: 7
+
+    - name: Performance regression summary
+      run: |
+        echo "## ⚡ Performance Regression Check" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Trigger**: Changes detected in performance-critical components" >> $GITHUB_STEP_SUMMARY
+        echo "**Components**: collectors, differ, analyzer, types" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ -f performance-results/quick_bench_*.txt ]; then
+          echo "### 📊 Quick Performance Results" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          tail -10 performance-results/quick_bench_*.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Status**: Performance regression check completed" >> $GITHUB_STEP_SUMMARY
+          echo "📄 **Action**: Review results for any performance impact" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ **Warning**: No benchmark results found" >> $GITHUB_STEP_SUMMARY
+        fi

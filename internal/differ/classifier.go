@@ -22,7 +22,7 @@ func NewDefaultClassifier() *DefaultClassifier {
 	classifier := &DefaultClassifier{
 		rules: make(map[string]ClassificationRule),
 	}
-	
+
 	classifier.initializeRules()
 	return classifier
 }
@@ -54,7 +54,7 @@ func (c *DefaultClassifier) initializeRules() {
 		RiskScore:   0.80,
 		Description: "Network ACL changes affect subnet-level security",
 	}
-	
+
 	// Network-related changes (HIGH)
 	c.rules["subnet_id"] = ClassificationRule{
 		Category:    DriftCategoryNetwork,
@@ -257,7 +257,7 @@ func (c *DefaultClassifier) CalculateResourceRisk(changes []Change) (RiskLevel, 
 
 	for _, change := range changes {
 		_, severity, riskScore := c.ClassifyChange(change)
-		
+
 		totalRiskScore += riskScore
 		if riskScore > maxRiskScore {
 			maxRiskScore = riskScore
@@ -370,7 +370,7 @@ func (c *AdvancedClassifier) ClassifyChange(change Change) (DriftCategory, RiskL
 
 	// Apply context rules if available
 	// This would be enhanced with actual resource context
-	
+
 	return category, severity, score
 }
 

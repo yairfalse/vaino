@@ -15,39 +15,39 @@ type Differ interface {
 
 // DriftReport represents the complete result of a drift comparison
 type DriftReport struct {
-	ID              string        `json:"id"`
-	BaselineID      string        `json:"baseline_id"`
-	CurrentID       string        `json:"current_id"`
-	Timestamp       time.Time     `json:"timestamp"`
-	Summary         DriftSummary  `json:"summary"`
+	ID              string         `json:"id"`
+	BaselineID      string         `json:"baseline_id"`
+	CurrentID       string         `json:"current_id"`
+	Timestamp       time.Time      `json:"timestamp"`
+	Summary         DriftSummary   `json:"summary"`
 	ResourceChanges []ResourceDiff `json:"resource_changes"`
 	Metadata        ReportMetadata `json:"metadata"`
 }
 
 // DriftSummary provides high-level statistics about the drift
 type DriftSummary struct {
-	TotalResources    int                       `json:"total_resources"`
-	ChangedResources  int                       `json:"changed_resources"`
-	AddedResources    int                       `json:"added_resources"`
-	RemovedResources  int                       `json:"removed_resources"`
-	ModifiedResources int                       `json:"modified_resources"`
-	ChangesByCategory map[DriftCategory]int     `json:"changes_by_category"`
-	ChangesBySeverity map[RiskLevel]int         `json:"changes_by_severity"`
-	OverallRisk       RiskLevel                 `json:"overall_risk"`
-	RiskScore         float64                   `json:"risk_score"`
+	TotalResources    int                   `json:"total_resources"`
+	ChangedResources  int                   `json:"changed_resources"`
+	AddedResources    int                   `json:"added_resources"`
+	RemovedResources  int                   `json:"removed_resources"`
+	ModifiedResources int                   `json:"modified_resources"`
+	ChangesByCategory map[DriftCategory]int `json:"changes_by_category"`
+	ChangesBySeverity map[RiskLevel]int     `json:"changes_by_severity"`
+	OverallRisk       RiskLevel             `json:"overall_risk"`
+	RiskScore         float64               `json:"risk_score"`
 }
 
 // ResourceDiff represents changes to a specific resource
 type ResourceDiff struct {
-	ResourceID    string      `json:"resource_id"`
-	ResourceType  string      `json:"resource_type"`
-	Provider      string      `json:"provider"`
-	DriftType     ChangeType  `json:"drift_type"`
-	Changes       []Change    `json:"changes"`
-	Severity      RiskLevel   `json:"severity"`
-	Category      DriftCategory `json:"category"`
-	RiskScore     float64     `json:"risk_score"`
-	Description   string      `json:"description"`
+	ResourceID   string        `json:"resource_id"`
+	ResourceType string        `json:"resource_type"`
+	Provider     string        `json:"provider"`
+	DriftType    ChangeType    `json:"drift_type"`
+	Changes      []Change      `json:"changes"`
+	Severity     RiskLevel     `json:"severity"`
+	Category     DriftCategory `json:"category"`
+	RiskScore    float64       `json:"risk_score"`
+	Description  string        `json:"description"`
 }
 
 // DifferChange represents a specific configuration change in the differ context
@@ -112,12 +112,12 @@ type ReportMetadata struct {
 
 // DiffOptions configures how the comparison is performed
 type DiffOptions struct {
-	IgnoreFields     []string          `json:"ignore_fields,omitempty"`
-	IgnoreResources  []string          `json:"ignore_resources,omitempty"`
-	IgnoreProviders  []string          `json:"ignore_providers,omitempty"`
-	MinRiskLevel     RiskLevel         `json:"min_risk_level,omitempty"`
-	Categories       []DriftCategory   `json:"categories,omitempty"`
-	Tags             map[string]string `json:"tags,omitempty"`
+	IgnoreFields    []string          `json:"ignore_fields,omitempty"`
+	IgnoreResources []string          `json:"ignore_resources,omitempty"`
+	IgnoreProviders []string          `json:"ignore_providers,omitempty"`
+	MinRiskLevel    RiskLevel         `json:"min_risk_level,omitempty"`
+	Categories      []DriftCategory   `json:"categories,omitempty"`
+	Tags            map[string]string `json:"tags,omitempty"`
 }
 
 // ResourceMatcher defines how resources are matched between snapshots

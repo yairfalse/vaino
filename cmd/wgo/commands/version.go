@@ -28,12 +28,12 @@ func newVersionCommand() *cobra.Command {
 
 func runVersion(cmd *cobra.Command, args []string) {
 	short, _ := cmd.Flags().GetBool("short")
-	
+
 	if short {
 		fmt.Println(Version)
 		return
 	}
-	
+
 	fmt.Printf("WGO (What's Going On) version %s\n", Version)
 	fmt.Printf("  commit: %s\n", Commit)
 	fmt.Printf("  built: %s\n", BuildTime)

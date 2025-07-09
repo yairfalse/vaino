@@ -53,14 +53,14 @@ type SnapshotInfo struct {
 
 // DriftReportInfo provides metadata about a stored drift report
 type DriftReportInfo struct {
-	ID           string            `json:"id"`
-	BaselineID   string            `json:"baseline_id"`
-	SnapshotID   string            `json:"snapshot_id"`
-	CreatedAt    time.Time         `json:"created_at"`
-	ChangeCount  int               `json:"change_count"`
-	Tags         map[string]string `json:"tags,omitempty"`
-	FilePath     string            `json:"file_path"`
-	FileSize     int64             `json:"file_size"`
+	ID          string            `json:"id"`
+	BaselineID  string            `json:"baseline_id"`
+	SnapshotID  string            `json:"snapshot_id"`
+	CreatedAt   time.Time         `json:"created_at"`
+	ChangeCount int               `json:"change_count"`
+	Tags        map[string]string `json:"tags,omitempty"`
+	FilePath    string            `json:"file_path"`
+	FileSize    int64             `json:"file_size"`
 }
 
 // Config holds storage configuration

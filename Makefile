@@ -1,5 +1,5 @@
 # WGO - Infrastructure Drift Detection Tool
-# Makefile for building, testing, and development
+# Modular Makefile for targeted testing and building
 
 # Variables
 BINARY_NAME=wgo
@@ -21,31 +21,66 @@ GOLINT=golangci-lint
 # Build flags
 LDFLAGS=-ldflags "-X main.version=$(shell git describe --tags --always --dirty) -X main.commit=$(shell git rev-parse HEAD) -X main.date=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-.PHONY: all build clean test test-unit test-integration test-e2e test-coverage lint fmt help
+# Colors for output
+CYAN := \033[36m
+GREEN := \033[32m
+YELLOW := \033[33m
+RED := \033[31m
+RESET := \033[0m
+
+.PHONY: all build clean test test-all test-unit test-integration test-e2e test-coverage lint fmt help \
+		test-collectors test-terraform test-gcp test-aws test-kubernetes test-commands test-config \
+		test-changed test-parallel perf-test perf-bench perf-stress perf-memory perf-concurrent \
+		perf-large-dataset perf-quick perf-profile perf-report check-deps
 
 # Default target
 all: clean lint test build
 
 # Help target
 help:
-	@echo "Available targets:"
-	@echo "  build          - Build the binary"
-	@echo "  build-all      - Build for all platforms"
-	@echo "  clean          - Clean build artifacts"
-	@echo "  test           - Run all tests"
-	@echo "  test-unit      - Run unit tests only"
-	@echo "  test-integration - Run integration tests only"
-	@echo "  test-e2e       - Run end-to-end tests only"
-	@echo "  test-coverage  - Run tests with coverage report"
-	@echo "  test-race      - Run tests with race detection"
-	@echo "  bench          - Run benchmarks"
-	@echo "  lint           - Run linters"
-	@echo "  fmt            - Format code"
-	@echo "  deps           - Download dependencies"
-	@echo "  deps-update    - Update dependencies"
-	@echo "  install        - Install binary to GOBIN"
-	@echo "  docker-build   - Build Docker image"
-	@echo "  docker-test    - Test Docker image"
+	@echo "$(CYAN)WGO Build & Test System$(RESET)"
+	@echo "========================"
+	@echo ""
+	@echo "$(GREEN)🔨 Build Targets:$(RESET)"
+	@echo "  build              Build the binary"
+	@echo "  build-all          Build for all platforms"
+	@echo "  install            Install binary to GOBIN"
+	@echo "  clean              Clean build artifacts"
+	@echo ""
+	@echo "$(GREEN)🧪 Test Targets:$(RESET)"
+	@echo "  test               Run tests for changed components only"
+	@echo "  test-all           Run all tests (full suite)"
+	@echo "  test-unit          Run unit tests only"
+	@echo "  test-integration   Run integration tests only"
+	@echo "  test-e2e           Run end-to-end tests only"
+	@echo "  test-parallel      Run tests in parallel"
+	@echo ""
+	@echo "$(GREEN)📦 Component Tests:$(RESET)"
+	@echo "  test-collectors    Test all collectors"
+	@echo "  test-terraform     Test Terraform collector only"
+	@echo "  test-gcp          Test GCP collector only" 
+	@echo "  test-aws          Test AWS collector only"
+	@echo "  test-kubernetes   Test Kubernetes collector only"
+	@echo "  test-commands     Test CLI commands"
+	@echo "  test-config       Test configuration system"
+	@echo ""
+	@echo "$(GREEN)🔍 Quality Targets:$(RESET)"
+	@echo "  lint              Run linters"
+	@echo "  fmt               Format code"
+	@echo "  test-coverage     Run tests with coverage report"
+	@echo "  deps              Download dependencies"
+	@echo ""
+	@echo "$(GREEN)⚡ Performance Testing:$(RESET)"
+	@echo "  perf-test         Run comprehensive performance tests"
+	@echo "  perf-bench        Run performance benchmarks"
+	@echo "  perf-stress       Run stress tests"
+	@echo "  perf-memory       Run memory analysis tests"
+	@echo "  perf-concurrent   Run concurrent operation tests"
+	@echo "  perf-large-dataset Run large dataset tests"
+	@echo "  perf-quick        Run quick performance tests"
+	@echo "  perf-profile      Run performance tests with profiling"
+	@echo "  perf-report       Show latest performance report"
+	@echo "  perf-ci           Run CI performance tests (reduced set)"
 
 # Build targets
 build:
@@ -69,22 +104,79 @@ install: build
 	@echo "Installing $(BINARY_NAME)..."
 	$(GOGET) -u $(MAIN_PATH)
 
-# Test targets
-test: test-unit test-integration test-e2e
+# Smart Test - Run tests for changed components only (default)
+test:
+	@echo "$(CYAN)Running smart tests (changed components only)...$(RESET)"
+	@./scripts/smart-test.sh || $(MAKE) test-unit
 
+# Test All - Run complete test suite
+test-all: test-unit test-integration test-e2e
+
+# Unit Tests - Fast unit tests only
 test-unit:
-	@echo "Running unit tests..."
+	@echo "$(CYAN)Running unit tests...$(RESET)"
 	$(GOTEST) -v -race -timeout $(TEST_TIMEOUT) ./internal/... ./pkg/... ./cmd/...
+	@echo "$(GREEN)✅ Unit tests completed$(RESET)"
 
 test-integration:
-	@echo "Running integration tests..."
+	@echo "$(CYAN)Running integration tests...$(RESET)"
 	@$(MAKE) build
 	$(GOTEST) -v -timeout $(TEST_TIMEOUT) ./test/integration/...
+	@echo "$(GREEN)✅ Integration tests completed$(RESET)"
 
 test-e2e:
-	@echo "Running end-to-end tests..."
+	@echo "$(CYAN)Running end-to-end tests...$(RESET)"
 	@$(MAKE) build
 	$(GOTEST) -v -timeout $(TEST_TIMEOUT) ./test/e2e/...
+	@echo "$(GREEN)✅ E2E tests completed$(RESET)"
+
+# Component-specific test targets
+test-collectors:
+	@echo "$(CYAN)Testing all collectors...$(RESET)"
+	$(GOTEST) -v -timeout $(TEST_TIMEOUT) ./internal/collectors/...
+	@echo "$(GREEN)✅ Collector tests completed$(RESET)"
+
+test-terraform:
+	@echo "$(CYAN)Testing Terraform collector...$(RESET)"
+	$(GOTEST) -v -timeout $(TEST_TIMEOUT) ./internal/collectors/terraform/...
+	@echo "$(GREEN)✅ Terraform tests completed$(RESET)"
+
+test-gcp:
+	@echo "$(CYAN)Testing GCP collector...$(RESET)"
+	$(GOTEST) -v -timeout $(TEST_TIMEOUT) ./internal/collectors/gcp/...
+	@echo "$(GREEN)✅ GCP tests completed$(RESET)"
+
+test-aws:
+	@echo "$(CYAN)Testing AWS collector...$(RESET)"
+	$(GOTEST) -v -timeout $(TEST_TIMEOUT) ./internal/collectors/aws/...
+	@echo "$(GREEN)✅ AWS tests completed$(RESET)"
+
+test-kubernetes:
+	@echo "$(CYAN)Testing Kubernetes collector...$(RESET)"
+	$(GOTEST) -v -timeout $(TEST_TIMEOUT) ./internal/collectors/kubernetes/...
+	@echo "$(GREEN)✅ Kubernetes tests completed$(RESET)"
+
+test-commands:
+	@echo "$(CYAN)Testing CLI commands...$(RESET)"
+	$(GOTEST) -v -timeout $(TEST_TIMEOUT) ./cmd/wgo/commands/...
+	@echo "$(GREEN)✅ Command tests completed$(RESET)"
+
+test-config:
+	@echo "$(CYAN)Testing configuration system...$(RESET)"
+	$(GOTEST) -v -timeout $(TEST_TIMEOUT) ./pkg/config/...
+	@echo "$(GREEN)✅ Configuration tests completed$(RESET)"
+
+# Parallel test execution for CI
+test-parallel:
+	@echo "$(CYAN)Running tests in parallel...$(RESET)"
+	@$(GOTEST) ./internal/collectors/terraform/... -v -timeout $(TEST_TIMEOUT) & \
+	 $(GOTEST) ./internal/collectors/gcp/... -v -timeout $(TEST_TIMEOUT) & \
+	 $(GOTEST) ./internal/collectors/aws/... -v -timeout $(TEST_TIMEOUT) & \
+	 $(GOTEST) ./internal/collectors/kubernetes/... -v -timeout $(TEST_TIMEOUT) & \
+	 $(GOTEST) ./cmd/wgo/commands/... -v -timeout $(TEST_TIMEOUT) & \
+	 $(GOTEST) ./pkg/config/... -v -timeout $(TEST_TIMEOUT) & \
+	 wait
+	@echo "$(GREEN)✅ Parallel tests completed$(RESET)"
 
 test-coverage:
 	@echo "Running tests with coverage..."
@@ -165,6 +257,80 @@ docs-serve:
 	@echo "Serving documentation..."
 	@command -v mkdocs >/dev/null 2>&1 || { echo "mkdocs not installed"; exit 1; }
 	mkdocs serve
+
+# Performance Testing targets
+perf-test:
+	@echo "$(CYAN)Running comprehensive performance tests...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh all
+	@echo "$(GREEN)✅ Performance tests completed$(RESET)"
+
+perf-bench:
+	@echo "$(CYAN)Running performance benchmarks...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh benchmarks
+	@echo "$(GREEN)✅ Performance benchmarks completed$(RESET)"
+
+perf-stress:
+	@echo "$(CYAN)Running stress tests...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh stress
+	@echo "$(GREEN)✅ Stress tests completed$(RESET)"
+
+perf-memory:
+	@echo "$(CYAN)Running memory analysis tests...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh memory --profile
+	@echo "$(GREEN)✅ Memory tests completed$(RESET)"
+
+perf-concurrent:
+	@echo "$(CYAN)Running concurrent operation tests...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh concurrent
+	@echo "$(GREEN)✅ Concurrent tests completed$(RESET)"
+
+perf-large-dataset:
+	@echo "$(CYAN)Running large dataset tests...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh large-dataset
+	@echo "$(GREEN)✅ Large dataset tests completed$(RESET)"
+
+perf-quick:
+	@echo "$(CYAN)Running quick performance tests...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh quick
+	@echo "$(GREEN)✅ Quick performance tests completed$(RESET)"
+
+perf-profile:
+	@echo "$(CYAN)Running performance tests with profiling...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh benchmarks --profile
+	@echo "$(GREEN)✅ Performance profiling completed$(RESET)"
+
+perf-report:
+	@echo "$(CYAN)Generating performance report...$(RESET)"
+	@if [ -d "performance-results" ]; then \
+		echo "Performance results found:"; \
+		ls -la performance-results/performance_report_*.md | tail -5; \
+		echo "$(GREEN)Latest performance report:$(RESET)"; \
+		ls -t performance-results/performance_report_*.md | head -1; \
+	else \
+		echo "$(YELLOW)No performance results found. Run 'make perf-test' first.$(RESET)"; \
+	fi
+
+# CI Performance testing (reduced test set)
+perf-ci:
+	@echo "$(CYAN)Running CI performance tests...$(RESET)"
+	@chmod +x scripts/run-performance-tests.sh
+	./scripts/run-performance-tests.sh quick --ci
+	@echo "$(GREEN)✅ CI performance tests completed$(RESET)"
+
+# Dependency checking
+check-deps:
+	@echo "$(CYAN)Checking dependencies...$(RESET)"
+	$(GOMOD) verify
+	$(GOMOD) download
+	@echo "$(GREEN)✅ Dependencies verified$(RESET)"
 
 # Maintenance targets
 mod-tidy:
