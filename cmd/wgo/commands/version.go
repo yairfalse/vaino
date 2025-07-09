@@ -13,6 +13,22 @@ var (
 	BuiltBy   = "unknown"
 )
 
+// SetVersionInfo updates the version variables with build-time information
+func SetVersionInfo(version, commit, buildTime, builtBy string) {
+	if version != "" {
+		Version = version
+	}
+	if commit != "" {
+		Commit = commit
+	}
+	if buildTime != "" {
+		BuildTime = buildTime
+	}
+	if builtBy != "" {
+		BuiltBy = builtBy
+	}
+}
+
 func newVersionCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
@@ -40,5 +56,5 @@ func runVersion(cmd *cobra.Command, args []string) {
 	fmt.Printf("  built by: %s\n", BuiltBy)
 	fmt.Println()
 	fmt.Println("Infrastructure drift detection tool")
-	fmt.Println("https://github.com/yourusername/wgo")
+	fmt.Println("https://github.com/yairfalse/wgo")
 }
