@@ -1,0 +1,44 @@
+{
+  "id": "gcp-scan-1752065821",
+  "timestamp": "2025-07-09T14:57:01.795317+02:00",
+  "provider": "gcp",
+  "resources": [
+    {
+      "id": "gcp-placeholder-1",
+      "type": "compute_instance",
+      "name": "placeholder-instance",
+      "provider": "gcp",
+      "region": "us-central1",
+      "configuration": {
+        "machine_type": "e2-micro",
+        "status": "running"
+      },
+      "metadata": {
+        "created_at": "2025-07-09T14:57:01.795318+02:00",
+        "updated_at": "0001-01-01T00:00:00Z",
+        "version": "1",
+        "additional_data": {
+          "project_id": "taskmate-461721",
+          "zone": "us-central1-a"
+        }
+      },
+      "tags": {
+        "environment": "development"
+      }
+    }
+  ],
+  "metadata": {
+    "collector_version": "1.0.0",
+    "collection_time": 0,
+    "resource_count": 0,
+    "additional_data": {
+      "scan_config": {
+        "config": {
+          "project_id": "taskmate-461721",
+          "scan_id": "gcp-1752065821",
+          "snapshot_name": "scan-wgo-2025-07-09-14-57"
+        }
+      }
+    }
+  }
+}

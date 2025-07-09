@@ -11,7 +11,7 @@ import (
 )
 
 // displayChanges shows detected changes in the configured format
-func (w *Watcher) displayChanges(event *WatchEvent) {
+func (w *Watcher) displayChanges(event *DisplayEvent) {
 	switch w.outputFormat {
 	case "table":
 		w.displayTableFormat(event)
@@ -25,7 +25,7 @@ func (w *Watcher) displayChanges(event *WatchEvent) {
 }
 
 // displayTableFormat shows changes in a human-readable table format
-func (w *Watcher) displayTableFormat(event *WatchEvent) {
+func (w *Watcher) displayTableFormat(event *DisplayEvent) {
 	timestamp := event.Timestamp.Format("15:04:05")
 
 	// Summary line
@@ -90,7 +90,7 @@ func (w *Watcher) displayTableFormat(event *WatchEvent) {
 }
 
 // displayJSONFormat outputs changes as JSON for automation
-func (w *Watcher) displayJSONFormat(event *WatchEvent) {
+func (w *Watcher) displayJSONFormat(event *DisplayEvent) {
 	// Filter groups by confidence if needed
 	filteredEvent := *event
 	if w.onlyHighConf {
@@ -109,7 +109,7 @@ func (w *Watcher) displayJSONFormat(event *WatchEvent) {
 }
 
 // displayQuietFormat shows minimal output for scripts
-func (w *Watcher) displayQuietFormat(event *WatchEvent) {
+func (w *Watcher) displayQuietFormat(event *DisplayEvent) {
 	timestamp := event.Timestamp.Format("15:04:05")
 
 	// Only show high-confidence correlated changes in quiet mode

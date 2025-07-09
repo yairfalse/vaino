@@ -5,7 +5,7 @@ This guide will help you configure Google Cloud Platform (GCP) authentication fo
 ## Prerequisites
 
 1. A Google Cloud Platform account
-2. A GCP project (you already have `taskmate-46a1721`)
+2. A GCP project (you already have `taskmate-461721`)
 3. `gcloud` CLI installed (optional but recommended)
 
 ## Authentication Methods
@@ -29,12 +29,12 @@ WGO supports two authentication methods for GCP:
 
 3. **Set your project**:
    ```bash
-   gcloud config set project taskmate-46a1721
+   gcloud config set project taskmate-461721
    ```
 
 4. **Run WGO scan**:
    ```bash
-   ./wgo scan --provider gcp --project taskmate-46a1721
+   ./wgo scan --provider gcp --project taskmate-461721
    ```
 
 ### Method 2: Service Account Key (Recommended for Production)
@@ -44,14 +44,14 @@ WGO supports two authentication methods for GCP:
    # Create service account
    gcloud iam service-accounts create wgo-scanner \
      --display-name="WGO Scanner" \
-     --project=taskmate-46a1721
+     --project=taskmate-461721
    ```
 
 2. **Grant necessary permissions**:
    ```bash
    # Grant viewer role (read-only access)
-   gcloud projects add-iam-policy-binding taskmate-46a1721 \
-     --member="serviceAccount:wgo-scanner@taskmate-46a1721.iam.gserviceaccount.com" \
+   gcloud projects add-iam-policy-binding taskmate-461721 \
+     --member="serviceAccount:wgo-scanner@taskmate-461721.iam.gserviceaccount.com" \
      --role="roles/viewer"
    
    # For more specific permissions, grant these roles:
@@ -63,17 +63,17 @@ WGO supports two authentication methods for GCP:
 3. **Create and download key**:
    ```bash
    gcloud iam service-accounts keys create ~/wgo-gcp-key.json \
-     --iam-account=wgo-scanner@taskmate-46a1721.iam.gserviceaccount.com
+     --iam-account=wgo-scanner@taskmate-461721.iam.gserviceaccount.com
    ```
 
 4. **Use the key with WGO**:
    ```bash
    # Option 1: Pass credentials file directly
-   ./wgo scan --provider gcp --project taskmate-46a1721 --credentials ~/wgo-gcp-key.json
+   ./wgo scan --provider gcp --project taskmate-461721 --credentials ~/wgo-gcp-key.json
    
    # Option 2: Set environment variable
    export GOOGLE_APPLICATION_CREDENTIALS=~/wgo-gcp-key.json
-   ./wgo scan --provider gcp --project taskmate-46a1721
+   ./wgo scan --provider gcp --project taskmate-461721
    ```
 
 ## Required Permissions
@@ -98,14 +98,14 @@ The GCP collector requires these permissions to scan resources:
 ### Error: "The caller does not have permission"
 - Ensure you're authenticated: `gcloud auth list`
 - Check your project: `gcloud config get-value project`
-- Verify permissions: `gcloud projects get-iam-policy taskmate-46a1721`
+- Verify permissions: `gcloud projects get-iam-policy taskmate-461721`
 
 ### Error: "Could not find default credentials"
 - Run: `gcloud auth application-default login`
 - Or set: `export GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json`
 
 ### Error: "Invalid project ID"
-- Verify project exists: `gcloud projects describe taskmate-46a1721`
+- Verify project exists: `gcloud projects describe taskmate-461721`
 - Ensure you have access: `gcloud projects list`
 
 ## Quick Test
@@ -114,13 +114,13 @@ Once authenticated, test with:
 
 ```bash
 # Basic scan
-./wgo scan --provider gcp --project taskmate-46a1721
+./wgo scan --provider gcp --project taskmate-461721
 
 # Scan specific regions
-./wgo scan --provider gcp --project taskmate-46a1721 --region us-central1,us-east1
+./wgo scan --provider gcp --project taskmate-461721 --region us-central1,us-east1
 
 # Save output
-./wgo scan --provider gcp --project taskmate-46a1721 --output-file gcp-snapshot.json
+./wgo scan --provider gcp --project taskmate-461721 --output-file gcp-snapshot.json
 ```
 
 ## Security Best Practices

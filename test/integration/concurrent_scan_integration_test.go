@@ -116,25 +116,6 @@ func TestConcurrentScanIntegration(t *testing.T) {
 		t.Logf("Found %d resources", len(result.Snapshot.Resources))
 	})
 
-	// Test CLI integration
-	// t.Run("CLI_ConcurrentScan", func(t *testing.T) {
-	// 	// This test would normally use exec.Command to test the CLI
-	// 	// but we'll test the command functions directly
-	//
-	// 	// Skip command test - function is not exported
-	// 	// cmd := commands.NewScanCommand()
-	//
-	// 	// Set up command flags
-	// 	// cmd.Flags().Set("concurrent", "true")
-	// 	// cmd.Flags().Set("max-workers", "2")
-	// 	// cmd.Flags().Set("quiet", "true")
-	// 	// cmd.Flags().Set("state-file", stateFile)
-	// 	// cmd.Flags().Set("provider", "terraform")
-	//
-	// 	// Note: This would normally execute the command
-	// 	// In a real integration test, you'd use exec.Command or similar
-	// 	// t.Log("CLI command would be executed here")
-	// })
 }
 
 func TestConcurrentScanPerformance(t *testing.T) {

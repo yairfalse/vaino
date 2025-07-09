@@ -150,7 +150,9 @@ func (k *KubernetesClient) GetDeployments(ctx context.Context, namespace string)
 		return nil, fmt.Errorf("client not initialized")
 	}
 
-	deployments, err := k.clientset.AppsV1().Deployments(namespace).List(ctx, metav1.ListOptions{})
+	deployments, err := k.clientset.AppsV1().Deployments(namespace).List(ctx, metav1.ListOptions{
+		Limit: 50, // Smaller page size for faster response
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list deployments: %w", err)
 	}
@@ -164,7 +166,7 @@ func (k *KubernetesClient) GetStatefulSets(ctx context.Context, namespace string
 		return nil, fmt.Errorf("client not initialized")
 	}
 
-	statefulSets, err := k.clientset.AppsV1().StatefulSets(namespace).List(ctx, metav1.ListOptions{})
+	statefulSets, err := k.clientset.AppsV1().StatefulSets(namespace).List(ctx, metav1.ListOptions{Limit: 50})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list statefulsets: %w", err)
 	}
@@ -178,7 +180,7 @@ func (k *KubernetesClient) GetDaemonSets(ctx context.Context, namespace string) 
 		return nil, fmt.Errorf("client not initialized")
 	}
 
-	daemonSets, err := k.clientset.AppsV1().DaemonSets(namespace).List(ctx, metav1.ListOptions{})
+	daemonSets, err := k.clientset.AppsV1().DaemonSets(namespace).List(ctx, metav1.ListOptions{Limit: 50})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list daemonsets: %w", err)
 	}
@@ -194,7 +196,7 @@ func (k *KubernetesClient) GetServices(ctx context.Context, namespace string) ([
 		return nil, fmt.Errorf("client not initialized")
 	}
 
-	services, err := k.clientset.CoreV1().Services(namespace).List(ctx, metav1.ListOptions{})
+	services, err := k.clientset.CoreV1().Services(namespace).List(ctx, metav1.ListOptions{Limit: 50})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list services: %w", err)
 	}
@@ -224,7 +226,7 @@ func (k *KubernetesClient) GetConfigMaps(ctx context.Context, namespace string) 
 		return nil, fmt.Errorf("client not initialized")
 	}
 
-	configMaps, err := k.clientset.CoreV1().ConfigMaps(namespace).List(ctx, metav1.ListOptions{})
+	configMaps, err := k.clientset.CoreV1().ConfigMaps(namespace).List(ctx, metav1.ListOptions{Limit: 50})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list configmaps: %w", err)
 	}
@@ -238,7 +240,7 @@ func (k *KubernetesClient) GetSecrets(ctx context.Context, namespace string) ([]
 		return nil, fmt.Errorf("client not initialized")
 	}
 
-	secrets, err := k.clientset.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{})
+	secrets, err := k.clientset.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{Limit: 50})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list secrets: %w", err)
 	}

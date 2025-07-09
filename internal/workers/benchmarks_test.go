@@ -503,8 +503,6 @@ func modifySnapshotResources(snapshot *types.Snapshot, changeRatio float64) {
 // Performance test utility functions
 
 func runPerformanceTest(name string, iterations int, fn func()) {
-	fmt.Printf("Running performance test: %s\n", name)
-
 	start := time.Now()
 
 	for i := 0; i < iterations; i++ {

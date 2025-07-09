@@ -241,33 +241,77 @@ func (c *GCPCollector) validateCredentials(config GCPConfig) error {
 				WithHelp("wgo validate gcp")
 		}
 
-		// Validate required fields
-		requiredFields := []string{"type", "project_id", "private_key_id", "private_key"}
-		for _, field := range requiredFields {
-			if _, exists := creds[field]; !exists {
-				return wgoerrors.New(wgoerrors.ErrorTypeAuthentication, wgoerrors.ProviderGCP,
-					fmt.Sprintf("GCP credentials file missing required field: %s", field)).
-					WithCause("Incomplete service account key file").
-					WithSolutions(
-						"Download a complete service account key from GCP Console",
-						"Ensure the key file was not truncated during download",
-					).
-					WithVerify("python -c \"import json; print(json.load(open('$GOOGLE_APPLICATION_CREDENTIALS')).keys())\"").
-					WithHelp("wgo validate gcp")
-			}
+		// Check credential type and validate accordingly
+		credType, hasType := creds["type"].(string)
+		if !hasType {
+			return wgoerrors.New(wgoerrors.ErrorTypeAuthentication, wgoerrors.ProviderGCP,
+				"GCP credentials file missing required field: type").
+				WithCause("Incomplete credentials file").
+				WithSolutions(
+					"Download a complete credentials file from GCP Console",
+					"Ensure the credentials file was not truncated during download",
+				).
+				WithVerify("python -c \"import json; print(json.load(open('$GOOGLE_APPLICATION_CREDENTIALS')).keys())\"").
+				WithHelp("wgo validate gcp")
 		}
 
-		// Check if the private key looks valid
-		if privateKey, ok := creds["private_key"].(string); ok {
-			if !strings.Contains(privateKey, "BEGIN PRIVATE KEY") {
-				return wgoerrors.New(wgoerrors.ErrorTypeAuthentication, wgoerrors.ProviderGCP,
-					"GCP service account private key appears to be invalid").
-					WithCause("Private key does not contain expected PEM format").
-					WithSolutions(
-						"Download a new service account key from GCP Console",
-						"Ensure the key file was not modified or corrupted",
-					).
-					WithHelp("wgo validate gcp")
+		// Validate fields based on credential type
+		if credType == "service_account" {
+			// Service account key - validate all required fields
+			requiredFields := []string{"type", "project_id", "private_key_id", "private_key"}
+			for _, field := range requiredFields {
+				if _, exists := creds[field]; !exists {
+					return wgoerrors.New(wgoerrors.ErrorTypeAuthentication, wgoerrors.ProviderGCP,
+						fmt.Sprintf("GCP service account credentials missing required field: %s", field)).
+						WithCause("Incomplete service account key file").
+						WithSolutions(
+							"Download a complete service account key from GCP Console",
+							"Ensure the key file was not truncated during download",
+						).
+						WithVerify("python -c \"import json; print(json.load(open('$GOOGLE_APPLICATION_CREDENTIALS')).keys())\"").
+						WithHelp("wgo validate gcp")
+				}
+			}
+		} else if credType == "authorized_user" {
+			// Application Default Credentials - validate required fields
+			requiredFields := []string{"type", "client_id", "client_secret", "refresh_token"}
+			for _, field := range requiredFields {
+				if _, exists := creds[field]; !exists {
+					return wgoerrors.New(wgoerrors.ErrorTypeAuthentication, wgoerrors.ProviderGCP,
+						fmt.Sprintf("GCP application default credentials missing required field: %s", field)).
+						WithCause("Incomplete application default credentials").
+						WithSolutions(
+							"Run 'gcloud auth application-default login' to refresh credentials",
+							"Ensure gcloud is properly authenticated",
+						).
+						WithVerify("gcloud auth application-default print-access-token").
+						WithHelp("wgo validate gcp")
+				}
+			}
+		} else {
+			return wgoerrors.New(wgoerrors.ErrorTypeAuthentication, wgoerrors.ProviderGCP,
+				fmt.Sprintf("Unsupported GCP credential type: %s", credType)).
+				WithCause("Unknown credential type in credentials file").
+				WithSolutions(
+					"Use a service account key for production environments",
+					"Use 'gcloud auth application-default login' for development",
+				).
+				WithHelp("wgo validate gcp")
+		}
+
+		// Check if the private key looks valid (only for service accounts)
+		if credType == "service_account" {
+			if privateKey, ok := creds["private_key"].(string); ok {
+				if !strings.Contains(privateKey, "BEGIN PRIVATE KEY") {
+					return wgoerrors.New(wgoerrors.ErrorTypeAuthentication, wgoerrors.ProviderGCP,
+						"GCP service account private key appears to be invalid").
+						WithCause("Private key does not contain expected PEM format").
+						WithSolutions(
+							"Download a new service account key from GCP Console",
+							"Ensure the key file was not modified or corrupted",
+						).
+						WithHelp("wgo validate gcp")
+				}
 			}
 		}
 	} else {

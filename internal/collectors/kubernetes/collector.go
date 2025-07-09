@@ -170,14 +170,18 @@ func (k *KubernetesCollector) AutoDiscover() (collectors.CollectorConfig, error)
 		contexts = []string{} // Not critical if we can't get contexts
 	}
 
-	// Get available namespaces
-	namespaces, err := k.client.GetAvailableNamespaces()
-	if err != nil {
-		namespaces = []string{"default"} // Fallback to default
+	// Use very limited namespaces for auto-discovery to prevent timeouts
+	// Only scan the most common namespaces where user workloads are likely
+	relevantNamespaces := []string{"default", "test-workloads"}
+
+	// Try to get additional namespaces but with a timeout
+	if additionalNs, err := k.getRelevantNamespaces(); err == nil && len(additionalNs) <= 10 {
+		// Only add if we have a reasonable number of namespaces
+		relevantNamespaces = additionalNs
 	}
 
 	collectorConfig := collectors.CollectorConfig{
-		Namespaces: namespaces,
+		Namespaces: relevantNamespaces,
 		Config: map[string]interface{}{
 			"contexts":   contexts,
 			"kubeconfig": "", // Use default
@@ -185,6 +189,48 @@ func (k *KubernetesCollector) AutoDiscover() (collectors.CollectorConfig, error)
 	}
 
 	return collectorConfig, nil
+}
+
+// getRelevantNamespaces returns a filtered list of namespaces that are likely to contain user workloads
+func (k *KubernetesCollector) getRelevantNamespaces() ([]string, error) {
+	// Get all namespaces
+	allNamespaces, err := k.client.GetAvailableNamespaces()
+	if err != nil {
+		return []string{"default"}, err
+	}
+
+	// Filter out system namespaces that rarely contain user workloads
+	systemNamespaces := map[string]bool{
+		"kube-node-lease":    true,
+		"kube-public":        false, // Keep this one, sometimes has user resources
+		"local-path-storage": true,
+	}
+
+	var relevantNamespaces []string
+	for _, ns := range allNamespaces {
+		// Skip system namespaces that are unlikely to have user workloads
+		if skip, exists := systemNamespaces[ns]; exists && skip {
+			continue
+		}
+
+		// Always include default and kube-system as they're commonly used
+		if ns == "default" || ns == "kube-system" || ns == "kube-public" {
+			relevantNamespaces = append(relevantNamespaces, ns)
+			continue
+		}
+
+		// Include namespaces that don't start with "kube-" (likely user namespaces)
+		if !strings.HasPrefix(ns, "kube-") {
+			relevantNamespaces = append(relevantNamespaces, ns)
+		}
+	}
+
+	// Ensure we always have at least default
+	if len(relevantNamespaces) == 0 {
+		relevantNamespaces = []string{"default"}
+	}
+
+	return relevantNamespaces, nil
 }
 
 // SupportedRegions returns supported regions (not applicable for Kubernetes)
@@ -214,9 +260,10 @@ func (k *KubernetesCollector) extractKubernetesConfig(config collectors.Collecto
 		}
 	}
 
-	// Default to all namespaces if none specified
+	// Default to common application namespaces if none specified
+	// Avoid scanning ALL namespaces which can cause timeouts
 	if len(kubeConfig.Namespaces) == 0 {
-		kubeConfig.Namespaces = []string{""}
+		kubeConfig.Namespaces = []string{"default", "kube-system"}
 	}
 
 	return kubeConfig

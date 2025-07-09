@@ -56,8 +56,8 @@ type WebhookMetadata struct {
 	Version       string   `json:"version"`
 }
 
-// sendWebhook sends change notification to configured webhook URL
-func (w *Watcher) sendWebhook(event *WatchEvent) error {
+// SendWebhook sends change notification to configured webhook URL
+func (w *Watcher) SendWebhook(event *DisplayEvent) error {
 	if w.webhookURL == "" {
 		return nil
 	}
@@ -91,8 +91,8 @@ func (w *Watcher) sendWebhook(event *WatchEvent) error {
 	return nil
 }
 
-// buildWebhookPayload converts a WatchEvent to webhook format
-func (w *Watcher) buildWebhookPayload(event *WatchEvent) WebhookPayload {
+// buildWebhookPayload converts a DisplayEvent to webhook format
+func (w *Watcher) buildWebhookPayload(event *DisplayEvent) WebhookPayload {
 	// Build summary with confidence counts
 	summary := WebhookSummary{
 		Total:    event.Summary.Total,
@@ -165,7 +165,7 @@ func (w *Watcher) buildWebhookPayload(event *WatchEvent) WebhookPayload {
 }
 
 // sendSlackWebhook sends a Slack-formatted webhook
-func (w *Watcher) sendSlackWebhook(event *WatchEvent) error {
+func (w *Watcher) sendSlackWebhook(event *DisplayEvent) error {
 	if w.webhookURL == "" {
 		return nil
 	}
@@ -227,7 +227,7 @@ func (w *Watcher) sendSlackWebhook(event *WatchEvent) error {
 }
 
 // getSlackColor returns appropriate color for Slack attachments
-func (w *Watcher) getSlackColor(event *WatchEvent) string {
+func (w *Watcher) getSlackColor(event *DisplayEvent) string {
 	// Determine color based on change types and confidence
 	hasHighConf := false
 	for _, group := range event.CorrelatedGroups {

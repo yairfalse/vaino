@@ -105,12 +105,12 @@ func (c *AWSCollector) collectSubnets(ctx context.Context) ([]types.Resource, er
 }
 
 // getVPCAttributes fetches additional VPC attributes
-func (c *AWSCollector) getVPCAttributes(ctx context.Context, vpcId string) (map[string]interface{}, error) {
+func (c *AWSCollector) getVPCAttributes(ctx context.Context, vpcID string) (map[string]interface{}, error) {
 	attributes := make(map[string]interface{})
 
 	// Get DNS hostnames attribute
 	dnsHostnamesResult, err := c.clients.EC2.DescribeVpcAttribute(ctx, &ec2.DescribeVpcAttributeInput{
-		VpcId:     &vpcId,
+		VpcId:     &vpcID,
 		Attribute: "enableDnsHostnames",
 	})
 	if err == nil && dnsHostnamesResult.EnableDnsHostnames != nil {
@@ -119,7 +119,7 @@ func (c *AWSCollector) getVPCAttributes(ctx context.Context, vpcId string) (map[
 
 	// Get DNS support attribute
 	dnsSupportResult, err := c.clients.EC2.DescribeVpcAttribute(ctx, &ec2.DescribeVpcAttributeInput{
-		VpcId:     &vpcId,
+		VpcId:     &vpcID,
 		Attribute: "enableDnsSupport",
 	})
 	if err == nil && dnsSupportResult.EnableDnsSupport != nil {
@@ -128,7 +128,7 @@ func (c *AWSCollector) getVPCAttributes(ctx context.Context, vpcId string) (map[
 
 	// Get network address usage metrics attribute
 	networkAddressUsageResult, err := c.clients.EC2.DescribeVpcAttribute(ctx, &ec2.DescribeVpcAttributeInput{
-		VpcId:     &vpcId,
+		VpcId:     &vpcID,
 		Attribute: "enableNetworkAddressUsageMetrics",
 	})
 	if err == nil && networkAddressUsageResult.EnableNetworkAddressUsageMetrics != nil {

@@ -303,7 +303,6 @@ func (p *ConcurrentTerraformParser) stop() {
 		// Normal shutdown
 	case <-time.After(10 * time.Second):
 		// Force shutdown
-		fmt.Println("Warning: Parser shutdown timed out")
 	}
 }
 

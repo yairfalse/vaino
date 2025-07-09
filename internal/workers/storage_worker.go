@@ -389,7 +389,6 @@ func (csm *ConcurrentStorageManager) stop() {
 		// Normal shutdown
 	case <-time.After(10 * time.Second):
 		// Force shutdown
-		fmt.Println("Warning: Storage manager shutdown timed out")
 	}
 
 	// Stop cleaner

@@ -106,8 +106,8 @@ install: build
 
 # Smart Test - Run tests for changed components only (default)
 test:
-	@echo "$(CYAN)Running smart tests (changed components only)...$(RESET)"
-	@./scripts/smart-test.sh || $(MAKE) test-unit
+	@echo "$(CYAN)Running unit tests...$(RESET)"
+	@$(MAKE) test-unit
 
 # Test All - Run complete test suite
 test-all: test-unit test-integration test-e2e
@@ -261,68 +261,52 @@ docs-serve:
 # Performance Testing targets
 perf-test:
 	@echo "$(CYAN)Running comprehensive performance tests...$(RESET)"
-	@chmod +x scripts/run-performance-tests.sh
-	./scripts/run-performance-tests.sh all
+	$(GOTEST) -bench=. -benchmem -run=^$$ ./...
 	@echo "$(GREEN)✅ Performance tests completed$(RESET)"
 
 perf-bench:
 	@echo "$(CYAN)Running performance benchmarks...$(RESET)"
-	@chmod +x scripts/run-performance-tests.sh
-	./scripts/run-performance-tests.sh benchmarks
+	$(GOTEST) -bench=. -benchmem -run=^$$ ./...
 	@echo "$(GREEN)✅ Performance benchmarks completed$(RESET)"
 
 perf-stress:
 	@echo "$(CYAN)Running stress tests...$(RESET)"
-	@chmod +x scripts/run-performance-tests.sh
-	./scripts/run-performance-tests.sh stress
+	$(GOTEST) -bench=. -benchmem -count=5 -run=^$$ ./...
 	@echo "$(GREEN)✅ Stress tests completed$(RESET)"
 
 perf-memory:
 	@echo "$(CYAN)Running memory analysis tests...$(RESET)"
-	@chmod +x scripts/run-performance-tests.sh
-	./scripts/run-performance-tests.sh memory --profile
+	$(GOTEST) -bench=. -benchmem -memprofile=mem.prof -run=^$$ ./...
 	@echo "$(GREEN)✅ Memory tests completed$(RESET)"
 
 perf-concurrent:
 	@echo "$(CYAN)Running concurrent operation tests...$(RESET)"
-	@chmod +x scripts/run-performance-tests.sh
-	./scripts/run-performance-tests.sh concurrent
+	$(GOTEST) -bench=. -benchmem -cpu=1,2,4 -run=^$$ ./...
 	@echo "$(GREEN)✅ Concurrent tests completed$(RESET)"
 
 perf-large-dataset:
 	@echo "$(CYAN)Running large dataset tests...$(RESET)"
-	@chmod +x scripts/run-performance-tests.sh
-	./scripts/run-performance-tests.sh large-dataset
+	$(GOTEST) -bench=. -benchmem -benchtime=10s -run=^$$ ./...
 	@echo "$(GREEN)✅ Large dataset tests completed$(RESET)"
 
 perf-quick:
 	@echo "$(CYAN)Running quick performance tests...$(RESET)"
-	@chmod +x scripts/run-performance-tests.sh
-	./scripts/run-performance-tests.sh quick
+	$(GOTEST) -bench=. -benchmem -benchtime=1s -run=^$$ ./...
 	@echo "$(GREEN)✅ Quick performance tests completed$(RESET)"
 
 perf-profile:
 	@echo "$(CYAN)Running performance tests with profiling...$(RESET)"
-	@chmod +x scripts/run-performance-tests.sh
-	./scripts/run-performance-tests.sh benchmarks --profile
+	$(GOTEST) -bench=. -benchmem -cpuprofile=cpu.prof -memprofile=mem.prof -run=^$$ ./...
 	@echo "$(GREEN)✅ Performance profiling completed$(RESET)"
 
 perf-report:
 	@echo "$(CYAN)Generating performance report...$(RESET)"
-	@if [ -d "performance-results" ]; then \
-		echo "Performance results found:"; \
-		ls -la performance-results/performance_report_*.md | tail -5; \
-		echo "$(GREEN)Latest performance report:$(RESET)"; \
-		ls -t performance-results/performance_report_*.md | head -1; \
-	else \
-		echo "$(YELLOW)No performance results found. Run 'make perf-test' first.$(RESET)"; \
-	fi
+	@echo "$(YELLOW)Performance report functionality not implemented yet$(RESET)"
 
 # CI Performance testing (reduced test set)
 perf-ci:
 	@echo "$(CYAN)Running CI performance tests...$(RESET)"
-	@chmod +x scripts/run-performance-tests.sh
-	./scripts/run-performance-tests.sh quick --ci
+	$(GOTEST) -bench=. -benchmem -benchtime=1s -run=^$$ ./...
 	@echo "$(GREEN)✅ CI performance tests completed$(RESET)"
 
 # Dependency checking

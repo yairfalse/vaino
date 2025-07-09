@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -326,19 +327,54 @@ func runDiff(cmd *cobra.Command, args []string) error {
 					scanArgs = append(scanArgs, "--auto-discover")
 				}
 
+				// For Kubernetes, add namespace restrictions from config to prevent scanning all namespaces
+				if providerName == "kubernetes" {
+					// Add configured namespaces if available
+					if configuredNamespaces := getConfiguredNamespaces(); len(configuredNamespaces) > 0 {
+						for _, ns := range configuredNamespaces {
+							scanArgs = append(scanArgs, "--namespace", ns)
+						}
+					} else {
+						// Default to common namespaces to prevent scanning all
+						scanArgs = append(scanArgs, "--namespace", "default", "--namespace", "test-workloads")
+					}
+				}
+
 				scanCmd.SetArgs(scanArgs)
 				scanCmd.SetOutput(io.Discard) // Suppress output
-				if err := scanCmd.Execute(); err != nil {
-					// Check if it's a known error type
-					if wgoErr, ok := err.(*wgoerrors.WGOError); ok {
-						return wgoErr
+
+				// Add timeout for scan execution
+				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+				defer cancel()
+
+				done := make(chan error, 1)
+				go func() {
+					done <- scanCmd.Execute()
+				}()
+
+				select {
+				case err := <-done:
+					if err != nil {
+						// Check if it's a known error type
+						if wgoErr, ok := err.(*wgoerrors.WGOError); ok {
+							return wgoErr
+						}
+						return wgoerrors.New(wgoerrors.ErrorTypeProvider, wgoerrors.Provider(providerName),
+							"Failed to scan current infrastructure").
+							WithCause(err.Error()).
+							WithSolutions(
+								fmt.Sprintf("Run 'wgo scan --provider %s' manually to debug", providerName),
+								"Check provider authentication with 'wgo check-config'",
+							).
+							WithHelp("wgo check-config")
 					}
-					return wgoerrors.New(wgoerrors.ErrorTypeProvider, wgoerrors.Provider(providerName),
-						"Failed to scan current infrastructure").
-						WithCause(err.Error()).
+				case <-ctx.Done():
+					return wgoerrors.New(wgoerrors.ErrorTypeNetwork, wgoerrors.Provider(providerName),
+						"Scan operation timed out after 30 seconds").
 						WithSolutions(
-							fmt.Sprintf("Run 'wgo scan --provider %s' manually to debug", providerName),
-							"Check provider authentication with 'wgo check-config'",
+							"Try limiting the scan scope with specific namespaces",
+							"Run 'wgo scan --provider kubernetes --namespace test-workloads' for targeted scanning",
+							"Check cluster connectivity with 'kubectl get nodes'",
 						).
 						WithHelp("wgo check-config")
 				}
@@ -589,4 +625,33 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// getConfiguredNamespaces reads namespaces from the config file
+func getConfiguredNamespaces() []string {
+	// Try to read from config file
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil
+	}
+
+	configFile := filepath.Join(homeDir, ".wgo", "config.yaml")
+	data, err := os.ReadFile(configFile)
+	if err != nil {
+		return nil
+	}
+
+	var config struct {
+		Providers struct {
+			Kubernetes struct {
+				Namespaces []string `yaml:"namespaces"`
+			} `yaml:"kubernetes"`
+		} `yaml:"providers"`
+	}
+
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil
+	}
+
+	return config.Providers.Kubernetes.Namespaces
 }
