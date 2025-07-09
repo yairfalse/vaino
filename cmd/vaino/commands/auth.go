@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/yairfalse/wgo/internal/helpers"
+	"github.com/yairfalse/vaino/internal/helpers"
 )
 
 func newAuthCommand() *cobra.Command {
@@ -14,16 +14,16 @@ func newAuthCommand() *cobra.Command {
 		Long: `The auth command helps you set up authentication for various cloud providers.
 It provides interactive setup and validation of credentials.`,
 		Example: `  # Set up GCP authentication
-  wgo auth gcp
+  vaino auth gcp
 
   # Set up AWS authentication  
-  wgo auth aws
+  vaino auth aws
 
   # Test current authentication
-  wgo auth test
+  vaino auth test
 
   # Show authentication status
-  wgo auth status`,
+  vaino auth status`,
 	}
 
 	// Add subcommands
@@ -44,10 +44,10 @@ func newAuthGCPCommand() *cobra.Command {
 - Set up Application Default Credentials
 - Optionally set a default project`,
 		Example: `  # Basic GCP auth setup
-  wgo auth gcp
+  vaino auth gcp
 
   # Set up auth with specific project
-  wgo auth gcp --project my-project-123`,
+  vaino auth gcp --project my-project-123`,
 		RunE: runAuthGCP,
 	}
 
@@ -65,7 +65,7 @@ func newAuthAWSCommand() *cobra.Command {
 - Run aws configure to set up credentials
 - Validate the configuration`,
 		Example: `  # Set up AWS auth
-  wgo auth aws`,
+  vaino auth aws`,
 		RunE: runAuthAWS,
 	}
 
@@ -78,10 +78,10 @@ func newAuthTestCommand() *cobra.Command {
 		Short: "Test authentication for all providers",
 		Long:  `Tests authentication for all configured cloud providers and shows the status.`,
 		Example: `  # Test all authentication
-  wgo auth test
+  vaino auth test
 
   # Test specific provider
-  wgo auth test --provider gcp`,
+  vaino auth test --provider gcp`,
 		RunE: runAuthTest,
 	}
 
@@ -163,8 +163,8 @@ func runAuthStatus(cmd *cobra.Command, args []string) error {
 	showTerraformStatus()
 
 	fmt.Println("\n💡 Tips:")
-	fmt.Println("  • Run 'wgo auth <provider>' to set up authentication")
-	fmt.Println("  • Run 'wgo auth test' to verify your credentials work")
+	fmt.Println("  • Run 'vaino auth <provider>' to set up authentication")
+	fmt.Println("  • Run 'vaino auth test' to verify your credentials work")
 
 	return nil
 }
@@ -177,7 +177,7 @@ func testGCPAuth() {
 		fmt.Printf("  ✅ Logged in as: %s\n", gcloudAccount)
 	} else {
 		fmt.Println("  ❌ Not authenticated")
-		fmt.Println("     Run: wgo auth gcp")
+		fmt.Println("     Run: vaino auth gcp")
 	}
 }
 
@@ -187,7 +187,7 @@ func testAWSAuth() {
 		fmt.Printf("  ✅ Using profile: %s\n", awsProfile)
 	} else {
 		fmt.Println("  ❌ No AWS credentials found")
-		fmt.Println("     Run: wgo auth aws")
+		fmt.Println("     Run: vaino auth aws")
 	}
 }
 

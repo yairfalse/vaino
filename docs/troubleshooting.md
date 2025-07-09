@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-Common issues and solutions when using WGO.
+Common issues and solutions when using VAINO.
 
 ## 🔧 Installation Issues
 
@@ -10,7 +10,7 @@ Common issues and solutions when using WGO.
 
 **Solutions:**
 ```bash
-# Check if WGO is in PATH
+# Check if VAINO is in PATH
 which wgo
 
 # Add to PATH if installed manually
@@ -26,7 +26,7 @@ curl -sSL https://install.wgo.sh | bash
 
 ### Permission Errors
 
-**Problem:** `Permission denied` when running WGO
+**Problem:** `Permission denied` when running VAINO
 
 **Solutions:**
 ```bash
@@ -176,8 +176,8 @@ gcloud compute instances list --limit=1
 
 # Service account setup
 gcloud iam service-accounts create wgo-monitor \
-  --description="WGO monitoring service account" \
-  --display-name="WGO Monitor"
+  --description="VAINO monitoring service account" \
+  --display-name="VAINO Monitor"
 
 gcloud projects add-iam-policy-binding PROJECT_ID \
   --member="serviceAccount:wgo-monitor@PROJECT_ID.iam.gserviceaccount.com" \
@@ -400,7 +400,7 @@ wgo check-config --baselines
 
 ### High Memory Usage
 
-**Problem:** WGO using too much memory
+**Problem:** VAINO using too much memory
 
 **Solutions:**
 ```yaml
@@ -479,14 +479,14 @@ storage:
 
 ### CI/CD Problems
 
-**Problem:** WGO fails in CI/CD pipeline
+**Problem:** VAINO fails in CI/CD pipeline
 
 **Solutions:**
 
 **GitHub Actions:**
 ```yaml
 # Add debugging
-- name: Debug WGO
+- name: Debug VAINO
   run: |
     wgo version
     wgo check-config
@@ -553,7 +553,7 @@ wgo --verbose status
 wgo --verbose scan --provider aws
 
 # Log level control
-export WGO_LOG_LEVEL=debug
+export VAINO_LOG_LEVEL=debug
 wgo scan
 ```
 
@@ -596,12 +596,12 @@ grep "Duration:" ~/.wgo/logs/debug.log
 #!/bin/bash
 # collect-diagnostics.sh
 
-echo "=== WGO Diagnostics ==="
+echo "=== VAINO Diagnostics ==="
 echo "Date: $(date)"
 echo "OS: $(uname -a)"
 echo
 
-echo "=== WGO Version ==="
+echo "=== VAINO Version ==="
 wgo version
 echo
 
@@ -646,7 +646,7 @@ tail -20 ~/.wgo/logs/wgo.log
 
 **Issue Template:**
 ```
-**WGO Version:** (output of `wgo version`)
+**VAINO Version:** (output of `wgo version`)
 **OS:** (e.g., macOS 13.0, Ubuntu 22.04)
 **Provider:** (terraform/aws/gcp/kubernetes)
 **Command:** (exact command that failed)
@@ -674,14 +674,14 @@ Any other relevant information
 
 ## 🔄 Recovery Procedures
 
-### Reset WGO
+### Reset VAINO
 
 **Complete Reset:**
 ```bash
 # Backup current state
 cp -r ~/.wgo ~/.wgo.backup
 
-# Remove all WGO data
+# Remove all VAINO data
 rm -rf ~/.wgo
 
 # Reinstall
@@ -717,4 +717,4 @@ wgo baseline create --from snapshot-123 --name recovered-baseline
 wgo baseline show recovered-baseline
 ```
 
-This troubleshooting guide should help resolve most common issues encountered when using WGO.
+This troubleshooting guide should help resolve most common issues encountered when using VAINO.

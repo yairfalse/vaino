@@ -1,4 +1,4 @@
-# WGO Command Redesign Proposal
+# VAINO Command Redesign Proposal
 
 ## Current Problems
 

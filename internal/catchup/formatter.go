@@ -388,7 +388,7 @@ func (f *Formatter) writeClosingMessage(output *strings.Builder, report *Report)
 
 	// Sync state reminder
 	if !report.Period.Start.IsZero() {
-		output.WriteString(fmt.Sprintf("\n%sRun 'wgo catch-up --sync-state' to update your baselines%s\n",
+		output.WriteString(fmt.Sprintf("\n%sRun 'vaino catch-up --sync-state' to update your baselines%s\n",
 			f.colors.Muted, f.colors.Reset))
 	}
 }

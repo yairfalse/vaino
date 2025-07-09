@@ -1,10 +1,10 @@
-# WGO Project Context for Claude
+# VAINO Project Context for Claude
 
-This document provides context about the WGO project to help Claude understand the codebase and assist effectively.
+This document provides context about the VAINO project to help Claude understand the codebase and assist effectively.
 
 ## Project Overview
 
-WGO (What's Going On) is a comprehensive infrastructure drift detection tool that acts as "git diff for infrastructure". It helps DevOps teams track changes in their infrastructure over time by:
+VAINO (What's Going On) is a comprehensive infrastructure drift detection tool that acts as "git diff for infrastructure". It helps DevOps teams track changes in their infrastructure over time by:
 
 - Scanning infrastructure state from multiple providers (Terraform, AWS, GCP, Kubernetes)
 - Creating snapshots of the current state
@@ -13,7 +13,7 @@ WGO (What's Going On) is a comprehensive infrastructure drift detection tool tha
 
 ## Key Design Principles
 
-1. **Simplicity First**: WGO should be as easy to use as `git diff`
+1. **Simplicity First**: VAINO should be as easy to use as `git diff`
 2. **Zero Configuration**: Works out of the box with smart defaults
 3. **Multi-Provider**: Supports multiple infrastructure providers through a plugin architecture
 4. **Unix Philosophy**: Does one thing well, plays nicely with other tools
@@ -66,7 +66,7 @@ Run tests with: `make test` or `go test ./...`
 
 ## Error Handling
 
-WGO uses a custom error system (`internal/errors`) that provides:
+VAINO uses a custom error system (`internal/errors`) that provides:
 - Categorized errors (Provider, Configuration, Network, etc.)
 - User-friendly error messages
 - Actionable solutions
@@ -139,7 +139,7 @@ WGO uses a custom error system (`internal/errors`) that provides:
 
 1. Use `-v` or `--verbose` flag for detailed output
 2. Check `~/.wgo/logs/` for debug logs (if enabled)
-3. Use `WGO_DEBUG=1` environment variable
+3. Use `VAINO_DEBUG=1` environment variable
 4. Provider-specific debugging:
    - AWS: Check AWS credentials and regions
    - GCP: Verify project ID and authentication

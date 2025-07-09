@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 func TestFileStorage_SaveAndLoadSnapshot(t *testing.T) {
 	// Create temporary directory
-	tempDir, err := os.MkdirTemp("", "wgo-storage-test")
+	tempDir, err := os.MkdirTemp("", "vaino-storage-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -68,7 +68,7 @@ func TestFileStorage_SaveAndLoadSnapshot(t *testing.T) {
 }
 
 func TestFileStorage_ListSnapshots(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "wgo-storage-test")
+	tempDir, err := os.MkdirTemp("", "vaino-storage-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -127,7 +127,7 @@ func TestFileStorage_ListSnapshots(t *testing.T) {
 }
 
 func TestFileStorage_DeleteSnapshot(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "wgo-storage-test")
+	tempDir, err := os.MkdirTemp("", "vaino-storage-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -172,7 +172,7 @@ func TestFileStorage_DeleteSnapshot(t *testing.T) {
 }
 
 func TestFileStorage_SaveAndLoadBaseline(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "wgo-storage-test")
+	tempDir, err := os.MkdirTemp("", "vaino-storage-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -222,7 +222,7 @@ func TestFileStorage_SaveAndLoadBaseline(t *testing.T) {
 }
 
 func TestFileStorage_DirectoryCreation(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "wgo-storage-test")
+	tempDir, err := os.MkdirTemp("", "vaino-storage-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}

@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // ComparisonPair represents a pair of resources to compare

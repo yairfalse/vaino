@@ -1,5 +1,5 @@
 #!/bin/bash
-# WGO Test Environment Manager
+# VAINO Test Environment Manager
 # Works on macOS and Ubuntu
 
 set -e
@@ -11,8 +11,8 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-CLUSTER_NAME="wgo-test"
-LOCALSTACK_CONTAINER="wgo-localstack"
+CLUSTER_NAME="vaino-test"
+LOCALSTACK_CONTAINER="vaino-localstack"
 TEST_NAMESPACE="test-workloads"
 
 # Functions
@@ -219,7 +219,7 @@ stop_localstack() {
 start_all() {
     check_dependencies
     
-    echo "🚀 Starting WGO Test Environment"
+    echo "🚀 Starting VAINO Test Environment"
     echo "================================"
     
     start_k8s
@@ -230,10 +230,10 @@ start_all() {
     echo ""
     echo "📋 Quick test commands:"
     echo "  # Test Kubernetes scanning"
-    echo "  wgo scan --provider kubernetes --namespace $TEST_NAMESPACE"
+    echo "  vaino scan --provider kubernetes --namespace $TEST_NAMESPACE"
     echo ""
     echo "  # Test AWS scanning (LocalStack)"
-    echo "  AWS_ENDPOINT_URL=http://localhost:4566 wgo scan --provider aws"
+    echo "  AWS_ENDPOINT_URL=http://localhost:4566 vaino scan --provider aws"
     echo ""
     echo "  # View Kubernetes resources"
     echo "  kubectl get all -n $TEST_NAMESPACE"
@@ -242,7 +242,7 @@ start_all() {
 }
 
 stop_all() {
-    echo "🛑 Stopping WGO Test Environment"
+    echo "🛑 Stopping VAINO Test Environment"
     echo "================================"
     
     stop_k8s
@@ -253,7 +253,7 @@ stop_all() {
 }
 
 status() {
-    echo "📊 WGO Test Environment Status"
+    echo "📊 VAINO Test Environment Status"
     echo "=============================="
     echo ""
     
@@ -317,7 +317,7 @@ case "${1:-}" in
         print_success "JarJar removed. The senate will decide his fate."
         ;;
     *)
-        echo "WGO Test Environment Manager"
+        echo "VAINO Test Environment Manager"
         echo ""
         echo "Usage: $0 {start|stop|restart|status|k8s-only|aws-only|add-jarjar|remove-jarjar}"
         echo ""

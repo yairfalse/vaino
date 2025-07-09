@@ -3,7 +3,7 @@ package output
 import (
 	"encoding/json"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // JSONFormatter handles JSON output formatting

@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/yairfalse/wgo/internal/analyzer"
-	"github.com/yairfalse/wgo/internal/differ"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/analyzer"
+	"github.com/yairfalse/vaino/internal/differ"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 func newSimpleDiffCommand() *cobra.Command {
@@ -20,13 +20,13 @@ func newSimpleDiffCommand() *cobra.Command {
 		Short: "Show infrastructure changes",
 		Long:  `Show what changed in your infrastructure between two points in time.`,
 		Example: `  # Show changes in the last hour
-  wgo changes --since 1h
+  vaino changes --since 1h
 
   # Show changes between two snapshots
-  wgo changes --from snapshot1.json --to snapshot2.json
+  vaino changes --from snapshot1.json --to snapshot2.json
 
   # Show changes for a specific provider
-  wgo changes --provider kubernetes --since 30m`,
+  vaino changes --provider kubernetes --since 30m`,
 		RunE: runSimpleDiff,
 	}
 
@@ -148,7 +148,7 @@ func getCurrentSnapshot(provider string) (*types.Snapshot, error) {
 	fmt.Println("📸 Capturing current state...")
 
 	// Create temp file for scan output
-	tempFile, err := os.CreateTemp("", "wgo-current-*.json")
+	tempFile, err := os.CreateTemp("", "vaino-current-*.json")
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +190,7 @@ func loadSnapshot(path string) (*types.Snapshot, error) {
 // Helper to find snapshot from a specific time
 func findSnapshotFromTime(targetTime time.Time, provider string) (*types.Snapshot, error) {
 	homeDir, _ := os.UserHomeDir()
-	historyDir := filepath.Join(homeDir, ".wgo", "history")
+	historyDir := filepath.Join(homeDir, ".vaino", "history")
 
 	// Find all snapshot files
 	pattern := "*.json"
@@ -227,7 +227,7 @@ func findSnapshotFromTime(targetTime time.Time, provider string) (*types.Snapsho
 // Helper to find recent snapshots
 func findRecentSnapshots(provider string, count int) ([]*types.Snapshot, error) {
 	homeDir, _ := os.UserHomeDir()
-	historyDir := filepath.Join(homeDir, ".wgo", "history")
+	historyDir := filepath.Join(homeDir, ".vaino", "history")
 
 	// Find all snapshot files
 	pattern := "*.json"

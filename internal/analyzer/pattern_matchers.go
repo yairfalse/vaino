@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/differ"
+	"github.com/yairfalse/vaino/internal/differ"
 )
 
 // ScalingPatternMatcher identifies deployment/statefulset scaling patterns

@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/yairfalse/wgo/pkg/config"
+	"github.com/yairfalse/vaino/pkg/config"
 )
 
 func newStatusCommand() *cobra.Command {
@@ -22,7 +22,7 @@ providers, authentication, and recent activity.`,
 }
 
 func runStatus(cmd *cobra.Command, args []string) error {
-	fmt.Println("WGO Status Report")
+	fmt.Println("VAINO Status Report")
 	fmt.Println("===================")
 	fmt.Println()
 
@@ -33,7 +33,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	configFile := viper.ConfigFileUsed()
 	if configFile == "" {
 		homeDir, _ := os.UserHomeDir()
-		configFile = filepath.Join(homeDir, ".wgo", "config.yaml")
+		configFile = filepath.Join(homeDir, ".vaino", "config.yaml")
 		if _, err := os.Stat(configFile); os.IsNotExist(err) {
 			configFile = "not found"
 		}
@@ -42,7 +42,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	// Storage info
 	homeDir, _ := os.UserHomeDir()
-	storagePath := filepath.Join(homeDir, ".wgo")
+	storagePath := filepath.Join(homeDir, ".vaino")
 	storageSize := getDirectorySize(storagePath)
 	fmt.Printf("  Storage: %s (%s used)\n", storagePath, formatBytes(storageSize))
 	fmt.Println()
@@ -125,7 +125,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	// Recent Activity
 	fmt.Println("Recent Activity:")
 
-	lastScanPath := filepath.Join(homeDir, ".wgo", "last-scan-*.json")
+	lastScanPath := filepath.Join(homeDir, ".vaino", "last-scan-*.json")
 	matches, _ := filepath.Glob(lastScanPath)
 
 	if len(matches) > 0 {
@@ -167,7 +167,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	}
 
 	// History info
-	historyPath := filepath.Join(homeDir, ".wgo", "history")
+	historyPath := filepath.Join(homeDir, ".vaino", "history")
 	historyCount := countFiles(historyPath, "*.json")
 	if historyCount > 0 {
 		fmt.Printf("  Snapshots: %d stored\n", historyCount)
@@ -175,9 +175,9 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	fmt.Println()
 	fmt.Println("Quick Actions:")
-	fmt.Println("  - Run 'wgo scan' to scan infrastructure")
-	fmt.Println("  - Run 'wgo configure' to set up providers")
-	fmt.Println("  - Run 'wgo check-config' to validate configuration")
+	fmt.Println("  - Run 'vaino scan' to scan infrastructure")
+	fmt.Println("  - Run 'vaino configure' to set up providers")
+	fmt.Println("  - Run 'vaino check-config' to validate configuration")
 
 	return nil
 }

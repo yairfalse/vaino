@@ -1,5 +1,5 @@
 #!/bin/bash
-# GCP Authentication Setup Script for WGO
+# GCP Authentication Setup Script for VAINO
 
 set -e
 
@@ -9,7 +9,7 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${GREEN}WGO GCP Authentication Setup${NC}"
+echo -e "${GREEN}VAINO GCP Authentication Setup${NC}"
 echo "============================"
 
 # Check if gcloud is installed
@@ -61,14 +61,14 @@ else
     exit 1
 fi
 
-# Test with WGO
-echo -e "\n${YELLOW}Testing WGO GCP scanner...${NC}"
-if [ -f "./wgo" ]; then
-    ./wgo scan --provider gcp --project "$PROJECT_ID"
+# Test with VAINO
+echo -e "\n${YELLOW}Testing VAINO GCP scanner...${NC}"
+if [ -f "./vaino" ]; then
+    ./vaino scan --provider gcp --project "$PROJECT_ID"
 else
-    echo -e "${RED}WGO binary not found. Please build it first:${NC}"
-    echo "go build -o wgo ./cmd/wgo"
+    echo -e "${RED}VAINO binary not found. Please build it first:${NC}"
+    echo "go build -o vaino ./cmd/vaino"
 fi
 
 echo -e "\n${GREEN}Setup complete!${NC}"
-echo -e "You can now use: ${YELLOW}./wgo scan --provider gcp --project $PROJECT_ID${NC}"
+echo -e "You can now use: ${YELLOW}./vaino scan --provider gcp --project $PROJECT_ID${NC}"

@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/yairfalse/wgo/internal/differ"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/differ"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // EnhancedTableRenderer provides enhanced table output with colors and alignment

@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	iamTypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // CollectIAMResources collects basic IAM resources (roles, policies, users)

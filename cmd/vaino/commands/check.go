@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/yairfalse/wgo/internal/differ"
-	"github.com/yairfalse/wgo/internal/storage"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/differ"
+	"github.com/yairfalse/vaino/internal/storage"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 func newCheckCommand() *cobra.Command {
@@ -20,19 +20,19 @@ func newCheckCommand() *cobra.Command {
 to detect configuration drift. It can automatically scan the current state
 or use a previously captured snapshot for comparison.`,
 		Example: `  # Check against latest baseline
-  wgo check
+  vaino check
 
   # Check against specific baseline
-  wgo check --baseline prod-baseline-2025-01-15
+  vaino check --baseline prod-baseline-2025-01-15
 
   # Check with current scan and AI analysis
-  wgo check --scan --explain
+  vaino check --scan --explain
 
   # Check specific provider only
-  wgo check --provider aws --region us-east-1
+  vaino check --provider aws --region us-east-1
 
   # Generate detailed report
-  wgo check --baseline prod-v1.0 --output-file drift-report.json --format json`,
+  vaino check --baseline prod-v1.0 --output-file drift-report.json --format json`,
 		RunE: runCheck,
 	}
 
@@ -191,15 +191,15 @@ func runCheck(cmd *cobra.Command, args []string) error {
 			fmt.Println("🎯 DO THIS NOW:")
 			fmt.Println()
 			fmt.Println("  1. Scan your infrastructure (if not done already):")
-			fmt.Println("     wgo scan --provider terraform")
-			fmt.Println("     wgo scan --provider aws --region us-east-1")
-			fmt.Println("     wgo scan --provider gcp --project YOUR-PROJECT")
+			fmt.Println("     vaino scan --provider terraform")
+			fmt.Println("     vaino scan --provider aws --region us-east-1")
+			fmt.Println("     vaino scan --provider gcp --project YOUR-PROJECT")
 			fmt.Println()
 			fmt.Println("  2. Create a baseline:")
-			fmt.Println("     wgo baseline create --name prod-baseline")
+			fmt.Println("     vaino baseline create --name prod-baseline")
 			fmt.Println()
 			fmt.Println("  3. Then check for drift:")
-			fmt.Println("     wgo check")
+			fmt.Println("     vaino check")
 			fmt.Println()
 			fmt.Println("💡 TIP: The baseline is your 'known good' state")
 			return nil
@@ -243,12 +243,12 @@ func runCheck(cmd *cobra.Command, args []string) error {
 			fmt.Println()
 			fmt.Println("🎯 DO THIS NOW (choose one):")
 			fmt.Println()
-			fmt.Println("  wgo scan --provider terraform")
-			fmt.Println("  wgo scan --provider aws --region us-east-1")
-			fmt.Println("  wgo scan --provider gcp --project YOUR-PROJECT")
-			fmt.Println("  wgo scan --provider kubernetes")
+			fmt.Println("  vaino scan --provider terraform")
+			fmt.Println("  vaino scan --provider aws --region us-east-1")
+			fmt.Println("  vaino scan --provider gcp --project YOUR-PROJECT")
+			fmt.Println("  vaino scan --provider kubernetes")
 			fmt.Println()
-			fmt.Println("💡 TIP: Having auth issues? Run 'wgo auth status'")
+			fmt.Println("💡 TIP: Having auth issues? Run 'vaino auth status'")
 			return nil
 		}
 		// Load the most recent snapshot

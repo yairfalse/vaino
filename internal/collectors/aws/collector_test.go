@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/yairfalse/wgo/internal/collectors"
+	"github.com/yairfalse/vaino/internal/collectors"
 )
 
 func TestAWSCollectorInterface(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 type FileStorage struct {

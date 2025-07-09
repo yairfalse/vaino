@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/yairfalse/wgo/internal/collectors"
+	"github.com/yairfalse/vaino/internal/collectors"
 )
 
 func TestGCPCollector_Name(t *testing.T) {

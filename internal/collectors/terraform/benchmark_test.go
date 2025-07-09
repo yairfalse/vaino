@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/yairfalse/wgo/internal/collectors"
+	"github.com/yairfalse/vaino/internal/collectors"
 )
 
 // BenchmarkTerraformCollector_ParseSmallState benchmarks parsing a small state file

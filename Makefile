@@ -1,9 +1,9 @@
-# WGO - Infrastructure Drift Detection Tool
-# Modular Makefile for targeted testing and building
+# VAINO - Ancient Finnish Wisdom for Modern Infrastructure
+# Divine Makefile for the creator god's build system
 
 # Variables
-BINARY_NAME=wgo
-MAIN_PATH=./cmd/wgo
+BINARY_NAME=vaino
+MAIN_PATH=./cmd/vaino
 BUILD_DIR=./build
 COVERAGE_DIR=./coverage
 TEST_TIMEOUT=10m
@@ -39,8 +39,8 @@ all: clean lint test build
 
 # Help target
 help:
-	@echo "$(CYAN)WGO Build & Test System$(RESET)"
-	@echo "========================"
+	@echo "$(CYAN)VAINO Build & Test System$(RESET)"
+	@echo "============================="
 	@echo ""
 	@echo "$(GREEN)🔨 Build Targets:$(RESET)"
 	@echo "  build              Build the binary"
@@ -165,7 +165,7 @@ test-kubernetes:
 
 test-commands:
 	@echo "$(CYAN)Testing CLI commands...$(RESET)"
-	$(GOTEST) -v -timeout $(TEST_TIMEOUT) ./cmd/wgo/commands/...
+	$(GOTEST) -v -timeout $(TEST_TIMEOUT) ./cmd/vaino/commands/...
 	@echo "$(GREEN)✅ Command tests completed$(RESET)"
 
 test-config:
@@ -180,7 +180,7 @@ test-parallel:
 	 $(GOTEST) ./internal/collectors/gcp/... -v -timeout $(TEST_TIMEOUT) & \
 	 $(GOTEST) ./internal/collectors/aws/... -v -timeout $(TEST_TIMEOUT) & \
 	 $(GOTEST) ./internal/collectors/kubernetes/... -v -timeout $(TEST_TIMEOUT) & \
-	 $(GOTEST) ./cmd/wgo/commands/... -v -timeout $(TEST_TIMEOUT) & \
+	 $(GOTEST) ./cmd/vaino/commands/... -v -timeout $(TEST_TIMEOUT) & \
 	 $(GOTEST) ./pkg/config/... -v -timeout $(TEST_TIMEOUT) & \
 	 wait
 	@echo "$(GREEN)✅ Parallel tests completed$(RESET)"
@@ -223,11 +223,11 @@ deps-update:
 # Docker targets
 docker-build:
 	@echo "Building Docker image..."
-	docker build -t wgo:latest .
+	docker build -t vaino:latest .
 
 docker-test: docker-build
 	@echo "Testing Docker image..."
-	docker run --rm wgo:latest --help
+	docker run --rm vaino:latest --help
 
 # Development targets
 dev-setup:

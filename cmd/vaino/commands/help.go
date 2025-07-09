@@ -41,9 +41,9 @@ Common Issues:
 - "Quota exceeded": Request quota increase
 
 Examples:
-  wgo scan --provider gcp --project my-project
-  wgo scan --provider gcp --region us-central1
-  wgo scan --provider gcp --credentials ./sa-key.json
+  vaino scan --provider gcp --project my-project
+  vaino scan --provider gcp --region us-central1
+  vaino scan --provider gcp --credentials ./sa-key.json
 `,
 
 	"aws": `
@@ -77,8 +77,8 @@ Common Issues:
 - "InvalidClientTokenId": Check access keys
 
 Examples:
-  wgo scan --provider aws --region us-east-1
-  wgo scan --provider aws --profile production
+  vaino scan --provider aws --region us-east-1
+  vaino scan --provider aws --profile production
 `,
 
 	"kubernetes": `
@@ -103,9 +103,9 @@ Common Issues:
 - "context not found": Verify kubeconfig
 
 Examples:
-  wgo scan --provider kubernetes
-  wgo scan --provider kubernetes --context prod
-  wgo scan --provider kubernetes --namespace default
+  vaino scan --provider kubernetes
+  vaino scan --provider kubernetes --context prod
+  vaino scan --provider kubernetes --namespace default
 `,
 
 	"terraform": `
@@ -128,9 +128,9 @@ Common Issues:
 - "corrupted state": Restore from backup
 
 Examples:
-  wgo scan --provider terraform
-  wgo scan --provider terraform --path ./environments/prod
-  wgo scan --provider terraform --auto-discover
+  vaino scan --provider terraform
+  vaino scan --provider terraform --path ./environments/prod
+  vaino scan --provider terraform --auto-discover
 `,
 }
 
@@ -139,19 +139,19 @@ WGO Troubleshooting Guide
 ========================
 
 Quick Diagnostics:
-  wgo check-config              # Validate all configuration
-  wgo check-config --verbose    # Detailed diagnostics
-  wgo status                    # System and provider status
+  vaino check-config              # Validate all configuration
+  vaino check-config --verbose    # Detailed diagnostics
+  vaino status                    # System and provider status
 
 Common Issues:
 
 1. "No providers configured"
-   Solution: Run 'wgo configure' or set up manually
+   Solution: Run 'vaino configure' or set up manually
 
 2. "Permission denied"
    - Check provider authentication
    - Verify IAM/RBAC permissions
-   - Run 'wgo check-config --verbose'
+   - Run 'vaino check-config --verbose'
 
 3. "No changes detected" when changes exist
    - Check scan filters (region, namespace)
@@ -170,13 +170,13 @@ Common Issues:
    - Consider --no-cache flag
 
 Debug Mode:
-  wgo scan --debug              # Enable debug logging
-  wgo diff --verbose            # Detailed diff output
+  vaino scan --debug              # Enable debug logging
+  vaino diff --verbose            # Detailed diff output
 
 Getting Help:
-  wgo help providers            # Provider-specific help
-  wgo help troubleshooting      # This guide
-  wgo <command> --help          # Command-specific help
+  vaino help providers            # Provider-specific help
+  vaino help troubleshooting      # This guide
+  vaino <command> --help          # Command-specific help
 
 Report Issues:
   https://github.com/anthropics/wgo/issues
@@ -189,10 +189,10 @@ func newHelpCommand() *cobra.Command {
 		Short: "Get help on specific topics",
 		Long: `Get detailed help on WGO topics including provider setup,
 troubleshooting, and best practices.`,
-		Example: `  wgo help providers          # List all provider guides
-  wgo help gcp                 # GCP-specific help
-  wgo help aws                 # AWS-specific help
-  wgo help troubleshooting     # Troubleshooting guide`,
+		Example: `  vaino help providers          # List all provider guides
+  vaino help gcp                 # GCP-specific help
+  vaino help aws                 # AWS-specific help
+  vaino help troubleshooting     # Troubleshooting guide`,
 		RunE: runHelp,
 	}
 
@@ -211,7 +211,7 @@ func runHelp(cmd *cobra.Command, args []string) error {
 		fmt.Println("  terraform        - Terraform guide")
 		fmt.Println("  troubleshooting  - Common issues and solutions")
 		fmt.Println()
-		fmt.Println("Usage: wgo help <topic>")
+		fmt.Println("Usage: vaino help <topic>")
 		return nil
 	}
 
@@ -220,7 +220,7 @@ func runHelp(cmd *cobra.Command, args []string) error {
 	switch topic {
 	case "providers":
 		fmt.Println()
-		fmt.Println("WGO Provider Setup Guides")
+		fmt.Println("VAINO Provider Setup Guides")
 		fmt.Println("========================")
 		fmt.Println()
 		fmt.Println("Available providers:")
@@ -229,7 +229,7 @@ func runHelp(cmd *cobra.Command, args []string) error {
 		fmt.Println("  - kubernetes  (Kubernetes clusters)")
 		fmt.Println("  - terraform   (Terraform state)")
 		fmt.Println()
-		fmt.Print("Get specific help: wgo help <provider>")
+		fmt.Print("Get specific help: vaino help <provider>")
 
 	case "gcp", "google", "gcloud":
 		fmt.Print(providerHelp["gcp"])
@@ -248,7 +248,7 @@ func runHelp(cmd *cobra.Command, args []string) error {
 
 	default:
 		fmt.Printf("Unknown help topic: %s\n\n", topic)
-		fmt.Println("Run 'wgo help' to see available topics")
+		fmt.Println("Run 'vaino help' to see available topics")
 		return fmt.Errorf("unknown help topic")
 	}
 

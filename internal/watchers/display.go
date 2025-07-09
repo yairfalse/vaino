@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/analyzer"
+	"github.com/yairfalse/vaino/internal/analyzer"
 )
 
 // displayChanges shows detected changes in the configured format

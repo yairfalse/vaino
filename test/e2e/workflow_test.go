@@ -16,9 +16,9 @@ const (
 
 func TestMain(m *testing.M) {
 	// Build the binary before running tests
-	cmd := exec.Command("go", "build", "-o", wgoBinary, "../../cmd/wgo")
+	cmd := exec.Command("go", "build", "-o", wgoBinary, "../../cmd/vaino")
 	if err := cmd.Run(); err != nil {
-		panic("Failed to build wgo binary: " + err.Error())
+		panic("Failed to build vaino binary: " + err.Error())
 	}
 
 	// Run tests
@@ -44,7 +44,7 @@ func runWGOWorkflow(workDir string, args ...string) (string, string, error) {
 func TestE2E_CompleteWorkflow(t *testing.T) {
 	// Create isolated test environment
 	tmpDir := t.TempDir()
-	workDir := filepath.Join(tmpDir, "wgo-test")
+	workDir := filepath.Join(tmpDir, "vaino-test")
 	err := os.MkdirAll(workDir, 0755)
 	if err != nil {
 		t.Fatalf("Failed to create work directory: %v", err)
@@ -55,7 +55,7 @@ func TestE2E_CompleteWorkflow(t *testing.T) {
 	// Create config file
 	configContent := `
 storage:
-  base_path: ` + filepath.Join(workDir, ".wgo") + `
+  base_path: ` + filepath.Join(workDir, ".vaino") + `
 output:
   format: table
   pretty: true
@@ -186,7 +186,7 @@ collectors:
 
 func TestE2E_ErrorHandling(t *testing.T) {
 	tmpDir := t.TempDir()
-	workDir := filepath.Join(tmpDir, "wgo-error-test")
+	workDir := filepath.Join(tmpDir, "vaino-error-test")
 	err := os.MkdirAll(workDir, 0755)
 	if err != nil {
 		t.Fatalf("Failed to create work directory: %v", err)
@@ -216,7 +216,7 @@ func TestE2E_ErrorHandling(t *testing.T) {
 		configFile := filepath.Join(workDir, "config.yaml")
 		configContent := `
 storage:
-  base_path: ` + filepath.Join(workDir, ".wgo") + `
+  base_path: ` + filepath.Join(workDir, ".vaino") + `
 `
 		err := os.WriteFile(configFile, []byte(configContent), 0644)
 		if err != nil {
@@ -251,7 +251,7 @@ storage:
 
 func TestE2E_ConcurrentOperations(t *testing.T) {
 	tmpDir := t.TempDir()
-	workDir := filepath.Join(tmpDir, "wgo-concurrent-test")
+	workDir := filepath.Join(tmpDir, "vaino-concurrent-test")
 	err := os.MkdirAll(workDir, 0755)
 	if err != nil {
 		t.Fatalf("Failed to create work directory: %v", err)
@@ -260,7 +260,7 @@ func TestE2E_ConcurrentOperations(t *testing.T) {
 	configFile := filepath.Join(workDir, "config.yaml")
 	configContent := `
 storage:
-  base_path: ` + filepath.Join(workDir, ".wgo") + `
+  base_path: ` + filepath.Join(workDir, ".vaino") + `
 output:
   format: table
 `
@@ -298,7 +298,7 @@ output:
 
 func TestE2E_ConfigurationVariations(t *testing.T) {
 	tmpDir := t.TempDir()
-	workDir := filepath.Join(tmpDir, "wgo-config-test")
+	workDir := filepath.Join(tmpDir, "vaino-config-test")
 	err := os.MkdirAll(workDir, 0755)
 	if err != nil {
 		t.Fatalf("Failed to create work directory: %v", err)
@@ -308,10 +308,10 @@ func TestE2E_ConfigurationVariations(t *testing.T) {
 	configs := map[string]string{
 		"minimal": `
 storage:
-  base_path: ` + filepath.Join(workDir, ".wgo-minimal"),
+  base_path: ` + filepath.Join(workDir, ".vaino-minimal"),
 		"comprehensive": `
 storage:
-  base_path: ` + filepath.Join(workDir, ".wgo-comprehensive") + `
+  base_path: ` + filepath.Join(workDir, ".vaino-comprehensive") + `
 output:
   format: json
   pretty: true

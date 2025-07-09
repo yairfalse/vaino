@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/yairfalse/wgo/internal/watchers"
+	"github.com/yairfalse/vaino/internal/watchers"
 )
 
 // watchCmd represents the watch command
@@ -23,13 +23,13 @@ changes as they happen, with intelligent correlation to group related
 changes together.
 
 EXAMPLES:
-  wgo watch                                    # Watch all providers, 30s interval  
-  wgo watch --provider kubernetes              # Watch only Kubernetes
-  wgo watch --interval 10s                     # Custom 10-second interval
-  wgo watch --quiet                           # Only show changes (script-friendly)
-  wgo watch --format json                     # JSON output for automation
-  wgo watch --webhook https://hooks.slack.com # Send to Slack webhook
-  wgo watch --high-confidence                 # Only show high-confidence correlations
+  vaino watch                                    # Watch all providers, 30s interval  
+  vaino watch --provider kubernetes              # Watch only Kubernetes
+  vaino watch --interval 10s                     # Custom 10-second interval
+  vaino watch --quiet                           # Only show changes (script-friendly)
+  vaino watch --format json                     # JSON output for automation
+  vaino watch --webhook https://hooks.slack.com # Send to Slack webhook
+  vaino watch --high-confidence                 # Only show high-confidence correlations
 
 INTEGRATION:
   • Uses smart correlation engine to group related changes

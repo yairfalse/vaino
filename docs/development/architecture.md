@@ -1,16 +1,16 @@
-# WGO Architecture Overview
+# VAINO Architecture Overview
 
-This document provides a comprehensive overview of WGO's architecture, including system design, command structure, and performance optimizations.
+This document provides a comprehensive overview of VAINO's architecture, including system design, command structure, and performance optimizations.
 
 ## System Architecture
 
 ### Core Components
 
-WGO follows a modular architecture with clear separation of concerns:
+VAINO follows a modular architecture with clear separation of concerns:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    WGO Core System                         │
+│                    VAINO Core System                         │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
 │  │  Commands   │  │  Scanner    │  │  Analyzer   │        │
@@ -118,7 +118,7 @@ wgo version      # Version information
 
 ### Concurrent Scanning System
 
-WGO implements a sophisticated concurrent scanning system for optimal performance:
+VAINO implements a sophisticated concurrent scanning system for optimal performance:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -291,7 +291,7 @@ type PatternWorker struct {
 
 ### Provider Authentication
 
-WGO supports multiple authentication methods for different providers:
+VAINO supports multiple authentication methods for different providers:
 
 #### AWS Authentication
 - **IAM Roles**: Preferred for production environments
@@ -345,7 +345,7 @@ const (
     ErrorTypeInternal       ErrorType = "internal"
 )
 
-type WGOError struct {
+type VAINOError struct {
     Type        ErrorType         `json:"type"`
     Message     string            `json:"message"`
     Provider    string            `json:"provider,omitempty"`
@@ -462,4 +462,4 @@ output:
    - Distributed tracing
    - Performance profiling
 
-This architecture provides a solid foundation for WGO's continued growth and evolution, ensuring scalability, maintainability, and extensibility for future enhancements.
+This architecture provides a solid foundation for VAINO's continued growth and evolution, ensuring scalability, maintainability, and extensibility for future enhancements.

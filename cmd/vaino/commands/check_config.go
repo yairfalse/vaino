@@ -9,12 +9,12 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/collectors/aws"
-	"github.com/yairfalse/wgo/internal/collectors/gcp"
-	"github.com/yairfalse/wgo/internal/collectors/kubernetes"
-	"github.com/yairfalse/wgo/internal/collectors/terraform"
-	"github.com/yairfalse/wgo/pkg/config"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/internal/collectors/aws"
+	"github.com/yairfalse/vaino/internal/collectors/gcp"
+	"github.com/yairfalse/vaino/internal/collectors/kubernetes"
+	"github.com/yairfalse/vaino/internal/collectors/terraform"
+	"github.com/yairfalse/vaino/pkg/config"
 )
 
 var (
@@ -35,9 +35,9 @@ This command helps diagnose configuration issues by:
 - Verifying permissions
 
 Examples:
-  wgo check-config                    # Check all providers
-  wgo check-config --verbose          # Detailed output
-  wgo check-config --provider gcp     # Check specific provider`,
+  vaino check-config                    # Check all providers
+  vaino check-config --verbose          # Detailed output
+  vaino check-config --provider gcp     # Check specific provider`,
 	RunE: runCheckConfig,
 }
 
@@ -60,7 +60,7 @@ func runCheckConfig(cmd *cobra.Command, args []string) error {
 
 	// Check config file
 	cfg := GetConfig()
-	configPath := filepath.Join(os.Getenv("HOME"), ".wgo", "config.yaml")
+	configPath := filepath.Join(os.Getenv("HOME"), ".vaino", "config.yaml")
 
 	if !checkQuiet {
 		fmt.Printf("Config file: %s ", configPath)
@@ -70,7 +70,7 @@ func runCheckConfig(cmd *cobra.Command, args []string) error {
 		fmt.Printf("%s\n", failSymbol)
 		if checkVerbose {
 			fmt.Printf("  Error: %v\n", err)
-			fmt.Printf("  Fix: wgo configure\n")
+			fmt.Printf("  Fix: vaino configure\n")
 		}
 	} else {
 		fmt.Printf("%s\n", okSymbol)

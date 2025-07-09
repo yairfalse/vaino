@@ -1,6 +1,6 @@
-# GCP Setup Guide for WGO
+# GCP Setup Guide for VAINO
 
-This guide will help you configure Google Cloud Platform (GCP) authentication for WGO.
+This guide will help you configure Google Cloud Platform (GCP) authentication for VAINO.
 
 ## Prerequisites
 
@@ -10,7 +10,7 @@ This guide will help you configure Google Cloud Platform (GCP) authentication fo
 
 ## Authentication Methods
 
-WGO supports two authentication methods for GCP:
+VAINO supports two authentication methods for GCP:
 
 ### Method 1: Application Default Credentials (Recommended for Development)
 
@@ -32,7 +32,7 @@ WGO supports two authentication methods for GCP:
    gcloud config set project taskmate-461721
    ```
 
-4. **Run WGO scan**:
+4. **Run VAINO scan**:
    ```bash
    ./wgo scan --provider gcp --project taskmate-461721
    ```
@@ -43,7 +43,7 @@ WGO supports two authentication methods for GCP:
    ```bash
    # Create service account
    gcloud iam service-accounts create wgo-scanner \
-     --display-name="WGO Scanner" \
+     --display-name="VAINO Scanner" \
      --project=taskmate-461721
    ```
 
@@ -66,7 +66,7 @@ WGO supports two authentication methods for GCP:
      --iam-account=wgo-scanner@taskmate-461721.iam.gserviceaccount.com
    ```
 
-4. **Use the key with WGO**:
+4. **Use the key with VAINO**:
    ```bash
    # Option 1: Pass credentials file directly
    ./wgo scan --provider gcp --project taskmate-461721 --credentials ~/wgo-gcp-key.json

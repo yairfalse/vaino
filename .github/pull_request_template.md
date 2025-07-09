@@ -139,4 +139,4 @@ Related to #<!-- issue number -->
 
 ---
 
-*This PR was created using the WGO Agent Branch Management System. For issues with the agent system, see `.agent-work/README.md`*
+*This PR was created using the VAINO Agent Branch Management System. For issues with the agent system, see `.agent-work/README.md`*

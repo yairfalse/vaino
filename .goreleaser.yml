@@ -1,7 +1,8 @@
-# GoReleaser configuration for WGO
+# GoReleaser configuration for VAINO
 # This handles multi-platform builds and package manager distributions
+# The Finnish creator god's divine release pipeline
 
-project_name: wgo
+project_name: vaino
 
 before:
   hooks:
@@ -9,9 +10,9 @@ before:
     - go generate ./...
 
 builds:
-  - id: wgo
-    main: ./cmd/wgo
-    binary: wgo
+  - id: vaino
+    main: ./cmd/vaino
+    binary: vaino
     env:
       - CGO_ENABLED=0
     goos:
@@ -69,12 +70,12 @@ changelog:
       - Merge pull request
       - Merge branch
 
-# Homebrew Formula
+# Homebrew Formula - Divine Blessing for macOS
 brews:
-  - name: wgo
+  - name: vaino
     tap:
       owner: yairfalse
-      name: homebrew-wgo
+      name: homebrew-vaino
       branch: main
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     
@@ -84,8 +85,8 @@ brews:
     
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
     
-    homepage: "https://github.com/yairfalse/wgo"
-    description: "Git diff for infrastructure - simple drift detection"
+    homepage: "https://github.com/yairfalse/vaino"
+    description: "Ancient Finnish wisdom for modern infrastructure"
     license: "MIT"
     
     dependencies:
@@ -93,19 +94,19 @@ brews:
         type: optional
     
     install: |
-      bin.install "wgo"
-      bash_completion.install "completions/wgo.bash" => "wgo"
-      zsh_completion.install "completions/wgo.zsh" => "_wgo"
-      fish_completion.install "completions/wgo.fish"
+      bin.install "vaino"
+      bash_completion.install "completions/vaino.bash" => "vaino"
+      zsh_completion.install "completions/vaino.zsh" => "_vaino"
+      fish_completion.install "completions/vaino.fish"
     
     test: |
-      system "#{bin}/wgo", "version"
+      system "#{bin}/vaino", "version"
 
-# Scoop Manifest
+# Scoop Manifest - Windows Blessing
 scoops:
   - repository:
       owner: yairfalse
-      name: scoop-wgo
+      name: scoop-vaino
       branch: main
       token: "{{ .Env.SCOOP_GITHUB_TOKEN }}"
     
@@ -115,20 +116,20 @@ scoops:
     
     commit_msg_template: "Scoop update for {{ .ProjectName }} version {{ .Tag }}"
     
-    homepage: "https://github.com/yairfalse/wgo"
-    description: "Git diff for infrastructure - simple drift detection"
+    homepage: "https://github.com/yairfalse/vaino"
+    description: "Ancient Finnish wisdom for modern infrastructure"
     license: MIT
 
-# Linux Packages
+# Linux Packages - Divine Distribution
 nfpms:
   - id: packages
-    package_name: wgo
-    vendor: WGO Contributors
-    homepage: https://github.com/yairfalse/wgo
+    package_name: vaino
+    vendor: VAINO Contributors
+    homepage: https://github.com/yairfalse/vaino
     maintainer: Yair <yair@example.com>
     description: |-
-      Git diff for infrastructure - simple drift detection.
-      WGO detects infrastructure drift in a simple, familiar way.
+      Ancient Finnish wisdom for modern infrastructure.
+      VAINO is the Finnish creator god for infrastructure monitoring.
     license: MIT
     formats:
       - deb
@@ -143,48 +144,48 @@ nfpms:
       - aws-cli
     
     contents:
-      - src: ./completions/wgo.bash
-        dst: /usr/share/bash-completion/completions/wgo
+      - src: ./completions/vaino.bash
+        dst: /usr/share/bash-completion/completions/vaino
         file_info:
           mode: 0644
       
-      - src: ./completions/wgo.zsh
-        dst: /usr/share/zsh/site-functions/_wgo
+      - src: ./completions/vaino.zsh
+        dst: /usr/share/zsh/site-functions/_vaino
         file_info:
           mode: 0644
       
-      - src: ./completions/wgo.fish
-        dst: /usr/share/fish/vendor_completions.d/wgo.fish
+      - src: ./completions/vaino.fish
+        dst: /usr/share/fish/vendor_completions.d/vaino.fish
         file_info:
           mode: 0644
       
       - src: ./README.md
-        dst: /usr/share/doc/wgo/README.md
+        dst: /usr/share/doc/vaino/README.md
         file_info:
           mode: 0644
       
       - src: ./LICENSE
-        dst: /usr/share/doc/wgo/LICENSE
+        dst: /usr/share/doc/vaino/LICENSE
         file_info:
           mode: 0644
     
     scripts:
       postinstall: |
         #!/bin/bash
-        echo "WGO installed successfully!"
-        echo "Run 'wgo version' to verify installation"
+        echo "VAINO installed successfully!"
+        echo "Run 'vaino version' to verify installation"
       
       postremove: |
         #!/bin/bash
-        echo "WGO has been removed"
+        echo "VAINO has been removed"
 
-# Snapcraft
+# Snapcraft - Divine Ubuntu Distribution
 snapcrafts:
-  - name: wgo
-    summary: Git diff for infrastructure
+  - name: vaino
+    summary: Ancient Finnish wisdom for modern infrastructure
     description: |
-      WGO (What's Going On) is a comprehensive infrastructure drift detection tool
-      that helps you track changes in your infrastructure over time.
+      VAINO is the Finnish creator god for infrastructure monitoring.
+      Ancient wisdom meets modern technology to watch over your cloud kingdom.
     
     grade: stable
     confinement: strict
@@ -193,86 +194,86 @@ snapcrafts:
     license: MIT
     
     apps:
-      wgo:
-        command: wgo
+      vaino:
+        command: vaino
         plugs:
           - home
           - network
           - personal-files
 
-# Docker Images
+# Docker Images - Containerized Finnish Power
 dockers:
   - image_templates:
-      - "yairfalse/wgo:{{ .Tag }}-amd64"
-      - "yairfalse/wgo:latest-amd64"
+      - "yairfalse/vaino:{{ .Tag }}-amd64"
+      - "yairfalse/vaino:latest-amd64"
     use: buildx
     build_flag_templates:
       - "--platform=linux/amd64"
     dockerfile: Dockerfile
     
   - image_templates:
-      - "yairfalse/wgo:{{ .Tag }}-arm64"
-      - "yairfalse/wgo:latest-arm64"
+      - "yairfalse/vaino:{{ .Tag }}-arm64"
+      - "yairfalse/vaino:latest-arm64"
     use: buildx
     build_flag_templates:
       - "--platform=linux/arm64"
     dockerfile: Dockerfile
 
-# Docker Manifests for multi-arch
+# Docker Manifests for multi-arch - Unified Finnish Distribution
 docker_manifests:
-  - name_template: "yairfalse/wgo:{{ .Tag }}"
+  - name_template: "yairfalse/vaino:{{ .Tag }}"
     image_templates:
-      - "yairfalse/wgo:{{ .Tag }}-amd64"
-      - "yairfalse/wgo:{{ .Tag }}-arm64"
+      - "yairfalse/vaino:{{ .Tag }}-amd64"
+      - "yairfalse/vaino:{{ .Tag }}-arm64"
   
-  - name_template: "yairfalse/wgo:latest"
+  - name_template: "yairfalse/vaino:latest"
     image_templates:
-      - "yairfalse/wgo:latest-amd64"
-      - "yairfalse/wgo:latest-arm64"
+      - "yairfalse/vaino:latest-amd64"
+      - "yairfalse/vaino:latest-arm64"
 
-# GitHub Release
+# GitHub Release - Divine Distribution
 release:
   github:
     owner: yairfalse
-    name: wgo
+    name: vaino
   
   name_template: "v{{.Version}}"
   
   header: |
-    ## WGO v{{.Version}} Release Notes
+    ## VAINO v{{.Version}} Release Notes
     
-    Git diff for infrastructure - simple drift detection
+    Ancient Finnish wisdom for modern infrastructure - Väinämoinen's divine creation
     
   footer: |
     ## Installation
     
     ### macOS/Linux
     ```bash
-    brew install yairfalse/wgo/wgo
+    brew install yairfalse/vaino/vaino
     ```
     
     ### Ubuntu/Debian
     ```bash
-    curl -L https://github.com/yairfalse/wgo/releases/download/v{{.Version}}/wgo_{{.Version}}_linux_amd64.deb -o wgo.deb
-    sudo dpkg -i wgo.deb
+    curl -L https://github.com/yairfalse/vaino/releases/download/v{{.Version}}/vaino_{{.Version}}_linux_amd64.deb -o vaino.deb
+    sudo dpkg -i vaino.deb
     ```
     
     ### Universal Script
     ```bash
-    curl -sSL https://install.wgo.sh | bash
+    curl -sSL https://install.vaino.sh | bash
     ```
     
-    **Full Documentation**: https://github.com/yairfalse/wgo
+    **Full Documentation**: https://github.com/yairfalse/vaino
 
-# Announce releases
+# Announce releases - Spread the Finnish Gospel
 announce:
   twitter:
     enabled: true
     message_template: |
-      WGO {{.Tag}} is out! 🚀
+      VAINO {{.Tag}} is out! 🇫🇮⚡
       
-      Git diff for infrastructure - detect drift in your cloud resources.
+      Ancient Finnish wisdom for modern infrastructure - Väinämoinen watches over your cloud!
       
-      https://github.com/yairfalse/wgo/releases/tag/{{.Tag}}
+      https://github.com/yairfalse/vaino/releases/tag/{{.Tag}}
       
-      #infrastructure #devops #cloud #aws #terraform
+      #vaino #finnish #infrastructure #devops #cloud #mythology

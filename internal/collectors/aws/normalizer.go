@@ -8,7 +8,7 @@ import (
 	lambdaTypes "github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	rdsTypes "github.com/aws/aws-sdk-go-v2/service/rds/types"
 	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // Normalizer converts AWS resources to WGO format

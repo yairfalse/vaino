@@ -1,6 +1,6 @@
 # Kubernetes Infrastructure Monitoring
 
-Real-world examples of using WGO to monitor Kubernetes infrastructure changes and detect configuration drift.
+Real-world examples of using VAINO to monitor Kubernetes infrastructure changes and detect configuration drift.
 
 ## Scenario: Multi-Tenant SaaS Platform
 
@@ -12,9 +12,9 @@ You're running a SaaS platform on Kubernetes with:
 
 ## Initial Setup
 
-### 1. Configure WGO for Kubernetes
+### 1. Configure VAINO for Kubernetes
 ```bash
-# Configure WGO for your cluster
+# Configure VAINO for your cluster
 wgo configure kubernetes
 ```
 
@@ -208,7 +208,7 @@ wgo watch --provider kubernetes --context production-cluster --interval 60s
 
 **Output:**
 ```
-🔍 WGO Watch Mode - Kubernetes Monitoring
+🔍 VAINO Watch Mode - Kubernetes Monitoring
 =========================================
 Context: production-cluster | Interval: 60s | Started: 2024-01-15 14:30:00
 
@@ -330,7 +330,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Install WGO
+      - name: Install VAINO
         run: curl -sSL https://install.wgo.sh | bash
       
       - name: Configure kubectl
@@ -590,4 +590,4 @@ if ! wgo diff --quiet; then
 fi
 ```
 
-This comprehensive example demonstrates how WGO can provide deep visibility into Kubernetes infrastructure changes, helping maintain security, compliance, and operational excellence in complex container environments.
+This comprehensive example demonstrates how VAINO can provide deep visibility into Kubernetes infrastructure changes, helping maintain security, compliance, and operational excellence in complex container environments.

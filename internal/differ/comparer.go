@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // DefaultComparer implements deep comparison of resources

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // BenchmarkResourceProcessor tests resource processor performance

@@ -13,19 +13,19 @@ func newBaselineCommand() *cobra.Command {
 		Long: `Manage infrastructure baselines used for drift detection.
 Baselines represent known good states of your infrastructure.`,
 		Example: `  # Create baseline from current state
-  wgo baseline create --name prod-v1.0 --description "Production baseline v1.0"
+  vaino baseline create --name prod-v1.0 --description "Production baseline v1.0"
 
   # Create baseline from existing snapshot
-  wgo baseline create --from-snapshot snapshot-123.json --name staging-v2.1
+  vaino baseline create --from-snapshot snapshot-123.json --name staging-v2.1
 
   # List all baselines
-  wgo baseline list
+  vaino baseline list
 
   # Show baseline details
-  wgo baseline show prod-v1.0
+  vaino baseline show prod-v1.0
 
   # Delete baseline
-  wgo baseline delete old-baseline`,
+  vaino baseline delete old-baseline`,
 	}
 
 	// Subcommands
@@ -121,18 +121,18 @@ func runBaselineCreate(cmd *cobra.Command, args []string) error {
 		fmt.Println("🎯 DO THIS NOW:")
 		fmt.Println()
 		fmt.Println("  1. Run a scan (choose one):")
-		fmt.Println("     wgo scan --provider terraform")
-		fmt.Println("     wgo scan --provider aws --region us-east-1")
-		fmt.Println("     wgo scan --provider gcp --project YOUR-PROJECT")
+		fmt.Println("     vaino scan --provider terraform")
+		fmt.Println("     vaino scan --provider aws --region us-east-1")
+		fmt.Println("     vaino scan --provider gcp --project YOUR-PROJECT")
 		fmt.Println()
 		fmt.Println("  2. Then create your baseline:")
-		fmt.Printf("     wgo baseline create --name %s", name)
+		fmt.Printf("     vaino baseline create --name %s", name)
 		if description != "" {
 			fmt.Printf(" --description \"%s\"", description)
 		}
 		fmt.Println()
 		fmt.Println()
-		fmt.Println("💡 TIP: Having auth issues? Run 'wgo auth status'")
+		fmt.Println("💡 TIP: Having auth issues? Run 'vaino auth status'")
 		return nil
 	}
 

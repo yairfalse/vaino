@@ -61,7 +61,7 @@ docs/
 
 **New content structure:**
 ```markdown
-# WGO - Git for Infrastructure
+# VAINO - Git for Infrastructure
 - Project overview and value proposition
 - Supported providers table
 - Quick start (3-4 commands max)
@@ -94,7 +94,7 @@ docs/
 
 **New content structure:**
 ```markdown
-# Getting Started with WGO
+# Getting Started with VAINO
 - Prerequisites
 - First scan tutorial
 - Understanding output

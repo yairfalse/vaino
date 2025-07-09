@@ -1,12 +1,12 @@
-# Homebrew Tap for WGO
+# Homebrew Tap for VAINO
 
-This directory contains the template for the Homebrew tap repository that will be created at `github.com/yairfalse/homebrew-wgo`.
+This directory contains the template for the Homebrew tap repository that will be created at `github.com/yairfalse/homebrew-vaino` - the divine Finnish distribution.
 
 ## Structure
 
 When GoReleaser publishes a new release, it will:
 
-1. Create/update a repository at `github.com/yairfalse/homebrew-wgo`
+1. Create/update a repository at `github.com/yairfalse/homebrew-vaino`
 2. Generate a Formula file based on the template
 3. Update the formula with the latest version and checksums
 
@@ -14,7 +14,7 @@ When GoReleaser publishes a new release, it will:
 
 If you need to manually create the tap repository:
 
-1. Create a new GitHub repository named `homebrew-wgo`
+1. Create a new GitHub repository named `homebrew-vaino`
 2. Create a `Formula` directory
 3. GoReleaser will handle the rest during releases
 
@@ -26,10 +26,10 @@ To test the formula locally before release:
 # Create local tap
 mkdir -p $(brew --prefix)/Homebrew/Library/Taps/yairfalse
 cd $(brew --prefix)/Homebrew/Library/Taps/yairfalse
-git clone https://github.com/yairfalse/wgo homebrew-wgo
+git clone https://github.com/yairfalse/vaino homebrew-vaino
 
 # Install from local tap
-brew install yairfalse/wgo/wgo
+brew install yairfalse/vaino/vaino
 ```
 
 ## Formula Template

@@ -1,6 +1,6 @@
 # Concurrent Multi-Provider Scanning
 
-WGO's concurrent scanning feature provides massive speed improvements by parallelizing infrastructure scanning across multiple providers and optimizing API calls within each provider.
+VAINO's concurrent scanning feature provides massive speed improvements by parallelizing infrastructure scanning across multiple providers and optimizing API calls within each provider.
 
 ## 🚀 Performance Benefits
 
@@ -410,7 +410,7 @@ make perf-bench-concurrent
 
 ```bash
 # Enable debug logging
-export WGO_DEBUG=true
+export VAINO_DEBUG=true
 wgo scan --all --concurrent
 
 # Test individual providers
@@ -441,4 +441,4 @@ wgo validate --provider aws
 - **Caching enhancements** - Intelligent result caching
 - **Load balancing** - Distribute load across multiple endpoints
 
-The concurrent scanning feature represents a significant advancement in WGO's performance capabilities, providing the scalability needed for modern cloud infrastructure management.
+The concurrent scanning feature represents a significant advancement in VAINO's performance capabilities, providing the scalability needed for modern cloud infrastructure management.

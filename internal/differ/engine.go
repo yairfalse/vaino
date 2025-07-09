@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // DifferEngine is the main implementation of the Differ interface

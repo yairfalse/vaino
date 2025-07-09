@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // TestE2ECorrelationWorkflow tests the complete end-to-end correlation workflow
@@ -55,7 +55,7 @@ func setupE2EEnvironment(t *testing.T) *e2eEnvironment {
 
 	// Build WGO binary
 	wgoBinary := filepath.Join(tmpDir, "wgo")
-	buildCmd := exec.Command("go", "build", "-o", wgoBinary, "../../cmd/wgo")
+	buildCmd := exec.Command("go", "build", "-o", wgoBinary, "../../cmd/vaino")
 	if err := buildCmd.Run(); err != nil {
 		t.Fatalf("Failed to build WGO: %v", err)
 	}
@@ -574,7 +574,7 @@ func (env *e2eEnvironment) saveSnapshot(filename string, snapshot *types.Snapsho
 }
 
 func (env *e2eEnvironment) runWGO(args ...string) (string, error) {
-	cmd := exec.Command(env.wgoBinary, args...)
+	cmd := exec.Command(env.vainoBinary, args...)
 	cmd.Dir = env.tmpDir
 	output, err := cmd.CombinedOutput()
 	return string(output), err

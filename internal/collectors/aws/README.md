@@ -1,6 +1,6 @@
-# AWS Provider for WGO
+# AWS Provider for VAINO
 
-This package implements AWS resource collection for WGO drift detection.
+This package implements AWS resource collection for VAINO drift detection.
 
 ## Supported Services
 

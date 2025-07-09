@@ -1,9 +1,9 @@
 #!/bin/bash
-# Comprehensive test runner for WGO correlation and timeline features
+# Comprehensive test runner for VAINO correlation and timeline features
 
 set -e
 
-echo "🧪 WGO Comprehensive Test Suite"
+echo "🧪 VAINO Comprehensive Test Suite"
 echo "================================"
 echo ""
 
@@ -67,13 +67,13 @@ run_performance_test() {
     echo ""
 }
 
-# Build WGO for testing
-echo -e "${BLUE}🔨 Building WGO...${NC}"
-if ! go build -o wgo ./cmd/wgo; then
-    echo -e "${RED}❌ Failed to build WGO${NC}"
+# Build VAINO for testing
+echo -e "${BLUE}🔨 Building VAINO...${NC}"
+if ! go build -o vaino ./cmd/vaino; then
+    echo -e "${RED}❌ Failed to build VAINO${NC}"
     exit 1
 fi
-echo -e "${GREEN}✅ WGO built successfully${NC}"
+echo -e "${GREEN}✅ VAINO built successfully${NC}"
 echo ""
 
 # Unit Tests

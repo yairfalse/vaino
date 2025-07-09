@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/collectors/aws"
-	"github.com/yairfalse/wgo/internal/collectors/gcp"
-	"github.com/yairfalse/wgo/internal/collectors/kubernetes"
-	"github.com/yairfalse/wgo/internal/collectors/terraform"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/internal/collectors/aws"
+	"github.com/yairfalse/vaino/internal/collectors/gcp"
+	"github.com/yairfalse/vaino/internal/collectors/kubernetes"
+	"github.com/yairfalse/vaino/internal/collectors/terraform"
 )
 
 // ConcurrentWatcher manages multiple provider watchers concurrently

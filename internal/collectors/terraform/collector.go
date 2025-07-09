@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/discovery"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/internal/discovery"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // TerraformCollector implements the EnhancedCollector interface for Terraform

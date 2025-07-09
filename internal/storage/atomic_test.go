@@ -11,7 +11,7 @@ import (
 
 func TestAtomicWriter_WriteFile(t *testing.T) {
 	// Create temporary directory for test
-	tempDir, err := os.MkdirTemp("", "wgo-atomic-test")
+	tempDir, err := os.MkdirTemp("", "vaino-atomic-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -69,7 +69,7 @@ func TestAtomicWriter_WriteFile(t *testing.T) {
 }
 
 func TestAtomicWriter_ConcurrentWrites(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "wgo-concurrent-test")
+	tempDir, err := os.MkdirTemp("", "vaino-concurrent-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -115,7 +115,7 @@ func TestAtomicWriter_ConcurrentWrites(t *testing.T) {
 }
 
 func TestAtomicWriter_ReadFileWithRecovery(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "wgo-recovery-test")
+	tempDir, err := os.MkdirTemp("", "vaino-recovery-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -158,7 +158,7 @@ func TestAtomicWriter_ReadFileWithRecovery(t *testing.T) {
 }
 
 func TestAtomicWriter_FileIntegrityCheck(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "wgo-integrity-test")
+	tempDir, err := os.MkdirTemp("", "vaino-integrity-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -189,7 +189,7 @@ func TestAtomicWriter_FileIntegrityCheck(t *testing.T) {
 }
 
 func TestStorageSpaceManager_CheckAndCleanup(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "wgo-space-test")
+	tempDir, err := os.MkdirTemp("", "vaino-space-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -253,7 +253,7 @@ func TestStorageSpaceManager_CheckAndCleanup(t *testing.T) {
 }
 
 func TestAtomicWriter_CleanupBackups(t *testing.T) {
-	tempDir, err := os.MkdirTemp("", "wgo-backup-cleanup-test")
+	tempDir, err := os.MkdirTemp("", "vaino-backup-cleanup-test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -320,7 +320,7 @@ func TestAtomicWriter_ErrorHandling(t *testing.T) {
 
 // Benchmark tests
 func BenchmarkAtomicWriter_WriteFile(b *testing.B) {
-	tempDir, err := os.MkdirTemp("", "wgo-benchmark")
+	tempDir, err := os.MkdirTemp("", "vaino-benchmark")
 	if err != nil {
 		b.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -340,7 +340,7 @@ func BenchmarkAtomicWriter_WriteFile(b *testing.B) {
 }
 
 func BenchmarkAtomicWriter_ReadFile(b *testing.B) {
-	tempDir, err := os.MkdirTemp("", "wgo-benchmark")
+	tempDir, err := os.MkdirTemp("", "vaino-benchmark")
 	if err != nil {
 		b.Fatalf("Failed to create temp dir: %v", err)
 	}

@@ -3,7 +3,7 @@ package differ
 import (
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // Differ interface defines the contract for infrastructure drift detection

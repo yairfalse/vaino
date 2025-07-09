@@ -53,14 +53,14 @@ Tests bizarre edge cases that might occur in production:
 ## Key Testing Principles
 
 ### Graceful Degradation
-WGO should fail gracefully and provide actionable error messages even in the worst scenarios:
+VAINO should fail gracefully and provide actionable error messages even in the worst scenarios:
 - Clear error messages with specific failure reasons
 - Suggested remediation steps
 - Professional Unix-style output without emojis
 - Appropriate exit codes for different error types
 
 ### Error Classification
-Tests verify that errors are properly classified using the WGO error framework:
+Tests verify that errors are properly classified using the VAINO error framework:
 - `ErrorTypeNetwork`: Network connectivity issues
 - `ErrorTypeAuthentication`: Authentication failures
 - `ErrorTypePermission`: Insufficient permissions
@@ -108,7 +108,7 @@ go test ./test/edge_cases/... -v -short
 ## Expected Results
 
 ### Successful Failure Handling
-Many tests are designed to verify that WGO fails **gracefully** rather than succeeding:
+Many tests are designed to verify that VAINO fails **gracefully** rather than succeeding:
 - Authentication errors should be caught and reported clearly
 - Network timeouts should be handled with appropriate error messages
 - Configuration errors should provide specific remediation steps
@@ -122,7 +122,7 @@ Tests verify that error messages are:
 - **Environment-Aware**: Provide context-specific solutions
 
 ### Performance Under Stress
-Tests ensure WGO remains stable under adverse conditions:
+Tests ensure VAINO remains stable under adverse conditions:
 - Large JSON parsing doesn't cause memory exhaustion
 - Concurrent operations don't cause race conditions
 - Network failures don't cause indefinite hangs
@@ -153,4 +153,4 @@ For each edge case category, see the [operational documentation](../../docs/trou
 - Recovery steps
 - Prevention measures
 
-This test suite ensures that WGO remains robust and user-friendly even when everything goes wrong.
+This test suite ensures that VAINO remains robust and user-friendly even when everything goes wrong.

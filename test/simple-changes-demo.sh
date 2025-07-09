@@ -3,7 +3,7 @@
 
 set -e
 
-echo "📊 WGO Simple Change Detection Demo"
+echo "📊 VAINO Simple Change Detection Demo"
 echo "==================================="
 echo ""
 
@@ -18,7 +18,7 @@ sleep 2
 echo ""
 echo "📸 Taking snapshot T1..."
 SNAPSHOT1=$(mktemp)
-./wgo scan --provider kubernetes --namespace test-workloads --output-file "$SNAPSHOT1" > /dev/null
+./vaino scan --provider kubernetes --namespace test-workloads --output-file "$SNAPSHOT1" > /dev/null
 echo "✅ Snapshot saved"
 
 # Make changes
@@ -34,14 +34,14 @@ sleep 3
 echo ""
 echo "📸 Taking snapshot T2..."
 SNAPSHOT2=$(mktemp)
-./wgo scan --provider kubernetes --namespace test-workloads --output-file "$SNAPSHOT2" > /dev/null
+./vaino scan --provider kubernetes --namespace test-workloads --output-file "$SNAPSHOT2" > /dev/null
 echo "✅ Snapshot saved"
 
 # Show changes
 echo ""
 echo "📊 What changed between T1 and T2?"
 echo ""
-./wgo changes --from "$SNAPSHOT1" --to "$SNAPSHOT2"
+./vaino changes --from "$SNAPSHOT1" --to "$SNAPSHOT2"
 
 # More changes
 echo ""
@@ -56,20 +56,20 @@ sleep 3
 echo ""
 echo "📸 Taking snapshot T3..."
 SNAPSHOT3=$(mktemp)
-./wgo scan --provider kubernetes --namespace test-workloads --output-file "$SNAPSHOT3" > /dev/null
+./vaino scan --provider kubernetes --namespace test-workloads --output-file "$SNAPSHOT3" > /dev/null
 echo "✅ Snapshot saved"
 
 # Show all changes
 echo ""
 echo "📊 What changed between T1 and T3?"
 echo ""
-./wgo changes --from "$SNAPSHOT1" --to "$SNAPSHOT3"
+./vaino changes --from "$SNAPSHOT1" --to "$SNAPSHOT3"
 
 # Time-based query
 echo ""
 echo "📊 Changes in the last 30 seconds:"
 echo ""
-./wgo changes --provider kubernetes --namespace test-workloads --since 30s
+./vaino changes --provider kubernetes --namespace test-workloads --since 30s
 
 # Cleanup
 echo ""

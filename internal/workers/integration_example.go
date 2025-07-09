@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // WorkerPoolIntegration demonstrates how to integrate all worker pools

@@ -1,6 +1,6 @@
 # Best Practices Guide
 
-Essential guidelines for using WGO effectively in production environments.
+Essential guidelines for using VAINO effectively in production environments.
 
 ## 🏗️ Infrastructure Management
 
@@ -60,7 +60,7 @@ wgo baseline create --name "$(git rev-parse --short HEAD)" \
 providers:
   aws:
     # Use IAM roles instead of access keys
-    role_arn: "arn:aws:iam::123456789012:role/WGOMonitoringRole"
+    role_arn: "arn:aws:iam::123456789012:role/VAINOMonitoringRole"
     
   gcp:
     # Use service account with minimal permissions
@@ -258,7 +258,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Install WGO
+      - name: Install VAINO
         run: curl -sSL https://install.wgo.sh | bash
         
       - name: Scan current infrastructure
@@ -351,7 +351,7 @@ fi
 #!/bin/bash
 # weekly-maintenance.sh
 
-echo "🔧 Weekly WGO maintenance"
+echo "🔧 Weekly VAINO maintenance"
 
 # Update baselines after maintenance windows
 if [ "$(date +%u)" -eq 7 ]; then  # Sunday
@@ -541,4 +541,4 @@ else
 fi
 ```
 
-This comprehensive best practices guide ensures teams can use WGO effectively while maintaining security, performance, and operational excellence.
+This comprehensive best practices guide ensures teams can use VAINO effectively while maintaining security, performance, and operational excellence.

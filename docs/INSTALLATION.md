@@ -1,10 +1,10 @@
 # Installation Guide
 
-WGO can be installed on any platform with a single command. Choose the method that works best for your system.
+VAINO can be installed on any platform with a single command. Choose the method that works best for your system.
 
 ## 🚀 Quick Install (Recommended)
 
-The universal installer automatically detects your system and installs WGO:
+The universal installer automatically detects your system and installs VAINO:
 
 ```bash
 curl -sSL https://install.wgo.sh | bash
@@ -36,11 +36,11 @@ brew install wgo
 #### Ubuntu/Debian (APT)
 
 ```bash
-# Add WGO repository
+# Add VAINO repository
 curl -fsSL https://apt.wgo.sh/ubuntu/wgo.gpg | sudo apt-key add -
 echo "deb https://apt.wgo.sh/ubuntu stable main" | sudo tee /etc/apt/sources.list.d/wgo.list
 
-# Install WGO
+# Install VAINO
 sudo apt-get update
 sudo apt-get install wgo
 ```
@@ -48,10 +48,10 @@ sudo apt-get install wgo
 #### RHEL/CentOS/Fedora (YUM/DNF)
 
 ```bash
-# Add WGO repository
+# Add VAINO repository
 sudo curl -fsSL https://yum.wgo.sh/rhel/wgo.repo -o /etc/yum.repos.d/wgo.repo
 
-# Install WGO (use dnf on Fedora/RHEL 8+)
+# Install VAINO (use dnf on Fedora/RHEL 8+)
 sudo yum install wgo
 # or
 sudo dnf install wgo
@@ -92,7 +92,7 @@ Use the Linux installation methods above within WSL.
 
 ## 🐳 Docker
 
-Run WGO in a container:
+Run VAINO in a container:
 
 ```bash
 # Run a single command
@@ -197,7 +197,7 @@ echo ". $(pwd)/wgo.ps1" >> $PROFILE
 
 ## ✅ Verify Installation
 
-After installation, verify WGO is working:
+After installation, verify VAINO is working:
 
 ```bash
 # Check version

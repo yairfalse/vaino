@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/yairfalse/wgo/internal/differ"
-	wgoerrors "github.com/yairfalse/wgo/internal/errors"
-	"github.com/yairfalse/wgo/internal/output"
-	"github.com/yairfalse/wgo/internal/storage"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/differ"
+	vainoerrors "github.com/yairfalse/vaino/internal/errors"
+	"github.com/yairfalse/vaino/internal/output"
+	"github.com/yairfalse/vaino/internal/storage"
+	"github.com/yairfalse/vaino/pkg/types"
 	"gopkg.in/yaml.v3"
 )
 
@@ -29,27 +29,27 @@ Works great with Unix tools and scripts. Exit codes: 0 = no changes, 1 = changes
 
 By default, compares current infrastructure state with the last scan automatically.`,
 		Example: `  # See what changed in your infrastructure
-  wgo diff
+  vaino diff
 
   # Just list what changed (like git diff --name-only)
-  wgo diff --name-only
+  vaino diff --name-only
 
   # Show change statistics (like git diff --stat)  
-  wgo diff --stat
+  vaino diff --stat
 
   # Silent mode for scripts (like git diff --quiet)
-  wgo diff --quiet && echo "All good!" || echo "Changes detected!"
+  vaino diff --quiet && echo "All good!" || echo "Changes detected!"
 
   # Compare with specific baseline
-  wgo diff --baseline prod-v1.0
+  vaino diff --baseline prod-v1.0
 
   # Compare two specific snapshots
-  wgo diff --from snapshot-1.json --to snapshot-2.json
+  vaino diff --from snapshot-1.json --to snapshot-2.json
 
   # Use in CI/CD pipelines
-  if ! wgo diff --quiet; then
+  if ! vaino diff --quiet; then
     echo "WARNING: Infrastructure drift detected!"
-    wgo diff --stat
+    vaino diff --stat
   fi`,
 		RunE: runDiff,
 	}
@@ -271,22 +271,22 @@ func runDiff(cmd *cobra.Command, args []string) error {
 
 	// Auto-detect last scan if no inputs provided
 	if baseline == "" && from == "" && to == "" {
-		// Try to find the most recent scan in ~/.wgo
+		// Try to find the most recent scan in ~/.vaino
 		homeDir, _ := os.UserHomeDir()
-		wgoDir := filepath.Join(homeDir, ".wgo")
+		vainoDir := filepath.Join(homeDir, ".vaino")
 
 		// Find all last-scan files
-		matches, _ := filepath.Glob(filepath.Join(wgoDir, "last-scan-*.json"))
+		matches, _ := filepath.Glob(filepath.Join(vainoDir, "last-scan-*.json"))
 		if len(matches) == 0 {
 			// No scans found - provide helpful guidance
-			return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+			return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
 				"No previous scans found").
-				WithCause("No snapshot files in ~/.wgo").
+				WithCause("No snapshot files in ~/.vaino").
 				WithSolutions(
-					"Run 'wgo scan' to create your first snapshot",
+					"Run 'vaino scan' to create your first snapshot",
 					"Specify snapshots manually with --from and --to",
 				).
-				WithHelp("wgo scan --help")
+				WithHelp("vaino scan --help")
 		}
 
 		if len(matches) > 0 {
@@ -310,7 +310,7 @@ func runDiff(cmd *cobra.Command, args []string) error {
 				fmt.Printf("Comparing %s infrastructure...\n", providerName)
 
 				// Create temp file for new scan
-				tempFile, err := os.CreateTemp("", "wgo-scan-*.json")
+				tempFile, err := os.CreateTemp("", "vaino-scan-*.json")
 				if err != nil {
 					return fmt.Errorf("failed to create temp file: %w", err)
 				}
@@ -342,27 +342,27 @@ func runDiff(cmd *cobra.Command, args []string) error {
 				case err := <-done:
 					if err != nil {
 						// Check if it's a known error type
-						if wgoErr, ok := err.(*wgoerrors.WGOError); ok {
+						if wgoErr, ok := err.(*vainoerrors.VAINOError); ok {
 							return wgoErr
 						}
-						return wgoerrors.New(wgoerrors.ErrorTypeProvider, wgoerrors.Provider(providerName),
+						return vainoerrors.New(vainoerrors.ErrorTypeProvider, vainoerrors.Provider(providerName),
 							"Failed to scan current infrastructure").
 							WithCause(err.Error()).
 							WithSolutions(
-								fmt.Sprintf("Run 'wgo scan --provider %s' manually to debug", providerName),
-								"Check provider authentication with 'wgo check-config'",
+								fmt.Sprintf("Run 'vaino scan --provider %s' manually to debug", providerName),
+								"Check provider authentication with 'vaino check-config'",
 							).
-							WithHelp("wgo check-config")
+							WithHelp("vaino check-config")
 					}
 				case <-ctx.Done():
-					return wgoerrors.New(wgoerrors.ErrorTypeNetwork, wgoerrors.Provider(providerName),
+					return vainoerrors.New(vainoerrors.ErrorTypeNetwork, vainoerrors.Provider(providerName),
 						"Scan operation timed out after 30 seconds").
 						WithSolutions(
 							"Try limiting the scan scope with specific namespaces",
-							"Run 'wgo scan --provider kubernetes --namespace test-workloads' for targeted scanning",
+							"Run 'vaino scan --provider kubernetes --namespace test-workloads' for targeted scanning",
 							"Check cluster connectivity with 'kubectl get nodes'",
 						).
-						WithHelp("wgo check-config")
+						WithHelp("vaino check-config")
 				}
 
 				// Set from and to for comparison
@@ -374,27 +374,27 @@ func runDiff(cmd *cobra.Command, args []string) error {
 
 	// Validate inputs after auto-detection
 	if baseline == "" && (from == "" || to == "") {
-		return wgoerrors.New(wgoerrors.ErrorTypeValidation, wgoerrors.ProviderUnknown,
+		return vainoerrors.New(vainoerrors.ErrorTypeValidation, vainoerrors.ProviderUnknown,
 			"Missing required arguments").
 			WithCause("Must specify snapshots to compare").
 			WithSolutions(
-				"Run 'wgo diff' (auto-detects last scan)",
-				"Use 'wgo diff --from snapshot1.json --to snapshot2.json'",
-				"Use 'wgo diff --baseline prod-v1.0'",
+				"Run 'vaino diff' (auto-detects last scan)",
+				"Use 'vaino diff --from snapshot1.json --to snapshot2.json'",
+				"Use 'vaino diff --baseline prod-v1.0'",
 			).
-			WithHelp("wgo diff --help")
+			WithHelp("vaino diff --help")
 	}
 
 	if baseline != "" && (from != "" || to != "") {
-		return wgoerrors.New(wgoerrors.ErrorTypeValidation, wgoerrors.ProviderUnknown,
+		return vainoerrors.New(vainoerrors.ErrorTypeValidation, vainoerrors.ProviderUnknown,
 			"Conflicting arguments").
 			WithCause("Cannot use --baseline with --from/--to").
 			WithSolutions(
 				"Use either --baseline OR --from/--to, not both",
-				"Example: wgo diff --baseline prod-v1.0",
-				"Example: wgo diff --from old.json --to new.json",
+				"Example: vaino diff --baseline prod-v1.0",
+				"Example: vaino diff --from old.json --to new.json",
 			).
-			WithHelp("wgo diff --help")
+			WithHelp("vaino diff --help")
 	}
 
 	// Validate format
@@ -419,15 +419,15 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	storageConfig := storage.Config{BaseDir: "./snapshots"}
 	localStorage, err := storage.NewLocalStorage(storageConfig)
 	if err != nil {
-		return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+		return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
 			"Storage initialization failed").
 			WithCause(err.Error()).
 			WithSolutions(
 				"Check directory permissions",
 				"Ensure disk has available space",
-				"Run 'wgo check-config' to diagnose",
+				"Run 'vaino check-config' to diagnose",
 			).
-			WithHelp("wgo check-config")
+			WithHelp("vaino check-config")
 	}
 
 	// Load snapshots
@@ -437,26 +437,26 @@ func runDiff(cmd *cobra.Command, args []string) error {
 		// Loading baseline
 		baselineData, err := localStorage.LoadBaseline(baseline)
 		if err != nil {
-			return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+			return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
 				fmt.Sprintf("Baseline '%s' not found", baseline)).
 				WithCause(err.Error()).
 				WithSolutions(
-					"List available baselines: wgo baseline list",
-					"Create a baseline: wgo baseline create --name <name>",
+					"List available baselines: vaino baseline list",
+					"Create a baseline: vaino baseline create --name <name>",
 					"Check baseline name spelling",
 				).
-				WithHelp("wgo baseline --help")
+				WithHelp("vaino baseline --help")
 		}
 		fromSnapshot, err = localStorage.LoadSnapshot(baselineData.SnapshotID)
 		if err != nil {
-			return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+			return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
 				"Failed to load baseline snapshot data").
 				WithCause(err.Error()).
 				WithSolutions(
 					"Baseline may be corrupted",
-					"Recreate baseline: wgo baseline create --name <name>",
+					"Recreate baseline: vaino baseline create --name <name>",
 				).
-				WithHelp("wgo baseline --help")
+				WithHelp("vaino baseline --help")
 		}
 
 		// Loading current snapshot
@@ -465,7 +465,7 @@ func runDiff(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to list snapshots: %w", err)
 		}
 		if len(snapshots) == 0 {
-			return fmt.Errorf("no current snapshots found. Run 'wgo scan' first")
+			return fmt.Errorf("no current snapshots found. Run 'vaino scan' first")
 		}
 		// Load the most recent snapshot
 		toSnapshot, err = localStorage.LoadSnapshot(snapshots[0].ID)
@@ -478,46 +478,46 @@ func runDiff(cmd *cobra.Command, args []string) error {
 		fromSnapshot, err = loadSnapshotFromFile(from)
 		if err != nil {
 			if os.IsNotExist(err) {
-				return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+				return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
 					fmt.Sprintf("Snapshot file not found: %s", from)).
 					WithCause("File does not exist").
 					WithSolutions(
 						"Check file path and spelling",
 						"Use absolute paths for clarity",
-						"List available snapshots: ls ~/.wgo/history/",
+						"List available snapshots: ls ~/.vaino/history/",
 					).
-					WithHelp("wgo scan --help")
+					WithHelp("vaino scan --help")
 			}
-			return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+			return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
 				"Failed to load snapshot").
 				WithCause(err.Error()).
 				WithSolutions(
 					"Ensure file is valid JSON",
 					"Check file permissions",
 				).
-				WithHelp("wgo diff --help")
+				WithHelp("vaino diff --help")
 		}
 		toSnapshot, err = loadSnapshotFromFile(to)
 		if err != nil {
 			if os.IsNotExist(err) {
-				return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+				return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
 					fmt.Sprintf("Snapshot file not found: %s", to)).
 					WithCause("File does not exist").
 					WithSolutions(
 						"Check file path and spelling",
 						"Use absolute paths for clarity",
-						"Run 'wgo scan' to create new snapshot",
+						"Run 'vaino scan' to create new snapshot",
 					).
-					WithHelp("wgo scan --help")
+					WithHelp("vaino scan --help")
 			}
-			return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+			return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
 				"Failed to load snapshot").
 				WithCause(err.Error()).
 				WithSolutions(
 					"Ensure file is valid JSON",
 					"Check file permissions",
 				).
-				WithHelp("wgo diff --help")
+				WithHelp("vaino diff --help")
 		}
 	}
 
@@ -547,15 +547,15 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	// Perform comparison
 	report, err := differ.Compare(fromSnapshot, toSnapshot)
 	if err != nil {
-		return wgoerrors.New(wgoerrors.ErrorTypeValidation, wgoerrors.ProviderUnknown,
+		return vainoerrors.New(vainoerrors.ErrorTypeValidation, vainoerrors.ProviderUnknown,
 			"Comparison failed").
 			WithCause(err.Error()).
 			WithSolutions(
 				"Ensure snapshots are from compatible WGO versions",
 				"Check that snapshots contain valid resource data",
-				"Try regenerating snapshots with 'wgo scan'",
+				"Try regenerating snapshots with 'vaino scan'",
 			).
-			WithHelp("wgo scan --help")
+			WithHelp("vaino scan --help")
 	}
 
 	// Comparison completed

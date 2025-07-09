@@ -1,6 +1,6 @@
 # Multi-Cloud Infrastructure Monitoring
 
-Real-world example of using WGO to monitor infrastructure across AWS, GCP, and Kubernetes in a multi-cloud environment.
+Real-world example of using VAINO to monitor infrastructure across AWS, GCP, and Kubernetes in a multi-cloud environment.
 
 ## Scenario: Global SaaS Platform
 
@@ -62,7 +62,7 @@ kubectl config set-context prod-us-central1-gke --cluster=prod-us-central1-gke
 kubectl config set-context prod-europe-west1-gke --cluster=prod-europe-west1-gke
 ```
 
-### 2. WGO Multi-Cloud Configuration
+### 2. VAINO Multi-Cloud Configuration
 
 **`~/.wgo/config.yaml`:**
 ```yaml
@@ -532,7 +532,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Install WGO
+      - name: Install VAINO
         run: curl -sSL https://install.wgo.sh | bash
       
       - name: Configure AWS credentials
@@ -720,4 +720,4 @@ for provider in aws gcp kubernetes; do
 done
 ```
 
-This comprehensive multi-cloud setup demonstrates how WGO can provide unified visibility and drift detection across complex, distributed cloud infrastructures while maintaining the ability to drill down into provider-specific details.
+This comprehensive multi-cloud setup demonstrates how VAINO can provide unified visibility and drift detection across complex, distributed cloud infrastructures while maintaining the ability to drill down into provider-specific details.

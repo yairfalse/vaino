@@ -62,7 +62,7 @@ cat > "$AFTER" << 'EOF'
 EOF
 
 # Test correlation
-OUTPUT=$(./wgo changes --from "$BEFORE" --to "$AFTER" --correlated 2>&1)
+OUTPUT=$(./vaino changes --from "$BEFORE" --to "$AFTER" --correlated 2>&1)
 
 # Verify service deployment pattern
 if ! echo "$OUTPUT" | grep -q "New Service: api-service"; then

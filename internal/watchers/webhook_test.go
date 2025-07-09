@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/analyzer"
-	"github.com/yairfalse/wgo/internal/differ"
+	"github.com/yairfalse/vaino/internal/analyzer"
+	"github.com/yairfalse/vaino/internal/differ"
 )
 
 func TestWatcher_SendWebhook(t *testing.T) {
@@ -70,7 +70,7 @@ func TestWatcher_SendWebhook(t *testing.T) {
 			Total:    1,
 			Modified: 1,
 		},
-		Source: "wgo-watch",
+		Source: "vaino-watch",
 	}
 
 	// Send webhook
@@ -80,7 +80,7 @@ func TestWatcher_SendWebhook(t *testing.T) {
 	}
 
 	// Verify received payload
-	if receivedPayload.Source != "wgo-watch" {
+	if receivedPayload.Source != "vaino-watch" {
 		t.Errorf("Expected source 'wgo-watch', got '%s'", receivedPayload.Source)
 	}
 
@@ -236,13 +236,13 @@ func TestBuildWebhookPayload(t *testing.T) {
 			Added:    1,
 			Modified: 2,
 		},
-		Source: "wgo-watch",
+		Source: "vaino-watch",
 	}
 
 	payload := watcher.buildWebhookPayload(event)
 
 	// Test basic fields
-	if payload.Source != "wgo-watch" {
+	if payload.Source != "vaino-watch" {
 		t.Errorf("Expected source 'wgo-watch', got '%s'", payload.Source)
 	}
 

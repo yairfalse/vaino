@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/yairfalse/wgo/internal/collectors"
+	"github.com/yairfalse/vaino/internal/collectors"
 )
 
 func TestTerraformCollector_Name(t *testing.T) {

@@ -1,4 +1,4 @@
-# WGO User Experience Comparison
+# VAINO User Experience Comparison
 
 ## Scenario 1: First-Time User Checking for Drift
 

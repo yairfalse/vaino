@@ -3,7 +3,7 @@ package storage
 import (
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // Storage defines the interface for persisting baselines and snapshots

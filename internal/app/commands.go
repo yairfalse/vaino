@@ -7,13 +7,13 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/output"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/internal/output"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 func (a *App) runVersionCommand(cmd *cobra.Command, args []string) {
-	fmt.Printf("wgo version %s\n", a.config.Version)
+	fmt.Printf("vaino version %s\n", a.config.Version)
 	fmt.Printf("  commit: %s\n", a.config.Commit)
 	fmt.Printf("  built: %s\n", a.config.BuildDate)
 }
@@ -66,7 +66,7 @@ func (a *App) runScanCommand(cmd *cobra.Command, args []string) {
 		}
 
 		fmt.Println("\nUse --provider <name> to scan a specific provider")
-		fmt.Println("Example: wgo scan --provider terraform")
+		fmt.Println("Example: vaino scan --provider terraform")
 		return
 	}
 
@@ -174,25 +174,25 @@ func (a *App) runCheckCommand(cmd *cobra.Command, args []string) {
 
 	fmt.Println("Drift Check:")
 	fmt.Println("  Baseline: Not found")
-	fmt.Println("  Status: Run 'wgo baseline create' first")
+	fmt.Println("  Status: Run 'vaino baseline create' first")
 }
 
 func (a *App) runDiffCommand(cmd *cobra.Command, args []string) {
 	a.logger.Info("Comparing infrastructure states...")
 
 	fmt.Println("Infrastructure Diff:")
-	fmt.Println("  Use 'wgo diff --baseline <name>' to compare with baseline")
-	fmt.Println("  Use 'wgo diff --from <file1> --to <file2>' to compare snapshots")
-	fmt.Println("  Example: wgo diff --baseline prod-v1.0 --format json")
+	fmt.Println("  Use 'vaino diff --baseline <name>' to compare with baseline")
+	fmt.Println("  Use 'vaino diff --from <file1> --to <file2>' to compare snapshots")
+	fmt.Println("  Example: vaino diff --baseline prod-v1.0 --format json")
 }
 
 func (a *App) runBaselineCommand(cmd *cobra.Command, args []string) {
 	a.logger.Info("Managing baselines...")
 
 	fmt.Println("Baseline Management:")
-	fmt.Println("  Use 'wgo baseline create' to create a new baseline")
-	fmt.Println("  Use 'wgo baseline list' to list baselines")
-	fmt.Println("  Use 'wgo baseline delete <id>' to delete a baseline")
+	fmt.Println("  Use 'vaino baseline create' to create a new baseline")
+	fmt.Println("  Use 'vaino baseline list' to list baselines")
+	fmt.Println("  Use 'vaino baseline delete <id>' to delete a baseline")
 }
 
 func (a *App) runExplainCommand(cmd *cobra.Command, args []string) {
@@ -200,7 +200,7 @@ func (a *App) runExplainCommand(cmd *cobra.Command, args []string) {
 
 	fmt.Println("AI-Powered Explanation:")
 	fmt.Println("  Set ANTHROPIC_API_KEY environment variable to use AI features")
-	fmt.Println("  Or configure it in ~/.wgo/config.yaml")
+	fmt.Println("  Or configure it in ~/.vaino/config.yaml")
 }
 
 func (a *App) runCacheCommand(cmd *cobra.Command, args []string) {
@@ -222,11 +222,11 @@ func (a *App) runConfigCommand(cmd *cobra.Command, args []string) {
 	fmt.Println("Configuration:")
 	fmt.Printf("  Verbose: %v\n", a.config.Verbose)
 	fmt.Printf("  Debug: %v\n", a.config.Debug)
-	fmt.Println("  Config file: ~/.wgo/config.yaml")
+	fmt.Println("  Config file: ~/.vaino/config.yaml")
 	fmt.Println("  Environment variables:")
 	fmt.Println("    ANTHROPIC_API_KEY - for AI features")
-	fmt.Println("    WGO_VERBOSE - enable verbose output")
-	fmt.Println("    WGO_DEBUG - enable debug mode")
+	fmt.Println("    VAINO_VERBOSE - enable verbose output")
+	fmt.Println("    VAINO_DEBUG - enable debug mode")
 }
 
 func (a *App) runSetupCommand(cmd *cobra.Command, args []string) {
@@ -238,7 +238,7 @@ func (a *App) runSetupCommand(cmd *cobra.Command, args []string) {
 	fmt.Println("  - AWS: Checking for AWS credentials...")
 	fmt.Println("  - Kubernetes: Checking for kubeconfig...")
 	fmt.Println("  - Git: Checking for .git directory...")
-	fmt.Println("  Setup complete! Run 'wgo config' to see configuration.")
+	fmt.Println("  Setup complete! Run 'vaino config' to see configuration.")
 }
 
 // saveSnapshotToFile saves a snapshot to a JSON file

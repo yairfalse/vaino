@@ -3,7 +3,7 @@
 
 set -e
 
-echo "🔗 WGO Advanced Correlation Demo"
+echo "🔗 VAINO Advanced Correlation Demo"
 echo "================================"
 echo ""
 
@@ -17,7 +17,7 @@ sleep 2
 # Take baseline
 echo "📸 Taking baseline snapshot..."
 BASELINE=$(mktemp)
-./wgo scan --provider kubernetes --namespace test-workloads --output-file "$BASELINE" > /dev/null
+./vaino scan --provider kubernetes --namespace test-workloads --output-file "$BASELINE" > /dev/null
 
 # Scenario 1: Full application deployment
 echo ""
@@ -42,12 +42,12 @@ sleep 2
 
 # Take snapshot
 SNAPSHOT1=$(mktemp)
-./wgo scan --provider kubernetes --namespace test-workloads --output-file "$SNAPSHOT1" > /dev/null
+./vaino scan --provider kubernetes --namespace test-workloads --output-file "$SNAPSHOT1" > /dev/null
 
 echo ""
 echo "New application deployment correlation:"
 echo "--------------------------------------"
-./wgo changes --from "$BASELINE" --to "$SNAPSHOT1" --correlated
+./vaino changes --from "$BASELINE" --to "$SNAPSHOT1" --correlated
 
 # Scenario 2: Network configuration change
 echo ""
@@ -75,12 +75,12 @@ sleep 2
 
 # Take snapshot
 SNAPSHOT2=$(mktemp)
-./wgo scan --provider kubernetes --namespace test-workloads --output-file "$SNAPSHOT2" > /dev/null
+./vaino scan --provider kubernetes --namespace test-workloads --output-file "$SNAPSHOT2" > /dev/null
 
 echo ""
 echo "Network changes correlation:"
 echo "---------------------------"
-./wgo changes --from "$SNAPSHOT1" --to "$SNAPSHOT2" --correlated
+./vaino changes --from "$SNAPSHOT1" --to "$SNAPSHOT2" --correlated
 
 # Scenario 3: Security rotation
 echo ""
@@ -94,12 +94,12 @@ sleep 2
 
 # Take snapshot
 SNAPSHOT3=$(mktemp)
-./wgo scan --provider kubernetes --namespace test-workloads --output-file "$SNAPSHOT3" > /dev/null
+./vaino scan --provider kubernetes --namespace test-workloads --output-file "$SNAPSHOT3" > /dev/null
 
 echo ""
 echo "Security changes correlation:"
 echo "----------------------------"
-./wgo changes --from "$SNAPSHOT2" --to "$SNAPSHOT3" --correlated
+./vaino changes --from "$SNAPSHOT2" --to "$SNAPSHOT3" --correlated
 
 # Scenario 4: Mixed changes
 echo ""
@@ -115,18 +115,18 @@ sleep 2
 
 # Take snapshot
 SNAPSHOT4=$(mktemp)
-./wgo scan --provider kubernetes --namespace test-workloads --output-file "$SNAPSHOT4" > /dev/null
+./vaino scan --provider kubernetes --namespace test-workloads --output-file "$SNAPSHOT4" > /dev/null
 
 echo ""
 echo "Mixed changes with correlation:"
 echo "------------------------------"
-./wgo changes --from "$SNAPSHOT3" --to "$SNAPSHOT4" --correlated
+./vaino changes --from "$SNAPSHOT3" --to "$SNAPSHOT4" --correlated
 
 # Show timeline view
 echo ""
 echo "📊 Complete timeline from baseline:"
 echo "==================================="
-./wgo changes --from "$BASELINE" --to "$SNAPSHOT4" --correlated
+./vaino changes --from "$BASELINE" --to "$SNAPSHOT4" --correlated
 
 # Cleanup
 kubectl delete configmap jarjar-config -n test-workloads 2>/dev/null || true
@@ -147,7 +147,7 @@ echo ""
 echo "✅ Advanced demo complete!"
 echo ""
 echo "Key takeaways:"
-echo "• WGO groups related changes intelligently"
+echo "• VAINO groups related changes intelligently"
 echo "• Detects patterns: scaling, deployments, network changes, security rotations"
 echo "• Makes infrastructure changes easier to understand"
 echo "• Like 'git log' but for your infrastructure"

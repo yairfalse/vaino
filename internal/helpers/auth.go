@@ -39,13 +39,13 @@ func (ah *AuthHelper) HandleGCPAuthError(projectID string, originalErr error) er
 
 			fmt.Println("\n📋 Then run this command:")
 			if projectID != "" {
-				fmt.Printf("   wgo scan --provider gcp --project %s\n", projectID)
+				fmt.Printf("   vaino scan --provider gcp --project %s\n", projectID)
 			} else {
-				fmt.Println("   wgo scan --provider gcp --project YOUR-PROJECT-ID")
+				fmt.Println("   vaino scan --provider gcp --project YOUR-PROJECT-ID")
 			}
 
 			fmt.Println("\n🚀 EVEN EASIER - Let WGO do it for you:")
-			fmt.Println("   wgo auth gcp")
+			fmt.Println("   vaino auth gcp")
 			fmt.Println("   (This will handle everything automatically)")
 		} else {
 			fmt.Println("\n✅ Good news: You have gcloud installed!")
@@ -62,13 +62,13 @@ func (ah *AuthHelper) HandleGCPAuthError(projectID string, originalErr error) er
 
 			fmt.Println("\n   STEP 3:")
 			if projectID != "" {
-				fmt.Printf("   wgo scan --provider gcp --project %s\n", projectID)
+				fmt.Printf("   vaino scan --provider gcp --project %s\n", projectID)
 			} else {
-				fmt.Println("   wgo scan --provider gcp --project YOUR-PROJECT-ID")
+				fmt.Println("   vaino scan --provider gcp --project YOUR-PROJECT-ID")
 			}
 
 			fmt.Println("\n🚀 OR JUST RUN THIS (easiest):")
-			fmt.Println("   wgo auth gcp")
+			fmt.Println("   vaino auth gcp")
 		}
 	} else {
 		fmt.Println("\n❌ You need gcloud CLI installed first")
@@ -80,19 +80,19 @@ func (ah *AuthHelper) HandleGCPAuthError(projectID string, originalErr error) er
 			fmt.Println("\n   You have Homebrew! Just run:")
 			fmt.Println("   brew install google-cloud-sdk")
 			fmt.Println("\n   Then run:")
-			fmt.Println("   wgo auth gcp")
+			fmt.Println("   vaino auth gcp")
 		} else if ah.isCommandAvailable("apt-get") {
 			fmt.Println("\n   Run these commands:")
 			fmt.Println("   echo \"deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main\" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list")
 			fmt.Println("   curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -")
 			fmt.Println("   sudo apt-get update && sudo apt-get install google-cloud-sdk")
 			fmt.Println("\n   Then run:")
-			fmt.Println("   wgo auth gcp")
+			fmt.Println("   vaino auth gcp")
 		} else {
 			fmt.Println("\n   Download from:")
 			fmt.Println("   https://cloud.google.com/sdk/docs/install")
 			fmt.Println("\n   After installing, run:")
-			fmt.Println("   wgo auth gcp")
+			fmt.Println("   vaino auth gcp")
 		}
 
 		fmt.Println("\n🔑 ALTERNATIVE - Use a service account (more steps):")
@@ -105,9 +105,9 @@ func (ah *AuthHelper) HandleGCPAuthError(projectID string, originalErr error) er
 		fmt.Println("   7. Run:")
 		fmt.Println("      export GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/key.json")
 		if projectID != "" {
-			fmt.Printf("      wgo scan --provider gcp --project %s\n", projectID)
+			fmt.Printf("      vaino scan --provider gcp --project %s\n", projectID)
 		} else {
-			fmt.Println("      wgo scan --provider gcp --project YOUR-PROJECT-ID")
+			fmt.Println("      vaino scan --provider gcp --project YOUR-PROJECT-ID")
 		}
 	}
 
@@ -147,21 +147,21 @@ func (ah *AuthHelper) HandleAWSAuthError(originalErr error) error {
 			fmt.Println("\n🎯 DO THIS RIGHT NOW (copy and paste):")
 			if len(profileList) > 0 && profileList[0] != "" {
 				fmt.Printf("\n   export AWS_PROFILE=%s\n", profileList[0])
-				fmt.Println("   wgo scan --provider aws")
+				fmt.Println("   vaino scan --provider aws")
 			} else {
 				fmt.Println("\n   export AWS_PROFILE=default")
-				fmt.Println("   wgo scan --provider aws")
+				fmt.Println("   vaino scan --provider aws")
 			}
 
 			fmt.Println("\n📋 Using a different profile? Run:")
 			fmt.Println("   export AWS_PROFILE=your-profile-name")
-			fmt.Println("   wgo scan --provider aws")
+			fmt.Println("   vaino scan --provider aws")
 		} else {
 			fmt.Println("\n✅ Good news: You have AWS CLI installed!")
 			fmt.Println("❌ Bad news: No AWS credentials configured")
 
 			fmt.Println("\n🎯 DO THIS RIGHT NOW:")
-			fmt.Println("\n   wgo auth aws")
+			fmt.Println("\n   vaino auth aws")
 			fmt.Println("   (This will walk you through setup)")
 
 			fmt.Println("\n📋 Or configure manually:")
@@ -173,7 +173,7 @@ func (ah *AuthHelper) HandleAWSAuthError(originalErr error) error {
 			fmt.Println("   • Output format (just press Enter)")
 
 			fmt.Println("\n   Then run:")
-			fmt.Println("   wgo scan --provider aws")
+			fmt.Println("   vaino scan --provider aws")
 		}
 	} else {
 		fmt.Println("\n❌ You need AWS CLI installed first")
@@ -185,22 +185,22 @@ func (ah *AuthHelper) HandleAWSAuthError(originalErr error) error {
 			fmt.Println("\n   You have Homebrew! Just run:")
 			fmt.Println("   brew install awscli")
 			fmt.Println("\n   Then run:")
-			fmt.Println("   wgo auth aws")
+			fmt.Println("   vaino auth aws")
 		} else if ah.isCommandAvailable("apt-get") {
 			fmt.Println("\n   Run this command:")
 			fmt.Println("   sudo apt-get update && sudo apt-get install awscli")
 			fmt.Println("\n   Then run:")
-			fmt.Println("   wgo auth aws")
+			fmt.Println("   vaino auth aws")
 		} else if ah.isCommandAvailable("yum") {
 			fmt.Println("\n   Run this command:")
 			fmt.Println("   sudo yum install aws-cli")
 			fmt.Println("\n   Then run:")
-			fmt.Println("   wgo auth aws")
+			fmt.Println("   vaino auth aws")
 		} else {
 			fmt.Println("\n   Download installer from:")
 			fmt.Println("   https://aws.amazon.com/cli/")
 			fmt.Println("\n   After installing, run:")
-			fmt.Println("   wgo auth aws")
+			fmt.Println("   vaino auth aws")
 		}
 
 		fmt.Println("\n🔑 QUICK ALTERNATIVE - Use environment variables:")
@@ -211,7 +211,7 @@ func (ah *AuthHelper) HandleAWSAuthError(originalErr error) error {
 		fmt.Println("      export AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY_HERE")
 		fmt.Println("      export AWS_SECRET_ACCESS_KEY=YOUR_SECRET_KEY_HERE")
 		fmt.Println("      export AWS_REGION=us-east-1")
-		fmt.Println("      wgo scan --provider aws")
+		fmt.Println("      vaino scan --provider aws")
 	}
 
 	if hasCredentials {
@@ -262,7 +262,7 @@ func (ah *AuthHelper) SetupGCPAuth(projectID string) error {
 
 	fmt.Println("\n✅ GCP authentication configured successfully!")
 	fmt.Println("You can now run:")
-	fmt.Printf("  wgo scan --provider gcp --project %s\n", projectID)
+	fmt.Printf("  vaino scan --provider gcp --project %s\n", projectID)
 
 	return nil
 }
@@ -293,7 +293,7 @@ func (ah *AuthHelper) SetupAWSAuth() error {
 
 	fmt.Println("\n✅ AWS authentication configured successfully!")
 	fmt.Println("You can now run:")
-	fmt.Println("  wgo scan --provider aws")
+	fmt.Println("  vaino scan --provider aws")
 
 	return nil
 }
@@ -315,7 +315,7 @@ func (ah *AuthHelper) CheckTerraformAuth() error {
 			fmt.Println("\n⚠️  No Terraform state found in current directory")
 			fmt.Println("\n🔧 Quick Fix:")
 			fmt.Println("Navigate to your Terraform project directory, or specify the path:")
-			fmt.Println("  wgo scan --provider terraform --path /path/to/terraform/project")
+			fmt.Println("  vaino scan --provider terraform --path /path/to/terraform/project")
 			return fmt.Errorf("no terraform state found")
 		}
 	}

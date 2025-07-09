@@ -5,8 +5,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/yairfalse/wgo/internal/storage"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/storage"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // Renderer implements the Outputter interface

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/yairfalse/wgo/internal/differ"
+	"github.com/yairfalse/vaino/internal/differ"
 )
 
 // UnixFormatter provides simple Unix-style output similar to git diff

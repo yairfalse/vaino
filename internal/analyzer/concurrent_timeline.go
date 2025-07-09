@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/differ"
+	"github.com/yairfalse/vaino/internal/differ"
 )
 
 // Event represents a timeline event

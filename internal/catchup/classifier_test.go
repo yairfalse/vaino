@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 func TestClassifier_Classify(t *testing.T) {

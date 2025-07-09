@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/collectors/aws"
-	"github.com/yairfalse/wgo/internal/collectors/gcp"
-	"github.com/yairfalse/wgo/internal/collectors/kubernetes"
-	wgoerrors "github.com/yairfalse/wgo/internal/errors"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/internal/collectors/aws"
+	"github.com/yairfalse/vaino/internal/collectors/gcp"
+	"github.com/yairfalse/vaino/internal/collectors/kubernetes"
+	vainoerrors "github.com/yairfalse/vaino/internal/errors"
 )
 
 // TestExpiredCredentials tests scenarios with expired authentication
@@ -25,7 +25,7 @@ func TestExpiredCredentials(t *testing.T) {
 		provider    string
 		setupAuth   func(t *testing.T) func()
 		expectError bool
-		errorType   wgoerrors.ErrorType
+		errorType   vainoerrors.ErrorType
 	}{
 		{
 			name:     "expired_aws_session_token",
@@ -45,7 +45,7 @@ func TestExpiredCredentials(t *testing.T) {
 				}
 			},
 			expectError: true,
-			errorType:   wgoerrors.ErrorTypeAuthentication,
+			errorType:   vainoerrors.ErrorTypeAuthentication,
 		},
 		{
 			name:     "invalid_gcp_service_account_key",
@@ -67,7 +67,7 @@ func TestExpiredCredentials(t *testing.T) {
 				}
 			},
 			expectError: true,
-			errorType:   wgoerrors.ErrorTypeAuthentication,
+			errorType:   vainoerrors.ErrorTypeAuthentication,
 		},
 		{
 			name:     "corrupted_kubeconfig",
@@ -105,7 +105,7 @@ users:
 				}
 			},
 			expectError: true,
-			errorType:   wgoerrors.ErrorTypeAuthentication,
+			errorType:   vainoerrors.ErrorTypeAuthentication,
 		},
 	}
 
@@ -153,7 +153,7 @@ users:
 					t.Errorf("Expected authentication error but got none")
 				} else {
 					// Verify it's the right type of error
-					if wgoErr, ok := err.(*wgoerrors.WGOError); ok {
+					if wgoErr, ok := err.(*vainoerrors.VAINOError); ok {
 						if wgoErr.Type != tt.errorType {
 							t.Errorf("Expected %v error, got %v", tt.errorType, wgoErr.Type)
 						}
@@ -190,25 +190,25 @@ func TestInsufficientPermissions(t *testing.T) {
 		name        string
 		scenario    string
 		expectError bool
-		errorType   wgoerrors.ErrorType
+		errorType   vainoerrors.ErrorType
 	}{
 		{
 			name:        "gcp_compute_read_only",
 			scenario:    "User has read-only access but WGO needs broader permissions",
 			expectError: true,
-			errorType:   wgoerrors.ErrorTypePermission,
+			errorType:   vainoerrors.ErrorTypePermission,
 		},
 		{
 			name:        "kubernetes_namespace_restricted",
 			scenario:    "User can only access specific namespace",
 			expectError: true,
-			errorType:   wgoerrors.ErrorTypePermission,
+			errorType:   vainoerrors.ErrorTypePermission,
 		},
 		{
 			name:        "aws_assume_role_denied",
 			scenario:    "Role assumption denied due to trust policy",
 			expectError: true,
-			errorType:   wgoerrors.ErrorTypePermission,
+			errorType:   vainoerrors.ErrorTypePermission,
 		},
 	}
 
@@ -243,7 +243,7 @@ func TestMissingCredentials(t *testing.T) {
 		provider    string
 		clearEnv    []string
 		expectError bool
-		errorType   wgoerrors.ErrorType
+		errorType   vainoerrors.ErrorType
 	}{
 		{
 			name:     "no_aws_credentials",
@@ -255,7 +255,7 @@ func TestMissingCredentials(t *testing.T) {
 				"AWS_PROFILE",
 			},
 			expectError: true,
-			errorType:   wgoerrors.ErrorTypeConfiguration,
+			errorType:   vainoerrors.ErrorTypeConfiguration,
 		},
 		{
 			name:     "no_gcp_credentials",
@@ -265,7 +265,7 @@ func TestMissingCredentials(t *testing.T) {
 				"GCLOUD_PROJECT",
 			},
 			expectError: true,
-			errorType:   wgoerrors.ErrorTypeConfiguration,
+			errorType:   vainoerrors.ErrorTypeConfiguration,
 		},
 		{
 			name:     "no_kubeconfig",
@@ -275,7 +275,7 @@ func TestMissingCredentials(t *testing.T) {
 				"HOME", // This affects default kubeconfig location
 			},
 			expectError: true,
-			errorType:   wgoerrors.ErrorTypeConfiguration,
+			errorType:   vainoerrors.ErrorTypeConfiguration,
 		},
 	}
 

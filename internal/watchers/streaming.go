@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // EventPipeline provides real-time event streaming with parallel processing

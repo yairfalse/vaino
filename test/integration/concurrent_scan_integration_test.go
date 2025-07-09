@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/collectors/terraform"
-	"github.com/yairfalse/wgo/internal/scanner"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/internal/collectors/terraform"
+	"github.com/yairfalse/vaino/internal/scanner"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // TestConcurrentScanIntegration tests end-to-end concurrent scanning

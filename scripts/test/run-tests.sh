@@ -10,7 +10,7 @@ NC='\033[0m' # No Color
 # Test results
 FAILED_TESTS=()
 
-echo -e "${GREEN}WGO Test Runner${NC}"
+echo -e "${GREEN}VAINO Test Runner${NC}"
 echo "=================="
 
 # Function to run a test suite
@@ -32,8 +32,8 @@ TEST_TYPE=${1:-all}
 VERBOSE=${2:-}
 
 # Build the binary first
-echo -e "\n${YELLOW}Building WGO binary...${NC}"
-go build -o wgo ./cmd/wgo
+echo -e "\n${YELLOW}Building VAINO binary...${NC}"
+go build -o vaino ./cmd/vaino
 
 # Run different test suites based on argument
 case $TEST_TYPE in
@@ -68,7 +68,7 @@ case $TEST_TYPE in
     quick)
         # Quick tests for development
         run_test_suite "Quick Unit Tests" "go test -short ./internal/... ./pkg/..."
-        run_test_suite "CLI Tests" "./wgo --help && ./wgo version"
+        run_test_suite "CLI Tests" "./vaino --help && ./vaino version"
         ;;
     all)
         # Run all test suites

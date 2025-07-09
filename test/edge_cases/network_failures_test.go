@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/collectors/aws"
-	wgoerrors "github.com/yairfalse/wgo/internal/errors"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/internal/collectors/aws"
+	vainoerrors "github.com/yairfalse/vaino/internal/errors"
 )
 
 // TestNetworkTimeouts tests various network timeout scenarios
@@ -74,8 +74,8 @@ func TestNetworkTimeouts(t *testing.T) {
 					t.Errorf("Expected error but got none")
 				} else {
 					// Verify it's the right type of error
-					if wgoErr, ok := err.(*wgoerrors.WGOError); ok {
-						if wgoErr.Type != wgoerrors.ErrorTypeNetwork {
+					if wgoErr, ok := err.(*vainoerrors.VAINOError); ok {
+						if wgoErr.Type != vainoerrors.ErrorTypeNetwork {
 							t.Errorf("Expected network error, got %v", wgoErr.Type)
 						}
 					}
@@ -95,25 +95,25 @@ func TestNetworkConnectivityIssues(t *testing.T) {
 		name        string
 		endpoint    string
 		expectError bool
-		errorType   wgoerrors.ErrorType
+		errorType   vainoerrors.ErrorType
 	}{
 		{
 			name:        "dns_resolution_failure",
 			endpoint:    "https://this-domain-does-not-exist-123456789.com",
 			expectError: true,
-			errorType:   wgoerrors.ErrorTypeNetwork,
+			errorType:   vainoerrors.ErrorTypeNetwork,
 		},
 		{
 			name:        "connection_refused",
 			endpoint:    "http://localhost:99999",
 			expectError: true,
-			errorType:   wgoerrors.ErrorTypeNetwork,
+			errorType:   vainoerrors.ErrorTypeNetwork,
 		},
 		{
 			name:        "invalid_url",
 			endpoint:    "not-a-valid-url",
 			expectError: true,
-			errorType:   wgoerrors.ErrorTypeValidation,
+			errorType:   vainoerrors.ErrorTypeValidation,
 		},
 	}
 

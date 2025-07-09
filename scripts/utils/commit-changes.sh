@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Script to commit all the WGO enhancements
+# Script to commit all the VAINO enhancements
 
 set -e
 
-echo "📝 Committing WGO CI/CD and Performance Enhancements..."
+echo "📝 Committing VAINO CI/CD and Performance Enhancements..."
 
 # Add all new and modified files
 git add .
@@ -67,4 +67,4 @@ echo "   - Generate benchmark reports"
 echo "   - Perform security scanning"
 echo "   - Create coverage reports"
 echo ""
-echo "🎉 WGO is production-ready!"
+echo "🎉 VAINO is production-ready!"

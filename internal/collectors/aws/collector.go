@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/collectors"
-	wgoerrors "github.com/yairfalse/wgo/internal/errors"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/collectors"
+	vainoerrors "github.com/yairfalse/vaino/internal/errors"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // AWSCollector implements the enhanced collector interface for AWS
@@ -132,7 +132,7 @@ func (c *AWSCollector) Collect(ctx context.Context, config collectors.CollectorC
 		if err != nil {
 			// Return authentication errors immediately, don't continue
 			if isAuthenticationError(err) {
-				return nil, wgoerrors.New(wgoerrors.ErrorTypeAuthentication, wgoerrors.ProviderAWS,
+				return nil, vainoerrors.New(vainoerrors.ErrorTypeAuthentication, vainoerrors.ProviderAWS,
 					fmt.Sprintf("Authentication failed for %s service", service.name)).
 					WithCause(err.Error()).
 					WithSolutions(
@@ -142,7 +142,7 @@ func (c *AWSCollector) Collect(ctx context.Context, config collectors.CollectorC
 						"Verify IAM permissions for the service",
 					).
 					WithVerify("aws sts get-caller-identity").
-					WithHelp("wgo validate aws")
+					WithHelp("vaino validate aws")
 			}
 
 			// For other errors, log and continue

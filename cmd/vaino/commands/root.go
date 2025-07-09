@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/yairfalse/wgo/pkg/config"
+	"github.com/yairfalse/vaino/pkg/config"
 )
 
 var (
@@ -16,27 +16,33 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "wgo",
-	Short: "Git diff for infrastructure - simple drift detection",
-	Long: `WGO is "git diff" for your infrastructure - see what changed, when, and why.
+	Use:   "vaino",
+	Short: "Ancient Finnish wisdom for modern infrastructure",
+	Long: `VAINO - The Finnish creator god who actually BUILDS things.
 
-Think of it as 'git diff' but for infrastructure changes:
-- Simple, familiar command-line experience
-- Unix-style output that works with pipes and scripts  
-- Exit codes: 0 = no changes, 1 = changes detected
-- Multiple output formats for different use cases
+Unlike weak advisory tools, Väinö brings ancient Finnish wisdom to modern 
+infrastructure monitoring. The creator god who forged the world from chaos
+now watches over your cloud resources with divine insight.
 
-QUICK START:
-  wgo diff              # See what changed in your infrastructure
-  wgo scan              # Scan your current infrastructure  
-  wgo diff --stat       # Show change statistics
-  wgo diff --quiet      # Silent mode for scripts
+DIVINE POWERS:
+- Forge clarity from infrastructure chaos
+- Ancient wisdom meets modern DevOps
+- Creator god energy vs passive advice-giving
+- Finnish authenticity over Swedish appropriation
 
-WORKS WITH:
-  • Terraform state files
-  • AWS resources  
-  • Kubernetes clusters
-  • And more...`,
+SUMMON VÄINÖ'S POWER:
+  vaino diff            # Divine insight into what changed
+  vaino scan            # The creator's watchful eye  
+  vaino diff --stat     # Mystical change statistics
+  vaino diff --quiet    # Silent divine knowledge
+
+THE CREATOR WATCHES:
+  🌲 Terraform state realms
+  ☁️  AWS cloud kingdoms  
+  ⚓ Kubernetes vessel fleets
+  🔥 And all infrastructure you create...
+
+"In the beginning was the Void. Then Väinö sang the world into being."`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Handle --version flag
 		if showVersion, _ := cmd.Flags().GetBool("version"); showVersion {
@@ -61,7 +67,7 @@ func Execute() {
 
 func init() {
 	// Global flags
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.wgo/config.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.vaino/config.yaml)")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "verbose output")
 	rootCmd.PersistentFlags().Bool("debug", false, "enable debug mode")
 	rootCmd.PersistentFlags().String("log-level", "info", "log level (debug, info, warn, error)")

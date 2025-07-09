@@ -3,7 +3,7 @@ package differ
 import (
 	"testing"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 func TestDefaultComparer_CompareResources(t *testing.T) {

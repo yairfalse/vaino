@@ -159,8 +159,8 @@ func DefaultConfig() *Config {
 			},
 		},
 		Storage: StorageConfig{
-			BasePath: "~/.wgo",
-			BaseDir:  filepath.Join(homeDir, ".wgo", "storage"),
+			BasePath: "~/.vaino",
+			BaseDir:  filepath.Join(homeDir, ".vaino", "storage"),
 			Backend:  "local",
 		},
 		Output: OutputConfig{
@@ -187,13 +187,13 @@ func Load() (*Config, error) {
 
 	// Add configuration paths
 	if home, err := os.UserHomeDir(); err == nil {
-		viper.AddConfigPath(filepath.Join(home, ".wgo"))
+		viper.AddConfigPath(filepath.Join(home, ".vaino"))
 	}
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("./config")
 
 	// Set environment variable support
-	viper.SetEnvPrefix("WGO")
+	viper.SetEnvPrefix("VAINO")
 	viper.AutomaticEnv()
 
 	// Map environment variables to config keys
