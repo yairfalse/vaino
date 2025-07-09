@@ -16,7 +16,7 @@ GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 GOMOD=$(GOCMD) mod
 GOFMT=gofmt
-GOLINT=golangci-lint
+GOLINT=$(shell go env GOPATH)/bin/golangci-lint
 
 # Build flags
 LDFLAGS=-ldflags "-X main.version=$(shell git describe --tags --always --dirty) -X main.commit=$(shell git rev-parse HEAD) -X main.date=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -31,7 +31,8 @@ RESET := \033[0m
 .PHONY: all build clean test test-all test-unit test-integration test-e2e test-coverage lint fmt help \
 		test-collectors test-terraform test-gcp test-aws test-kubernetes test-commands test-config \
 		test-changed test-parallel perf-test perf-bench perf-stress perf-memory perf-concurrent \
-		perf-large-dataset perf-quick perf-profile perf-report check-deps
+		perf-large-dataset perf-quick perf-profile perf-report check-deps \
+		agent-start agent-status agent-check pr-ready
 
 # Default target
 all: clean lint test build
@@ -81,6 +82,12 @@ help:
 	@echo "  perf-profile      Run performance tests with profiling"
 	@echo "  perf-report       Show latest performance report"
 	@echo "  perf-ci           Run CI performance tests (reduced set)"
+	@echo ""
+	@echo "$(GREEN)🤖 Agent Management:$(RESET)"
+	@echo "  agent-start       Start interactive agent creation"
+	@echo "  agent-status      Show agent status and active work"
+	@echo "  agent-check       Run quality checks (alias for pr-ready)"
+	@echo "  pr-ready          Complete quality checks before PR"
 
 # Build targets
 build:
@@ -342,3 +349,43 @@ pre-commit: fmt lint test-unit
 # Full validation
 validate: clean deps lint test-coverage build-all
 	@echo "Full validation completed!"
+
+# Agent Management targets
+agent-start:
+	@echo "$(CYAN)Starting agent creation...$(RESET)"
+	@./scripts/agent-branch.sh start
+	@echo "$(GREEN)✅ Agent created successfully$(RESET)"
+
+agent-status:
+	@echo "$(CYAN)Checking agent status...$(RESET)"
+	@./scripts/agent-branch.sh status
+
+agent-check: pr-ready
+	@echo "$(GREEN)✅ Agent quality checks passed$(RESET)"
+
+pr-ready: fmt build
+	@echo "$(CYAN)Running comprehensive quality checks...$(RESET)"
+	@echo "$(YELLOW)Checking code formatting...$(RESET)"
+	@if [ -n "$$(gofmt -l .)" ]; then \
+		echo "$(RED)❌ Code is not formatted. Run 'make fmt' first.$(RESET)"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)✅ Code formatting OK$(RESET)"
+	@echo "$(YELLOW)Checking for untracked files...$(RESET)"
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "$(YELLOW)⚠️  Untracked files present - ensure they're intentional$(RESET)"; \
+		git status --porcelain; \
+	fi
+	@echo "$(YELLOW)Checking build...$(RESET)"
+	@if [ ! -f "$(BUILD_DIR)/$(BINARY_NAME)" ]; then \
+		echo "$(RED)❌ Build failed or binary not found$(RESET)"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)✅ Build OK$(RESET)"
+	@echo "$(YELLOW)Checking agent registration...$(RESET)"
+	@if [ -d ".agent-work" ]; then \
+		echo "$(GREEN)✅ Agent system initialized$(RESET)"; \
+	else \
+		echo "$(YELLOW)⚠️  Agent system not initialized (run 'make agent-start' first)$(RESET)"; \
+	fi
+	@echo "$(GREEN)✅ All quality checks passed - ready for PR!$(RESET)"

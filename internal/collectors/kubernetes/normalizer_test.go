@@ -183,7 +183,7 @@ func TestResourceNormalizer_NormalizeConfigMap(t *testing.T) {
 			"app.conf":    "debug=true",
 		},
 		BinaryData: map[string][]byte{
-			"binary.dat": []byte{0x01, 0x02, 0x03},
+			"binary.dat": {0x01, 0x02, 0x03},
 		},
 	}
 

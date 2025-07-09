@@ -1,0 +1,15 @@
+# Agent work files - keep structure but ignore runtime data
+config.json
+tasks/*.json
+agents/*.json
+conflicts/*.json
+
+# Keep empty directories
+!tasks/.gitkeep
+!agents/.gitkeep
+!conflicts/.gitkeep
+
+# Temporary files
+*.tmp
+*.temp
+*.lock

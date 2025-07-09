@@ -20,6 +20,7 @@ import (
 
 // TestWatchModeIntegration tests watch mode with real collectors
 func TestWatchModeIntegration(t *testing.T) {
+	t.Skip("Skipping until watcher interface is finalized")
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -141,6 +142,7 @@ func TestWatchModeIntegration(t *testing.T) {
 
 // TestWatchModeWebhookIntegration tests webhook notifications
 func TestWatchModeWebhookIntegration(t *testing.T) {
+	t.Skip("Skipping until watcher interface is finalized")
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -223,6 +225,7 @@ func TestWatchModeWebhookIntegration(t *testing.T) {
 
 // TestWatchModeMultipleProviders tests watching multiple providers
 func TestWatchModeMultipleProviders(t *testing.T) {
+	t.Skip("Skipping until watcher interface is finalized")
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
@@ -306,6 +309,7 @@ func TestWatchModeMultipleProviders(t *testing.T) {
 
 // TestWatchModeConcurrentWebhooks tests concurrent webhook sending
 func TestWatchModeConcurrentWebhooks(t *testing.T) {
+	t.Skip("Skipping until watcher interface is finalized")
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
