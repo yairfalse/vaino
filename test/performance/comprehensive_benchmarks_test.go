@@ -26,12 +26,12 @@ func BenchmarkMegaFileProcessing(b *testing.B) {
 	}
 
 	sizes := []struct {
-		name      string
-		resources int
+		name       string
+		resources  int
 		fileSizeMB float64
 	}{
 		{"10MB_file", 5000, 10},
-		{"50MB_file", 25000, 50}, 
+		{"50MB_file", 25000, 50},
 		{"100MB_file", 50000, 100},
 		{"200MB_file", 100000, 200},
 	}
@@ -40,7 +40,7 @@ func BenchmarkMegaFileProcessing(b *testing.B) {
 		b.Run(size.name, func(b *testing.B) {
 			tmpDir := b.TempDir()
 			stateFile := filepath.Join(tmpDir, "mega-state.tfstate")
-			
+
 			// Create massive state file
 			state := createMegaTestState(size.resources)
 			data, err := json.MarshalIndent(state, "", "  ")
@@ -71,7 +71,7 @@ func BenchmarkMegaFileProcessing(b *testing.B) {
 				if err != nil {
 					b.Fatalf("Mega file collection failed: %v", err)
 				}
-				
+
 				if len(snapshot.Resources) != size.resources {
 					b.Errorf("Expected %d resources, got %d", size.resources, len(snapshot.Resources))
 				}
@@ -91,17 +91,17 @@ func BenchmarkConcurrentOperations(b *testing.B) {
 				// Setup test files for each concurrent operation
 				tmpDir := b.TempDir()
 				stateFiles := make([]string, concurrency)
-				
+
 				for i := 0; i < concurrency; i++ {
 					stateFile := filepath.Join(tmpDir, fmt.Sprintf("state-%d.tfstate", i))
 					stateFiles[i] = stateFile
-					
+
 					state := createMegaTestState(resourceCount)
 					data, err := json.MarshalIndent(state, "", "  ")
 					if err != nil {
 						b.Fatalf("Failed to marshal state %d: %v", i, err)
 					}
-					
+
 					if err := os.WriteFile(stateFile, data, 0644); err != nil {
 						b.Fatalf("Failed to write state file %d: %v", i, err)
 					}
@@ -121,7 +121,7 @@ func BenchmarkConcurrentOperations(b *testing.B) {
 						wg.Add(1)
 						go func(idx int) {
 							defer wg.Done()
-							
+
 							collector := terraform.NewTerraformCollector()
 							config := collectors.CollectorConfig{
 								StatePaths: []string{stateFiles[idx]},
@@ -133,7 +133,7 @@ func BenchmarkConcurrentOperations(b *testing.B) {
 								errors <- fmt.Errorf("worker %d failed: %v", idx, err)
 								return
 							}
-							
+
 							results[idx] = *snapshot
 						}(j)
 					}
@@ -159,7 +159,7 @@ func BenchmarkConcurrentOperations(b *testing.B) {
 						b.Errorf("Expected %d total resources, got %d", expectedTotal, totalResources)
 					}
 
-					b.Logf("Concurrent level %d: processed %d resources in %v", 
+					b.Logf("Concurrent level %d: processed %d resources in %v",
 						concurrency, totalResources, duration)
 				}
 			})
@@ -215,19 +215,19 @@ func BenchmarkMemoryIntensiveOperations(b *testing.B) {
 	for _, resourceCount := range resourceCounts {
 		b.Run(fmt.Sprintf("memory_test_%d_resources", resourceCount), func(b *testing.B) {
 			tmpDir := b.TempDir()
-			
+
 			// Create large state files
 			stateFiles := make([]string, 5) // 5 large files
 			for i := 0; i < 5; i++ {
 				stateFile := filepath.Join(tmpDir, fmt.Sprintf("memory-state-%d.tfstate", i))
 				stateFiles[i] = stateFile
-				
+
 				state := createMegaTestState(resourceCount)
 				data, err := json.MarshalIndent(state, "", "  ")
 				if err != nil {
 					b.Fatalf("Failed to marshal state %d: %v", i, err)
 				}
-				
+
 				if err := os.WriteFile(stateFile, data, 0644); err != nil {
 					b.Fatalf("Failed to write state file %d: %v", i, err)
 				}
@@ -257,7 +257,7 @@ func BenchmarkMemoryIntensiveOperations(b *testing.B) {
 						StatePaths: []string{statePath},
 						Tags:       config.Tags,
 					}
-					
+
 					snapshot, err := collector.Collect(context.Background(), singleConfig)
 					if err != nil {
 						b.Fatalf("Collection failed for file %d: %v", j, err)
@@ -280,7 +280,7 @@ func BenchmarkMemoryIntensiveOperations(b *testing.B) {
 				memUsed := afterMem.HeapAlloc - beforeMem.HeapAlloc
 				totalResources := resourceCount * 5
 
-				b.Logf("Memory test %d resources: used %d bytes (%.2f MB)", 
+				b.Logf("Memory test %d resources: used %d bytes (%.2f MB)",
 					totalResources, memUsed, float64(memUsed)/(1024*1024))
 
 				// Memory usage should be reasonable (< 100MB for 125k resources)
@@ -314,17 +314,17 @@ func BenchmarkEndToEndWorkflow(b *testing.B) {
 	for _, workflow := range workflows {
 		b.Run(workflow.name, func(b *testing.B) {
 			tmpDir := b.TempDir()
-			
+
 			// Create baseline and current state files
 			baselineFile := filepath.Join(tmpDir, "baseline.tfstate")
 			currentFile := filepath.Join(tmpDir, "current.tfstate")
-			
+
 			baselineState := createMegaTestState(workflow.resourceCount)
 			currentState := createMegaTestStateWithChanges(workflow.resourceCount, workflow.changePercent)
-			
+
 			baselineData, _ := json.MarshalIndent(baselineState, "", "  ")
 			currentData, _ := json.MarshalIndent(currentState, "", "  ")
-			
+
 			os.WriteFile(baselineFile, baselineData, 0644)
 			os.WriteFile(currentFile, currentData, 0644)
 
@@ -333,14 +333,14 @@ func BenchmarkEndToEndWorkflow(b *testing.B) {
 
 			for i := 0; i < b.N; i++ {
 				// Complete workflow: collect -> store -> diff -> analyze
-				
+
 				// 1. Collect baseline
 				collector := terraform.NewTerraformCollector()
 				baselineConfig := collectors.CollectorConfig{
 					StatePaths: []string{baselineFile},
 					Tags:       map[string]string{"snapshot": "baseline"},
 				}
-				
+
 				baselineSnapshot, err := collector.Collect(context.Background(), baselineConfig)
 				if err != nil {
 					b.Fatalf("Baseline collection failed: %v", err)
@@ -351,7 +351,7 @@ func BenchmarkEndToEndWorkflow(b *testing.B) {
 					StatePaths: []string{currentFile},
 					Tags:       map[string]string{"snapshot": "current"},
 				}
-				
+
 				currentSnapshot, err := collector.Collect(context.Background(), currentConfig)
 				if err != nil {
 					b.Fatalf("Current collection failed: %v", err)
@@ -359,16 +359,16 @@ func BenchmarkEndToEndWorkflow(b *testing.B) {
 
 				// 3. Store snapshots
 				storageConfig := storage.Config{BaseDir: tmpDir}
-	storageEngine, err := storage.NewLocalStorage(storageConfig)
-	if err != nil {
-		b.Fatalf("Failed to create storage engine: %v", err)
-	}
-				
+				storageEngine, err := storage.NewLocalStorage(storageConfig)
+				if err != nil {
+					b.Fatalf("Failed to create storage engine: %v", err)
+				}
+
 				err = storageEngine.SaveSnapshot(baselineSnapshot)
 				if err != nil {
 					b.Fatalf("Baseline storage failed: %v", err)
 				}
-				
+
 				err = storageEngine.SaveSnapshot(currentSnapshot)
 				if err != nil {
 					b.Fatalf("Current storage failed: %v", err)
@@ -384,12 +384,12 @@ func BenchmarkEndToEndWorkflow(b *testing.B) {
 				// 5. Verify results
 				expectedChanges := (workflow.resourceCount * workflow.changePercent) / 100
 				changeCount := len(report.Changes)
-				
+
 				if changeCount < expectedChanges/2 || changeCount > expectedChanges*2 {
 					b.Logf("Warning: Expected ~%d changes, got %d", expectedChanges, changeCount)
 				}
 
-				b.Logf("End-to-end %s: %d resources, %d changes", 
+				b.Logf("End-to-end %s: %d resources, %d changes",
 					workflow.name, workflow.resourceCount, changeCount)
 			}
 		})
@@ -403,34 +403,34 @@ func TestPerformanceRequirements(t *testing.T) {
 	}
 
 	requirements := []struct {
-		name         string
+		name          string
 		resourceCount int
-		maxDuration  time.Duration
-		description  string
+		maxDuration   time.Duration
+		description   string
 	}{
 		{
-			name:         "small_scale",
+			name:          "small_scale",
 			resourceCount: 100,
-			maxDuration:  1 * time.Second,
-			description:  "Small infrastructures should be very fast",
+			maxDuration:   1 * time.Second,
+			description:   "Small infrastructures should be very fast",
 		},
 		{
-			name:         "medium_scale", 
+			name:          "medium_scale",
 			resourceCount: 1000,
-			maxDuration:  5 * time.Second,
-			description:  "Medium infrastructures should be fast",
+			maxDuration:   5 * time.Second,
+			description:   "Medium infrastructures should be fast",
 		},
 		{
-			name:         "large_scale",
+			name:          "large_scale",
 			resourceCount: 5000,
-			maxDuration:  30 * time.Second,
-			description:  "Large infrastructures should complete within 30s",
+			maxDuration:   30 * time.Second,
+			description:   "Large infrastructures should complete within 30s",
 		},
 		{
-			name:         "mega_scale",
+			name:          "mega_scale",
 			resourceCount: 25000,
-			maxDuration:  2 * time.Minute,
-			description:  "Mega infrastructures should complete within 2 minutes",
+			maxDuration:   2 * time.Minute,
+			description:   "Mega infrastructures should complete within 2 minutes",
 		},
 	}
 
@@ -438,13 +438,13 @@ func TestPerformanceRequirements(t *testing.T) {
 		t.Run(req.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
 			stateFile := filepath.Join(tmpDir, "requirement-test.tfstate")
-			
+
 			state := createMegaTestState(req.resourceCount)
 			data, err := json.MarshalIndent(state, "", "  ")
 			if err != nil {
 				t.Fatalf("Failed to marshal state: %v", err)
 			}
-			
+
 			if err := os.WriteFile(stateFile, data, 0644); err != nil {
 				t.Fatalf("Failed to write state file: %v", err)
 			}
@@ -470,7 +470,7 @@ func TestPerformanceRequirements(t *testing.T) {
 			if duration > req.maxDuration {
 				t.Errorf("%s: took %v, requirement < %v", req.description, duration, req.maxDuration)
 			} else {
-				t.Logf("%s: ✓ processed %d resources in %v (< %v)", 
+				t.Logf("%s: ✓ processed %d resources in %v (< %v)",
 					req.description, req.resourceCount, duration, req.maxDuration)
 			}
 		})
@@ -481,26 +481,26 @@ func TestPerformanceRequirements(t *testing.T) {
 
 func createMegaTestState(resourceCount int) *terraform.TerraformState {
 	resources := make([]terraform.TerraformResource, resourceCount)
-	
+
 	resourceTypes := []string{
 		"aws_instance", "aws_s3_bucket", "aws_vpc", "aws_subnet", "aws_security_group",
 		"aws_rds_instance", "aws_lambda_function", "aws_iam_role", "aws_cloudfront_distribution",
 		"google_compute_instance", "google_storage_bucket", "google_compute_network",
 		"kubernetes_deployment", "kubernetes_service", "kubernetes_configmap",
 	}
-	
+
 	regions := []string{"us-west-2", "us-east-1", "eu-west-1", "ap-southeast-1"}
 	environments := []string{"production", "staging", "development", "test"}
-	
+
 	for i := 0; i < resourceCount; i++ {
 		resourceType := resourceTypes[i%len(resourceTypes)]
 		region := regions[i%len(regions)]
 		environment := environments[i%len(environments)]
-		
+
 		// Create realistic attributes based on resource type
 		attributes := map[string]interface{}{
-			"id":   fmt.Sprintf("%s-id-%d", resourceType, i),
-			"name": fmt.Sprintf("%s-name-%d", resourceType, i),
+			"id":     fmt.Sprintf("%s-id-%d", resourceType, i),
+			"name":   fmt.Sprintf("%s-name-%d", resourceType, i),
 			"region": region,
 			"tags": map[string]interface{}{
 				"Environment": environment,
@@ -527,7 +527,7 @@ func createMegaTestState(resourceCount int) *terraform.TerraformState {
 			Mode: "managed",
 			Type: resourceType,
 			Name: fmt.Sprintf("resource_%d", i),
-			Provider: fmt.Sprintf("provider[\"registry.terraform.io/hashicorp/%s\"]", 
+			Provider: fmt.Sprintf("provider[\"registry.terraform.io/hashicorp/%s\"]",
 				getProviderName(resourceType)),
 			Instances: []terraform.TerraformInstance{
 				{
@@ -537,7 +537,7 @@ func createMegaTestState(resourceCount int) *terraform.TerraformState {
 			},
 		}
 	}
-	
+
 	return &terraform.TerraformState{
 		Version:          4,
 		TerraformVersion: "1.5.0",
@@ -550,26 +550,26 @@ func createMegaTestState(resourceCount int) *terraform.TerraformState {
 
 func createMegaTestStateWithChanges(resourceCount int, changePercentage int) *terraform.TerraformState {
 	state := createMegaTestState(resourceCount)
-	
+
 	// Calculate number of resources to change
 	changeCount := (resourceCount * changePercentage) / 100
-	
+
 	for i := 0; i < changeCount; i++ {
 		// Modify every N-th resource where N = resourceCount/changeCount
 		resourceIndex := i * (resourceCount / changeCount)
 		if resourceIndex >= len(state.Resources) {
 			break
 		}
-		
+
 		resource := &state.Resources[resourceIndex]
 		instance := &resource.Instances[0]
-		
+
 		// Make realistic changes based on resource type
 		switch resource.Type {
 		case "aws_instance":
 			instance.Attributes["instance_type"] = "t3.large" // Scale up
 		case "kubernetes_deployment":
-			instance.Attributes["replicas"] = 5 // Scale up
+			instance.Attributes["replicas"] = 5                                    // Scale up
 			instance.Attributes["image"] = fmt.Sprintf("app:v2.%d", resourceIndex) // Update image
 		case "aws_s3_bucket":
 			if tags, ok := instance.Attributes["tags"].(map[string]interface{}); ok {
@@ -582,7 +582,7 @@ func createMegaTestStateWithChanges(resourceCount int, changePercentage int) *te
 			}
 		}
 	}
-	
+
 	return state
 }
 

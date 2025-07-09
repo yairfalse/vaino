@@ -16,27 +16,27 @@ type WorkerPoolConfig struct {
 	TerraformParser   TerraformParserConfig   `yaml:"terraform_parser"`
 	DiffWorker        DiffWorkerConfig        `yaml:"diff_worker"`
 	StorageManager    StorageManagerConfig    `yaml:"storage_manager"`
-	
+
 	// Global settings
-	MaxConcurrency    int           `yaml:"max_concurrency"`
-	DefaultTimeout    time.Duration `yaml:"default_timeout"`
-	MemoryLimit       int64         `yaml:"memory_limit"`
-	EnableMetrics     bool          `yaml:"enable_metrics"`
-	MetricsInterval   time.Duration `yaml:"metrics_interval"`
-	HealthCheckPort   int           `yaml:"health_check_port"`
+	MaxConcurrency  int           `yaml:"max_concurrency"`
+	DefaultTimeout  time.Duration `yaml:"default_timeout"`
+	MemoryLimit     int64         `yaml:"memory_limit"`
+	EnableMetrics   bool          `yaml:"enable_metrics"`
+	MetricsInterval time.Duration `yaml:"metrics_interval"`
+	HealthCheckPort int           `yaml:"health_check_port"`
 }
 
 // ResourceProcessorConfig configures the resource processor
 type ResourceProcessorConfig struct {
-	Enabled       bool          `yaml:"enabled"`
-	WorkerCount   int           `yaml:"worker_count"`
-	BufferSize    int           `yaml:"buffer_size"`
-	MaxRetries    int           `yaml:"max_retries"`
-	RetryDelay    time.Duration `yaml:"retry_delay"`
-	Timeout       time.Duration `yaml:"timeout"`
-	MemoryLimit   int64         `yaml:"memory_limit"`
-	RateLimit     int           `yaml:"rate_limit"`
-	RateBurst     int           `yaml:"rate_burst"`
+	Enabled     bool          `yaml:"enabled"`
+	WorkerCount int           `yaml:"worker_count"`
+	BufferSize  int           `yaml:"buffer_size"`
+	MaxRetries  int           `yaml:"max_retries"`
+	RetryDelay  time.Duration `yaml:"retry_delay"`
+	Timeout     time.Duration `yaml:"timeout"`
+	MemoryLimit int64         `yaml:"memory_limit"`
+	RateLimit   int           `yaml:"rate_limit"`
+	RateBurst   int           `yaml:"rate_burst"`
 }
 
 // TerraformParserConfig configures the Terraform parser
@@ -51,45 +51,45 @@ type TerraformParserConfig struct {
 
 // DiffWorkerConfig configures the diff worker
 type DiffWorkerConfig struct {
-	Enabled       bool          `yaml:"enabled"`
-	WorkerCount   int           `yaml:"worker_count"`
-	BufferSize    int           `yaml:"buffer_size"`
-	BatchSize     int           `yaml:"batch_size"`
-	Timeout       time.Duration `yaml:"timeout"`
-	CacheEnabled  bool          `yaml:"cache_enabled"`
-	CacheTTL      time.Duration `yaml:"cache_ttl"`
+	Enabled      bool          `yaml:"enabled"`
+	WorkerCount  int           `yaml:"worker_count"`
+	BufferSize   int           `yaml:"buffer_size"`
+	BatchSize    int           `yaml:"batch_size"`
+	Timeout      time.Duration `yaml:"timeout"`
+	CacheEnabled bool          `yaml:"cache_enabled"`
+	CacheTTL     time.Duration `yaml:"cache_ttl"`
 }
 
 // StorageManagerConfig configures the storage manager
 type StorageManagerConfig struct {
-	Enabled       bool          `yaml:"enabled"`
-	WorkerCount   int           `yaml:"worker_count"`
-	BufferSize    int           `yaml:"buffer_size"`
-	Timeout       time.Duration `yaml:"timeout"`
-	MaxFileSize   int64         `yaml:"max_file_size"`
-	Compression   bool          `yaml:"compression"`
-	Encryption    bool          `yaml:"encryption"`
-	Backup        bool          `yaml:"backup"`
+	Enabled     bool          `yaml:"enabled"`
+	WorkerCount int           `yaml:"worker_count"`
+	BufferSize  int           `yaml:"buffer_size"`
+	Timeout     time.Duration `yaml:"timeout"`
+	MaxFileSize int64         `yaml:"max_file_size"`
+	Compression bool          `yaml:"compression"`
+	Encryption  bool          `yaml:"encryption"`
+	Backup      bool          `yaml:"backup"`
 }
 
 // WorkerPoolManager manages all worker pools
 type WorkerPoolManager struct {
-	config           WorkerPoolConfig
+	config            WorkerPoolConfig
 	resourceProcessor *ResourceProcessor
-	terraformParser  *ConcurrentTerraformParser
-	diffWorker       *DiffWorker
-	storageManager   *ConcurrentStorageManager
-	
+	terraformParser   *ConcurrentTerraformParser
+	diffWorker        *DiffWorker
+	storageManager    *ConcurrentStorageManager
+
 	// State management
-	ctx            context.Context
-	cancel         context.CancelFunc
-	mu             sync.RWMutex
-	running        bool
-	
+	ctx     context.Context
+	cancel  context.CancelFunc
+	mu      sync.RWMutex
+	running bool
+
 	// Metrics
 	metricsCollector *MetricsCollector
 	healthMonitor    *HealthMonitor
-	
+
 	// Lifecycle management
 	shutdownTimeout time.Duration
 	gracefulStop    chan struct{}
@@ -97,41 +97,41 @@ type WorkerPoolManager struct {
 
 // MetricsCollector collects metrics from all worker pools
 type MetricsCollector struct {
-	interval        time.Duration
-	enabled         bool
-	lastCollection  time.Time
-	metrics         WorkerPoolMetrics
-	mu              sync.RWMutex
+	interval       time.Duration
+	enabled        bool
+	lastCollection time.Time
+	metrics        WorkerPoolMetrics
+	mu             sync.RWMutex
 }
 
 // WorkerPoolMetrics contains metrics from all worker pools
 type WorkerPoolMetrics struct {
-	Timestamp         time.Time                `json:"timestamp"`
-	ResourceProcessor ProcessingStats          `json:"resource_processor"`
-	TerraformParser   TerraformParsingStats    `json:"terraform_parser"`
-	DiffWorker        DiffWorkerStats          `json:"diff_worker"`
-	StorageManager    StorageManagerStats      `json:"storage_manager"`
-	SystemMetrics     SystemMetrics            `json:"system_metrics"`
+	Timestamp         time.Time             `json:"timestamp"`
+	ResourceProcessor ProcessingStats       `json:"resource_processor"`
+	TerraformParser   TerraformParsingStats `json:"terraform_parser"`
+	DiffWorker        DiffWorkerStats       `json:"diff_worker"`
+	StorageManager    StorageManagerStats   `json:"storage_manager"`
+	SystemMetrics     SystemMetrics         `json:"system_metrics"`
 }
 
 // SystemMetrics contains system-level metrics
 type SystemMetrics struct {
-	CPUUsage        float64 `json:"cpu_usage"`
-	MemoryUsage     int64   `json:"memory_usage"`
-	MemoryLimit     int64   `json:"memory_limit"`
-	GoroutineCount  int     `json:"goroutine_count"`
-	GCPauses        int64   `json:"gc_pauses"`
-	HeapSize        int64   `json:"heap_size"`
-	StackSize       int64   `json:"stack_size"`
+	CPUUsage       float64 `json:"cpu_usage"`
+	MemoryUsage    int64   `json:"memory_usage"`
+	MemoryLimit    int64   `json:"memory_limit"`
+	GoroutineCount int     `json:"goroutine_count"`
+	GCPauses       int64   `json:"gc_pauses"`
+	HeapSize       int64   `json:"heap_size"`
+	StackSize      int64   `json:"stack_size"`
 }
 
 // HealthMonitor monitors the health of worker pools
 type HealthMonitor struct {
-	port           int
-	checkInterval  time.Duration
-	healthChecks   []HealthCheck
-	status         HealthStatus
-	mu             sync.RWMutex
+	port          int
+	checkInterval time.Duration
+	healthChecks  []HealthCheck
+	status        HealthStatus
+	mu            sync.RWMutex
 }
 
 // HealthCheck represents a health check
@@ -144,11 +144,11 @@ type HealthCheck struct {
 
 // HealthStatus represents the overall health status
 type HealthStatus struct {
-	Healthy    bool      `json:"healthy"`
-	Timestamp  time.Time `json:"timestamp"`
-	Checks     []HealthCheckResult `json:"checks"`
-	Uptime     time.Duration `json:"uptime"`
-	StartTime  time.Time `json:"start_time"`
+	Healthy   bool                `json:"healthy"`
+	Timestamp time.Time           `json:"timestamp"`
+	Checks    []HealthCheckResult `json:"checks"`
+	Uptime    time.Duration       `json:"uptime"`
+	StartTime time.Time           `json:"start_time"`
 }
 
 // HealthCheckResult represents the result of a health check
@@ -177,9 +177,9 @@ func NewWorkerPoolManager(config WorkerPoolConfig) *WorkerPoolManager {
 	if config.HealthCheckPort <= 0 {
 		config.HealthCheckPort = 8080
 	}
-	
+
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	wpm := &WorkerPoolManager{
 		config:          config,
 		ctx:             ctx,
@@ -187,7 +187,7 @@ func NewWorkerPoolManager(config WorkerPoolConfig) *WorkerPoolManager {
 		shutdownTimeout: 30 * time.Second,
 		gracefulStop:    make(chan struct{}),
 	}
-	
+
 	// Initialize metrics collector
 	if config.EnableMetrics {
 		wpm.metricsCollector = &MetricsCollector{
@@ -195,7 +195,7 @@ func NewWorkerPoolManager(config WorkerPoolConfig) *WorkerPoolManager {
 			enabled:  true,
 		}
 	}
-	
+
 	// Initialize health monitor
 	wpm.healthMonitor = &HealthMonitor{
 		port:          config.HealthCheckPort,
@@ -204,7 +204,7 @@ func NewWorkerPoolManager(config WorkerPoolConfig) *WorkerPoolManager {
 			StartTime: time.Now(),
 		},
 	}
-	
+
 	return wpm
 }
 
@@ -212,47 +212,47 @@ func NewWorkerPoolManager(config WorkerPoolConfig) *WorkerPoolManager {
 func (wpm *WorkerPoolManager) Start(ctx context.Context) error {
 	wpm.mu.Lock()
 	defer wpm.mu.Unlock()
-	
+
 	if wpm.running {
 		return fmt.Errorf("worker pool manager is already running")
 	}
-	
+
 	// Start resource processor
 	if wpm.config.ResourceProcessor.Enabled {
 		if err := wpm.startResourceProcessor(); err != nil {
 			return fmt.Errorf("failed to start resource processor: %w", err)
 		}
 	}
-	
+
 	// Start Terraform parser
 	if wpm.config.TerraformParser.Enabled {
 		if err := wpm.startTerraformParser(); err != nil {
 			return fmt.Errorf("failed to start Terraform parser: %w", err)
 		}
 	}
-	
+
 	// Start diff worker
 	if wpm.config.DiffWorker.Enabled {
 		if err := wpm.startDiffWorker(); err != nil {
 			return fmt.Errorf("failed to start diff worker: %w", err)
 		}
 	}
-	
+
 	// Start storage manager
 	if wpm.config.StorageManager.Enabled {
 		if err := wpm.startStorageManager(); err != nil {
 			return fmt.Errorf("failed to start storage manager: %w", err)
 		}
 	}
-	
+
 	// Start metrics collector
 	if wpm.metricsCollector != nil {
 		go wpm.metricsCollector.Start(wpm.ctx)
 	}
-	
+
 	// Start health monitor
 	go wpm.healthMonitor.Start(wpm.ctx)
-	
+
 	wpm.running = true
 	return nil
 }
@@ -261,46 +261,46 @@ func (wpm *WorkerPoolManager) Start(ctx context.Context) error {
 func (wpm *WorkerPoolManager) Stop() error {
 	wpm.mu.Lock()
 	defer wpm.mu.Unlock()
-	
+
 	if !wpm.running {
 		return fmt.Errorf("worker pool manager is not running")
 	}
-	
+
 	// Signal graceful shutdown
 	close(wpm.gracefulStop)
-	
+
 	// Create shutdown context with timeout
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), wpm.shutdownTimeout)
 	defer shutdownCancel()
-	
+
 	// Stop all worker pools
 	var errors []error
-	
+
 	// Stop resource processor
 	if wpm.resourceProcessor != nil {
 		if err := wpm.resourceProcessor.Stop(); err != nil {
 			errors = append(errors, fmt.Errorf("resource processor stop error: %w", err))
 		}
 	}
-	
+
 	// Stop Terraform parser
 	if wpm.terraformParser != nil {
 		wpm.terraformParser.stop()
 	}
-	
+
 	// Stop diff worker
 	if wpm.diffWorker != nil {
 		wpm.diffWorker.stop()
 	}
-	
+
 	// Stop storage manager
 	if wpm.storageManager != nil {
 		wpm.storageManager.stop()
 	}
-	
+
 	// Cancel main context
 	wpm.cancel()
-	
+
 	// Wait for shutdown completion or timeout
 	done := make(chan struct{})
 	go func() {
@@ -308,27 +308,27 @@ func (wpm *WorkerPoolManager) Stop() error {
 		time.Sleep(100 * time.Millisecond)
 		close(done)
 	}()
-	
+
 	select {
 	case <-done:
 		// Normal shutdown
 	case <-shutdownCtx.Done():
 		errors = append(errors, fmt.Errorf("shutdown timeout exceeded"))
 	}
-	
+
 	wpm.running = false
-	
+
 	if len(errors) > 0 {
 		return fmt.Errorf("shutdown errors: %v", errors)
 	}
-	
+
 	return nil
 }
 
 // startResourceProcessor starts the resource processor
 func (wpm *WorkerPoolManager) startResourceProcessor() error {
 	config := wpm.config.ResourceProcessor
-	
+
 	options := []ProcessorOption{
 		WithWorkerCount(config.WorkerCount),
 		WithBufferSize(config.BufferSize),
@@ -337,61 +337,61 @@ func (wpm *WorkerPoolManager) startResourceProcessor() error {
 		WithMemoryLimit(config.MemoryLimit),
 		WithRateLimit(config.RateLimit, config.RateBurst),
 	}
-	
+
 	wpm.resourceProcessor = NewResourceProcessor(options...)
-	
+
 	return wpm.resourceProcessor.Start(wpm.ctx)
 }
 
 // startTerraformParser starts the Terraform parser
 func (wpm *WorkerPoolManager) startTerraformParser() error {
 	config := wpm.config.TerraformParser
-	
+
 	options := []TerraformParserOption{
 		WithTerraformWorkerCount(config.WorkerCount),
 		WithTerraformBufferSize(config.BufferSize),
 		WithTerraformMaxFileSize(config.MaxFileSize),
 		WithTerraformTimeout(config.Timeout),
 	}
-	
+
 	wpm.terraformParser = NewConcurrentTerraformParser(options...)
-	
+
 	return wpm.terraformParser.start()
 }
 
 // startDiffWorker starts the diff worker
 func (wpm *WorkerPoolManager) startDiffWorker() error {
 	config := wpm.config.DiffWorker
-	
+
 	options := []DiffWorkerOption{
 		WithDiffWorkerCount(config.WorkerCount),
 		WithDiffBufferSize(config.BufferSize),
 		WithDiffBatchSize(config.BatchSize),
 		WithDiffTimeout(config.Timeout),
 	}
-	
+
 	if config.CacheEnabled {
 		options = append(options, WithComparisonCache(config.CacheTTL))
 	}
-	
+
 	wpm.diffWorker = NewDiffWorker(options...)
-	
+
 	return wpm.diffWorker.start()
 }
 
 // startStorageManager starts the storage manager
 func (wpm *WorkerPoolManager) startStorageManager() error {
 	config := wpm.config.StorageManager
-	
+
 	options := []StorageManagerOption{
 		WithStorageWorkerCount(config.WorkerCount),
 		WithStorageBufferSize(config.BufferSize),
 		WithStorageTimeout(config.Timeout),
 		WithStorageMaxFileSize(config.MaxFileSize),
 	}
-	
+
 	wpm.storageManager = NewConcurrentStorageManager(options...)
-	
+
 	return wpm.storageManager.start()
 }
 
@@ -428,7 +428,7 @@ func (wpm *WorkerPoolManager) GetMetrics() WorkerPoolMetrics {
 	if wpm.metricsCollector == nil {
 		return WorkerPoolMetrics{}
 	}
-	
+
 	wpm.metricsCollector.mu.RLock()
 	defer wpm.metricsCollector.mu.RUnlock()
 	return wpm.metricsCollector.metrics
@@ -453,7 +453,7 @@ func (wpm *WorkerPoolManager) ProcessResourcesConcurrently(resources []RawResour
 	if wpm.resourceProcessor == nil {
 		return nil, []error{fmt.Errorf("resource processor is not enabled")}
 	}
-	
+
 	return wpm.resourceProcessor.ProcessResources(resources)
 }
 
@@ -462,7 +462,7 @@ func (wpm *WorkerPoolManager) ParseTerraformStatesConcurrently(statePaths []stri
 	if wpm.terraformParser == nil {
 		return nil, fmt.Errorf("Terraform parser is not enabled")
 	}
-	
+
 	return wpm.terraformParser.ParseStatesConcurrent(statePaths)
 }
 
@@ -471,7 +471,7 @@ func (wpm *WorkerPoolManager) ComputeDiffsConcurrently(baseline, current *types.
 	if wpm.diffWorker == nil {
 		return nil, fmt.Errorf("diff worker is not enabled")
 	}
-	
+
 	return wpm.diffWorker.ComputeDiffsConcurrent(baseline, current)
 }
 
@@ -480,7 +480,7 @@ func (wpm *WorkerPoolManager) SaveSnapshotConcurrently(snapshot *types.Snapshot)
 	if wpm.storageManager == nil {
 		return fmt.Errorf("storage manager is not enabled")
 	}
-	
+
 	return wpm.storageManager.SaveSnapshotConcurrent(snapshot)
 }
 
@@ -489,7 +489,7 @@ func (wpm *WorkerPoolManager) LoadSnapshotConcurrently(snapshotID string) (*type
 	if wpm.storageManager == nil {
 		return nil, fmt.Errorf("storage manager is not enabled")
 	}
-	
+
 	return wpm.storageManager.LoadSnapshotConcurrent(snapshotID)
 }
 
@@ -498,10 +498,10 @@ func (mc *MetricsCollector) Start(ctx context.Context) {
 	if !mc.enabled {
 		return
 	}
-	
+
 	ticker := time.NewTicker(mc.interval)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -516,7 +516,7 @@ func (mc *MetricsCollector) Start(ctx context.Context) {
 func (mc *MetricsCollector) collectMetrics() {
 	mc.mu.Lock()
 	defer mc.mu.Unlock()
-	
+
 	mc.metrics.Timestamp = time.Now()
 	mc.metrics.SystemMetrics = mc.collectSystemMetrics()
 	mc.lastCollection = time.Now()
@@ -526,7 +526,7 @@ func (mc *MetricsCollector) collectMetrics() {
 func (mc *MetricsCollector) collectSystemMetrics() SystemMetrics {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	
+
 	return SystemMetrics{
 		MemoryUsage:    int64(m.Alloc),
 		GoroutineCount: runtime.NumGoroutine(),
@@ -540,10 +540,10 @@ func (mc *MetricsCollector) collectSystemMetrics() SystemMetrics {
 func (hm *HealthMonitor) Start(ctx context.Context) {
 	// Register health checks
 	hm.registerHealthChecks()
-	
+
 	ticker := time.NewTicker(hm.checkInterval)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -558,7 +558,7 @@ func (hm *HealthMonitor) Start(ctx context.Context) {
 func (hm *HealthMonitor) registerHealthChecks() {
 	hm.mu.Lock()
 	defer hm.mu.Unlock()
-	
+
 	hm.healthChecks = []HealthCheck{
 		{
 			Name:  "memory_usage",
@@ -575,30 +575,30 @@ func (hm *HealthMonitor) registerHealthChecks() {
 func (hm *HealthMonitor) performHealthChecks() {
 	hm.mu.Lock()
 	defer hm.mu.Unlock()
-	
+
 	var results []HealthCheckResult
 	healthy := true
-	
+
 	for i := range hm.healthChecks {
 		check := &hm.healthChecks[i]
 		err := check.Check()
 		check.LastResult = err
 		check.LastChecked = time.Now()
-		
+
 		result := HealthCheckResult{
 			Name:      check.Name,
 			Healthy:   err == nil,
 			Timestamp: time.Now(),
 		}
-		
+
 		if err != nil {
 			result.Error = err.Error()
 			healthy = false
 		}
-		
+
 		results = append(results, result)
 	}
-	
+
 	hm.status.Healthy = healthy
 	hm.status.Timestamp = time.Now()
 	hm.status.Checks = results
@@ -609,25 +609,25 @@ func (hm *HealthMonitor) performHealthChecks() {
 func (hm *HealthMonitor) checkMemoryUsage() error {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	
+
 	// Check if memory usage is above 80% of limit
 	memoryLimit := int64(500 * 1024 * 1024) // 500MB default
 	if int64(m.Alloc) > memoryLimit*8/10 {
 		return fmt.Errorf("memory usage %d exceeds 80%% of limit %d", m.Alloc, memoryLimit)
 	}
-	
+
 	return nil
 }
 
 // checkGoroutineCount checks goroutine count
 func (hm *HealthMonitor) checkGoroutineCount() error {
 	count := runtime.NumGoroutine()
-	
+
 	// Check if goroutine count is above threshold
 	if count > 1000 {
 		return fmt.Errorf("goroutine count %d exceeds threshold 1000", count)
 	}
-	
+
 	return nil
 }
 

@@ -11,23 +11,23 @@ import (
 
 // WebhookPayload represents the payload sent to webhooks
 type WebhookPayload struct {
-	Timestamp   time.Time            `json:"timestamp"`
-	Source      string               `json:"source"`
-	Summary     WebhookSummary       `json:"summary"`
-	Groups      []WebhookGroup       `json:"groups,omitempty"`
-	RawChanges  []WebhookChange      `json:"raw_changes,omitempty"`
-	Metadata    WebhookMetadata      `json:"metadata"`
+	Timestamp  time.Time       `json:"timestamp"`
+	Source     string          `json:"source"`
+	Summary    WebhookSummary  `json:"summary"`
+	Groups     []WebhookGroup  `json:"groups,omitempty"`
+	RawChanges []WebhookChange `json:"raw_changes,omitempty"`
+	Metadata   WebhookMetadata `json:"metadata"`
 }
 
 // WebhookSummary provides a summary of changes
 type WebhookSummary struct {
-	Total     int `json:"total"`
-	Added     int `json:"added"`
-	Modified  int `json:"modified"`
-	Removed   int `json:"removed"`
-	HighConf  int `json:"high_confidence_groups"`
+	Total      int `json:"total"`
+	Added      int `json:"added"`
+	Modified   int `json:"modified"`
+	Removed    int `json:"removed"`
+	HighConf   int `json:"high_confidence_groups"`
 	MediumConf int `json:"medium_confidence_groups"`
-	LowConf   int `json:"low_confidence_groups"`
+	LowConf    int `json:"low_confidence_groups"`
 }
 
 // WebhookGroup represents a correlated group for webhooks
@@ -63,7 +63,7 @@ func (w *Watcher) sendWebhook(event *WatchEvent) error {
 	}
 
 	payload := w.buildWebhookPayload(event)
-	
+
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal webhook payload: %w", err)

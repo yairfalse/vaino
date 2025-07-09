@@ -12,12 +12,12 @@ import (
 
 // ConcurrentScanner manages parallel provider scanning for massive speed improvements
 type ConcurrentScanner struct {
-	providers   map[string]collectors.EnhancedCollector
-	workerPool  chan struct{} // Limit concurrent operations
-	maxWorkers  int
-	timeout     time.Duration
-	clientPool  *ProviderClientPool
-	mu          sync.RWMutex
+	providers  map[string]collectors.EnhancedCollector
+	workerPool chan struct{} // Limit concurrent operations
+	maxWorkers int
+	timeout    time.Duration
+	clientPool *ProviderClientPool
+	mu         sync.RWMutex
 }
 
 // ProviderResult holds the result of a provider scan
@@ -39,13 +39,13 @@ type CombinedSnapshot struct {
 
 // ScanConfig holds configuration for concurrent scanning
 type ScanConfig struct {
-	Providers       map[string]collectors.CollectorConfig
-	MaxWorkers      int
-	Timeout         time.Duration
-	FailOnError     bool
-	EnablePooling   bool
-	SkipMerging     bool
-	PreferredOrder  []string // Order preference for provider scanning
+	Providers      map[string]collectors.CollectorConfig
+	MaxWorkers     int
+	Timeout        time.Duration
+	FailOnError    bool
+	EnablePooling  bool
+	SkipMerging    bool
+	PreferredOrder []string // Order preference for provider scanning
 }
 
 // NewConcurrentScanner creates a new concurrent scanner with optimized defaults
@@ -53,17 +53,17 @@ func NewConcurrentScanner(maxWorkers int, timeout time.Duration) *ConcurrentScan
 	if maxWorkers <= 0 {
 		maxWorkers = 4 // Default to 4 concurrent providers
 	}
-	
+
 	if timeout <= 0 {
 		timeout = 5 * time.Minute // Default timeout
 	}
 
 	scanner := &ConcurrentScanner{
-		providers:   make(map[string]collectors.EnhancedCollector),
-		workerPool:  make(chan struct{}, maxWorkers),
-		maxWorkers:  maxWorkers,
-		timeout:     timeout,
-		clientPool:  NewProviderClientPool(maxWorkers * 10), // 10x connection pool
+		providers:  make(map[string]collectors.EnhancedCollector),
+		workerPool: make(chan struct{}, maxWorkers),
+		maxWorkers: maxWorkers,
+		timeout:    timeout,
+		clientPool: NewProviderClientPool(maxWorkers * 10), // 10x connection pool
 	}
 
 	// Pre-fill worker pool
@@ -84,31 +84,31 @@ func (s *ConcurrentScanner) RegisterProvider(name string, collector collectors.E
 // ScanAllProviders scans all registered providers concurrently
 func (s *ConcurrentScanner) ScanAllProviders(ctx context.Context, config ScanConfig) (*CombinedSnapshot, error) {
 	startTime := time.Now()
-	
+
 	// Create context with timeout
 	scanCtx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
 	// Results channel with buffer for all providers
 	results := make(chan *ProviderResult, len(config.Providers))
-	
+
 	// Wait group to track all provider scans
 	var wg sync.WaitGroup
-	
+
 	// Error tracking
 	var errorsMu sync.Mutex
 	criticalErrors := make([]error, 0)
 
 	// Launch provider scans concurrently with preferred ordering
 	providerOrder := s.getProviderOrder(config.Providers, config.PreferredOrder)
-	
+
 	for _, providerName := range providerOrder {
 		providerConfig := config.Providers[providerName]
-		
+
 		s.mu.RLock()
 		provider, exists := s.providers[providerName]
 		s.mu.RUnlock()
-		
+
 		if !exists {
 			// Create error result for missing provider
 			results <- &ProviderResult{
@@ -132,10 +132,10 @@ func (s *ConcurrentScanner) ScanAllProviders(ctx context.Context, config ScanCon
 	// Collect results
 	providerResults := make(map[string]*ProviderResult)
 	var snapshots []*types.Snapshot
-	
+
 	for result := range results {
 		providerResults[result.Provider] = result
-		
+
 		if result.Error != nil {
 			if config.FailOnError {
 				cancel() // Cancel remaining scans
@@ -147,7 +147,7 @@ func (s *ConcurrentScanner) ScanAllProviders(ctx context.Context, config ScanCon
 	}
 
 	totalDuration := time.Since(startTime)
-	
+
 	// Calculate success/error counts
 	successCount := 0
 	errorCount := 0
@@ -191,7 +191,7 @@ func (s *ConcurrentScanner) scanProvider(
 	criticalErrors *[]error,
 ) {
 	defer wg.Done()
-	
+
 	// Acquire worker from pool
 	select {
 	case <-s.workerPool:
@@ -205,7 +205,7 @@ func (s *ConcurrentScanner) scanProvider(
 		}
 		return
 	}
-	
+
 	// Release worker back to pool when done
 	defer func() {
 		s.workerPool <- struct{}{}
@@ -227,10 +227,10 @@ func (s *ConcurrentScanner) scanProvider(
 	// Perform the actual collection
 	snapshot, err := provider.Collect(ctx, config)
 	result.Duration = time.Since(startTime)
-	
+
 	if err != nil {
 		result.Error = fmt.Errorf("collection failed: %w", err)
-		
+
 		// Track critical errors
 		errorsMu.Lock()
 		*criticalErrors = append(*criticalErrors, err)
@@ -262,15 +262,15 @@ func (s *ConcurrentScanner) mergeSnapshots(snapshots []*types.Snapshot) (*types.
 
 	// Resource deduplication map
 	resourceMap := make(map[string]types.Resource)
-	
+
 	// Process snapshots concurrently for better performance
 	type snapshotResult struct {
 		resources []types.Resource
 		err       error
 	}
-	
+
 	resultChan := make(chan snapshotResult, len(snapshots))
-	
+
 	// Process each snapshot in parallel
 	for _, snapshot := range snapshots {
 		go func(snap *types.Snapshot) {
@@ -280,7 +280,7 @@ func (s *ConcurrentScanner) mergeSnapshots(snapshots []*types.Snapshot) (*types.
 			resultChan <- result
 		}(snapshot)
 	}
-	
+
 	// Collect normalized resources
 	allResources := make([]types.Resource, 0)
 	for i := 0; i < len(snapshots); i++ {
@@ -294,7 +294,7 @@ func (s *ConcurrentScanner) mergeSnapshots(snapshots []*types.Snapshot) (*types.
 	// Deduplicate resources by ID and provider
 	for _, resource := range allResources {
 		key := fmt.Sprintf("%s:%s:%s", resource.Provider, resource.Type, resource.ID)
-		
+
 		if existing, exists := resourceMap[key]; exists {
 			// Merge resource configurations if they're different
 			merged := s.mergeResourceConfigurations(existing, resource)
@@ -315,7 +315,7 @@ func (s *ConcurrentScanner) mergeSnapshots(snapshots []*types.Snapshot) (*types.
 // normalizeResources ensures resources have consistent formatting
 func (s *ConcurrentScanner) normalizeResources(resources []types.Resource) []types.Resource {
 	normalized := make([]types.Resource, len(resources))
-	
+
 	for i, resource := range resources {
 		normalized[i] = types.Resource{
 			ID:            resource.ID,
@@ -325,20 +325,20 @@ func (s *ConcurrentScanner) normalizeResources(resources []types.Resource) []typ
 			Namespace:     resource.Namespace,
 			Configuration: resource.Configuration,
 		}
-		
+
 		// Ensure configuration is not nil
 		if normalized[i].Configuration == nil {
 			normalized[i].Configuration = make(map[string]interface{})
 		}
 	}
-	
+
 	return normalized
 }
 
 // mergeResourceConfigurations merges two resource configurations
 func (s *ConcurrentScanner) mergeResourceConfigurations(existing, new types.Resource) types.Resource {
 	merged := existing
-	
+
 	// Merge configurations
 	if new.Configuration != nil {
 		for key, value := range new.Configuration {
@@ -347,7 +347,7 @@ func (s *ConcurrentScanner) mergeResourceConfigurations(existing, new types.Reso
 			}
 		}
 	}
-	
+
 	// Use non-empty fields from new resource
 	if new.Name != "" && existing.Name == "" {
 		merged.Name = new.Name
@@ -355,7 +355,7 @@ func (s *ConcurrentScanner) mergeResourceConfigurations(existing, new types.Reso
 	if new.Namespace != "" && existing.Namespace == "" {
 		merged.Namespace = new.Namespace
 	}
-	
+
 	return merged
 }
 
@@ -364,7 +364,7 @@ func (s *ConcurrentScanner) getProviderOrder(providers map[string]collectors.Col
 	// Start with preferred order
 	order := make([]string, 0, len(providers))
 	used := make(map[string]bool)
-	
+
 	// Add preferred providers first
 	for _, provider := range preferred {
 		if _, exists := providers[provider]; exists {
@@ -372,14 +372,14 @@ func (s *ConcurrentScanner) getProviderOrder(providers map[string]collectors.Col
 			used[provider] = true
 		}
 	}
-	
+
 	// Add remaining providers
 	for provider := range providers {
 		if !used[provider] {
 			order = append(order, provider)
 		}
 	}
-	
+
 	return order
 }
 
@@ -387,11 +387,11 @@ func (s *ConcurrentScanner) getProviderOrder(providers map[string]collectors.Col
 func (s *ConcurrentScanner) GetStats() map[string]interface{} {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	
+
 	return map[string]interface{}{
 		"registered_providers": len(s.providers),
-		"max_workers":         s.maxWorkers,
-		"timeout":            s.timeout.String(),
+		"max_workers":          s.maxWorkers,
+		"timeout":              s.timeout.String(),
 		"connection_pool_size": s.clientPool.maxConns,
 	}
 }

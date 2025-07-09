@@ -48,7 +48,7 @@ func TestCorruptedFiles(t *testing.T) {
 			name:        "extremely_large_config",
 			fileType:    "json",
 			content:     createLargeJSON(10000), // 10MB+ JSON file
-			expectError: false, // Should handle large files
+			expectError: false,                  // Should handle large files
 			errorType:   "",
 		},
 		{
@@ -64,7 +64,7 @@ func TestCorruptedFiles(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tempDir := t.TempDir()
 			var fileName string
-			
+
 			switch tt.fileType {
 			case "json":
 				fileName = "config.json"
@@ -73,9 +73,9 @@ func TestCorruptedFiles(t *testing.T) {
 			default:
 				fileName = "config.txt"
 			}
-			
+
 			filePath := filepath.Join(tempDir, fileName)
-			
+
 			// Write the test content
 			err := os.WriteFile(filePath, []byte(tt.content), 0644)
 			if err != nil {
@@ -95,7 +95,7 @@ func TestCorruptedFiles(t *testing.T) {
 			if tt.fileType == "json" {
 				var parsed map[string]interface{}
 				err = json.Unmarshal(content, &parsed)
-				
+
 				if tt.expectError && err == nil {
 					t.Error("Expected parsing to fail but it succeeded")
 				} else if !tt.expectError && err != nil {
@@ -130,13 +130,13 @@ func TestPermissionErrors(t *testing.T) {
 			setup: func(t *testing.T) (string, func()) {
 				tempDir := t.TempDir()
 				file := filepath.Join(tempDir, "no-read.json")
-				
+
 				content := `{"test": "config"}`
 				os.WriteFile(file, []byte(content), 0644)
-				
+
 				// Remove read permission
 				os.Chmod(file, 0000)
-				
+
 				return file, func() {
 					os.Chmod(file, 0644) // Restore for cleanup
 				}
@@ -149,14 +149,14 @@ func TestPermissionErrors(t *testing.T) {
 			setup: func(t *testing.T) (string, func()) {
 				tempDir := t.TempDir()
 				file := filepath.Join(tempDir, "no-write.json")
-				
+
 				// Create file first
 				content := `{"test": "config"}`
 				os.WriteFile(file, []byte(content), 0644)
-				
+
 				// Remove write permission
 				os.Chmod(file, 0444)
-				
+
 				return file, func() {
 					os.Chmod(file, 0644) // Restore for cleanup
 				}
@@ -170,14 +170,14 @@ func TestPermissionErrors(t *testing.T) {
 				tempDir := t.TempDir()
 				restrictedDir := filepath.Join(tempDir, "restricted")
 				os.Mkdir(restrictedDir, 0755)
-				
+
 				file := filepath.Join(restrictedDir, "config.json")
 				content := `{"test": "config"}`
 				os.WriteFile(file, []byte(content), 0644)
-				
+
 				// Remove directory permissions
 				os.Chmod(restrictedDir, 0000)
-				
+
 				return file, func() {
 					os.Chmod(restrictedDir, 0755) // Restore for cleanup
 				}
@@ -200,7 +200,7 @@ func TestPermissionErrors(t *testing.T) {
 				} else if !tt.expectError && err != nil {
 					t.Errorf("Expected read to succeed but got: %v", err)
 				}
-				
+
 				// Verify it's a permission error
 				if err != nil && !os.IsPermission(err) {
 					t.Errorf("Expected permission error, got: %v", err)
@@ -213,7 +213,7 @@ func TestPermissionErrors(t *testing.T) {
 				} else if !tt.expectError && err != nil {
 					t.Errorf("Expected write to succeed but got: %v", err)
 				}
-				
+
 				// Verify it's a permission error
 				if err != nil && !os.IsPermission(err) {
 					t.Errorf("Expected permission error, got: %v", err)
@@ -238,7 +238,7 @@ func TestDiskSpaceIssues(t *testing.T) {
 		{
 			name:      "large_file_write",
 			fileSize:  100 * 1024 * 1024, // 100MB
-			expectErr: false, // Most systems should handle this
+			expectErr: false,             // Most systems should handle this
 		},
 	}
 
@@ -249,11 +249,11 @@ func TestDiskSpaceIssues(t *testing.T) {
 
 			// Create a large JSON structure
 			data := make(map[string]interface{})
-			
+
 			// Fill with data to reach approximate size
 			chunkSize := 1024
 			chunks := int(tt.fileSize / int64(chunkSize))
-			
+
 			for i := 0; i < chunks; i++ {
 				key := fmt.Sprintf("data_%d", i)
 				value := strings.Repeat("x", chunkSize-len(key)-10) // Approximate
@@ -267,7 +267,7 @@ func TestDiskSpaceIssues(t *testing.T) {
 
 			// Try to write the large file
 			err = os.WriteFile(file, jsonData, 0644)
-			
+
 			if tt.expectErr && err == nil {
 				t.Error("Expected write to fail due to disk space but it succeeded")
 			} else if !tt.expectErr && err != nil {
@@ -295,7 +295,7 @@ func TestDiskSpaceIssues(t *testing.T) {
 // TestFileSystemRaceConditions tests concurrent file operations
 func TestFileSystemRaceConditions(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	tests := []struct {
 		name       string
 		operations []func(string) error
@@ -336,10 +336,10 @@ func TestFileSystemRaceConditions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			file := filepath.Join(tempDir, fmt.Sprintf("race-test-%s.json", tt.name))
-			
+
 			// Run operations concurrently
 			done := make(chan error, len(tt.operations))
-			
+
 			for i, op := range tt.operations {
 				go func(operation func(string) error, id int) {
 					// Small random delay to increase chance of race conditions
@@ -394,12 +394,12 @@ func TestSymlinkAndMountIssues(t *testing.T) {
 			setup: func(t *testing.T) (string, func()) {
 				target := filepath.Join(tempDir, "nonexistent.json")
 				link := filepath.Join(tempDir, "broken-link.json")
-				
+
 				err := os.Symlink(target, link)
 				if err != nil {
 					t.Fatalf("Failed to create symlink: %v", err)
 				}
-				
+
 				return link, func() {
 					os.Remove(link)
 				}
@@ -411,10 +411,10 @@ func TestSymlinkAndMountIssues(t *testing.T) {
 			setup: func(t *testing.T) (string, func()) {
 				link1 := filepath.Join(tempDir, "link1.json")
 				link2 := filepath.Join(tempDir, "link2.json")
-				
+
 				os.Symlink(link2, link1)
 				os.Symlink(link1, link2)
-				
+
 				return link1, func() {
 					os.Remove(link1)
 					os.Remove(link2)
@@ -427,17 +427,17 @@ func TestSymlinkAndMountIssues(t *testing.T) {
 			setup: func(t *testing.T) (string, func()) {
 				target := filepath.Join(tempDir, "target.json")
 				link := filepath.Join(tempDir, "valid-link.json")
-				
+
 				// Create target file
 				content := `{"test": "data"}`
 				os.WriteFile(target, []byte(content), 0644)
-				
+
 				// Create symlink
 				err := os.Symlink(target, link)
 				if err != nil {
 					t.Fatalf("Failed to create symlink: %v", err)
 				}
-				
+
 				return link, func() {
 					os.Remove(link)
 					os.Remove(target)
@@ -453,7 +453,7 @@ func TestSymlinkAndMountIssues(t *testing.T) {
 			defer cleanup()
 
 			_, err := os.ReadFile(file)
-			
+
 			if tt.expectError && err == nil {
 				t.Error("Expected error reading symlink but got none")
 			} else if !tt.expectError && err != nil {
@@ -461,13 +461,13 @@ func TestSymlinkAndMountIssues(t *testing.T) {
 			}
 
 			// Test stat vs lstat behavior
-			_, err1 := os.Stat(file)    // Follows symlinks
-			_, err2 := os.Lstat(file)  // Does not follow symlinks
-			
+			_, err1 := os.Stat(file)  // Follows symlinks
+			_, err2 := os.Lstat(file) // Does not follow symlinks
+
 			if err2 != nil {
 				t.Errorf("Lstat should not fail for symlink itself: %v", err2)
 			}
-			
+
 			if tt.expectError && err1 == nil {
 				t.Error("Stat should fail for broken symlink")
 			}
@@ -479,7 +479,7 @@ func TestSymlinkAndMountIssues(t *testing.T) {
 
 func createLargeJSON(entries int) string {
 	data := make(map[string]interface{})
-	
+
 	for i := 0; i < entries; i++ {
 		key := fmt.Sprintf("resource_%d", i)
 		resource := types.Resource{
@@ -495,7 +495,7 @@ func createLargeJSON(entries int) string {
 		}
 		data[key] = resource
 	}
-	
+
 	jsonData, _ := json.MarshalIndent(data, "", "  ")
 	return string(jsonData)
 }
@@ -504,17 +504,17 @@ func isNoSpaceError(err error) bool {
 	if err == nil {
 		return false
 	}
-	
+
 	// Check for "no space left on device" error
 	if pathErr, ok := err.(*fs.PathError); ok {
 		if errno, ok := pathErr.Err.(syscall.Errno); ok {
 			return errno == syscall.ENOSPC
 		}
 	}
-	
+
 	// Also check error message
 	errMsg := strings.ToLower(err.Error())
-	return strings.Contains(errMsg, "no space left") || 
-		   strings.Contains(errMsg, "disk full") ||
-		   strings.Contains(errMsg, "quota exceeded")
+	return strings.Contains(errMsg, "no space left") ||
+		strings.Contains(errMsg, "disk full") ||
+		strings.Contains(errMsg, "quota exceeded")
 }

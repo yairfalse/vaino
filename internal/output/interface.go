@@ -20,24 +20,24 @@ const (
 type Outputter interface {
 	// Format drift reports
 	FormatDriftReport(report *types.DriftReport, format OutputFormat) ([]byte, error)
-	
+
 	// Format snapshots
 	FormatSnapshot(snapshot *types.Snapshot, format OutputFormat) ([]byte, error)
-	
+
 	// Format baselines
 	FormatBaseline(baseline *types.Baseline, format OutputFormat) ([]byte, error)
-	
+
 	// Format lists
 	FormatBaselineList(baselines []BaselineListItem, format OutputFormat) ([]byte, error)
 	FormatSnapshotList(snapshots []SnapshotListItem, format OutputFormat) ([]byte, error)
 	FormatDriftReportList(reports []DriftReportListItem, format OutputFormat) ([]byte, error)
-	
+
 	// Display methods for interactive use
 	DisplayProgress(message string)
 	DisplayError(err error)
 	DisplaySuccess(message string)
 	DisplayWarning(message string)
-	
+
 	// Writer methods
 	WriteToFile(data []byte, filename string) error
 	WriteTo(data []byte, writer io.Writer) error
@@ -45,13 +45,13 @@ type Outputter interface {
 
 // BaselineListItem represents a baseline in list output
 type BaselineListItem struct {
-	ID          string `json:"id" table:"ID"`
-	Name        string `json:"name" table:"Name"`
-	Description string `json:"description,omitempty" table:"Description"`
-	SnapshotID  string `json:"snapshot_id" table:"Snapshot ID"`
-	CreatedAt   string `json:"created_at" table:"Created"`
-	ResourceCount int  `json:"resource_count" table:"Resources"`
-	FileSize    string `json:"file_size" table:"Size"`
+	ID            string `json:"id" table:"ID"`
+	Name          string `json:"name" table:"Name"`
+	Description   string `json:"description,omitempty" table:"Description"`
+	SnapshotID    string `json:"snapshot_id" table:"Snapshot ID"`
+	CreatedAt     string `json:"created_at" table:"Created"`
+	ResourceCount int    `json:"resource_count" table:"Resources"`
+	FileSize      string `json:"file_size" table:"Size"`
 }
 
 // SnapshotListItem represents a snapshot in list output
@@ -78,17 +78,17 @@ type DriftReportListItem struct {
 type Config struct {
 	// Default format when none specified
 	DefaultFormat OutputFormat `json:"default_format"`
-	
+
 	// Color settings
 	EnableColors bool `json:"enable_colors"`
-	
+
 	// Table settings
 	TableHeaders bool `json:"table_headers"`
 	TableBorders bool `json:"table_borders"`
-	
+
 	// Pagination
 	PageSize int `json:"page_size"`
-	
+
 	// Timestamp format
 	TimeFormat string `json:"time_format"`
 }

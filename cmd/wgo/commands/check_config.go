@@ -52,20 +52,20 @@ func runCheckConfig(cmd *cobra.Command, args []string) error {
 	okSymbol := color.GreenString("[OK]")
 	failSymbol := color.RedString("[FAIL]")
 	_ = color.YellowString("[WARN]") // warnSymbol - reserved for future use
-	
+
 	if !checkQuiet {
 		fmt.Println("Checking WGO configuration...")
 		fmt.Println()
 	}
-	
+
 	// Check config file
 	cfg := GetConfig()
 	configPath := filepath.Join(os.Getenv("HOME"), ".wgo", "config.yaml")
-	
+
 	if !checkQuiet {
 		fmt.Printf("Config file: %s ", configPath)
 	}
-	
+
 	if _, err := os.Stat(configPath); err != nil {
 		fmt.Printf("%s\n", failSymbol)
 		if checkVerbose {
@@ -75,13 +75,13 @@ func runCheckConfig(cmd *cobra.Command, args []string) error {
 	} else {
 		fmt.Printf("%s\n", okSymbol)
 	}
-	
+
 	// Check storage directory
 	storageDir := cfg.Storage.BaseDir
 	if !checkQuiet {
 		fmt.Printf("Storage directory: %s ", storageDir)
 	}
-	
+
 	if stat, err := os.Stat(storageDir); err != nil {
 		fmt.Printf("%s\n", failSymbol)
 		if checkVerbose {
@@ -96,19 +96,19 @@ func runCheckConfig(cmd *cobra.Command, args []string) error {
 	} else {
 		fmt.Printf("%s\n", okSymbol)
 	}
-	
+
 	fmt.Println()
-	
+
 	// Get providers to check
 	providers, _ := cmd.Flags().GetStringSlice("provider")
 	if len(providers) == 0 {
 		providers = []string{"terraform", "gcp", "aws", "kubernetes"}
 	}
-	
+
 	ctx := context.Background()
 	successCount := 0
 	totalCount := len(providers)
-	
+
 	// Check each provider
 	for _, provider := range providers {
 		if checkProvider(ctx, provider, cfg, checkVerbose, checkQuiet) {
@@ -118,37 +118,37 @@ func runCheckConfig(cmd *cobra.Command, args []string) error {
 			fmt.Println()
 		}
 	}
-	
+
 	// Summary
 	if !checkQuiet {
 		fmt.Println()
 		if successCount == totalCount {
-			fmt.Printf("Summary: %s All %d providers configured\n", 
+			fmt.Printf("Summary: %s All %d providers configured\n",
 				color.GreenString("[OK]"), totalCount)
 		} else {
-			fmt.Printf("Summary: %d of %d providers configured\n", 
+			fmt.Printf("Summary: %d of %d providers configured\n",
 				successCount, totalCount)
 			if !checkVerbose {
 				fmt.Println("\nRun with --verbose for detailed error information")
 			}
 		}
 	}
-	
+
 	if successCount < totalCount {
 		return fmt.Errorf("%d provider(s) not configured", totalCount-successCount)
 	}
-	
+
 	return nil
 }
 
 func checkProvider(ctx context.Context, provider string, cfg *config.Config, verbose, quiet bool) bool {
 	_ = color.GreenString("[OK]") // okSymbol - used in sub-functions
 	failSymbol := color.RedString("[FAIL]")
-	
+
 	if !quiet {
 		fmt.Printf("%s provider:\n", strings.Title(provider))
 	}
-	
+
 	switch provider {
 	case "terraform":
 		return checkTerraform(cfg, verbose, quiet)
@@ -170,10 +170,10 @@ func checkTerraform(cfg *config.Config, verbose, quiet bool) bool {
 	okSymbol := color.GreenString("[OK]")
 	failSymbol := color.RedString("[FAIL]")
 	warnSymbol := color.YellowString("[WARN]")
-	
+
 	collector := terraform.NewTerraformCollector()
 	tfConfig := cfg.Providers.Terraform
-	
+
 	// Check state file discovery
 	if !quiet {
 		fmt.Print("  State file discovery: ")
@@ -183,19 +183,19 @@ func checkTerraform(cfg *config.Config, verbose, quiet bool) bool {
 			fmt.Printf("disabled %s\n", warnSymbol)
 		}
 	}
-	
+
 	// Check for state files
 	var stateFiles []string
 	paths := tfConfig.StatePaths
 	if len(paths) == 0 {
 		paths = []string{"."}
 	}
-	
+
 	for _, path := range paths {
 		matches, _ := filepath.Glob(filepath.Join(path, "*.tfstate"))
 		stateFiles = append(stateFiles, matches...)
 	}
-	
+
 	if !quiet {
 		fmt.Printf("  Found state files: %d ", len(stateFiles))
 		if len(stateFiles) > 0 {
@@ -213,15 +213,15 @@ func checkTerraform(cfg *config.Config, verbose, quiet bool) bool {
 			}
 		}
 	}
-	
+
 	// Test parsing
 	if len(stateFiles) > 0 && !quiet {
 		fmt.Print("  Parse test: ")
-		
+
 		collectorConfig := collectors.CollectorConfig{
 			StatePaths: []string{filepath.Dir(stateFiles[0])},
 		}
-		
+
 		if err := collector.Validate(collectorConfig); err != nil {
 			fmt.Printf("failed %s\n", failSymbol)
 			if verbose {
@@ -232,23 +232,23 @@ func checkTerraform(cfg *config.Config, verbose, quiet bool) bool {
 			fmt.Printf("passed %s\n", okSymbol)
 		}
 	}
-	
+
 	return len(stateFiles) > 0
 }
 
 func checkGCP(ctx context.Context, cfg *config.Config, verbose, quiet bool) bool {
 	okSymbol := color.GreenString("[OK]")
 	failSymbol := color.RedString("[FAIL]")
-	
+
 	collector := gcp.NewGCPCollector()
 	gcpConfig := cfg.Providers.GCP
-	
+
 	// Check project
 	project := gcpConfig.Project
 	if project == "" {
 		project = os.Getenv("GOOGLE_CLOUD_PROJECT")
 	}
-	
+
 	if !quiet {
 		fmt.Printf("  Project: %s ", project)
 		if project == "" {
@@ -261,18 +261,18 @@ func checkGCP(ctx context.Context, cfg *config.Config, verbose, quiet bool) bool
 			fmt.Printf("%s\n", okSymbol)
 		}
 	}
-	
+
 	// Check authentication
 	if !quiet {
 		fmt.Print("  Authentication: ")
 	}
-	
+
 	collectorConfig := collectors.CollectorConfig{
 		Config: map[string]interface{}{
 			"project_id": project,
 		},
 	}
-	
+
 	if err := collector.Validate(collectorConfig); err != nil {
 		if !quiet {
 			fmt.Printf("invalid %s\n", failSymbol)
@@ -283,32 +283,32 @@ func checkGCP(ctx context.Context, cfg *config.Config, verbose, quiet bool) bool
 		}
 		return false
 	}
-	
+
 	if !quiet {
 		fmt.Printf("valid %s\n", okSymbol)
 	}
-	
+
 	// Test API access
 	if !quiet {
 		fmt.Print("  API access: ")
 		// In real implementation, would make a simple API call
 		fmt.Printf("confirmed %s\n", okSymbol)
 	}
-	
+
 	return true
 }
 
 func checkAWS(ctx context.Context, cfg *config.Config, verbose, quiet bool) bool {
 	okSymbol := color.GreenString("[OK]")
 	failSymbol := color.RedString("[FAIL]")
-	
+
 	collector := aws.NewAWSCollector()
-	
+
 	// Check credentials
 	if !quiet {
 		fmt.Print("  Credentials: ")
 	}
-	
+
 	// Check for AWS credentials
 	hasEnvCreds := os.Getenv("AWS_ACCESS_KEY_ID") != "" && os.Getenv("AWS_SECRET_ACCESS_KEY") != ""
 	credsFile := filepath.Join(os.Getenv("HOME"), ".aws", "credentials")
@@ -316,7 +316,7 @@ func checkAWS(ctx context.Context, cfg *config.Config, verbose, quiet bool) bool
 	if _, err := os.Stat(credsFile); err == nil {
 		hasFileCreds = true
 	}
-	
+
 	if !hasEnvCreds && !hasFileCreds {
 		if !quiet {
 			fmt.Printf("not found %s\n", failSymbol)
@@ -326,7 +326,7 @@ func checkAWS(ctx context.Context, cfg *config.Config, verbose, quiet bool) bool
 		}
 		return false
 	}
-	
+
 	// Validate with collector
 	collectorConfig := collectors.CollectorConfig{
 		Config: map[string]interface{}{},
@@ -334,7 +334,7 @@ func checkAWS(ctx context.Context, cfg *config.Config, verbose, quiet bool) bool
 	if region := cfg.Providers.AWS.DefaultRegion; region != "" {
 		collectorConfig.Config["region"] = region
 	}
-	
+
 	if err := collector.Validate(collectorConfig); err != nil {
 		if !quiet {
 			fmt.Printf("invalid %s\n", failSymbol)
@@ -344,11 +344,11 @@ func checkAWS(ctx context.Context, cfg *config.Config, verbose, quiet bool) bool
 		}
 		return false
 	}
-	
+
 	if !quiet {
 		fmt.Printf("found %s\n", okSymbol)
 	}
-	
+
 	// Check region
 	region := cfg.Providers.AWS.DefaultRegion
 	if region == "" {
@@ -357,7 +357,7 @@ func checkAWS(ctx context.Context, cfg *config.Config, verbose, quiet bool) bool
 			region = os.Getenv("AWS_DEFAULT_REGION")
 		}
 	}
-	
+
 	if !quiet {
 		fmt.Printf("  Region: %s ", region)
 		if region == "" {
@@ -369,22 +369,22 @@ func checkAWS(ctx context.Context, cfg *config.Config, verbose, quiet bool) bool
 			fmt.Printf("%s\n", okSymbol)
 		}
 	}
-	
+
 	return true
 }
 
 func checkKubernetes(ctx context.Context, cfg *config.Config, verbose, quiet bool) bool {
 	okSymbol := color.GreenString("[OK]")
 	failSymbol := color.RedString("[FAIL]")
-	
+
 	collector := kubernetes.NewKubernetesCollector()
-	
+
 	// Check kubeconfig
 	kubeconfigPath := os.Getenv("KUBECONFIG")
 	if kubeconfigPath == "" {
 		kubeconfigPath = filepath.Join(os.Getenv("HOME"), ".kube", "config")
 	}
-	
+
 	if !quiet {
 		fmt.Printf("  Kubeconfig: %s ", kubeconfigPath)
 		if _, err := os.Stat(kubeconfigPath); err != nil {
@@ -398,12 +398,12 @@ func checkKubernetes(ctx context.Context, cfg *config.Config, verbose, quiet boo
 			fmt.Printf("%s\n", okSymbol)
 		}
 	}
-	
+
 	// Check current context
 	collectorConfig := collectors.CollectorConfig{
 		Config: map[string]interface{}{},
 	}
-	
+
 	// Validate connection
 	if err := collector.Validate(collectorConfig); err != nil {
 		if !quiet {
@@ -416,12 +416,12 @@ func checkKubernetes(ctx context.Context, cfg *config.Config, verbose, quiet boo
 		}
 		return false
 	}
-	
+
 	if !quiet {
 		fmt.Printf("  Connection: established %s\n", okSymbol)
 		fmt.Printf("  Permissions: read-only %s\n", okSymbol)
 	}
-	
+
 	return true
 }
 

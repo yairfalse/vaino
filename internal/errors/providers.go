@@ -9,7 +9,7 @@ import (
 // GCPAuthenticationError creates a GCP authentication error with guidance
 func GCPAuthenticationError(originalErr error) *WGOError {
 	err := New(ErrorTypeAuthentication, ProviderGCP, "GCP authentication failed")
-	
+
 	// Detect specific authentication issues
 	if originalErr != nil {
 		errStr := originalErr.Error()
@@ -26,7 +26,7 @@ func GCPAuthenticationError(originalErr error) *WGOError {
 			err.WithCause(originalErr.Error())
 		}
 	}
-	
+
 	// Environment-specific solutions
 	if err.Environment == "CI/CD detected" {
 		err.WithSolutions(
@@ -40,31 +40,31 @@ func GCPAuthenticationError(originalErr error) *WGOError {
 			`export GOOGLE_APPLICATION_CREDENTIALS="/path/to/key.json"`,
 		)
 	}
-	
+
 	err.WithVerify("gcloud auth list")
 	err.WithHelp("wgo configure gcp")
-	
+
 	return err
 }
 
 // GCPProjectError creates a GCP project configuration error
 func GCPProjectError() *WGOError {
 	err := New(ErrorTypeConfiguration, ProviderGCP, "GCP project not configured")
-	
+
 	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
 	if projectID == "" {
 		projectID = "your-project-id"
 	}
-	
+
 	err.WithSolutions(
 		fmt.Sprintf(`export GOOGLE_CLOUD_PROJECT="%s"`, projectID),
 		`gcloud config set project your-project-id`,
 		`wgo configure gcp`,
 	)
-	
+
 	err.WithVerify("gcloud config get-value project")
 	err.WithHelp("wgo configure --help")
-	
+
 	return err
 }
 
@@ -72,7 +72,7 @@ func GCPProjectError() *WGOError {
 func AWSCredentialsError(originalErr error) *WGOError {
 	err := New(ErrorTypeAuthentication, ProviderAWS, "AWS credentials not found")
 	err.WithCause("No valid credential source detected")
-	
+
 	// Check for specific AWS credential issues
 	if originalErr != nil && strings.Contains(originalErr.Error(), "ExpiredToken") {
 		err.Message = "AWS credentials expired"
@@ -95,49 +95,49 @@ func AWSCredentialsError(originalErr error) *WGOError {
 			`aws sso login (if using AWS SSO)`,
 		)
 	}
-	
+
 	err.WithVerify("aws sts get-caller-identity")
 	err.WithHelp("wgo configure aws")
-	
+
 	return err
 }
 
 // AWSRegionError creates an AWS region configuration error
 func AWSRegionError() *WGOError {
 	err := New(ErrorTypeConfiguration, ProviderAWS, "AWS region not specified")
-	
+
 	err.WithSolutions(
 		`export AWS_REGION=us-east-1`,
 		`aws configure set region us-east-1`,
 		`Add --region flag to your command`,
 	)
-	
+
 	err.WithVerify("aws configure get region")
 	err.WithHelp("wgo configure aws")
-	
+
 	return err
 }
 
 // KubernetesConnectionError creates a Kubernetes connection error
 func KubernetesConnectionError(context string, originalErr error) *WGOError {
 	err := New(ErrorTypeNetwork, ProviderKubernetes, "Kubernetes connection failed")
-	
+
 	if context != "" {
 		err.WithCause(fmt.Sprintf("Current context '%s' is not accessible", context))
 	} else if originalErr != nil {
 		err.WithCause(originalErr.Error())
 	}
-	
+
 	err.WithSolutions(
 		`kubectl config get-contexts`,
 		`kubectl config use-context working-context`,
 		`Check if cluster is running: kubectl cluster-info`,
 		`Verify VPN connection if using remote cluster`,
 	)
-	
+
 	err.WithVerify("kubectl cluster-info")
 	err.WithHelp("wgo configure kubernetes")
-	
+
 	return err
 }
 
@@ -145,40 +145,40 @@ func KubernetesConnectionError(context string, originalErr error) *WGOError {
 func KubernetesConfigError() *WGOError {
 	err := New(ErrorTypeConfiguration, ProviderKubernetes, "Kubernetes configuration not found")
 	err.WithCause("No kubeconfig file found")
-	
+
 	err.WithSolutions(
 		`Ensure kubectl is configured: kubectl config view`,
 		`Set KUBECONFIG environment variable`,
 		`Copy config to ~/.kube/config`,
 		`For new cluster: gcloud container clusters get-credentials cluster-name`,
 	)
-	
+
 	err.WithVerify("kubectl config current-context")
 	err.WithHelp("wgo configure kubernetes")
-	
+
 	return err
 }
 
 // TerraformStateError creates a Terraform state error
 func TerraformStateError(path string) *WGOError {
 	err := New(ErrorTypeFileSystem, ProviderTerraform, "No terraform state files found")
-	
+
 	if path != "" {
 		err.WithCause(fmt.Sprintf("No .tfstate files in %s", path))
 	} else {
 		err.WithCause("No .tfstate files in current directory or configured paths")
 	}
-	
+
 	err.WithSolutions(
 		`Run from terraform project directory`,
 		`Configure state paths in ~/.wgo/config.yaml`,
 		`Specify path with --path flag`,
 		`Check if using remote state backend`,
 	)
-	
+
 	err.WithVerify("terraform show")
 	err.WithHelp("wgo configure terraform")
-	
+
 	return err
 }
 
@@ -186,23 +186,23 @@ func TerraformStateError(path string) *WGOError {
 func TerraformVersionError(required, found string) *WGOError {
 	err := New(ErrorTypeValidation, ProviderTerraform, "Terraform version mismatch")
 	err.WithCause(fmt.Sprintf("Required: %s, Found: %s", required, found))
-	
+
 	err.WithSolutions(
 		`Install required Terraform version`,
 		`Use tfenv to manage multiple versions`,
 		`Update state file version (use with caution)`,
 	)
-	
+
 	err.WithVerify("terraform version")
 	err.WithHelp("wgo help terraform")
-	
+
 	return err
 }
 
 // PermissionError creates a generic permission error
 func PermissionError(provider Provider, resource string) *WGOError {
 	err := New(ErrorTypePermission, provider, fmt.Sprintf("Permission denied accessing %s", resource))
-	
+
 	switch provider {
 	case ProviderGCP:
 		err.WithSolutions(
@@ -211,7 +211,7 @@ func PermissionError(provider Provider, resource string) *WGOError {
 			`gcloud projects add-iam-policy-binding PROJECT_ID --member=user:EMAIL --role=roles/viewer`,
 		)
 		err.WithVerify("gcloud projects get-iam-policy PROJECT_ID")
-		
+
 	case ProviderAWS:
 		err.WithSolutions(
 			`Check IAM policies attached to user/role`,
@@ -219,7 +219,7 @@ func PermissionError(provider Provider, resource string) *WGOError {
 			`aws iam get-user --user-name USERNAME`,
 		)
 		err.WithVerify("aws iam get-user")
-		
+
 	case ProviderKubernetes:
 		err.WithSolutions(
 			`Check RBAC permissions`,
@@ -228,9 +228,9 @@ func PermissionError(provider Provider, resource string) *WGOError {
 		)
 		err.WithVerify("kubectl auth can-i --list")
 	}
-	
+
 	err.WithHelp(fmt.Sprintf("wgo configure %s", strings.ToLower(string(provider))))
-	
+
 	return err
 }
 
@@ -238,21 +238,21 @@ func PermissionError(provider Provider, resource string) *WGOError {
 func NetworkError(provider Provider, endpoint string) *WGOError {
 	err := New(ErrorTypeNetwork, provider, "Network connection failed")
 	err.WithCause(fmt.Sprintf("Cannot reach %s", endpoint))
-	
+
 	err.WithSolutions(
 		`Check internet connectivity`,
 		`Verify firewall rules`,
 		`Check proxy settings: echo $HTTP_PROXY $HTTPS_PROXY`,
 		`Try using VPN if accessing private resources`,
 	)
-	
+
 	if provider == ProviderGCP {
 		err.WithVerify("gcloud compute regions list")
 	} else if provider == ProviderAWS {
 		err.WithVerify("aws ec2 describe-regions")
 	}
-	
+
 	err.WithHelp("wgo help troubleshooting")
-	
+
 	return err
 }

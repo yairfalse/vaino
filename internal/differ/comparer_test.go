@@ -8,12 +8,12 @@ import (
 
 func TestDefaultComparer_CompareResources(t *testing.T) {
 	comparer := &DefaultComparer{}
-	
+
 	tests := []struct {
-		name           string
-		baseline       types.Resource
-		current        types.Resource
-		expectedChanges int
+		name                 string
+		baseline             types.Resource
+		current              types.Resource
+		expectedChanges      int
 		expectSpecificChange string
 	}{
 		{
@@ -31,7 +31,7 @@ func TestDefaultComparer_CompareResources(t *testing.T) {
 			current: types.Resource{
 				ID:       "resource-1",
 				Type:     "instance",
-				Name:     "test-server", 
+				Name:     "test-server",
 				Provider: "aws",
 				Configuration: map[string]interface{}{
 					"instance_type": "t3.micro",
@@ -53,7 +53,7 @@ func TestDefaultComparer_CompareResources(t *testing.T) {
 				},
 			},
 			current: types.Resource{
-				ID:       "resource-1", 
+				ID:       "resource-1",
 				Type:     "instance",
 				Name:     "test-server",
 				Provider: "aws",
@@ -71,7 +71,7 @@ func TestDefaultComparer_CompareResources(t *testing.T) {
 				ID:       "resource-1",
 				Type:     "instance",
 				Name:     "test-server",
-				Provider: "aws", 
+				Provider: "aws",
 				Configuration: map[string]interface{}{
 					"instance_type": "t3.micro",
 					"state":         "running",
@@ -80,7 +80,7 @@ func TestDefaultComparer_CompareResources(t *testing.T) {
 			},
 			current: types.Resource{
 				ID:       "resource-1",
-				Type:     "instance", 
+				Type:     "instance",
 				Name:     "test-server",
 				Provider: "aws",
 				Configuration: map[string]interface{}{
@@ -106,7 +106,7 @@ func TestDefaultComparer_CompareResources(t *testing.T) {
 				ID:       "resource-1",
 				Type:     "instance",
 				Name:     "test-server",
-				Provider: "aws", 
+				Provider: "aws",
 				Configuration: map[string]interface{}{
 					"instance_type": "t3.micro",
 					"monitoring":    true, // Added field
@@ -119,7 +119,7 @@ func TestDefaultComparer_CompareResources(t *testing.T) {
 			name: "removed field",
 			baseline: types.Resource{
 				ID:       "resource-1",
-				Type:     "instance", 
+				Type:     "instance",
 				Name:     "test-server",
 				Provider: "aws",
 				Configuration: map[string]interface{}{
@@ -145,14 +145,14 @@ func TestDefaultComparer_CompareResources(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			changes := comparer.CompareResources(tt.baseline, tt.current)
-			
+
 			if len(changes) != tt.expectedChanges {
 				t.Errorf("expected %d changes, got %d", tt.expectedChanges, len(changes))
 				for i, change := range changes {
 					t.Logf("Change %d: %s: %v -> %v", i, change.Field, change.OldValue, change.NewValue)
 				}
 			}
-			
+
 			if tt.expectSpecificChange != "" {
 				found := false
 				for _, change := range changes {
@@ -171,7 +171,7 @@ func TestDefaultComparer_CompareResources(t *testing.T) {
 
 func TestDefaultComparer_CompareConfiguration(t *testing.T) {
 	comparer := &DefaultComparer{}
-	
+
 	tests := []struct {
 		name            string
 		baseline        map[string]interface{}
@@ -243,7 +243,7 @@ func TestDefaultComparer_CompareConfiguration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			changes := comparer.CompareConfiguration("", tt.baseline, tt.current)
-			
+
 			if len(changes) != tt.expectedChanges {
 				t.Errorf("expected %d changes, got %d", tt.expectedChanges, len(changes))
 				for i, change := range changes {
@@ -256,50 +256,50 @@ func TestDefaultComparer_CompareConfiguration(t *testing.T) {
 
 func TestDefaultComparer_SecurityRelatedChanges(t *testing.T) {
 	comparer := &DefaultComparer{}
-	
+
 	baseline := types.Resource{
 		ID:       "i-1234567890",
 		Type:     "instance",
 		Name:     "web-server",
 		Provider: "aws",
 		Configuration: map[string]interface{}{
-			"instance_type":        "t3.micro",
-			"state":               "running",
-			"security_group_ids":   []interface{}{"sg-123", "sg-456"},
-			"subnet_id":           "subnet-abc",
-			"public_ip":           "1.2.3.4",
-			"private_ip":          "10.0.1.100",
+			"instance_type":      "t3.micro",
+			"state":              "running",
+			"security_group_ids": []interface{}{"sg-123", "sg-456"},
+			"subnet_id":          "subnet-abc",
+			"public_ip":          "1.2.3.4",
+			"private_ip":         "10.0.1.100",
 		},
 	}
-	
+
 	current := types.Resource{
 		ID:       "i-1234567890",
 		Type:     "instance",
 		Name:     "web-server",
 		Provider: "aws",
 		Configuration: map[string]interface{}{
-			"instance_type":        "t3.medium", // instance type change
-			"state":               "running",
-			"security_group_ids":   []interface{}{"sg-123", "sg-789"}, // security groups changed
-			"subnet_id":           "subnet-abc",
-			"public_ip":           "1.2.3.5", // IP changed
-			"private_ip":          "10.0.1.100",
+			"instance_type":      "t3.medium", // instance type change
+			"state":              "running",
+			"security_group_ids": []interface{}{"sg-123", "sg-789"}, // security groups changed
+			"subnet_id":          "subnet-abc",
+			"public_ip":          "1.2.3.5", // IP changed
+			"private_ip":         "10.0.1.100",
 		},
 	}
-	
+
 	changes := comparer.CompareResources(baseline, current)
-	
+
 	// Should detect all changes
 	if len(changes) == 0 {
 		t.Error("expected changes to be detected")
 	}
-	
+
 	// Verify specific changes are detected
 	changeFields := make(map[string]bool)
 	for _, change := range changes {
 		changeFields[change.Field] = true
 	}
-	
+
 	expectedFields := []string{"instance_type", "security_group_ids", "public_ip"}
 	for _, field := range expectedFields {
 		if !changeFields[field] {
@@ -310,7 +310,7 @@ func TestDefaultComparer_SecurityRelatedChanges(t *testing.T) {
 
 func TestDefaultComparer_SecurityGroupChanges(t *testing.T) {
 	comparer := &DefaultComparer{}
-	
+
 	baseline := types.Resource{
 		ID:       "sg-123456",
 		Type:     "security_group",
@@ -326,7 +326,7 @@ func TestDefaultComparer_SecurityGroupChanges(t *testing.T) {
 			},
 		},
 	}
-	
+
 	current := types.Resource{
 		ID:       "sg-123456",
 		Type:     "security_group",
@@ -347,14 +347,14 @@ func TestDefaultComparer_SecurityGroupChanges(t *testing.T) {
 			},
 		},
 	}
-	
+
 	changes := comparer.CompareResources(baseline, current)
-	
+
 	// Should detect the addition of SSH rule
 	if len(changes) == 0 {
 		t.Error("expected changes to be detected")
 	}
-	
+
 	// Should find ingress_rules change
 	foundIngressChange := false
 	for _, change := range changes {
@@ -362,7 +362,7 @@ func TestDefaultComparer_SecurityGroupChanges(t *testing.T) {
 			foundIngressChange = true
 		}
 	}
-	
+
 	if !foundIngressChange {
 		t.Error("expected ingress_rules change to be detected")
 	}

@@ -11,13 +11,13 @@ import (
 // CollectS3Resources collects S3 buckets
 func (c *AWSCollector) CollectS3Resources(ctx context.Context) ([]types.Resource, error) {
 	var resources []types.Resource
-	
+
 	// List all buckets
 	result, err := c.clients.S3.ListBuckets(ctx, &s3.ListBucketsInput{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list S3 buckets: %w", err)
 	}
-	
+
 	// Process each bucket
 	for _, bucket := range result.Buckets {
 		// Check if bucket is in the current region
@@ -26,19 +26,19 @@ func (c *AWSCollector) CollectS3Resources(ctx context.Context) ([]types.Resource
 			// Skip buckets we can't access
 			continue
 		}
-		
+
 		// Only include buckets in the current region
 		if bucketRegion != c.normalizer.region {
 			continue
 		}
-		
+
 		resource := c.normalizer.NormalizeS3Bucket(bucket)
-		
+
 		// Try to get bucket tags
 		if tags, err := c.getBucketTags(ctx, *bucket.Name); err == nil {
 			resource.Tags = tags
 		}
-		
+
 		// Try to get bucket versioning info
 		if versioning, err := c.getBucketVersioning(ctx, *bucket.Name); err == nil {
 			if resource.Configuration == nil {
@@ -46,7 +46,7 @@ func (c *AWSCollector) CollectS3Resources(ctx context.Context) ([]types.Resource
 			}
 			resource.Configuration["versioning"] = versioning
 		}
-		
+
 		// Try to get bucket encryption info
 		if encryption, err := c.getBucketEncryption(ctx, *bucket.Name); err == nil {
 			if resource.Configuration == nil {
@@ -54,10 +54,10 @@ func (c *AWSCollector) CollectS3Resources(ctx context.Context) ([]types.Resource
 			}
 			resource.Configuration["server_side_encryption"] = encryption
 		}
-		
+
 		resources = append(resources, resource)
 	}
-	
+
 	return resources, nil
 }
 
@@ -69,12 +69,12 @@ func (c *AWSCollector) getBucketRegion(ctx context.Context, bucketName string) (
 	if err != nil {
 		return "", err
 	}
-	
+
 	// AWS returns empty string for us-east-1
 	if result.LocationConstraint == "" {
 		return "us-east-1", nil
 	}
-	
+
 	return string(result.LocationConstraint), nil
 }
 
@@ -87,14 +87,14 @@ func (c *AWSCollector) getBucketTags(ctx context.Context, bucketName string) (ma
 		// Return empty tags if bucket has no tags or we can't access them
 		return make(map[string]string), nil
 	}
-	
+
 	tags := make(map[string]string)
 	for _, tag := range result.TagSet {
 		if tag.Key != nil && tag.Value != nil {
 			tags[*tag.Key] = *tag.Value
 		}
 	}
-	
+
 	return tags, nil
 }
 
@@ -106,12 +106,12 @@ func (c *AWSCollector) getBucketVersioning(ctx context.Context, bucketName strin
 	if err != nil {
 		return nil, err
 	}
-	
+
 	versioning := map[string]interface{}{
-		"enabled": string(result.Status) == "Enabled",
+		"enabled":    string(result.Status) == "Enabled",
 		"mfa_delete": string(result.MFADelete) == "Enabled",
 	}
-	
+
 	return versioning, nil
 }
 
@@ -126,27 +126,27 @@ func (c *AWSCollector) getBucketEncryption(ctx context.Context, bucketName strin
 			"enabled": false,
 		}, nil
 	}
-	
+
 	encryption := map[string]interface{}{
 		"enabled": true,
 		"rules":   make([]map[string]interface{}, 0),
 	}
-	
+
 	rules := make([]map[string]interface{}, 0)
 	for _, rule := range result.ServerSideEncryptionConfiguration.Rules {
 		if rule.ApplyServerSideEncryptionByDefault != nil {
 			ruleMap := map[string]interface{}{
 				"sse_algorithm": string(rule.ApplyServerSideEncryptionByDefault.SSEAlgorithm),
 			}
-			
+
 			if rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID != nil {
 				ruleMap["kms_master_key_id"] = *rule.ApplyServerSideEncryptionByDefault.KMSMasterKeyID
 			}
-			
+
 			rules = append(rules, ruleMap)
 		}
 	}
 	encryption["rules"] = rules
-	
+
 	return encryption, nil
 }

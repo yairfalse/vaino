@@ -47,7 +47,7 @@ about root causes, risks, and remediation steps.`,
 func runExplain(cmd *cobra.Command, args []string) error {
 	fmt.Println("🤖 AI Infrastructure Analysis")
 	fmt.Println("=============================")
-	
+
 	driftReport, _ := cmd.Flags().GetString("drift-report")
 	resource, _ := cmd.Flags().GetString("resource")
 	provider, _ := cmd.Flags().GetString("provider")
@@ -56,11 +56,11 @@ func runExplain(cmd *cobra.Command, args []string) error {
 	format, _ := cmd.Flags().GetString("format")
 	includeRemediation, _ := cmd.Flags().GetBool("include-remediation")
 	includeRisk, _ := cmd.Flags().GetBool("include-risk-assessment")
-	
+
 	if resource != "" && provider == "" {
 		return fmt.Errorf("--provider is required when using --resource")
 	}
-	
+
 	if driftReport == "" && resource == "" {
 		fmt.Println("📊 Analyzing latest drift report")
 	} else if driftReport != "" {
@@ -68,18 +68,18 @@ func runExplain(cmd *cobra.Command, args []string) error {
 	} else {
 		fmt.Printf("🔧 Resource: %s (%s)\n", resource, provider)
 	}
-	
+
 	if focus != "" {
 		fmt.Printf("🎯 Analysis focus: %s\n", focus)
 	}
-	
+
 	if outputFile != "" {
 		fmt.Printf("💾 Output file: %s (%s)\n", outputFile, format)
 	}
-	
+
 	fmt.Printf("📋 Include remediation: %v\n", includeRemediation)
 	fmt.Printf("📋 Include risk assessment: %v\n", includeRisk)
-	
+
 	fmt.Println("\n⚠️  AI explanation not yet implemented")
 	fmt.Println("This command will:")
 	fmt.Println("  • Analyze drift data with Claude AI")
@@ -87,7 +87,7 @@ func runExplain(cmd *cobra.Command, args []string) error {
 	fmt.Println("  • Assess risks and impact")
 	fmt.Println("  • Suggest remediation steps")
 	fmt.Println("  • Provide compliance insights")
-	
+
 	// Check if Claude API key is configured
 	config := GetConfig()
 	if config != nil && config.Claude.APIKey == "" {
@@ -95,6 +95,6 @@ func runExplain(cmd *cobra.Command, args []string) error {
 		fmt.Println("   Set CLAUDE_API_KEY or ANTHROPIC_API_KEY environment variable")
 		fmt.Println("   Or configure it in ~/.wgo/config.yaml")
 	}
-	
+
 	return nil
 }

@@ -46,7 +46,7 @@ func (t *TableFormatter) FormatDriftReport(report *types.DriftReport) ([]byte, e
 		for _, change := range report.Changes {
 			oldVal := truncateString(fmt.Sprintf("%v", change.OldValue), 20)
 			newVal := truncateString(fmt.Sprintf("%v", change.NewValue), 20)
-			
+
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
 				change.Field,
 				change.Path,

@@ -47,7 +47,7 @@ func (l *SimpleLogger) WithField(key string, value interface{}) Logger {
 		newFields[k] = v
 	}
 	newFields[key] = value
-	
+
 	return &SimpleLogger{fields: newFields}
 }
 
@@ -59,7 +59,7 @@ func (l *SimpleLogger) WithFields(fields map[string]interface{}) Logger {
 	for k, v := range fields {
 		newFields[k] = v
 	}
-	
+
 	return &SimpleLogger{fields: newFields}
 }
 

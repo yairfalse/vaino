@@ -47,7 +47,7 @@ func TestWatchCommandE2E(t *testing.T) {
 		defer cancel()
 
 		cmd := exec.CommandContext(ctx, binPath, "watch", "--format", "json", "--interval", "5s")
-		
+
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			t.Fatalf("Failed to create stdout pipe: %v", err)
@@ -134,7 +134,7 @@ func TestWatchWithMockInfrastructure(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, binPath, "watch", 
+	cmd := exec.CommandContext(ctx, binPath, "watch",
 		"--provider", "terraform",
 		"--interval", "5s",
 		"--format", "json")
@@ -204,7 +204,7 @@ func TestWatchGracefulShutdown(t *testing.T) {
 	binPath := buildWGO(t)
 
 	cmd := exec.Command(binPath, "watch", "--interval", "5s")
-	
+
 	// Start the command
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("Failed to start command: %v", err)
@@ -271,14 +271,14 @@ func TestWatchWithWebhook(t *testing.T) {
 
 func buildWGO(t *testing.T) string {
 	t.Helper()
-	
+
 	binPath := filepath.Join(t.TempDir(), "wgo")
 	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/wgo")
-	
+
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("Failed to build wgo: %v\nOutput: %s", err, output)
 	}
-	
+
 	return binPath
 }
 

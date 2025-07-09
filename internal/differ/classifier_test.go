@@ -6,7 +6,7 @@ import (
 
 func TestDefaultClassifier_ClassifyChange(t *testing.T) {
 	classifier := &DefaultClassifier{}
-	
+
 	tests := []struct {
 		name             string
 		change           Change
@@ -110,15 +110,15 @@ func TestDefaultClassifier_ClassifyChange(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			category, risk, score := classifier.ClassifyChange(tt.change)
-			
+
 			if category != tt.expectedCategory {
 				t.Errorf("expected category %s, got %s", tt.expectedCategory, category)
 			}
-			
+
 			if risk != tt.expectedRisk {
 				t.Errorf("expected risk %s, got %s", tt.expectedRisk, risk)
 			}
-			
+
 			if score < tt.expectedMinScore {
 				t.Errorf("expected score >= %f, got %f", tt.expectedMinScore, score)
 			}
@@ -128,7 +128,7 @@ func TestDefaultClassifier_ClassifyChange(t *testing.T) {
 
 func TestDefaultClassifier_CalculateResourceRisk(t *testing.T) {
 	classifier := &DefaultClassifier{}
-	
+
 	tests := []struct {
 		name         string
 		changes      []Change
@@ -139,14 +139,14 @@ func TestDefaultClassifier_CalculateResourceRisk(t *testing.T) {
 			name: "multiple critical changes",
 			changes: []Change{
 				{
-					Type:       ChangeTypeModified,
-					Field:      "instance_type",
-					Severity:   RiskLevelCritical,
+					Type:     ChangeTypeModified,
+					Field:    "instance_type",
+					Severity: RiskLevelCritical,
 				},
 				{
-					Type:       ChangeTypeModified,
-					Field:      "security_groups",
-					Severity:   RiskLevelCritical,
+					Type:     ChangeTypeModified,
+					Field:    "security_groups",
+					Severity: RiskLevelCritical,
 				},
 			},
 			expectedRisk: RiskLevelCritical,
@@ -156,14 +156,14 @@ func TestDefaultClassifier_CalculateResourceRisk(t *testing.T) {
 			name: "mixed severity changes",
 			changes: []Change{
 				{
-					Type:       ChangeTypeModified,
-					Field:      "public_ip",
-					Severity:   RiskLevelMedium,
+					Type:     ChangeTypeModified,
+					Field:    "public_ip",
+					Severity: RiskLevelMedium,
 				},
 				{
-					Type:       ChangeTypeModified,
-					Field:      "tags",
-					Severity:   RiskLevelLow,
+					Type:     ChangeTypeModified,
+					Field:    "tags",
+					Severity: RiskLevelLow,
 				},
 			},
 			expectedRisk: RiskLevelMedium,
@@ -173,9 +173,9 @@ func TestDefaultClassifier_CalculateResourceRisk(t *testing.T) {
 			name: "single high risk change",
 			changes: []Change{
 				{
-					Type:       ChangeTypeModified,
-					Field:      "state",
-					Severity:   RiskLevelHigh,
+					Type:     ChangeTypeModified,
+					Field:    "state",
+					Severity: RiskLevelHigh,
 				},
 			},
 			expectedRisk: RiskLevelHigh,
@@ -185,14 +185,14 @@ func TestDefaultClassifier_CalculateResourceRisk(t *testing.T) {
 			name: "multiple low risk changes",
 			changes: []Change{
 				{
-					Type:       ChangeTypeModified,
-					Field:      "tags.team",
-					Severity:   RiskLevelLow,
+					Type:     ChangeTypeModified,
+					Field:    "tags.team",
+					Severity: RiskLevelLow,
 				},
 				{
-					Type:       ChangeTypeModified,
-					Field:      "tags.project",
-					Severity:   RiskLevelLow,
+					Type:     ChangeTypeModified,
+					Field:    "tags.project",
+					Severity: RiskLevelLow,
 				},
 			},
 			expectedRisk: RiskLevelLow,
@@ -203,11 +203,11 @@ func TestDefaultClassifier_CalculateResourceRisk(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			risk, score := classifier.CalculateResourceRisk(tt.changes)
-			
+
 			if risk != tt.expectedRisk {
 				t.Errorf("expected risk %s, got %s", tt.expectedRisk, risk)
 			}
-			
+
 			if score < tt.minScore {
 				t.Errorf("expected score >= %f, got %f", tt.minScore, score)
 			}
@@ -217,7 +217,7 @@ func TestDefaultClassifier_CalculateResourceRisk(t *testing.T) {
 
 func TestDefaultClassifier_CalculateOverallRisk(t *testing.T) {
 	classifier := &DefaultClassifier{}
-	
+
 	tests := []struct {
 		name         string
 		summary      DriftSummary
@@ -279,7 +279,7 @@ func TestDefaultClassifier_CalculateOverallRisk(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			risk, _ := classifier.CalculateOverallRisk(tt.summary)
-			
+
 			if risk != tt.expectedRisk {
 				t.Errorf("expected risk %s, got %s", tt.expectedRisk, risk)
 			}
@@ -289,11 +289,11 @@ func TestDefaultClassifier_CalculateOverallRisk(t *testing.T) {
 
 func TestDefaultClassifier_EdgeCases(t *testing.T) {
 	classifier := &DefaultClassifier{}
-	
+
 	// Test with empty change
 	emptyChange := Change{}
 	category, risk, score := classifier.ClassifyChange(emptyChange)
-	
+
 	// Should assign default values
 	if category == "" {
 		t.Error("expected non-empty category for empty change")
@@ -304,7 +304,7 @@ func TestDefaultClassifier_EdgeCases(t *testing.T) {
 	if score < 0 || score > 1 {
 		t.Errorf("expected score between 0-1, got %f", score)
 	}
-	
+
 	// Test with nil changes slice
 	risk2, score2 := classifier.CalculateResourceRisk(nil)
 	if risk2 != RiskLevelLow {
@@ -313,7 +313,7 @@ func TestDefaultClassifier_EdgeCases(t *testing.T) {
 	if score2 != 0.0 {
 		t.Errorf("expected 0 score for nil changes, got %f", score2)
 	}
-	
+
 	// Test with empty changes slice
 	risk3, score3 := classifier.CalculateResourceRisk([]Change{})
 	if risk3 != RiskLevelLow {
@@ -326,7 +326,7 @@ func TestDefaultClassifier_EdgeCases(t *testing.T) {
 
 func TestDefaultClassifier_SecurityRules(t *testing.T) {
 	classifier := &DefaultClassifier{}
-	
+
 	securityTests := []struct {
 		name         string
 		field        string
@@ -374,18 +374,18 @@ func TestDefaultClassifier_SecurityRules(t *testing.T) {
 	for _, tt := range securityTests {
 		t.Run(tt.name, func(t *testing.T) {
 			change := Change{
-				Type:       ChangeTypeModified,
-				Field:      tt.field,
-				OldValue:   tt.oldValue,
-				NewValue:   tt.newValue,
+				Type:     ChangeTypeModified,
+				Field:    tt.field,
+				OldValue: tt.oldValue,
+				NewValue: tt.newValue,
 			}
-			
+
 			category, risk, _ := classifier.ClassifyChange(change)
-			
+
 			if category != DriftCategorySecurity {
 				t.Errorf("expected security category, got %s", category)
 			}
-			
+
 			if risk != tt.expectedRisk {
 				t.Errorf("expected risk %s, got %s", tt.expectedRisk, risk)
 			}

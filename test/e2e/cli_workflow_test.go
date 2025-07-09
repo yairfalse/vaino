@@ -119,16 +119,16 @@ func TestScanWorkflow(t *testing.T) {
 		expectContains []string
 	}{
 		{
-			name: "scan without provider shows available",
-			args: []string{"scan"},
+			name:        "scan without provider shows available",
+			args:        []string{"scan"},
 			expectError: false,
 			expectContains: []string{
 				"Auto-discovering infrastructure",
 			},
 		},
 		{
-			name: "scan terraform with state file",
-			args: []string{"scan", "--provider", "terraform", "--state-file", tfState},
+			name:        "scan terraform with state file",
+			args:        []string{"scan", "--provider", "terraform", "--state-file", tfState},
 			expectError: false,
 			expectContains: []string{
 				"Infrastructure Scan",
@@ -140,8 +140,8 @@ func TestScanWorkflow(t *testing.T) {
 		{
 			name: "scan terraform and save output",
 			args: []string{
-				"scan", 
-				"--provider", "terraform", 
+				"scan",
+				"--provider", "terraform",
 				"--state-file", tfState,
 				"--output-file", filepath.Join(tempDir, "snapshot.json"),
 			},
@@ -151,24 +151,24 @@ func TestScanWorkflow(t *testing.T) {
 			},
 		},
 		{
-			name: "scan kubernetes without config",
-			args: []string{"scan", "--provider", "kubernetes"},
+			name:        "scan kubernetes without config",
+			args:        []string{"scan", "--provider", "kubernetes"},
 			expectError: true,
 			expectContains: []string{
 				"configuration validation failed",
 			},
 		},
 		{
-			name: "scan gcp without project",
-			args: []string{"scan", "--provider", "gcp"},
+			name:        "scan gcp without project",
+			args:        []string{"scan", "--provider", "gcp"},
 			expectError: true,
 			expectContains: []string{
 				"project_id is required",
 			},
 		},
 		{
-			name: "scan gcp with project",
-			args: []string{"scan", "--provider", "gcp", "--project", "test-project"},
+			name:        "scan gcp with project",
+			args:        []string{"scan", "--provider", "gcp", "--project", "test-project"},
 			expectError: true,
 			expectContains: []string{
 				"Collecting resources from gcp",
@@ -219,8 +219,8 @@ func TestBaselineWorkflow(t *testing.T) {
 		expectContains []string
 	}{
 		{
-			name: "list baselines empty",
-			args: []string{"baseline", "list", "--config", configFile},
+			name:        "list baselines empty",
+			args:        []string{"baseline", "list", "--config", configFile},
 			expectError: false,
 			expectContains: []string{
 				"Infrastructure Baselines",
@@ -241,8 +241,8 @@ func TestBaselineWorkflow(t *testing.T) {
 			},
 		},
 		{
-			name: "list baselines after create",
-			args: []string{"baseline", "list", "--config", configFile},
+			name:        "list baselines after create",
+			args:        []string{"baseline", "list", "--config", configFile},
 			expectError: false,
 			expectContains: []string{
 				"Infrastructure Baselines",
@@ -475,10 +475,10 @@ func runWGOCLI(args ...string) (string, string, error) {
 
 func createTestTerraformState(t *testing.T, dir string) string {
 	t.Helper()
-	
+
 	stateFile := filepath.Join(dir, "terraform.tfstate")
 	state := map[string]interface{}{
-		"version": 4,
+		"version":           4,
 		"terraform_version": "1.0.0",
 		"resources": []interface{}{
 			map[string]interface{}{
@@ -487,7 +487,7 @@ func createTestTerraformState(t *testing.T, dir string) string {
 				"instances": []interface{}{
 					map[string]interface{}{
 						"attributes": map[string]interface{}{
-							"id": "i-1234567890",
+							"id":            "i-1234567890",
 							"instance_type": "t2.micro",
 						},
 					},
@@ -510,7 +510,7 @@ func createTestTerraformState(t *testing.T, dir string) string {
 
 func createTestSnapshot(t *testing.T, file string) {
 	t.Helper()
-	
+
 	snapshot := map[string]interface{}{
 		"id":        "test-snapshot-1",
 		"timestamp": time.Now().Format(time.RFC3339),
@@ -540,7 +540,7 @@ func createTestSnapshot(t *testing.T, file string) {
 
 func createModifiedSnapshot(t *testing.T, file string) {
 	t.Helper()
-	
+
 	snapshot := map[string]interface{}{
 		"id":        "test-snapshot-2",
 		"timestamp": time.Now().Add(1 * time.Hour).Format(time.RFC3339),
@@ -579,7 +579,7 @@ func createModifiedSnapshot(t *testing.T, file string) {
 
 func createTestConfig(t *testing.T, file string, storageDir string) {
 	t.Helper()
-	
+
 	config := fmt.Sprintf(`
 storage:
   base_path: %s

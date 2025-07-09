@@ -42,26 +42,26 @@ type ClientConfig struct {
 func NewAWSClients(ctx context.Context, clientConfig ClientConfig) (*AWSClients, error) {
 	// Build AWS config with optional profile and region
 	var opts []func(*config.LoadOptions) error
-	
+
 	if clientConfig.Profile != "" {
 		opts = append(opts, config.WithSharedConfigProfile(clientConfig.Profile))
 	}
-	
+
 	if clientConfig.Region != "" {
 		opts = append(opts, config.WithRegion(clientConfig.Region))
 	}
-	
+
 	// Load AWS configuration
 	cfg, err := config.LoadDefaultConfig(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
-	
+
 	// Verify credentials are available
 	if _, err := cfg.Credentials.Retrieve(ctx); err != nil {
 		return nil, fmt.Errorf("failed to retrieve AWS credentials: %w", err)
 	}
-	
+
 	// Create service clients
 	clients := &AWSClients{
 		EC2:    ec2.NewFromConfig(cfg),
@@ -71,7 +71,7 @@ func NewAWSClients(ctx context.Context, clientConfig ClientConfig) (*AWSClients,
 		IAM:    iam.NewFromConfig(cfg),
 		Config: cfg,
 	}
-	
+
 	return clients, nil
 }
 

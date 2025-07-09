@@ -157,21 +157,21 @@ func TestDifferEngine_Compare(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			engine := NewDifferEngine(tt.options)
-			
+
 			report, err := engine.Compare(tt.baseline, tt.current)
-			
+
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("expected error but got none")
 				}
 				return
 			}
-			
+
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 				return
 			}
-			
+
 			if report == nil {
 				t.Errorf("expected report but got nil")
 				return
@@ -181,7 +181,7 @@ func TestDifferEngine_Compare(t *testing.T) {
 			if report.BaselineID != tt.baseline.ID {
 				t.Errorf("expected BaselineID %s, got %s", tt.baseline.ID, report.BaselineID)
 			}
-			
+
 			if report.CurrentID != tt.current.ID {
 				t.Errorf("expected CurrentID %s, got %s", tt.current.ID, report.CurrentID)
 			}
@@ -211,42 +211,42 @@ func TestDifferEngine_Compare(t *testing.T) {
 
 func TestDifferEngine_CalculateDrift(t *testing.T) {
 	engine := NewDifferEngine(DiffOptions{})
-	
+
 	changes := []Change{
 		{
-			Type:        ChangeTypeAdded,
-			ResourceID:  "resource-1",
-			Field:       "instance_type",
-			Severity:    RiskLevelHigh,
-			Category:    DriftCategoryConfig,
+			Type:       ChangeTypeAdded,
+			ResourceID: "resource-1",
+			Field:      "instance_type",
+			Severity:   RiskLevelHigh,
+			Category:   DriftCategoryConfig,
 		},
 		{
-			Type:        ChangeTypeModified,
-			ResourceID:  "resource-2", 
-			Field:       "security_group",
-			Severity:    RiskLevelCritical,
-			Category:    DriftCategorySecurity,
+			Type:       ChangeTypeModified,
+			ResourceID: "resource-2",
+			Field:      "security_group",
+			Severity:   RiskLevelCritical,
+			Category:   DriftCategorySecurity,
 		},
 	}
-	
+
 	summary := engine.CalculateDrift(changes)
-	
+
 	if summary.ChangedResources != 2 {
 		t.Errorf("expected 2 changed resources, got %d", summary.ChangedResources)
 	}
-	
+
 	if summary.ChangesByCategory[DriftCategoryConfig] != 1 {
 		t.Errorf("expected 1 config change, got %d", summary.ChangesByCategory[DriftCategoryConfig])
 	}
-	
+
 	if summary.ChangesByCategory[DriftCategorySecurity] != 1 {
 		t.Errorf("expected 1 security change, got %d", summary.ChangesByCategory[DriftCategorySecurity])
 	}
-	
+
 	if summary.ChangesBySeverity[RiskLevelHigh] != 1 {
 		t.Errorf("expected 1 high risk change, got %d", summary.ChangesBySeverity[RiskLevelHigh])
 	}
-	
+
 	if summary.ChangesBySeverity[RiskLevelCritical] != 1 {
 		t.Errorf("expected 1 critical risk change, got %d", summary.ChangesBySeverity[RiskLevelCritical])
 	}
@@ -268,7 +268,7 @@ func TestDifferEngine_WithIgnoreFields(t *testing.T) {
 			},
 		},
 	}
-	
+
 	current := &types.Snapshot{
 		ID: "current",
 		Resources: []types.Resource{
@@ -284,14 +284,14 @@ func TestDifferEngine_WithIgnoreFields(t *testing.T) {
 			},
 		},
 	}
-	
+
 	// Test without ignore fields - should detect timestamp change
 	engine1 := NewDifferEngine(DiffOptions{})
 	report1, err := engine1.Compare(baseline, current)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	// Test with ignore fields - should ignore timestamp change
 	engine2 := NewDifferEngine(DiffOptions{
 		IgnoreFields: []string{"timestamp"},
@@ -300,13 +300,13 @@ func TestDifferEngine_WithIgnoreFields(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	
+
 	// Without ignore fields, should detect change
 	if report1.Summary.ChangedResources == 0 {
 		t.Errorf("expected changes without ignore fields")
 	}
-	
-	// With ignore fields, should not detect change  
+
+	// With ignore fields, should not detect change
 	if report2.Summary.ChangedResources != 0 {
 		t.Errorf("expected no changes with ignore fields, got %d", report2.Summary.ChangedResources)
 	}

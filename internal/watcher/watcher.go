@@ -29,11 +29,11 @@ type Watcher struct {
 
 // WatchEvent represents a real-time change event
 type WatchEvent struct {
-	Timestamp        time.Time                  `json:"timestamp"`
-	CorrelatedGroups []analyzer.ChangeGroup     `json:"correlated_groups"`
-	RawChanges       []differ.SimpleChange      `json:"raw_changes"`
-	Summary          differ.ChangeSummary       `json:"summary"`
-	Source           string                     `json:"source"`
+	Timestamp        time.Time              `json:"timestamp"`
+	CorrelatedGroups []analyzer.ChangeGroup `json:"correlated_groups"`
+	RawChanges       []differ.SimpleChange  `json:"raw_changes"`
+	Summary          differ.ChangeSummary   `json:"summary"`
+	Source           string                 `json:"source"`
 }
 
 // WatcherConfig holds configuration for the watcher
@@ -59,7 +59,7 @@ func NewWatcher(config WatcherConfig) (*Watcher, error) {
 
 	correlator := analyzer.NewCorrelator()
 	differ := differ.NewSimpleDiffer()
-	
+
 	// Get registry (this would normally be injected)
 	registry := collectors.NewEnhancedRegistry()
 
@@ -124,7 +124,7 @@ func (w *Watcher) takeInitialSnapshot(ctx context.Context) error {
 	}
 
 	w.lastSnapshot = snapshot
-	
+
 	if !w.quiet {
 		fmt.Printf("Initial snapshot captured (%d resources)\n", len(snapshot.Resources))
 		fmt.Printf("Watching for changes every %v...\n\n", w.interval)
@@ -193,7 +193,7 @@ func (w *Watcher) checkForChanges(ctx context.Context) error {
 func (w *Watcher) takeSnapshot(ctx context.Context) (*types.Snapshot, error) {
 	// This is a simplified version - in reality we'd iterate through providers
 	// and use the collector registry to gather resources
-	
+
 	snapshot := &types.Snapshot{
 		ID:        fmt.Sprintf("watch-%d", time.Now().Unix()),
 		Timestamp: time.Now(),
@@ -203,13 +203,13 @@ func (w *Watcher) takeSnapshot(ctx context.Context) (*types.Snapshot, error) {
 
 	// In a real implementation, we'd:
 	// 1. Iterate through w.providers
-	// 2. Use w.registry.GetCollector(provider) 
+	// 2. Use w.registry.GetCollector(provider)
 	// 3. Collect resources from each provider
 	// 4. Merge results into snapshot.Resources
-	
+
 	// For now, return empty snapshot to avoid build errors
 	// This would be replaced with actual collection logic
-	
+
 	return snapshot, nil
 }
 

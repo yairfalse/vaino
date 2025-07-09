@@ -35,25 +35,25 @@ func (f *AppFactory) Create(config Config) (*App, error) {
 
 	// Create enhanced registry and initialize collectors
 	enhancedRegistry := collectors.NewEnhancedRegistry()
-	
+
 	// Register Terraform collector
 	terraformCollector := terraform.NewTerraformCollector()
 	enhancedRegistry.RegisterEnhanced(terraformCollector)
-	
+
 	// Register Kubernetes collector
 	kubernetesCollector := kubernetes.NewKubernetesCollector()
 	enhancedRegistry.RegisterEnhanced(kubernetesCollector)
-	
+
 	// Register AWS collector
 	awsCollector := aws.NewAWSCollector()
 	enhancedRegistry.RegisterEnhanced(awsCollector)
 	// Debug print to verify AWS collector is being registered
 	fmt.Printf("Debug: Registered AWS collector with name: %s\n", awsCollector.Name())
-	
+
 	// Register GCP collector
 	// gcpCollector := gcp.NewGCPCollector()
 	// enhancedRegistry.RegisterEnhanced(gcpCollector)  // Removed temporarily
-	
+
 	// Create legacy registry for compatibility
 	registry := collectors.NewRegistry()
 

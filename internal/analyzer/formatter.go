@@ -25,15 +25,15 @@ func FormatCorrelatedChanges(groups []ChangeGroup) string {
 		} else if group.Confidence == "medium" {
 			confidenceIcon = "◐"
 		}
-		
+
 		output.WriteString(fmt.Sprintf("%s 🔗 %s\n", confidenceIcon, group.Title))
 		output.WriteString(fmt.Sprintf("   %s\n", group.Description))
 		output.WriteString(fmt.Sprintf("   Time: %s\n", group.Timestamp.Format("15:04:05")))
-		
+
 		if group.Reason != "" {
 			output.WriteString(fmt.Sprintf("   Reason: %s\n", group.Reason))
 		}
-		
+
 		output.WriteString("\n")
 
 		// Changes in this group
@@ -47,7 +47,7 @@ func FormatCorrelatedChanges(groups []ChangeGroup) string {
 				output.WriteString(fmt.Sprintf("   ~ %s (%s)\n", change.ResourceName, change.ResourceType))
 				// Show key changes
 				for _, detail := range change.Details {
-					output.WriteString(fmt.Sprintf("     • %s: %v → %v\n", 
+					output.WriteString(fmt.Sprintf("     • %s: %v → %v\n",
 						detail.Field, detail.OldValue, detail.NewValue))
 				}
 			}
@@ -72,7 +72,7 @@ func FormatChangeTimeline(groups []ChangeGroup, duration time.Duration) string {
 	// Find time bounds
 	earliest := groups[0].Timestamp
 	latest := groups[0].Timestamp
-	
+
 	for _, group := range groups {
 		if group.Timestamp.Before(earliest) {
 			earliest = group.Timestamp
@@ -99,12 +99,12 @@ func FormatChangeTimeline(groups []ChangeGroup, duration time.Duration) string {
 		if position >= lineWidth {
 			position = lineWidth - 1
 		}
-		
+
 		// Create marker line
 		marker := strings.Repeat(" ", position) + "▲"
 		label := strings.Repeat(" ", position) + "|"
-		
-		output.WriteString(fmt.Sprintf("%s\n%s %s (%d changes)\n", 
+
+		output.WriteString(fmt.Sprintf("%s\n%s %s (%d changes)\n",
 			marker, label, group.Title, len(group.Changes)))
 	}
 

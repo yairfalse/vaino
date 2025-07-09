@@ -20,13 +20,13 @@ func TestMain(m *testing.M) {
 	if err := cmd.Run(); err != nil {
 		panic("Failed to build wgo binary: " + err.Error())
 	}
-	
+
 	// Run tests
 	code := m.Run()
-	
+
 	// Cleanup
 	os.Remove(wgoBinary)
-	
+
 	os.Exit(code)
 }
 
@@ -36,7 +36,7 @@ func runWGOWorkflow(workDir string, args ...string) (string, string, error) {
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	
+
 	err := cmd.Run()
 	return stdout.String(), stderr.String(), err
 }
@@ -49,9 +49,9 @@ func TestE2E_CompleteWorkflow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create work directory: %v", err)
 	}
-	
+
 	configFile := filepath.Join(workDir, "config.yaml")
-	
+
 	// Create config file
 	configContent := `
 storage:
@@ -70,7 +70,7 @@ collectors:
 	if err != nil {
 		t.Fatalf("Failed to create config file: %v", err)
 	}
-	
+
 	// Create mock Terraform state file
 	terraformState := `{
   "version": 4,
@@ -105,78 +105,78 @@ collectors:
 	if err != nil {
 		t.Fatalf("Failed to create terraform state file: %v", err)
 	}
-	
+
 	// Step 1: Test scan command
 	t.Run("scan_infrastructure", func(t *testing.T) {
 		stdout, stderr, err := runWGOWorkflow(workDir, "scan", "--provider", "terraform", "--config", configFile)
-		
+
 		if err != nil {
 			t.Logf("Scan stderr: %s", stderr)
 			// This might error due to stub implementation, which is expected
 		}
-		
+
 		if !strings.Contains(stdout, "Scanning infrastructure") {
 			t.Errorf("Expected scan output to contain 'Scanning infrastructure', got: %s", stdout)
 		}
 	})
-	
+
 	// Step 2: Test baseline creation
 	t.Run("create_baseline", func(t *testing.T) {
-		stdout, stderr, err := runWGOWorkflow(workDir, "baseline", "create", 
-			"--name", "test-baseline", 
+		stdout, stderr, err := runWGOWorkflow(workDir, "baseline", "create",
+			"--name", "test-baseline",
 			"--description", "E2E test baseline",
 			"--config", configFile)
-		
+
 		if err != nil {
 			t.Logf("Baseline create stderr: %s", stderr)
 		}
-		
+
 		if !strings.Contains(stdout, "Creating Baseline") {
 			t.Errorf("Expected baseline create output, got: %s", stdout)
 		}
-		
+
 		if !strings.Contains(stdout, "test-baseline") {
 			t.Errorf("Expected baseline name in output, got: %s", stdout)
 		}
 	})
-	
+
 	// Step 3: Test baseline listing
 	t.Run("list_baselines", func(t *testing.T) {
 		stdout, stderr, err := runWGOWorkflow(workDir, "baseline", "list", "--config", configFile)
-		
+
 		if err != nil {
 			t.Logf("Baseline list stderr: %s", stderr)
 		}
-		
+
 		if !strings.Contains(stdout, "Infrastructure Baselines") {
 			t.Errorf("Expected baseline list output, got: %s", stdout)
 		}
 	})
-	
+
 	// Step 4: Test drift checking
 	t.Run("check_drift", func(t *testing.T) {
 		stdout, stderr, err := runWGOWorkflow(workDir, "check", "--config", configFile)
-		
+
 		if err != nil {
 			t.Logf("Check drift stderr: %s", stderr)
 		}
-		
+
 		if !strings.Contains(stdout, "Checking for infrastructure drift") {
 			t.Errorf("Expected drift check output, got: %s", stdout)
 		}
 	})
-	
+
 	// Step 5: Test different output formats
 	t.Run("output_formats", func(t *testing.T) {
 		formats := []string{"json", "yaml", "markdown"}
-		
+
 		for _, format := range formats {
 			stdout, stderr, err := runWGOWorkflow(workDir, "baseline", "list", "--output", format, "--config", configFile)
-			
+
 			if err != nil {
 				t.Logf("Format %s stderr: %s", format, stderr)
 			}
-			
+
 			if stdout == "" {
 				t.Errorf("Expected output for format %s", format)
 			}
@@ -191,7 +191,7 @@ func TestE2E_ErrorHandling(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create work directory: %v", err)
 	}
-	
+
 	// Test with invalid config
 	t.Run("invalid_config", func(t *testing.T) {
 		invalidConfig := filepath.Join(workDir, "invalid.yaml")
@@ -199,18 +199,18 @@ func TestE2E_ErrorHandling(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create invalid config: %v", err)
 		}
-		
+
 		_, stderr, err := runWGOWorkflow(workDir, "baseline", "list", "--config", invalidConfig)
-		
+
 		if err == nil {
 			t.Error("Expected error with invalid config")
 		}
-		
+
 		if !strings.Contains(stderr, "config") {
 			t.Errorf("Expected config error in stderr, got: %s", stderr)
 		}
 	})
-	
+
 	// Test with non-existent baseline
 	t.Run("non_existent_baseline", func(t *testing.T) {
 		configFile := filepath.Join(workDir, "config.yaml")
@@ -222,27 +222,27 @@ storage:
 		if err != nil {
 			t.Fatalf("Failed to create config: %v", err)
 		}
-		
+
 		_, stderr, err := runWGOWorkflow(workDir, "baseline", "show", "non-existent", "--config", configFile)
-		
+
 		if err == nil {
 			t.Error("Expected error with non-existent baseline")
 		}
-		
+
 		// Error message should indicate baseline not found
 		if !strings.Contains(stderr, "not") {
 			t.Logf("Show non-existent baseline stderr: %s", stderr)
 		}
 	})
-	
+
 	// Test with missing required flags
 	t.Run("missing_required_flags", func(t *testing.T) {
 		_, stderr, err := runWGOWorkflow(workDir, "baseline", "create")
-		
+
 		if err == nil {
 			t.Error("Expected error with missing required flags")
 		}
-		
+
 		if !strings.Contains(stderr, "required") {
 			t.Errorf("Expected required flag error, got: %s", stderr)
 		}
@@ -256,7 +256,7 @@ func TestE2E_ConcurrentOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create work directory: %v", err)
 	}
-	
+
 	configFile := filepath.Join(workDir, "config.yaml")
 	configContent := `
 storage:
@@ -268,19 +268,19 @@ output:
 	if err != nil {
 		t.Fatalf("Failed to create config file: %v", err)
 	}
-	
+
 	// Run multiple commands concurrently to test for race conditions
 	t.Run("concurrent_baseline_operations", func(t *testing.T) {
 		const numOperations = 5
 		results := make(chan error, numOperations)
-		
+
 		for i := 0; i < numOperations; i++ {
 			go func(index int) {
 				_, _, err := runWGOWorkflow(workDir, "baseline", "list", "--config", configFile)
 				results <- err
 			}(i)
 		}
-		
+
 		// Wait for all operations to complete
 		for i := 0; i < numOperations; i++ {
 			select {
@@ -303,7 +303,7 @@ func TestE2E_ConfigurationVariations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create work directory: %v", err)
 	}
-	
+
 	// Test different configuration scenarios
 	configs := map[string]string{
 		"minimal": `
@@ -337,7 +337,7 @@ logging:
   level: warn
 `,
 	}
-	
+
 	for configName, configContent := range configs {
 		t.Run("config_"+configName, func(t *testing.T) {
 			configFile := filepath.Join(workDir, configName+".yaml")
@@ -345,25 +345,25 @@ logging:
 			if err != nil {
 				t.Fatalf("Failed to create config %s: %v", configName, err)
 			}
-			
+
 			// Test that each config works
 			stdout, stderr, err := runWGOWorkflow(workDir, "version", "--config", configFile)
-			
+
 			if err != nil {
 				t.Logf("Config %s stderr: %s", configName, stderr)
 			}
-			
+
 			if !strings.Contains(stdout, "version") {
 				t.Errorf("Expected version output with config %s, got: %s", configName, stdout)
 			}
-			
+
 			// Test baseline operations with each config
 			stdout, stderr, err = runWGOWorkflow(workDir, "baseline", "list", "--config", configFile)
-			
+
 			if err != nil {
 				t.Logf("Baseline list with config %s stderr: %s", configName, stderr)
 			}
-			
+
 			// Should not have config parsing errors
 			if strings.Contains(stderr, "yaml") && strings.Contains(stderr, "error") {
 				t.Errorf("Config parsing error with %s: %s", configName, stderr)

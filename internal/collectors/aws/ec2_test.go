@@ -15,7 +15,7 @@ import (
 func TestCollectEC2Instances(t *testing.T) {
 	ctx := context.Background()
 	mockClient := new(MockEC2Client)
-	
+
 	// Setup mock response
 	expectedOutput := &ec2.DescribeInstancesOutput{
 		Reservations: []ec2Types.Reservation{
@@ -58,9 +58,9 @@ func TestCollectEC2Instances(t *testing.T) {
 		},
 		NextToken: nil,
 	}
-	
+
 	mockClient.On("DescribeInstances", ctx, mock.AnythingOfType("*ec2.DescribeInstancesInput")).Return(expectedOutput, nil)
-	
+
 	// Create collector with mocked client
 	collector := &AWSCollector{
 		clients: &AWSClients{
@@ -68,23 +68,23 @@ func TestCollectEC2Instances(t *testing.T) {
 		},
 		normalizer: NewNormalizer("us-east-1"),
 	}
-	
+
 	// Test collection
 	resources, err := collector.collectEC2Instances(ctx)
-	
+
 	assert.NoError(t, err)
 	assert.Len(t, resources, 1) // Only running instance, terminated should be filtered
 	assert.Equal(t, "i-1234567890abcdef0", resources[0].ID)
 	assert.Equal(t, "aws_instance", resources[0].Type)
 	assert.Equal(t, "test-instance", resources[0].Name)
-	
+
 	mockClient.AssertExpectations(t)
 }
 
 func TestCollectSecurityGroups(t *testing.T) {
 	ctx := context.Background()
 	mockClient := new(MockEC2Client)
-	
+
 	// Setup mock response
 	expectedOutput := &ec2.DescribeSecurityGroupsOutput{
 		SecurityGroups: []ec2Types.SecurityGroup{
@@ -116,9 +116,9 @@ func TestCollectSecurityGroups(t *testing.T) {
 		},
 		NextToken: nil,
 	}
-	
+
 	mockClient.On("DescribeSecurityGroups", ctx, mock.AnythingOfType("*ec2.DescribeSecurityGroupsInput")).Return(expectedOutput, nil)
-	
+
 	// Create collector with mocked client
 	collector := &AWSCollector{
 		clients: &AWSClients{
@@ -126,30 +126,30 @@ func TestCollectSecurityGroups(t *testing.T) {
 		},
 		normalizer: NewNormalizer("us-east-1"),
 	}
-	
+
 	// Test collection
 	resources, err := collector.collectSecurityGroups(ctx)
-	
+
 	assert.NoError(t, err)
 	assert.Len(t, resources, 2)
-	
+
 	// Check first security group
 	assert.Equal(t, "sg-0123456789abcdef0", resources[0].ID)
 	assert.Equal(t, "aws_security_group", resources[0].Type)
 	assert.Equal(t, "web-server-sg", resources[0].Name)
-	
+
 	// Check second security group
 	assert.Equal(t, "sg-default", resources[1].ID)
 	assert.Equal(t, "aws_security_group", resources[1].Type)
 	assert.Equal(t, "default", resources[1].Name)
-	
+
 	mockClient.AssertExpectations(t)
 }
 
 func TestCollectEC2ResourcesWithPagination(t *testing.T) {
 	ctx := context.Background()
 	mockClient := new(MockEC2Client)
-	
+
 	// First page of instances
 	firstPage := &ec2.DescribeInstancesOutput{
 		Reservations: []ec2Types.Reservation{
@@ -172,7 +172,7 @@ func TestCollectEC2ResourcesWithPagination(t *testing.T) {
 		},
 		NextToken: aws.String("token1"),
 	}
-	
+
 	// Second page of instances
 	secondPage := &ec2.DescribeInstancesOutput{
 		Reservations: []ec2Types.Reservation{
@@ -195,14 +195,14 @@ func TestCollectEC2ResourcesWithPagination(t *testing.T) {
 		},
 		NextToken: nil, // No more pages
 	}
-	
+
 	// Setup mock calls
 	mockClient.On("DescribeInstances", ctx, &ec2.DescribeInstancesInput{}).Return(firstPage, nil).Once()
 	mockClient.On("DescribeInstances", ctx, &ec2.DescribeInstancesInput{NextToken: aws.String("token1")}).Return(secondPage, nil).Once()
-	
+
 	// Empty security groups for simplicity
 	mockClient.On("DescribeSecurityGroups", ctx, mock.AnythingOfType("*ec2.DescribeSecurityGroupsInput")).Return(&ec2.DescribeSecurityGroupsOutput{}, nil)
-	
+
 	// Create collector with mocked client
 	collector := &AWSCollector{
 		clients: &AWSClients{
@@ -210,10 +210,10 @@ func TestCollectEC2ResourcesWithPagination(t *testing.T) {
 		},
 		normalizer: NewNormalizer("us-east-1"),
 	}
-	
+
 	// Test collection
 	resources, err := collector.CollectEC2Resources(ctx)
-	
+
 	assert.NoError(t, err)
 	// Should have 2 instances from pagination
 	instanceCount := 0
@@ -223,6 +223,6 @@ func TestCollectEC2ResourcesWithPagination(t *testing.T) {
 		}
 	}
 	assert.Equal(t, 2, instanceCount)
-	
+
 	mockClient.AssertExpectations(t)
 }

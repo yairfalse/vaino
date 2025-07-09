@@ -27,12 +27,12 @@ type DetectionResult struct {
 // DetectAll detects all available providers
 func (d *ProviderDetector) DetectAll() map[string]DetectionResult {
 	results := make(map[string]DetectionResult)
-	
+
 	results["terraform"] = d.DetectTerraform()
 	results["gcp"] = d.DetectGCP()
 	results["aws"] = d.DetectAWS()
 	results["kubernetes"] = d.DetectKubernetes()
-	
+
 	return results
 }
 
@@ -42,7 +42,7 @@ func (d *ProviderDetector) DetectTerraform() DetectionResult {
 		Available: true, // Terraform provider is always available
 		Status:    "ready",
 	}
-	
+
 	// Look for state files
 	patterns := []string{
 		"terraform.tfstate",
@@ -50,7 +50,7 @@ func (d *ProviderDetector) DetectTerraform() DetectionResult {
 		"terraform/*.tfstate",
 		"**/*.tfstate",
 	}
-	
+
 	statePaths := []string{}
 	for _, pattern := range patterns {
 		matches, _ := filepath.Glob(pattern)
@@ -61,7 +61,7 @@ func (d *ProviderDetector) DetectTerraform() DetectionResult {
 			}
 		}
 	}
-	
+
 	// Remove duplicates
 	seen := make(map[string]bool)
 	uniquePaths := []string{}
@@ -71,35 +71,35 @@ func (d *ProviderDetector) DetectTerraform() DetectionResult {
 			uniquePaths = append(uniquePaths, path)
 		}
 	}
-	
+
 	result.StateFiles = len(uniquePaths)
 	result.StatePaths = uniquePaths
-	
+
 	if result.StateFiles > 0 {
 		result.Status = "ready"
 	} else {
 		result.Status = "no state files found"
 	}
-	
+
 	return result
 }
 
 // DetectGCP detects Google Cloud SDK
 func (d *ProviderDetector) DetectGCP() DetectionResult {
 	result := DetectionResult{}
-	
+
 	// Check if gcloud is installed
 	cmd := exec.Command("gcloud", "version", "--format=json")
 	output, err := cmd.Output()
-	
+
 	if err != nil {
 		result.Available = false
 		result.Status = "gcloud CLI not found"
 		return result
 	}
-	
+
 	result.Available = true
-	
+
 	// Extract version
 	outputStr := string(output)
 	if strings.Contains(outputStr, "Google Cloud SDK") {
@@ -114,73 +114,73 @@ func (d *ProviderDetector) DetectGCP() DetectionResult {
 			}
 		}
 	}
-	
+
 	result.Status = "gcloud CLI found"
 	if result.Version != "" {
 		result.Status += " (v" + result.Version + ")"
 	}
-	
+
 	return result
 }
 
 // DetectAWS detects AWS CLI
 func (d *ProviderDetector) DetectAWS() DetectionResult {
 	result := DetectionResult{}
-	
+
 	// Check if aws cli is installed
 	cmd := exec.Command("aws", "--version")
 	output, err := cmd.Output()
-	
+
 	if err != nil {
 		result.Available = false
 		result.Status = "AWS CLI not found"
 		return result
 	}
-	
+
 	result.Available = true
-	
+
 	// Extract version
 	outputStr := string(output)
 	parts := strings.Fields(outputStr)
 	if len(parts) > 0 && strings.HasPrefix(parts[0], "aws-cli/") {
 		result.Version = strings.TrimPrefix(parts[0], "aws-cli/")
 	}
-	
+
 	result.Status = "AWS CLI found"
 	if result.Version != "" {
 		result.Status += " (v" + result.Version + ")"
 	}
-	
+
 	return result
 }
 
 // DetectKubernetes detects kubectl
 func (d *ProviderDetector) DetectKubernetes() DetectionResult {
 	result := DetectionResult{}
-	
+
 	// Check if kubectl is installed
 	cmd := exec.Command("kubectl", "version", "--client", "--short")
 	output, err := cmd.Output()
-	
+
 	if err != nil {
 		result.Available = false
 		result.Status = "kubectl not found"
 		return result
 	}
-	
+
 	result.Available = true
-	
+
 	// Extract version
 	outputStr := strings.TrimSpace(string(output))
 	if strings.HasPrefix(outputStr, "Client Version:") {
 		result.Version = strings.TrimSpace(strings.TrimPrefix(outputStr, "Client Version:"))
 	}
-	
+
 	result.Status = "kubectl found"
 	if result.Version != "" {
 		result.Status += " (" + result.Version + ")"
 	}
-	
+
 	return result
 }
 
@@ -206,7 +206,7 @@ type AuthResult struct {
 // CheckGCP checks GCP authentication
 func (a *AuthChecker) CheckGCP() AuthResult {
 	result := AuthResult{}
-	
+
 	// Check if authenticated
 	cmd := exec.Command("gcloud", "auth", "application-default", "print-access-token")
 	if err := cmd.Run(); err != nil {
@@ -214,9 +214,9 @@ func (a *AuthChecker) CheckGCP() AuthResult {
 		result.Message = "not authenticated with gcloud"
 		return result
 	}
-	
+
 	result.Authenticated = true
-	
+
 	// Get current project
 	cmd = exec.Command("gcloud", "config", "get-value", "project")
 	output, err := cmd.Output()
@@ -227,18 +227,18 @@ func (a *AuthChecker) CheckGCP() AuthResult {
 			result.Message += " with project " + result.ProjectID
 		}
 	}
-	
+
 	return result
 }
 
 // CheckAWS checks AWS authentication
 func (a *AuthChecker) CheckAWS() AuthResult {
 	result := AuthResult{}
-	
+
 	// Check for credentials
 	homeDir, _ := os.UserHomeDir()
 	credFile := filepath.Join(homeDir, ".aws", "credentials")
-	
+
 	// Check environment variables first
 	if os.Getenv("AWS_ACCESS_KEY_ID") != "" && os.Getenv("AWS_SECRET_ACCESS_KEY") != "" {
 		result.Authenticated = true
@@ -249,28 +249,28 @@ func (a *AuthChecker) CheckAWS() AuthResult {
 		}
 		return result
 	}
-	
+
 	// Check credentials file
 	if _, err := os.Stat(credFile); err == nil {
 		result.Authenticated = true
 		result.Message = "authenticated via credentials file"
-		
+
 		// Try to get default profile info
 		cmd := exec.Command("aws", "configure", "get", "region")
 		output, err := cmd.Output()
 		if err == nil {
 			result.Region = strings.TrimSpace(string(output))
 		}
-		
+
 		// Get profile
 		result.Profile = os.Getenv("AWS_PROFILE")
 		if result.Profile == "" {
 			result.Profile = "default"
 		}
-		
+
 		return result
 	}
-	
+
 	// Check for IAM role (EC2 instance)
 	cmd := exec.Command("aws", "sts", "get-caller-identity")
 	if err := cmd.Run(); err == nil {
@@ -278,7 +278,7 @@ func (a *AuthChecker) CheckAWS() AuthResult {
 		result.Message = "authenticated via IAM role"
 		return result
 	}
-	
+
 	result.Authenticated = false
 	result.Message = "no AWS credentials found"
 	return result
@@ -287,7 +287,7 @@ func (a *AuthChecker) CheckAWS() AuthResult {
 // CheckKubernetes checks Kubernetes cluster access
 func (a *AuthChecker) CheckKubernetes() AuthResult {
 	result := AuthResult{}
-	
+
 	// Get current context
 	cmd := exec.Command("kubectl", "config", "current-context")
 	output, err := cmd.Output()
@@ -296,9 +296,9 @@ func (a *AuthChecker) CheckKubernetes() AuthResult {
 		result.Message = "no kubernetes context configured"
 		return result
 	}
-	
+
 	result.Context = strings.TrimSpace(string(output))
-	
+
 	// Try to access the cluster
 	cmd = exec.Command("kubectl", "get", "namespaces", "--no-headers")
 	output, err = cmd.Output()
@@ -307,10 +307,10 @@ func (a *AuthChecker) CheckKubernetes() AuthResult {
 		result.Message = "cannot connect to kubernetes cluster"
 		return result
 	}
-	
+
 	result.Authenticated = true
 	result.Message = "cluster accessible"
-	
+
 	// Count namespaces
 	lines := strings.Split(string(output), "\n")
 	count := 0
@@ -320,6 +320,6 @@ func (a *AuthChecker) CheckKubernetes() AuthResult {
 		}
 	}
 	result.Namespaces = count
-	
+
 	return result
 }

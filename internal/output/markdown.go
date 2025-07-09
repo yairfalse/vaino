@@ -24,7 +24,7 @@ func (m *MarkdownFormatter) FormatDriftReport(report *types.DriftReport) ([]byte
 	var md strings.Builder
 
 	md.WriteString("# Drift Report\n\n")
-	
+
 	// Report metadata
 	md.WriteString("## Summary\n\n")
 	md.WriteString(fmt.Sprintf("- **Report ID**: `%s`\n", report.ID))
@@ -39,14 +39,14 @@ func (m *MarkdownFormatter) FormatDriftReport(report *types.DriftReport) ([]byte
 	} else {
 		md.WriteString("## Changes Detected\n\n")
 		md.WriteString(fmt.Sprintf("### All Changes (%d)\n\n", len(report.Changes)))
-			
+
 		md.WriteString("| Field | Path | Old Value | New Value | Severity |\n")
 		md.WriteString("|-------|------|-----------|-----------|----------|\n")
-		
+
 		for _, change := range report.Changes {
 			oldVal := m.escapeMarkdown(fmt.Sprintf("%v", change.OldValue))
 			newVal := m.escapeMarkdown(fmt.Sprintf("%v", change.NewValue))
-			
+
 			// Truncate long values
 			if len(oldVal) > 50 {
 				oldVal = oldVal[:47] + "..."
@@ -54,7 +54,7 @@ func (m *MarkdownFormatter) FormatDriftReport(report *types.DriftReport) ([]byte
 			if len(newVal) > 50 {
 				newVal = newVal[:47] + "..."
 			}
-			
+
 			md.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s |\n",
 				change.Field,
 				change.Path,
@@ -77,7 +77,7 @@ func (m *MarkdownFormatter) FormatSnapshot(snapshot *types.Snapshot) ([]byte, er
 	var md strings.Builder
 
 	md.WriteString("# Infrastructure Snapshot\n\n")
-	
+
 	// Snapshot metadata
 	md.WriteString("## Summary\n\n")
 	md.WriteString(fmt.Sprintf("- **Snapshot ID**: `%s`\n", snapshot.ID))
@@ -96,16 +96,16 @@ func (m *MarkdownFormatter) FormatSnapshot(snapshot *types.Snapshot) ([]byte, er
 	md.WriteString("## Resources by Type\n\n")
 	for resourceType, resources := range resourcesByType {
 		md.WriteString(fmt.Sprintf("### %s (%d)\n\n", resourceType, len(resources)))
-		
+
 		md.WriteString("| ID | Name | Region |\n")
 		md.WriteString("|----|------|--------|\n")
-		
+
 		for _, resource := range resources {
 			region := resource.Region
 			if region == "" {
 				region = "N/A"
 			}
-			
+
 			md.WriteString(fmt.Sprintf("| `%s` | %s | %s |\n",
 				resource.ID,
 				resource.Name,
@@ -123,7 +123,7 @@ func (m *MarkdownFormatter) FormatBaseline(baseline *types.Baseline) ([]byte, er
 	var md strings.Builder
 
 	md.WriteString("# Baseline\n\n")
-	
+
 	md.WriteString("## Details\n\n")
 	md.WriteString(fmt.Sprintf("- **ID**: `%s`\n", baseline.ID))
 	md.WriteString(fmt.Sprintf("- **Name**: %s\n", baseline.Name))
@@ -153,7 +153,7 @@ func (m *MarkdownFormatter) FormatBaselineList(baselines []BaselineListItem) ([]
 
 	var md strings.Builder
 	md.WriteString("# Baselines\n\n")
-	
+
 	return m.formatStructListAsMarkdown(baselines, md.String())
 }
 
@@ -165,7 +165,7 @@ func (m *MarkdownFormatter) FormatSnapshotList(snapshots []SnapshotListItem) ([]
 
 	var md strings.Builder
 	md.WriteString("# Snapshots\n\n")
-	
+
 	return m.formatStructListAsMarkdown(snapshots, md.String())
 }
 
@@ -177,7 +177,7 @@ func (m *MarkdownFormatter) FormatDriftReportList(reports []DriftReportListItem)
 
 	var md strings.Builder
 	md.WriteString("# Drift Reports\n\n")
-	
+
 	return m.formatStructListAsMarkdown(reports, md.String())
 }
 
@@ -244,7 +244,7 @@ func (m *MarkdownFormatter) escapeMarkdown(s string) string {
 		"`", "\\`",
 		"#", "\\#",
 	}
-	
+
 	replacer := strings.NewReplacer(replacements...)
 	return replacer.Replace(s)
 }

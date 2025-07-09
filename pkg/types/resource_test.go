@@ -87,7 +87,7 @@ func TestResource_String(t *testing.T) {
 
 	str := resource.String()
 	expected := "aws:ec2:instance:i-1234567890abcdef0 (web-server) in us-west-2"
-	
+
 	if str != expected {
 		t.Errorf("Resource.String() = %s, want %s", str, expected)
 	}
@@ -103,7 +103,7 @@ func TestResource_StringWithoutName(t *testing.T) {
 
 	str := resource.String()
 	expected := "aws:ec2:instance:i-1234567890abcdef0 in us-west-2"
-	
+
 	if str != expected {
 		t.Errorf("Resource.String() = %s, want %s", str, expected)
 	}
@@ -120,7 +120,7 @@ func TestResource_StringWithNamespace(t *testing.T) {
 
 	str := resource.String()
 	expected := "kubernetes:pod:pod-1234 (api-server) in production"
-	
+
 	if str != expected {
 		t.Errorf("Resource.String() = %s, want %s", str, expected)
 	}

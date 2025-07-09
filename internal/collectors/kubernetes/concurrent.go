@@ -63,13 +63,13 @@ func (c *ConcurrentKubernetesCollector) CollectConcurrent(ctx context.Context, c
 
 	// Results channel for concurrent operations
 	results := make(chan K8sResourceCollectionResult, len(namespaces)*8) // 8 resource types per namespace
-	
+
 	// Wait group for tracking goroutines
 	var wg sync.WaitGroup
 
 	// Define Kubernetes resource types to collect
 	resourceTypes := []string{
-		"pods", "services", "deployments", "replicasets", 
+		"pods", "services", "deployments", "replicasets",
 		"configmaps", "secrets", "persistentvolumes", "persistentvolumeclaims",
 	}
 
@@ -93,7 +93,7 @@ func (c *ConcurrentKubernetesCollector) CollectConcurrent(ctx context.Context, c
 
 	for result := range results {
 		if result.Error != nil {
-			collectionErrors = append(collectionErrors, 
+			collectionErrors = append(collectionErrors,
 				fmt.Errorf("%s/%s collection failed: %w", result.Namespace, result.ResourceType, result.Error))
 		} else {
 			allResources = append(allResources, result.Resources...)
@@ -196,9 +196,9 @@ func (c *ConcurrentKubernetesCollector) collectServices(ctx context.Context, nam
 			Provider:  "kubernetes",
 			Namespace: namespace,
 			Configuration: map[string]interface{}{
-				"type":         "ClusterIP",
-				"cluster_ip":   "10.0.0.1",
-				"ports":        []int{80, 443},
+				"type":       "ClusterIP",
+				"cluster_ip": "10.0.0.1",
+				"ports":      []int{80, 443},
 			},
 		},
 	}, nil
@@ -323,16 +323,16 @@ func (c *ConcurrentKubernetesCollector) CollectMultiNamespace(ctx context.Contex
 		wg.Add(1)
 		go func(ns string) {
 			defer wg.Done()
-			
+
 			config := collectors.CollectorConfig{
 				Namespaces: []string{ns},
 			}
-			
+
 			snapshot, err := c.CollectConcurrent(ctx, config)
 			if err != nil {
 				return // Skip failed namespaces
 			}
-			
+
 			mu.Lock()
 			allResources = append(allResources, snapshot.Resources...)
 			mu.Unlock()
@@ -354,16 +354,16 @@ func (c *ConcurrentKubernetesCollector) CollectFilteredResources(ctx context.Con
 		wg.Add(1)
 		go func(rType string) {
 			defer wg.Done()
-			
+
 			results := make(chan K8sResourceCollectionResult, 1)
 			var innerWg sync.WaitGroup
-			
+
 			innerWg.Add(1)
 			c.collectK8sResource(ctx, namespace, rType, results, &innerWg)
-			
+
 			innerWg.Wait()
 			close(results)
-			
+
 			for result := range results {
 				if result.Error == nil {
 					mu.Lock()

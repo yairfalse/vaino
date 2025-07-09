@@ -197,7 +197,7 @@ func TestStorageSpaceManager_CheckAndCleanup(t *testing.T) {
 
 	backupDir := filepath.Join(tempDir, "backups")
 	writer := NewAtomicWriter(backupDir)
-	
+
 	// Create space manager with very small threshold (1 KB)
 	threshold := int64(1024)
 	spaceManager := NewStorageSpaceManager(writer, threshold)

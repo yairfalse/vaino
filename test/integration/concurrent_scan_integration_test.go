@@ -23,7 +23,7 @@ func TestConcurrentScanIntegration(t *testing.T) {
 
 	// Create temporary directory for test files
 	tmpDir := t.TempDir()
-	
+
 	// Create test Terraform state file
 	terraformState := `{
 		"version": 4,
@@ -47,7 +47,7 @@ func TestConcurrentScanIntegration(t *testing.T) {
 			}
 		]
 	}`
-	
+
 	stateFile := filepath.Join(tmpDir, "terraform.tfstate")
 	err := os.WriteFile(stateFile, []byte(terraformState), 0644)
 	if err != nil {
@@ -61,7 +61,7 @@ func TestConcurrentScanIntegration(t *testing.T) {
 
 		// Register actual collectors (they will use mock data since we don't have real credentials)
 		scanner.RegisterProvider("terraform", terraform.NewTerraformCollector())
-		
+
 		// Create scan configuration
 		config := scanner.ScanConfig{
 			Providers: map[string]collectors.CollectorConfig{
@@ -80,9 +80,9 @@ func TestConcurrentScanIntegration(t *testing.T) {
 		// Perform concurrent scan
 		ctx := context.Background()
 		startTime := time.Now()
-		
+
 		result, err := scanner.ScanAllProviders(ctx, config)
-		
+
 		scanDuration := time.Since(startTime)
 
 		// Validate results
@@ -121,10 +121,10 @@ func TestConcurrentScanIntegration(t *testing.T) {
 	// t.Run("CLI_ConcurrentScan", func(t *testing.T) {
 	// 	// This test would normally use exec.Command to test the CLI
 	// 	// but we'll test the command functions directly
-	// 	
+	//
 	// 	// Skip command test - function is not exported
 	// 	// cmd := commands.NewScanCommand()
-	// 	
+	//
 	// 	// Set up command flags
 	// 	// cmd.Flags().Set("concurrent", "true")
 	// 	// cmd.Flags().Set("max-workers", "2")
@@ -160,7 +160,7 @@ func TestConcurrentScanPerformance(t *testing.T) {
 			}
 
 			startTime := time.Now()
-			
+
 			for name, collector := range mockCollectors {
 				snapshot, err := collector.Collect(ctx, config)
 				if err != nil {
@@ -170,7 +170,7 @@ func TestConcurrentScanPerformance(t *testing.T) {
 					t.Errorf("Expected snapshot for %s", name)
 				}
 			}
-			
+
 			sequentialDuration := time.Since(startTime)
 			t.Logf("Sequential scan took: %v", sequentialDuration)
 		})
@@ -199,9 +199,9 @@ func TestConcurrentScanPerformance(t *testing.T) {
 
 			ctx := context.Background()
 			startTime := time.Now()
-			
+
 			result, err := scanner.ScanAllProviders(ctx, config)
-			
+
 			concurrentDuration := time.Since(startTime)
 
 			if err != nil {
@@ -213,7 +213,7 @@ func TestConcurrentScanPerformance(t *testing.T) {
 			}
 
 			t.Logf("Concurrent scan took: %v", concurrentDuration)
-			
+
 			// Concurrent should be significantly faster
 			if concurrentDuration >= 500*time.Millisecond { // Should be much less than sequential
 				t.Errorf("Concurrent scan not fast enough: %v", concurrentDuration)

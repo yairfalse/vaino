@@ -7,11 +7,11 @@ import (
 
 // Snapshot represents a point-in-time capture of infrastructure state
 type Snapshot struct {
-	ID        string             `json:"id"`
-	Timestamp time.Time          `json:"timestamp"`
-	Provider  string             `json:"provider"`
-	Resources []Resource         `json:"resources"`
-	Metadata  SnapshotMetadata   `json:"metadata"`
+	ID        string           `json:"id"`
+	Timestamp time.Time        `json:"timestamp"`
+	Provider  string           `json:"provider"`
+	Resources []Resource       `json:"resources"`
+	Metadata  SnapshotMetadata `json:"metadata"`
 }
 
 // SnapshotMetadata contains metadata about the snapshot collection process
@@ -36,13 +36,13 @@ func (s Snapshot) Validate() error {
 	if s.Timestamp.IsZero() {
 		return fmt.Errorf("snapshot timestamp is required")
 	}
-	
+
 	for i, resource := range s.Resources {
 		if err := resource.Validate(); err != nil {
 			return fmt.Errorf("resource %d invalid: %w", i, err)
 		}
 	}
-	
+
 	return s.Metadata.Validate()
 }
 

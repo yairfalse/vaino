@@ -14,19 +14,19 @@ import (
 
 // MockConcurrentCollector implements EnhancedCollector for testing
 type MockConcurrentCollector struct {
-	name         string
-	delay        time.Duration
-	shouldFail   bool
+	name          string
+	delay         time.Duration
+	shouldFail    bool
 	resourceCount int
-	collectCalls int
-	mu           sync.Mutex
+	collectCalls  int
+	mu            sync.Mutex
 }
 
 func NewMockConcurrentCollector(name string, delay time.Duration, shouldFail bool, resourceCount int) *MockConcurrentCollector {
 	return &MockConcurrentCollector{
-		name:         name,
-		delay:        delay,
-		shouldFail:   shouldFail,
+		name:          name,
+		delay:         delay,
+		shouldFail:    shouldFail,
 		resourceCount: resourceCount,
 	}
 }
@@ -127,9 +127,9 @@ func TestConcurrentScanner_Basic(t *testing.T) {
 	// Perform concurrent scan
 	ctx := context.Background()
 	startTime := time.Now()
-	
+
 	result, err := scanner.ScanAllProviders(ctx, config)
-	
+
 	scanDuration := time.Since(startTime)
 
 	// Validate results
@@ -154,7 +154,7 @@ func TestConcurrentScanner_Basic(t *testing.T) {
 
 		expectedCount := collectors[providerName].resourceCount
 		if len(providerResult.Snapshot.Resources) != expectedCount {
-			t.Errorf("Provider %s: expected %d resources, got %d", 
+			t.Errorf("Provider %s: expected %d resources, got %d",
 				providerName, expectedCount, len(providerResult.Snapshot.Resources))
 		}
 	}
@@ -165,7 +165,7 @@ func TestConcurrentScanner_Basic(t *testing.T) {
 	} else {
 		expectedTotalResources := 5 + 3 + 8 // aws + gcp + kubernetes
 		if len(result.Snapshot.Resources) != expectedTotalResources {
-			t.Errorf("Expected %d total resources in merged snapshot, got %d", 
+			t.Errorf("Expected %d total resources in merged snapshot, got %d",
 				expectedTotalResources, len(result.Snapshot.Resources))
 		}
 	}
@@ -195,7 +195,7 @@ func TestConcurrentScanner_WithErrors(t *testing.T) {
 	// Register mock collectors with one that fails
 	collectors := map[string]*MockConcurrentCollector{
 		"aws":        NewMockConcurrentCollector("aws", 100*time.Millisecond, false, 5),
-		"gcp":        NewMockConcurrentCollector("gcp", 150*time.Millisecond, true, 3),  // This one fails
+		"gcp":        NewMockConcurrentCollector("gcp", 150*time.Millisecond, true, 3), // This one fails
 		"kubernetes": NewMockConcurrentCollector("kubernetes", 200*time.Millisecond, false, 8),
 	}
 
@@ -249,7 +249,7 @@ func TestConcurrentScanner_WithErrors(t *testing.T) {
 	if result.Snapshot != nil {
 		expectedResources := 5 + 8 // aws + kubernetes (gcp failed)
 		if len(result.Snapshot.Resources) != expectedResources {
-			t.Errorf("Expected %d resources in merged snapshot, got %d", 
+			t.Errorf("Expected %d resources in merged snapshot, got %d",
 				expectedResources, len(result.Snapshot.Resources))
 		}
 	}
@@ -262,7 +262,7 @@ func TestConcurrentScanner_FailOnError(t *testing.T) {
 	// Register mock collectors with one that fails
 	collectors := map[string]*MockConcurrentCollector{
 		"aws": NewMockConcurrentCollector("aws", 100*time.Millisecond, false, 5),
-		"gcp": NewMockConcurrentCollector("gcp", 150*time.Millisecond, true, 3),  // This one fails
+		"gcp": NewMockConcurrentCollector("gcp", 150*time.Millisecond, true, 3), // This one fails
 	}
 
 	for name, collector := range collectors {
@@ -315,9 +315,9 @@ func TestConcurrentScanner_Timeout(t *testing.T) {
 	// Perform concurrent scan
 	ctx := context.Background()
 	startTime := time.Now()
-	
+
 	result, err := scanner.ScanAllProviders(ctx, config)
-	
+
 	scanDuration := time.Since(startTime)
 
 	// Should not fail, but should timeout
@@ -369,7 +369,7 @@ func TestConcurrentScanner_ResourceDeduplication(t *testing.T) {
 	// Should have deduplication logic in place
 	if result.Snapshot != nil {
 		t.Logf("Merged snapshot has %d resources", len(result.Snapshot.Resources))
-		
+
 		// Check for unique resource IDs
 		seenIDs := make(map[string]bool)
 		for _, resource := range result.Snapshot.Resources {

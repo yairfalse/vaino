@@ -74,11 +74,11 @@ func TestClientConfig(t *testing.T) {
 func TestGetRegion(t *testing.T) {
 	// This test verifies the GetRegion method works correctly
 	// In a real environment with credentials, this would be more comprehensive
-	
+
 	clients := &AWSClients{
 		Config: mockAWSConfig("us-east-1"),
 	}
-	
+
 	assert.Equal(t, "us-east-1", clients.GetRegion())
 }
 

@@ -20,14 +20,14 @@ import (
 
 // MemorySnapshot represents memory usage at a point in time
 type MemorySnapshot struct {
-	Timestamp    time.Time
-	HeapAlloc    uint64
-	HeapSys      uint64
-	HeapIdle     uint64
-	HeapInuse    uint64
-	StackInuse   uint64
-	GCCycles     uint32
-	Operation    string
+	Timestamp     time.Time
+	HeapAlloc     uint64
+	HeapSys       uint64
+	HeapIdle      uint64
+	HeapInuse     uint64
+	StackInuse    uint64
+	GCCycles      uint32
+	Operation     string
 	ResourceCount int
 }
 
@@ -47,10 +47,10 @@ func NewMemoryProfiler() *MemoryProfiler {
 func (mp *MemoryProfiler) TakeSnapshot(operation string, resourceCount int) {
 	runtime.GC() // Force GC for accurate measurement
 	runtime.GC() // Double GC to ensure cleanup
-	
+
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	
+
 	snapshot := MemorySnapshot{
 		Timestamp:     time.Now(),
 		HeapAlloc:     m.HeapAlloc,
@@ -62,7 +62,7 @@ func (mp *MemoryProfiler) TakeSnapshot(operation string, resourceCount int) {
 		Operation:     operation,
 		ResourceCount: resourceCount,
 	}
-	
+
 	mp.snapshots = append(mp.snapshots, snapshot)
 }
 
@@ -70,10 +70,10 @@ func (mp *MemoryProfiler) GetReport() string {
 	if len(mp.snapshots) == 0 {
 		return "No memory snapshots recorded"
 	}
-	
+
 	report := "Memory Usage Analysis Report\n"
 	report += "============================\n\n"
-	
+
 	for i, snapshot := range mp.snapshots {
 		duration := snapshot.Timestamp.Sub(mp.startTime)
 		report += fmt.Sprintf("Snapshot %d: %s (at %v)\n", i+1, snapshot.Operation, duration)
@@ -88,33 +88,33 @@ func (mp *MemoryProfiler) GetReport() string {
 		}
 		report += "\n"
 	}
-	
+
 	// Memory growth analysis
 	if len(mp.snapshots) > 1 {
 		report += "Memory Growth Analysis:\n"
 		baseline := mp.snapshots[0]
 		peak := mp.snapshots[0]
-		
+
 		for _, snapshot := range mp.snapshots[1:] {
 			if snapshot.HeapAlloc > peak.HeapAlloc {
 				peak = snapshot
 			}
 		}
-		
+
 		growth := float64(peak.HeapAlloc-baseline.HeapAlloc) / (1024 * 1024)
 		report += fmt.Sprintf("  Peak memory growth: %.2f MB\n", growth)
 		report += fmt.Sprintf("  Peak operation: %s\n", peak.Operation)
-		
+
 		// Check for memory leaks
 		final := mp.snapshots[len(mp.snapshots)-1]
 		retained := float64(final.HeapAlloc-baseline.HeapAlloc) / (1024 * 1024)
 		report += fmt.Sprintf("  Retained memory: %.2f MB\n", retained)
-		
+
 		if retained > growth*0.5 {
 			report += "  WARNING: Potential memory leak detected!\n"
 		}
 	}
-	
+
 	return report
 }
 
@@ -126,65 +126,65 @@ func TestMemoryUsagePatterns(t *testing.T) {
 
 	profiler := NewMemoryProfiler()
 	tmpDir := t.TempDir()
-	
+
 	profiler.TakeSnapshot("baseline", 0)
 
 	// Test 1: Collection memory pattern
 	t.Log("Testing collection memory patterns...")
-	
+
 	resourceCounts := []int{1000, 5000, 10000, 25000}
 	for _, resourceCount := range resourceCounts {
 		stateFile := filepath.Join(tmpDir, fmt.Sprintf("memory-test-%d.tfstate", resourceCount))
-		
+
 		state := createMegaTestState(resourceCount)
 		data, err := json.MarshalIndent(state, "", "  ")
 		if err != nil {
 			t.Fatalf("Failed to marshal state: %v", err)
 		}
-		
+
 		if err := os.WriteFile(stateFile, data, 0644); err != nil {
 			t.Fatalf("Failed to write state file: %v", err)
 		}
-		
+
 		collector := terraform.NewTerraformCollector()
 		config := collectors.CollectorConfig{
 			StatePaths: []string{stateFile},
 			Tags:       map[string]string{"memory-test": "true"},
 		}
-		
+
 		_, err = collector.Collect(context.Background(), config)
 		if err != nil {
 			t.Fatalf("Collection failed: %v", err)
 		}
-		
+
 		profiler.TakeSnapshot(fmt.Sprintf("collection_%d", resourceCount), resourceCount)
 	}
 
 	// Test 2: Diff memory pattern
 	t.Log("Testing diff memory patterns...")
-	
+
 	baseline := createLargeSnapshot("baseline", 10000)
 	modified := createLargeSnapshotWithChanges("modified", 10000, 5)
-	
+
 	profiler.TakeSnapshot("before_diff", 10000)
-	
+
 	differ := differ.NewSimpleDiffer()
 	_, err := differ.Compare(baseline, modified)
 	if err != nil {
 		t.Fatalf("Diff failed: %v", err)
 	}
-	
+
 	profiler.TakeSnapshot("after_diff", 10000)
 
 	// Test 3: Storage memory pattern
 	t.Log("Testing storage memory patterns...")
-	
+
 	storageConfig := storage.Config{BaseDir: tmpDir}
 	storageEngine, err := storage.NewLocalStorage(storageConfig)
 	if err != nil {
 		t.Fatalf("Failed to create storage engine: %v", err)
 	}
-	
+
 	for i := 0; i < 5; i++ {
 		snapshot := createLargeSnapshot(fmt.Sprintf("storage-test-%d", i), 2000)
 		err := storageEngine.SaveSnapshot(snapshot)
@@ -192,13 +192,13 @@ func TestMemoryUsagePatterns(t *testing.T) {
 			t.Fatalf("Storage failed: %v", err)
 		}
 	}
-	
+
 	profiler.TakeSnapshot("after_storage", 10000)
 
 	// Generate and log report
 	report := profiler.GetReport()
 	t.Log("\n" + report)
-	
+
 	// Write detailed report to file
 	reportFile := filepath.Join(tmpDir, "memory-analysis-report.txt")
 	if err := os.WriteFile(reportFile, []byte(report), 0644); err != nil {
@@ -216,7 +216,7 @@ func TestMemoryLeakDetection(t *testing.T) {
 
 	profiler := NewMemoryProfiler()
 	tmpDir := t.TempDir()
-	
+
 	profiler.TakeSnapshot("baseline", 0)
 
 	// Create test data
@@ -226,7 +226,7 @@ func TestMemoryLeakDetection(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to marshal state: %v", err)
 	}
-	
+
 	if err := os.WriteFile(stateFile, data, 0644); err != nil {
 		t.Fatalf("Failed to write state file: %v", err)
 	}
@@ -242,12 +242,12 @@ func TestMemoryLeakDetection(t *testing.T) {
 			StatePaths: []string{stateFile},
 			Tags:       map[string]string{"iteration": fmt.Sprintf("%d", i)},
 		}
-		
+
 		snapshot, err := collector.Collect(context.Background(), config)
 		if err != nil {
 			t.Fatalf("Collection failed at iteration %d: %v", i, err)
 		}
-		
+
 		// Diff operation
 		baseline := createLargeSnapshot("baseline", 5000)
 		differ := differ.NewSimpleDiffer()
@@ -255,7 +255,7 @@ func TestMemoryLeakDetection(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Diff failed at iteration %d: %v", i, err)
 		}
-		
+
 		// Take memory snapshots every 10 iterations
 		if i%10 == 0 {
 			profiler.TakeSnapshot(fmt.Sprintf("iteration_%d", i), 5000)
@@ -286,7 +286,7 @@ func TestMemoryLeakDetection(t *testing.T) {
 	// Memory growth should be minimal for repeated operations
 	maxAllowedGrowthMB := 50.0 // Allow up to 50MB growth
 	if growth > maxAllowedGrowthMB {
-		t.Errorf("Potential memory leak detected: %.2f MB growth (max allowed: %.2f MB)", 
+		t.Errorf("Potential memory leak detected: %.2f MB growth (max allowed: %.2f MB)",
 			growth, maxAllowedGrowthMB)
 	} else {
 		t.Logf("✓ No significant memory leak detected (%.2f MB growth)", growth)
@@ -301,7 +301,7 @@ func TestMemoryProfileDuringStorageOperations(t *testing.T) {
 
 	profiler := NewMemoryProfiler()
 	tmpDir := t.TempDir()
-	
+
 	profiler.TakeSnapshot("storage_baseline", 0)
 
 	// Setup storage
@@ -310,7 +310,7 @@ func TestMemoryProfileDuringStorageOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create storage engine: %v", err)
 	}
-	
+
 	profiler.TakeSnapshot("storage_start", 0)
 
 	// Create and store many snapshots
@@ -319,7 +319,7 @@ func TestMemoryProfileDuringStorageOperations(t *testing.T) {
 
 	for i := 0; i < snapshotCount; i++ {
 		snapshot := createLargeSnapshot(fmt.Sprintf("storage-memory-test-%d", i), 1000)
-		
+
 		err := storageEngine.SaveSnapshot(snapshot)
 		if err != nil {
 			t.Fatalf("Failed to store snapshot %d: %v", i, err)
@@ -354,7 +354,7 @@ func TestMemoryProfileDuringStorageOperations(t *testing.T) {
 
 	// Check for memory growth during storage operations
 	snapshots := profiler.snapshots
-	startSnapshot := snapshots[1] // storage_start
+	startSnapshot := snapshots[1]              // storage_start
 	endSnapshot := snapshots[len(snapshots)-1] // storage_after_loads
 
 	growth := float64(endSnapshot.HeapAlloc-startSnapshot.HeapAlloc) / (1024 * 1024)
@@ -367,7 +367,7 @@ func TestMemoryProfileDuringStorageOperations(t *testing.T) {
 	// Storage should not accumulate too much memory
 	maxStorageGrowthMB := 100.0 // Allow up to 100MB growth for 50 snapshots
 	if growth > maxStorageGrowthMB {
-		t.Errorf("Storage memory growth too high: %.2f MB (max: %.2f MB)", 
+		t.Errorf("Storage memory growth too high: %.2f MB (max: %.2f MB)",
 			growth, maxStorageGrowthMB)
 	} else {
 		t.Logf("✓ Storage memory usage acceptable (%.2f MB growth)", growth)
@@ -405,7 +405,7 @@ func TestCPUProfileDuringIntensiveOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to marshal state: %v", err)
 	}
-	
+
 	if err := os.WriteFile(stateFile, data, 0644); err != nil {
 		t.Fatalf("Failed to write state file: %v", err)
 	}
@@ -419,12 +419,12 @@ func TestCPUProfileDuringIntensiveOperations(t *testing.T) {
 			StatePaths: []string{stateFile},
 			Tags:       map[string]string{"cpu-profile": fmt.Sprintf("%d", i)},
 		}
-		
+
 		snapshot, err := collector.Collect(context.Background(), config)
 		if err != nil {
 			t.Fatalf("Collection failed: %v", err)
 		}
-		
+
 		// Intensive diff
 		baseline := createLargeSnapshot("baseline", 25000)
 		differ := differ.NewSimpleDiffer()
@@ -448,7 +448,7 @@ func TestHeapProfileDuringMemoryIntensiveOps(t *testing.T) {
 	}
 
 	tmpDir := t.TempDir()
-	
+
 	// Perform memory-intensive operations
 	t.Log("Performing memory-intensive operations for heap profiling...")
 
@@ -488,7 +488,7 @@ func TestHeapProfileDuringMemoryIntensiveOps(t *testing.T) {
 	// Basic heap analysis
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	
+
 	t.Logf("Heap analysis:")
 	t.Logf("  Heap allocated: %.2f MB", float64(m.HeapAlloc)/(1024*1024))
 	t.Logf("  Heap system: %.2f MB", float64(m.HeapSys)/(1024*1024))

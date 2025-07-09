@@ -202,7 +202,7 @@ func FormatChangeReport(report *SimpleChangeReport) string {
 	// Header
 	output.WriteString(fmt.Sprintf("📊 Infrastructure Changes\n"))
 	output.WriteString(fmt.Sprintf("========================\n"))
-	output.WriteString(fmt.Sprintf("Time range: %s → %s\n\n", 
+	output.WriteString(fmt.Sprintf("Time range: %s → %s\n\n",
 		report.FromTime.Format("2006-01-02 15:04:05"),
 		report.ToTime.Format("2006-01-02 15:04:05")))
 
@@ -249,7 +249,7 @@ func FormatChangeReport(report *SimpleChangeReport) string {
 		for _, change := range modified {
 			output.WriteString(fmt.Sprintf("  ~ %s\n", change.ResourceID))
 			for _, detail := range change.Details {
-				output.WriteString(fmt.Sprintf("    - %s: %v → %v\n", 
+				output.WriteString(fmt.Sprintf("    - %s: %v → %v\n",
 					detail.Field, detail.OldValue, detail.NewValue))
 			}
 		}

@@ -10,9 +10,9 @@ import (
 
 // EnhancedRegistry manages enhanced collectors that support full collection
 type EnhancedRegistry struct {
-	mu                sync.RWMutex
-	collectors        map[string]EnhancedCollector
-	legacyCollectors  map[string]Collector
+	mu               sync.RWMutex
+	collectors       map[string]EnhancedCollector
+	legacyCollectors map[string]Collector
 }
 
 // NewEnhancedRegistry creates a new enhanced collector registry
@@ -41,12 +41,12 @@ func (r *EnhancedRegistry) RegisterLegacy(collector Collector) {
 func (r *EnhancedRegistry) GetEnhanced(name string) (EnhancedCollector, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	collector, exists := r.collectors[name]
 	if !exists {
 		return nil, fmt.Errorf("enhanced collector %s not found", name)
 	}
-	
+
 	return collector, nil
 }
 
@@ -54,12 +54,12 @@ func (r *EnhancedRegistry) GetEnhanced(name string) (EnhancedCollector, error) {
 func (r *EnhancedRegistry) GetLegacy(name string) (Collector, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	collector, exists := r.legacyCollectors[name]
 	if !exists {
 		return nil, fmt.Errorf("legacy collector %s not found", name)
 	}
-	
+
 	return collector, nil
 }
 
@@ -67,12 +67,12 @@ func (r *EnhancedRegistry) GetLegacy(name string) (Collector, error) {
 func (r *EnhancedRegistry) ListEnhanced() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	names := make([]string, 0, len(r.collectors))
 	for name := range r.collectors {
 		names = append(names, name)
 	}
-	
+
 	return names
 }
 
@@ -80,12 +80,12 @@ func (r *EnhancedRegistry) ListEnhanced() []string {
 func (r *EnhancedRegistry) ListLegacy() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	names := make([]string, 0, len(r.legacyCollectors))
 	for name := range r.legacyCollectors {
 		names = append(names, name)
 	}
-	
+
 	return names
 }
 
@@ -93,17 +93,17 @@ func (r *EnhancedRegistry) ListLegacy() []string {
 func (r *EnhancedRegistry) ListAll() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	names := make([]string, 0, len(r.collectors)+len(r.legacyCollectors))
-	
+
 	for name := range r.collectors {
 		names = append(names, name)
 	}
-	
+
 	for name := range r.legacyCollectors {
 		names = append(names, name)
 	}
-	
+
 	return names
 }
 
@@ -113,7 +113,7 @@ func (r *EnhancedRegistry) CollectFromProvider(ctx context.Context, providerName
 	if collector, err := r.GetEnhanced(providerName); err == nil {
 		return collector.Collect(ctx, config)
 	}
-	
+
 	// Enhanced collector not found
 	return nil, fmt.Errorf("enhanced collector %s not found - only enhanced collectors support collection", providerName)
 }
@@ -124,7 +124,7 @@ func (r *EnhancedRegistry) ValidateConfig(providerName string, config CollectorC
 	if err != nil {
 		return fmt.Errorf("enhanced collector %s not found", providerName)
 	}
-	
+
 	return collector.Validate(config)
 }
 
@@ -134,7 +134,7 @@ func (r *EnhancedRegistry) AutoDiscover(providerName string) (CollectorConfig, e
 	if err != nil {
 		return CollectorConfig{}, fmt.Errorf("enhanced collector %s not found", providerName)
 	}
-	
+
 	return collector.AutoDiscover()
 }
 
@@ -142,7 +142,7 @@ func (r *EnhancedRegistry) AutoDiscover(providerName string) (CollectorConfig, e
 func (r *EnhancedRegistry) GetCollectorInfo(providerName string) (CollectorInfo, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	// Check enhanced collectors
 	if collector, exists := r.collectors[providerName]; exists {
 		return CollectorInfo{
@@ -154,7 +154,7 @@ func (r *EnhancedRegistry) GetCollectorInfo(providerName string) (CollectorInfo,
 			Status:      collector.Status(),
 		}, nil
 	}
-	
+
 	// Check legacy collectors
 	if collector, exists := r.legacyCollectors[providerName]; exists {
 		return CollectorInfo{
@@ -166,7 +166,7 @@ func (r *EnhancedRegistry) GetCollectorInfo(providerName string) (CollectorInfo,
 			Status:      collector.Status(),
 		}, nil
 	}
-	
+
 	return CollectorInfo{}, fmt.Errorf("collector %s not found", providerName)
 }
 
@@ -184,7 +184,7 @@ func (r *EnhancedRegistry) GetEnhancedProviders() []string {
 func (r *EnhancedRegistry) IsEnhanced(providerName string) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	_, exists := r.collectors[providerName]
 	return exists
 }
@@ -193,17 +193,17 @@ func (r *EnhancedRegistry) IsEnhanced(providerName string) bool {
 func (r *EnhancedRegistry) GetStatus() map[string]string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	status := make(map[string]string)
-	
+
 	for name, collector := range r.collectors {
 		status[name] = collector.Status()
 	}
-	
+
 	for name, collector := range r.legacyCollectors {
 		status[name] = collector.Status()
 	}
-	
+
 	return status
 }
 

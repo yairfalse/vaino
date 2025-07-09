@@ -9,18 +9,18 @@ import (
 	"github.com/yairfalse/wgo/internal/collectors"
 	"github.com/yairfalse/wgo/pkg/types"
 	"google.golang.org/api/compute/v1"
-	"google.golang.org/api/storage/v1"
 	"google.golang.org/api/container/v1"
 	"google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
+	"google.golang.org/api/storage/v1"
 )
 
 // ConcurrentGCPCollector implements parallel resource collection for GCP
 type ConcurrentGCPCollector struct {
 	*GCPCollector
-	maxWorkers   int
-	timeout      time.Duration
-	clientPool   *GCPClientPool
+	maxWorkers int
+	timeout    time.Duration
+	clientPool *GCPClientPool
 }
 
 // GCPClientPool manages reusable GCP service clients
@@ -63,7 +63,7 @@ func NewConcurrentGCPCollector(maxWorkers int, timeout time.Duration) collectors
 func (c *ConcurrentGCPCollector) CollectConcurrent(ctx context.Context, config collectors.CollectorConfig) (*types.Snapshot, error) {
 	// Extract GCP configuration
 	gcpConfig := c.extractGCPConfig(config)
-	
+
 	// Validate credentials
 	if err := c.validateCredentials(gcpConfig); err != nil {
 		return nil, err
@@ -82,13 +82,13 @@ func (c *ConcurrentGCPCollector) CollectConcurrent(ctx context.Context, config c
 
 	// Results channel for concurrent operations
 	results := make(chan ResourceCollectionResult, 4) // 4 main resource types
-	
+
 	// Wait group for tracking goroutines
 	var wg sync.WaitGroup
 
 	// Launch concurrent resource collection
 	resourceTypes := []string{"compute", "storage", "container", "iam"}
-	
+
 	for _, resourceType := range resourceTypes {
 		wg.Add(1)
 		go c.collectResourceType(collectCtx, resourceType, gcpConfig, results, &wg)
@@ -106,7 +106,7 @@ func (c *ConcurrentGCPCollector) CollectConcurrent(ctx context.Context, config c
 
 	for result := range results {
 		if result.Error != nil {
-			collectionErrors = append(collectionErrors, 
+			collectionErrors = append(collectionErrors,
 				fmt.Errorf("%s collection failed: %w", result.ResourceType, result.Error))
 		} else {
 			allResources = append(allResources, result.Resources...)
@@ -180,18 +180,18 @@ func (c *ConcurrentGCPCollector) collectCompute(ctx context.Context, config GCPC
 
 	// Collect different compute resources concurrently
 	computeTypes := []string{"instances", "disks", "networks", "firewalls"}
-	
+
 	for _, computeType := range computeTypes {
 		wg.Add(1)
 		go func(cType string) {
 			defer wg.Done()
-			
+
 			resources, err := c.collectComputeType(ctx, cType, config)
 			if err != nil {
 				// Log error but don't fail the entire collection
 				return
 			}
-			
+
 			mu.Lock()
 			allResources = append(allResources, resources...)
 			mu.Unlock()
@@ -205,7 +205,7 @@ func (c *ConcurrentGCPCollector) collectCompute(ctx context.Context, config GCPC
 // collectComputeType collects a specific compute resource type
 func (c *ConcurrentGCPCollector) collectComputeType(ctx context.Context, computeType string, config GCPConfig) ([]types.Resource, error) {
 	var resources []types.Resource
-	
+
 	switch computeType {
 	case "instances":
 		return c.collectInstances(ctx, config)
@@ -216,7 +216,7 @@ func (c *ConcurrentGCPCollector) collectComputeType(ctx context.Context, compute
 	case "firewalls":
 		return c.collectFirewalls(ctx, config)
 	}
-	
+
 	return resources, nil
 }
 
@@ -228,17 +228,17 @@ func (c *ConcurrentGCPCollector) collectInstances(ctx context.Context, config GC
 
 	// Collect instances from all zones in parallel
 	zones := c.getZonesForRegions(config.Regions)
-	
+
 	for _, zone := range zones {
 		wg.Add(1)
 		go func(z string) {
 			defer wg.Done()
-			
+
 			instances, err := c.collectInstancesFromZone(ctx, config.ProjectID, z)
 			if err != nil {
 				return // Skip failed zones
 			}
-			
+
 			mu.Lock()
 			allInstances = append(allInstances, instances...)
 			mu.Unlock()
@@ -270,7 +270,7 @@ func (c *ConcurrentGCPCollector) collectInstancesFromZone(ctx context.Context, p
 			},
 		},
 	}
-	
+
 	return resources, nil
 }
 
@@ -319,8 +319,8 @@ func (c *ConcurrentGCPCollector) collectFirewalls(ctx context.Context, config GC
 			Name:     "allow-ssh",
 			Provider: "gcp",
 			Configuration: map[string]interface{}{
-				"direction": "INGRESS",
-				"priority":  1000,
+				"direction":  "INGRESS",
+				"priority":   1000,
 				"project_id": config.ProjectID,
 			},
 		},
@@ -382,7 +382,7 @@ func (c *ConcurrentGCPCollector) collectIAM(ctx context.Context, config GCPConfi
 func (c *ConcurrentGCPCollector) initializeClientPool(ctx context.Context, config GCPConfig) (*GCPClientPool, error) {
 	// Create client options
 	var options []option.ClientOption
-	
+
 	if config.CredentialsFile != "" {
 		options = append(options, option.WithCredentialsFile(config.CredentialsFile))
 	}

@@ -206,7 +206,7 @@ func TestWatcher_ConcurrentAccess(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	
+
 	// Set initial snapshot
 	watcher.lastSnapshot = &types.Snapshot{
 		ID:        "test",
@@ -217,7 +217,7 @@ func TestWatcher_ConcurrentAccess(t *testing.T) {
 
 	// Run concurrent operations
 	done := make(chan bool, 3)
-	
+
 	// Goroutine 1: Check for changes
 	go func() {
 		for i := 0; i < 10; i++ {
@@ -323,7 +323,7 @@ func TestWatcher_ContextCancellationDuringCheck(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	// Start check in goroutine
 	errCh := make(chan error)
 	go func() {

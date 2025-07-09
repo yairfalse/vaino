@@ -36,29 +36,29 @@ type ResourceProcessor struct {
 	errorChan      chan error
 	workers        []*resourceWorker
 	processingFunc func(RawResource) (*types.Resource, error)
-	
+
 	// Metrics
 	processedCount int64
 	errorCount     int64
 	totalTime      time.Duration
 	mu             sync.RWMutex
-	
+
 	// Configuration
-	maxRetries   int
-	retryDelay   time.Duration
-	bufferSize   int
-	timeout      time.Duration
-	
+	maxRetries int
+	retryDelay time.Duration
+	bufferSize int
+	timeout    time.Duration
+
 	// State management
 	ctx    context.Context
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
-	
+
 	// Memory management
-	memoryLimit    int64
-	currentMemory  int64
-	backpressure   bool
-	rateLimiter    *RateLimiter
+	memoryLimit   int64
+	currentMemory int64
+	backpressure  bool
+	rateLimiter   *RateLimiter
 }
 
 // resourceWorker represents a single worker goroutine
@@ -70,48 +70,48 @@ type resourceWorker struct {
 
 // workerStats holds statistics for a worker
 type workerStats struct {
-	processed   int64
-	errors      int64
-	totalTime   time.Duration
-	lastActive  time.Time
-	mu          sync.RWMutex
+	processed  int64
+	errors     int64
+	totalTime  time.Duration
+	lastActive time.Time
+	mu         sync.RWMutex
 }
 
 // RateLimiter controls the rate of processing
 type RateLimiter struct {
-	rate    int
-	burst   int
-	tokens  chan struct{}
-	ticker  *time.Ticker
-	stop    chan struct{}
+	rate   int
+	burst  int
+	tokens chan struct{}
+	ticker *time.Ticker
+	stop   chan struct{}
 }
 
 // NewResourceProcessor creates a new resource processor with worker pool
 func NewResourceProcessor(opts ...ProcessorOption) *ResourceProcessor {
 	// Default configuration
 	p := &ResourceProcessor{
-		workerCount:  runtime.NumCPU(),
-		bufferSize:   100,
-		maxRetries:   3,
-		retryDelay:   100 * time.Millisecond,
-		timeout:      30 * time.Second,
-		memoryLimit:  100 * 1024 * 1024, // 100MB
-		rateLimiter:  NewRateLimiter(1000, 100), // 1000 ops/sec, burst 100
+		workerCount: runtime.NumCPU(),
+		bufferSize:  100,
+		maxRetries:  3,
+		retryDelay:  100 * time.Millisecond,
+		timeout:     30 * time.Second,
+		memoryLimit: 100 * 1024 * 1024,         // 100MB
+		rateLimiter: NewRateLimiter(1000, 100), // 1000 ops/sec, burst 100
 	}
-	
+
 	// Apply options
 	for _, opt := range opts {
 		opt(p)
 	}
-	
+
 	// Initialize channels
 	p.inputChan = make(chan RawResource, p.bufferSize)
 	p.outputChan = make(chan ProcessingResult, p.bufferSize)
 	p.errorChan = make(chan error, p.bufferSize)
-	
+
 	// Create context
 	p.ctx, p.cancel = context.WithCancel(context.Background())
-	
+
 	// Initialize workers
 	p.workers = make([]*resourceWorker, p.workerCount)
 	for i := 0; i < p.workerCount; i++ {
@@ -120,7 +120,7 @@ func NewResourceProcessor(opts ...ProcessorOption) *ResourceProcessor {
 			processor: p,
 		}
 	}
-	
+
 	return p
 }
 
@@ -186,22 +186,22 @@ func (p *ResourceProcessor) Start(ctx context.Context) error {
 	if p.processingFunc == nil {
 		return fmt.Errorf("processing function must be set")
 	}
-	
+
 	// Start rate limiter
 	if p.rateLimiter != nil {
 		p.rateLimiter.Start()
 	}
-	
+
 	// Start workers
 	for i := 0; i < p.workerCount; i++ {
 		p.wg.Add(1)
 		go p.worker(ctx, i)
 	}
-	
+
 	// Start memory monitor
 	p.wg.Add(1)
 	go p.memoryMonitor(ctx)
-	
+
 	return nil
 }
 
@@ -209,17 +209,17 @@ func (p *ResourceProcessor) Start(ctx context.Context) error {
 func (p *ResourceProcessor) Stop() error {
 	// Cancel context
 	p.cancel()
-	
+
 	// Close input channel
 	close(p.inputChan)
-	
+
 	// Wait for workers to finish
 	done := make(chan struct{})
 	go func() {
 		p.wg.Wait()
 		close(done)
 	}()
-	
+
 	// Wait for completion or timeout
 	select {
 	case <-done:
@@ -228,16 +228,16 @@ func (p *ResourceProcessor) Stop() error {
 		// Force shutdown
 		fmt.Println("Warning: Processor shutdown timed out")
 	}
-	
+
 	// Stop rate limiter
 	if p.rateLimiter != nil {
 		p.rateLimiter.Stop()
 	}
-	
+
 	// Close output channels
 	close(p.outputChan)
 	close(p.errorChan)
-	
+
 	return nil
 }
 
@@ -257,15 +257,15 @@ func (p *ResourceProcessor) ProcessResource(resource RawResource) error {
 func (p *ResourceProcessor) ProcessResources(resources []RawResource) ([]types.Resource, []error) {
 	var results []types.Resource
 	var errors []error
-	
+
 	// Start processor if not already running
 	if err := p.Start(p.ctx); err != nil {
 		return nil, []error{err}
 	}
-	
+
 	// Channel to collect results
 	resultChan := make(chan ProcessingResult, len(resources))
-	
+
 	// Send all resources for processing
 	for _, resource := range resources {
 		go func(r RawResource) {
@@ -274,7 +274,7 @@ func (p *ResourceProcessor) ProcessResources(resources []RawResource) ([]types.R
 			}
 		}(resource)
 	}
-	
+
 	// Collect results
 	processed := 0
 	for processed < len(resources) {
@@ -290,7 +290,7 @@ func (p *ResourceProcessor) ProcessResources(resources []RawResource) ([]types.R
 			return results, errors
 		}
 	}
-	
+
 	// Process collected results
 	for i := 0; i < len(resources); i++ {
 		result := <-resultChan
@@ -300,16 +300,16 @@ func (p *ResourceProcessor) ProcessResources(resources []RawResource) ([]types.R
 			results = append(results, *result.Resource)
 		}
 	}
-	
+
 	return results, errors
 }
 
 // worker processes resources from the input channel
 func (p *ResourceProcessor) worker(ctx context.Context, workerID int) {
 	defer p.wg.Done()
-	
+
 	worker := p.workers[workerID]
-	
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -318,26 +318,26 @@ func (p *ResourceProcessor) worker(ctx context.Context, workerID int) {
 			if !ok {
 				return
 			}
-			
+
 			// Apply rate limiting
 			if p.rateLimiter != nil {
 				if !p.rateLimiter.Allow() {
 					continue
 				}
 			}
-			
+
 			// Check backpressure
 			if p.backpressure {
 				time.Sleep(10 * time.Millisecond)
 				continue
 			}
-			
+
 			// Process resource with retries
 			result := p.processResourceWithRetries(resource, workerID)
-			
+
 			// Update worker stats
 			worker.updateStats(result)
-			
+
 			// Send result
 			select {
 			case p.outputChan <- result:
@@ -351,27 +351,27 @@ func (p *ResourceProcessor) worker(ctx context.Context, workerID int) {
 // processResourceWithRetries processes a resource with retry logic
 func (p *ResourceProcessor) processResourceWithRetries(resource RawResource, workerID int) ProcessingResult {
 	startTime := time.Now()
-	
+
 	var lastErr error
 	for attempt := 0; attempt <= p.maxRetries; attempt++ {
 		if attempt > 0 {
 			time.Sleep(p.retryDelay * time.Duration(attempt))
 		}
-		
+
 		// Process with timeout
 		ctx, cancel := context.WithTimeout(p.ctx, p.timeout)
 		result := p.processResourceWithTimeout(ctx, resource, workerID)
 		cancel()
-		
+
 		if result.Error == nil {
 			result.ProcessTime = time.Since(startTime)
 			atomic.AddInt64(&p.processedCount, 1)
 			return result
 		}
-		
+
 		lastErr = result.Error
 	}
-	
+
 	// All retries failed
 	atomic.AddInt64(&p.errorCount, 1)
 	return ProcessingResult{
@@ -384,7 +384,7 @@ func (p *ResourceProcessor) processResourceWithRetries(resource RawResource, wor
 // processResourceWithTimeout processes a resource with timeout
 func (p *ResourceProcessor) processResourceWithTimeout(ctx context.Context, resource RawResource, workerID int) ProcessingResult {
 	resultChan := make(chan ProcessingResult, 1)
-	
+
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -394,7 +394,7 @@ func (p *ResourceProcessor) processResourceWithTimeout(ctx context.Context, reso
 				}
 			}
 		}()
-		
+
 		processedResource, err := p.processingFunc(resource)
 		resultChan <- ProcessingResult{
 			Resource: processedResource,
@@ -402,7 +402,7 @@ func (p *ResourceProcessor) processResourceWithTimeout(ctx context.Context, reso
 			WorkerID: workerID,
 		}
 	}()
-	
+
 	select {
 	case result := <-resultChan:
 		return result
@@ -417,10 +417,10 @@ func (p *ResourceProcessor) processResourceWithTimeout(ctx context.Context, reso
 // memoryMonitor monitors memory usage and applies backpressure
 func (p *ResourceProcessor) memoryMonitor(ctx context.Context) {
 	defer p.wg.Done()
-	
+
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -428,10 +428,10 @@ func (p *ResourceProcessor) memoryMonitor(ctx context.Context) {
 		case <-ticker.C:
 			var m runtime.MemStats
 			runtime.ReadMemStats(&m)
-			
+
 			currentMemory := int64(m.Alloc)
 			atomic.StoreInt64(&p.currentMemory, currentMemory)
-			
+
 			// Apply backpressure if memory limit exceeded
 			if currentMemory > p.memoryLimit {
 				p.backpressure = true
@@ -447,10 +447,10 @@ func (p *ResourceProcessor) memoryMonitor(ctx context.Context) {
 func (w *resourceWorker) updateStats(result ProcessingResult) {
 	w.stats.mu.Lock()
 	defer w.stats.mu.Unlock()
-	
+
 	w.stats.lastActive = time.Now()
 	w.stats.totalTime += result.ProcessTime
-	
+
 	if result.Error != nil {
 		w.stats.errors++
 	} else {
@@ -462,29 +462,29 @@ func (w *resourceWorker) updateStats(result ProcessingResult) {
 func (p *ResourceProcessor) GetStats() ProcessingStats {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	
+
 	stats := ProcessingStats{
-		TotalProcessed:  atomic.LoadInt64(&p.processedCount),
-		TotalErrors:     atomic.LoadInt64(&p.errorCount),
-		WorkerCount:     p.workerCount,
-		CurrentMemory:   atomic.LoadInt64(&p.currentMemory),
-		MemoryLimit:     p.memoryLimit,
+		TotalProcessed:     atomic.LoadInt64(&p.processedCount),
+		TotalErrors:        atomic.LoadInt64(&p.errorCount),
+		WorkerCount:        p.workerCount,
+		CurrentMemory:      atomic.LoadInt64(&p.currentMemory),
+		MemoryLimit:        p.memoryLimit,
 		BackpressureActive: p.backpressure,
-		WorkerStats:     make([]WorkerStats, len(p.workers)),
+		WorkerStats:        make([]WorkerStats, len(p.workers)),
 	}
-	
+
 	for i, worker := range p.workers {
 		worker.stats.mu.RLock()
 		stats.WorkerStats[i] = WorkerStats{
-			WorkerID:    i,
-			Processed:   worker.stats.processed,
-			Errors:      worker.stats.errors,
-			TotalTime:   worker.stats.totalTime,
-			LastActive:  worker.stats.lastActive,
+			WorkerID:   i,
+			Processed:  worker.stats.processed,
+			Errors:     worker.stats.errors,
+			TotalTime:  worker.stats.totalTime,
+			LastActive: worker.stats.lastActive,
 		}
 		worker.stats.mu.RUnlock()
 	}
-	
+
 	return stats
 }
 
@@ -501,11 +501,11 @@ type ProcessingStats struct {
 
 // WorkerStats holds individual worker statistics
 type WorkerStats struct {
-	WorkerID    int
-	Processed   int64
-	Errors      int64
-	TotalTime   time.Duration
-	LastActive  time.Time
+	WorkerID   int
+	Processed  int64
+	Errors     int64
+	TotalTime  time.Duration
+	LastActive time.Time
 }
 
 // NewRateLimiter creates a new rate limiter
@@ -527,7 +527,7 @@ func (rl *RateLimiter) Start() {
 		default:
 		}
 	}
-	
+
 	// Start token refill
 	if rl.rate > 0 {
 		interval := time.Second / time.Duration(rl.rate)

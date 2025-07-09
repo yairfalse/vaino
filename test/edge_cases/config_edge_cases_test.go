@@ -43,7 +43,7 @@ output:
 			errorType:   "yaml_indentation_error",
 		},
 		{
-			name: "tabs_instead_of_spaces",
+			name:        "tabs_instead_of_spaces",
 			yamlContent: "storage:\n\tbase_path: /tmp/wgo\n\ttype: local\noutput:\n\tformat: table",
 			expectError: true,
 			errorType:   "yaml_tab_error",
@@ -90,7 +90,7 @@ level1:
 			errorType:   "",
 		},
 		{
-			name: "binary_data_in_yaml",
+			name:        "binary_data_in_yaml",
 			yamlContent: "storage:\n  base_path: \x00\x01\x02\x03",
 			expectError: true,
 			errorType:   "binary_data_error",
@@ -101,7 +101,7 @@ level1:
 		t.Run(tt.name, func(t *testing.T) {
 			tempDir := t.TempDir()
 			configFile := filepath.Join(tempDir, "config.yaml")
-			
+
 			err := os.WriteFile(configFile, []byte(tt.yamlContent), 0644)
 			if err != nil {
 				t.Fatalf("Failed to write test config: %v", err)
@@ -132,9 +132,9 @@ level1:
 // TestMissingRequiredFields tests scenarios where required configuration fields are missing
 func TestMissingRequiredFields(t *testing.T) {
 	tests := []struct {
-		name        string
-		config      map[string]interface{}
-		expectError bool
+		name         string
+		config       map[string]interface{}
+		expectError  bool
 		missingField string
 	}{
 		{
@@ -231,9 +231,9 @@ func TestMissingRequiredFields(t *testing.T) {
 // TestInvalidFieldTypes tests scenarios with incorrect field types
 func TestInvalidFieldTypes(t *testing.T) {
 	tests := []struct {
-		name        string
-		config      map[string]interface{}
-		expectError bool
+		name         string
+		config       map[string]interface{}
+		expectError  bool
 		invalidField string
 	}{
 		{
@@ -555,7 +555,7 @@ func TestConfigurationOverrides(t *testing.T) {
 
 			// Simulate merging configs
 			finalConfig := make(map[string]interface{})
-			
+
 			// Start with base
 			for k, v := range tt.baseConfig {
 				finalConfig[k] = v
@@ -612,7 +612,7 @@ storage:
 	t.Run("detect_circular_reference", func(t *testing.T) {
 		// Simulate a config loader that detects circular references
 		visited := make(map[string]bool)
-		
+
 		err := checkCircularReference(file1, visited)
 		if err == nil {
 			t.Error("Expected circular reference detection to fail but it didn't")
@@ -682,7 +682,7 @@ func validateFieldTypes(config map[string]interface{}) error {
 					return fmt.Errorf("output.format must be a string")
 				}
 			}
-			
+
 			// Check output.pretty is boolean if it exists
 			if pretty, exists := outputMap["pretty"]; exists {
 				if _, ok := pretty.(bool); !ok {
@@ -701,7 +701,7 @@ func mergeConfig(base, override map[string]interface{}) error {
 			// Check for type conflicts
 			baseType := fmt.Sprintf("%T", baseValue)
 			overrideType := fmt.Sprintf("%T", value)
-			
+
 			if baseType != overrideType {
 				// Special case: both are maps
 				if baseMap, ok := baseValue.(map[string]interface{}); ok {
@@ -722,28 +722,28 @@ func checkCircularReference(file string, visited map[string]bool) error {
 	if visited[file] {
 		return fmt.Errorf("circular reference detected: %s", file)
 	}
-	
+
 	visited[file] = true
-	
+
 	// Read file and look for includes (simplified)
 	content, err := os.ReadFile(file)
 	if err != nil {
 		return err
 	}
-	
+
 	lines := strings.Split(string(content), "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "include:") {
 			includedFile := strings.TrimSpace(strings.TrimPrefix(line, "include:"))
 			includedFile = filepath.Join(filepath.Dir(file), includedFile)
-			
+
 			if err := checkCircularReference(includedFile, visited); err != nil {
 				return err
 			}
 		}
 	}
-	
+
 	delete(visited, file) // Remove from visited when done
 	return nil
 }

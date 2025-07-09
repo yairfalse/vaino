@@ -42,7 +42,7 @@ func TestLargeDatasetScaling(t *testing.T) {
 			stateFile := filepath.Join(tmpDir, "large-dataset.tfstate")
 
 			t.Logf("Creating %s with %d resources...", dataset.name, dataset.resourceCount)
-			
+
 			// Create large state file
 			state := createMegaTestState(dataset.resourceCount)
 			data, err := json.MarshalIndent(state, "", "  ")
@@ -59,7 +59,7 @@ func TestLargeDatasetScaling(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to stat file: %v", err)
 			}
-			
+
 			actualSizeMB := float64(stat.Size()) / (1024 * 1024)
 			t.Logf("File size: %.2f MB (expected ~%.2f MB)", actualSizeMB, dataset.expectedSizeMB)
 
@@ -100,7 +100,7 @@ func TestLargeDatasetScaling(t *testing.T) {
 			// Memory analysis
 			memUsed := afterMem.HeapAlloc - beforeMem.HeapAlloc
 			memUsedMB := float64(memUsed) / (1024 * 1024)
-			
+
 			t.Logf("Performance results:")
 			t.Logf("  - Processing time: %v (limit: %v)", processingTime, dataset.maxProcessTime)
 			t.Logf("  - Memory used: %.2f MB", memUsedMB)
@@ -123,10 +123,10 @@ func TestMegaFileParsing(t *testing.T) {
 	}
 
 	megaFiles := []struct {
-		name           string
-		resourceCount  int
-		targetSizeMB   int
-		maxParseTime   time.Duration
+		name          string
+		resourceCount int
+		targetSizeMB  int
+		maxParseTime  time.Duration
 	}{
 		{"mega_100MB", 50000, 100, 3 * time.Minute},
 		{"mega_200MB", 100000, 200, 6 * time.Minute},
@@ -156,7 +156,7 @@ func TestMegaFileParsing(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to stat mega file: %v", err)
 			}
-			
+
 			actualSizeMB := float64(stat.Size()) / (1024 * 1024)
 			t.Logf("Mega file created: %.2f MB", actualSizeMB)
 
@@ -215,10 +215,10 @@ func TestMultiFileProcessing(t *testing.T) {
 	}
 
 	scenarios := []struct {
-		name           string
-		fileCount      int
+		name             string
+		fileCount        int
 		resourcesPerFile int
-		maxProcessTime time.Duration
+		maxProcessTime   time.Duration
 	}{
 		{"many_small_files", 100, 100, 30 * time.Second},
 		{"medium_files", 50, 1000, 1 * time.Minute},
@@ -229,21 +229,21 @@ func TestMultiFileProcessing(t *testing.T) {
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
-			
+
 			t.Logf("Creating %d files with %d resources each...", scenario.fileCount, scenario.resourcesPerFile)
-			
+
 			// Create multiple state files
 			stateFiles := make([]string, scenario.fileCount)
 			for i := 0; i < scenario.fileCount; i++ {
 				stateFile := filepath.Join(tmpDir, fmt.Sprintf("state-%d.tfstate", i))
 				stateFiles[i] = stateFile
-				
+
 				state := createMegaTestState(scenario.resourcesPerFile)
 				data, err := json.MarshalIndent(state, "", "  ")
 				if err != nil {
 					t.Fatalf("Failed to marshal state %d: %v", i, err)
 				}
-				
+
 				if err := os.WriteFile(stateFile, data, 0644); err != nil {
 					t.Fatalf("Failed to write state file %d: %v", i, err)
 				}
@@ -313,10 +313,10 @@ func TestDifferPerformanceAtScale(t *testing.T) {
 	}
 
 	scaleTests := []struct {
-		name           string
-		resourceCount  int
-		changePercent  int
-		maxDiffTime    time.Duration
+		name          string
+		resourceCount int
+		changePercent int
+		maxDiffTime   time.Duration
 	}{
 		{"small_scale_10_percent", 1000, 10, 1 * time.Second},
 		{"medium_scale_5_percent", 5000, 5, 5 * time.Second},
@@ -391,20 +391,20 @@ func TestDifferPerformanceAtScale(t *testing.T) {
 
 func createRichMegaTestState(resourceCount int) *terraform.TerraformState {
 	state := createMegaTestState(resourceCount)
-	
+
 	// Enrich with more data to increase file size
 	for i := range state.Resources {
 		resource := &state.Resources[i]
 		instance := &resource.Instances[0]
-		
+
 		// Add large configuration blocks
 		instance.Attributes["large_config"] = map[string]interface{}{
 			"description": fmt.Sprintf("This is a very long description for resource %d. It contains detailed information about the resource configuration, its purpose, dependencies, and other metadata that might be stored in real-world Terraform state files. This helps us create larger file sizes for testing purposes.", i),
 			"metadata": map[string]interface{}{
-				"created_by": "terraform",
-				"created_at": "2023-01-01T00:00:00Z",
-				"updated_at": "2023-12-01T00:00:00Z",
-				"version": "1.0.0",
+				"created_by":    "terraform",
+				"created_at":    "2023-01-01T00:00:00Z",
+				"updated_at":    "2023-12-01T00:00:00Z",
+				"version":       "1.0.0",
 				"documentation": "https://example.com/docs/resource/" + fmt.Sprintf("%d", i),
 			},
 			"complex_config": map[string]interface{}{
@@ -413,13 +413,13 @@ func createRichMegaTestState(resourceCount int) *terraform.TerraformState {
 				"policies": make(map[string]interface{}),
 			},
 		}
-		
+
 		// Add complex settings
 		settings := instance.Attributes["large_config"].(map[string]interface{})["complex_config"].(map[string]interface{})["settings"].(map[string]interface{})
 		for j := 0; j < 20; j++ {
 			settings[fmt.Sprintf("setting_%d", j)] = fmt.Sprintf("value_%d_%d", i, j)
 		}
-		
+
 		// Add rules array
 		complexConfig := instance.Attributes["large_config"].(map[string]interface{})["complex_config"].(map[string]interface{})
 		rulesSlice := complexConfig["rules"].([]interface{})
@@ -437,20 +437,20 @@ func createRichMegaTestState(resourceCount int) *terraform.TerraformState {
 		}
 		complexConfig["rules"] = rulesSlice
 	}
-	
+
 	return state
 }
 
 func createLargeSnapshot(id string, resourceCount int) *types.Snapshot {
 	resources := make([]types.Resource, resourceCount)
 	now := time.Now()
-	
+
 	for i := 0; i < resourceCount; i++ {
 		resources[i] = types.Resource{
-			ID:       fmt.Sprintf("resource-%d", i),
-			Type:     fmt.Sprintf("type-%d", i%10),
-			Name:     fmt.Sprintf("resource-name-%d", i),
-			Provider: "test-provider",
+			ID:        fmt.Sprintf("resource-%d", i),
+			Type:      fmt.Sprintf("type-%d", i%10),
+			Name:      fmt.Sprintf("resource-name-%d", i),
+			Provider:  "test-provider",
 			Namespace: fmt.Sprintf("namespace-%d", i%5),
 			Configuration: map[string]interface{}{
 				"index":  i,
@@ -462,7 +462,7 @@ func createLargeSnapshot(id string, resourceCount int) *types.Snapshot {
 			},
 		}
 	}
-	
+
 	return &types.Snapshot{
 		ID:        id,
 		Timestamp: now,
@@ -473,7 +473,7 @@ func createLargeSnapshot(id string, resourceCount int) *types.Snapshot {
 
 func createLargeSnapshotWithChanges(id string, resourceCount int, changePercent int) *types.Snapshot {
 	snapshot := createLargeSnapshot(id, resourceCount)
-	
+
 	// Modify specified percentage of resources
 	changeCount := (resourceCount * changePercent) / 100
 	for i := 0; i < changeCount; i++ {
@@ -481,15 +481,15 @@ func createLargeSnapshotWithChanges(id string, resourceCount int, changePercent 
 		if resourceIndex >= len(snapshot.Resources) {
 			break
 		}
-		
+
 		resource := &snapshot.Resources[resourceIndex]
 		resource.Configuration["modified"] = true
 		resource.Configuration["config"] = fmt.Sprintf("modified-config-value-%d", resourceIndex)
-		
+
 		if tags, ok := resource.Configuration["tags"].(map[string]interface{}); ok {
 			tags["Modified"] = "true"
 		}
 	}
-	
+
 	return snapshot
 }

@@ -45,20 +45,20 @@ type WGOError struct {
 // Error implements the error interface
 func (e *WGOError) Error() string {
 	var sb strings.Builder
-	
+
 	// Main error message
 	sb.WriteString(fmt.Sprintf("\nError: %s\n", e.Message))
-	
+
 	// Cause if available
 	if e.Cause != "" {
 		sb.WriteString(fmt.Sprintf("Cause: %s\n", e.Cause))
 	}
-	
+
 	// Environment context
 	if e.Environment != "" {
 		sb.WriteString(fmt.Sprintf("Environment: %s\n", e.Environment))
 	}
-	
+
 	// Solutions
 	if len(e.Solutions) > 0 {
 		sb.WriteString("\nSolutions:\n")
@@ -66,17 +66,17 @@ func (e *WGOError) Error() string {
 			sb.WriteString(fmt.Sprintf("  %s\n", solution))
 		}
 	}
-	
+
 	// Verification step
 	if e.Verify != "" {
 		sb.WriteString(fmt.Sprintf("\nVerify: %s\n", e.Verify))
 	}
-	
+
 	// Help command
 	if e.Help != "" {
 		sb.WriteString(fmt.Sprintf("Help: %s\n", e.Help))
 	}
-	
+
 	return sb.String()
 }
 
@@ -138,17 +138,17 @@ func detectEnvironment() string {
 			return "CI/CD detected"
 		}
 	}
-	
+
 	// Check for container environment
 	if _, err := os.Stat("/.dockerenv"); err == nil {
 		return "Container environment detected"
 	}
-	
+
 	// Check for cloud shell
 	if os.Getenv("CLOUD_SHELL") == "true" || os.Getenv("GOOGLE_CLOUD_SHELL") == "true" {
 		return "Cloud Shell detected"
 	}
-	
+
 	// Default to development workstation
 	return "Development workstation detected"
 }
@@ -165,7 +165,7 @@ func GetExitCode(err error) int {
 	if !ok {
 		return 1 // Generic error
 	}
-	
+
 	switch wgoErr.Type {
 	case ErrorTypeAuthentication:
 		return 77 // EX_NOPERM

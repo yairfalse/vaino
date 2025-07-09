@@ -235,11 +235,11 @@ func NewSmartResourceMatcher() *SmartResourceMatcher {
 // Match uses multiple strategies to find the best matches
 func (m *SmartResourceMatcher) Match(baseline, current []types.Resource) (map[string]string, []types.Resource, []types.Resource) {
 	matches := make(map[string]string)
-	
+
 	// Apply strategies in order of priority
 	for _, strategy := range m.strategies {
 		strategyMatches := strategy.match(baseline, current)
-		
+
 		// Merge non-conflicting matches
 		for baselineID, currentID := range strategyMatches {
 			if _, exists := matches[baselineID]; !exists {
@@ -339,7 +339,7 @@ func (s *configurationMatchingStrategy) match(baseline, current []types.Resource
 		for _, currentResource := range current {
 			if baselineResource.Type == currentResource.Type &&
 				baselineResource.Provider == currentResource.Provider {
-				
+
 				score := s.calculateConfigSimilarity(baselineResource.Configuration, currentResource.Configuration)
 				if score > bestScore && score > 0.8 {
 					bestScore = score
