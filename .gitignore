@@ -46,3 +46,57 @@ kubeconfig*
 *.swo
 *~
 .DS_Store
+
+# OS files
+Thumbs.db
+.DS_Store
+*.tmp
+*.temp
+*.log
+*.bak
+*.backup
+*.orig
+*.save
+
+# Development artifacts
+debug
+debug.*
+.debug
+*.debug
+.air/
+.air.toml.local
+
+# Performance and benchmarking
+*.bench
+*.benchstat
+*.pprof
+*.trace
+performance-results/archive/
+performance-results/raw/
+
+# Snapshots and cache
+snapshots/
+.cache/
+cache/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+terraform.tfvars.json
+*.tfplan
+
+# Docker
+.dockerignore
+Dockerfile.local
+docker-compose.override.yml
+
+# Misc
+*.pid
+*.seed
+*.tgz
+*.tar.gz
+*.zip
+.nyc_output
+.sass-cache/
