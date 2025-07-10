@@ -86,4 +86,33 @@ exit 0
 EOF
 chmod 755 "${BUILD_DIR}/DEBIAN/prerm"
 
-echo "DEB package structure created successfully"
+# Copy binary
+if [[ -f "wgo" ]]; then
+    cp wgo "${BUILD_DIR}/usr/bin/"
+    chmod 755 "${BUILD_DIR}/usr/bin/wgo"
+else
+    echo "Error: wgo binary not found. Please build it first."
+    exit 1
+fi
+
+# Copy documentation
+if [[ -f "README.md" ]]; then
+    cp README.md "${BUILD_DIR}/usr/share/doc/${PACKAGE_NAME}/"
+fi
+
+if [[ -f "LICENSE" ]]; then
+    cp LICENSE "${BUILD_DIR}/usr/share/doc/${PACKAGE_NAME}/"
+fi
+
+# Generate and copy completions
+if [[ -f "wgo" ]]; then
+    ./wgo completion bash > "${BUILD_DIR}/usr/share/bash-completion/completions/wgo" 2>/dev/null || echo "Warning: Failed to generate bash completion"
+    ./wgo completion zsh > "${BUILD_DIR}/usr/share/zsh/site-functions/_wgo" 2>/dev/null || echo "Warning: Failed to generate zsh completion"
+    ./wgo completion fish > "${BUILD_DIR}/usr/share/fish/vendor_completions.d/wgo.fish" 2>/dev/null || echo "Warning: Failed to generate fish completion"
+fi
+
+# Build the package
+echo "Building DEB package..."
+dpkg-deb --build "${BUILD_DIR}" "${PACKAGE_NAME}_${VERSION}_${ARCH}.deb"
+
+echo "DEB package built successfully: ${PACKAGE_NAME}_${VERSION}_${ARCH}.deb"

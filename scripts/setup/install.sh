@@ -170,6 +170,54 @@ try_package_manager_install() {
     return 1
 }
 
+# Verify file checksum
+verify_checksum() {
+    local file=$1
+    local checksum_file=$2
+    
+    log_info "Verifying file integrity..."
+    
+    # Check if sha256sum is available
+    if command_exists sha256sum; then
+        local file_hash=$(sha256sum "$file" | cut -d' ' -f1)
+        local expected_hash=$(grep "$(basename "$file")" "$checksum_file" | cut -d' ' -f1)
+        
+        if [[ -z "$expected_hash" ]]; then
+            log_warn "Checksum not found for $(basename "$file"), skipping verification"
+            return 0
+        fi
+        
+        if [[ "$file_hash" == "$expected_hash" ]]; then
+            log_success "File integrity verified ✓"
+        else
+            log_error "Checksum verification failed!"
+            log_error "Expected: $expected_hash"
+            log_error "Got:      $file_hash"
+            exit 1
+        fi
+    elif command_exists shasum; then
+        # macOS alternative
+        local file_hash=$(shasum -a 256 "$file" | cut -d' ' -f1)
+        local expected_hash=$(grep "$(basename "$file")" "$checksum_file" | cut -d' ' -f1)
+        
+        if [[ -z "$expected_hash" ]]; then
+            log_warn "Checksum not found for $(basename "$file"), skipping verification"
+            return 0
+        fi
+        
+        if [[ "$file_hash" == "$expected_hash" ]]; then
+            log_success "File integrity verified ✓"
+        else
+            log_error "Checksum verification failed!"
+            log_error "Expected: $expected_hash"
+            log_error "Got:      $file_hash"
+            exit 1
+        fi
+    else
+        log_warn "sha256sum/shasum not available, skipping checksum verification"
+    fi
+}
+
 # Download and install binary directly
 install_binary() {
     local os=$1
@@ -182,11 +230,21 @@ install_binary() {
     local ext=""
     [[ "$os" == "windows" ]] && ext=".zip" || ext=".tar.gz"
     
+    # Map OS names to match GoReleaser format (capitalized)
+    local download_os=""
+    case "$os" in
+        linux)   download_os="Linux" ;;
+        darwin)  download_os="Darwin" ;;
+        windows) download_os="Windows" ;;
+    esac
+    
     # Map architecture names for download
     local download_arch="$arch"
     
-    local url="https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$version/${REPO_NAME}_${os}_${download_arch}${ext}"
+    local url="https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$version/${REPO_NAME}_${download_os}_${download_arch}${ext}"
     local download_file="$TEMP_DIR/vaino${ext}"
+    local checksum_url="https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$version/checksums.txt"
+    local checksum_file="$TEMP_DIR/checksums.txt"
     
     log_info "Downloading from: $url"
     
@@ -194,6 +252,14 @@ install_binary() {
     if ! curl -fsSL "$url" -o "$download_file"; then
         log_error "Failed to download VAINO"
         exit 1
+    fi
+    
+    # Download checksums for verification
+    log_info "Downloading checksums for verification..."
+    if ! curl -fsSL "$checksum_url" -o "$checksum_file"; then
+        log_warn "Failed to download checksums, skipping verification"
+    else
+        verify_checksum "$download_file" "$checksum_file"
     fi
     
     # Extract based on file type
