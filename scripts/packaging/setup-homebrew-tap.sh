@@ -4,7 +4,7 @@
 set -e
 
 REPO_OWNER="yairfalse"
-REPO_NAME="homebrew-wgo"
+REPO_NAME="homebrew-vaino"
 
 echo "🍺 Setting up Homebrew Tap Repository"
 echo "====================================="
@@ -12,7 +12,7 @@ echo "====================================="
 # Create repository if it doesn't exist
 if ! gh repo view "$REPO_OWNER/$REPO_NAME" >/dev/null 2>&1; then
     echo "Creating Homebrew tap repository..."
-    gh repo create "$REPO_OWNER/$REPO_NAME" --public --description "Homebrew tap for WGO"
+    gh repo create "$REPO_OWNER/$REPO_NAME" --public --description "Homebrew tap for VAINO"
     echo "Repository created: https://github.com/$REPO_OWNER/$REPO_NAME"
 else
     echo "Repository already exists: https://github.com/$REPO_OWNER/$REPO_NAME"
@@ -20,26 +20,26 @@ fi
 
 # Create initial README
 cat > /tmp/README.md << 'EOF'
-# WGO Homebrew Tap
+# VAINO Homebrew Tap
 
-This is the official Homebrew tap for WGO (What's Going On).
+This is the official Homebrew tap for VAINO (What's Going On).
 
 ## Installation
 
 ```bash
-brew tap yairfalse/wgo
-brew install wgo
+brew tap yairfalse/vaino
+brew install vaino
 ```
 
 ## Available Formulas
 
-- `wgo` - Git diff for infrastructure
+- `vaino` - Git diff for infrastructure
 
 ## Repository
 
 This tap is automatically updated when new releases are published.
 
-For more information, visit: https://github.com/yairfalse/wgo
+For more information, visit: https://github.com/yairfalse/vaino
 EOF
 
 echo "Setup complete! Next steps:"

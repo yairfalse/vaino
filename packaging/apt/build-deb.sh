@@ -87,11 +87,11 @@ EOF
 chmod 755 "${BUILD_DIR}/DEBIAN/prerm"
 
 # Copy binary
-if [[ -f "wgo" ]]; then
-    cp wgo "${BUILD_DIR}/usr/bin/"
-    chmod 755 "${BUILD_DIR}/usr/bin/wgo"
+if [[ -f "vaino" ]]; then
+    cp vaino "${BUILD_DIR}/usr/bin/"
+    chmod 755 "${BUILD_DIR}/usr/bin/vaino"
 else
-    echo "Error: wgo binary not found. Please build it first."
+    echo "Error: vaino binary not found. Please build it first."
     exit 1
 fi
 
@@ -105,10 +105,10 @@ if [[ -f "LICENSE" ]]; then
 fi
 
 # Generate and copy completions
-if [[ -f "wgo" ]]; then
-    ./wgo completion bash > "${BUILD_DIR}/usr/share/bash-completion/completions/wgo" 2>/dev/null || echo "Warning: Failed to generate bash completion"
-    ./wgo completion zsh > "${BUILD_DIR}/usr/share/zsh/site-functions/_wgo" 2>/dev/null || echo "Warning: Failed to generate zsh completion"
-    ./wgo completion fish > "${BUILD_DIR}/usr/share/fish/vendor_completions.d/wgo.fish" 2>/dev/null || echo "Warning: Failed to generate fish completion"
+if [[ -f "vaino" ]]; then
+    ./vaino completion bash > "${BUILD_DIR}/usr/share/bash-completion/completions/vaino" 2>/dev/null || echo "Warning: Failed to generate bash completion"
+    ./vaino completion zsh > "${BUILD_DIR}/usr/share/zsh/site-functions/_vaino" 2>/dev/null || echo "Warning: Failed to generate zsh completion"
+    ./vaino completion fish > "${BUILD_DIR}/usr/share/fish/vendor_completions.d/vaino.fish" 2>/dev/null || echo "Warning: Failed to generate fish completion"
 fi
 
 # Build the package

@@ -135,7 +135,7 @@ Examples:
 }
 
 var troubleshootingHelp = `
-WGO Troubleshooting Guide
+VAINO Troubleshooting Guide
 ========================
 
 Quick Diagnostics:
@@ -179,7 +179,7 @@ Getting Help:
   vaino <command> --help          # Command-specific help
 
 Report Issues:
-  https://github.com/anthropics/wgo/issues
+  https://github.com/yairfalse/vaino/issues
 `
 
 // newHelpCommand creates the help command
@@ -187,7 +187,7 @@ func newHelpCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "help [topic]",
 		Short: "Get help on specific topics",
-		Long: `Get detailed help on WGO topics including provider setup,
+		Long: `Get detailed help on VAINO topics including provider setup,
 troubleshooting, and best practices.`,
 		Example: `  vaino help providers          # List all provider guides
   vaino help gcp                 # GCP-specific help

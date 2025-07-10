@@ -20,15 +20,15 @@ func TestCorrelationSystemWorkflow(t *testing.T) {
 	}
 
 	// Build vaino binary for testing
-	wgoBinary := buildWGOBinary(t)
-	defer os.Remove(wgoBinary)
+	vainoBinary := buildVainoBinary(t)
+	defer os.Remove(vainoBinary)
 
 	// Create test snapshots
 	baselineSnapshot := createBaselineSnapshot(t)
 	scalingSnapshot := createScalingSnapshot(t, baselineSnapshot)
 
 	// Test correlation detection
-	output, err := runWGOCommand(t, wgoBinary, "changes",
+	output, err := runVainoCommand(t, vainoBinary, "changes",
 		"--from", baselineSnapshot,
 		"--to", scalingSnapshot,
 		"--correlated")
@@ -61,8 +61,8 @@ func TestTimelineSystemWorkflow(t *testing.T) {
 		t.Skip("Skipping system test in short mode")
 	}
 
-	wgoBinary := buildWGOBinary(t)
-	defer os.Remove(wgoBinary)
+	vainoBinary := buildVainoBinary(t)
+	defer os.Remove(vainoBinary)
 
 	// Create test snapshots with time progression
 	snapshot1 := createTimelineSnapshot1(t)
@@ -70,7 +70,7 @@ func TestTimelineSystemWorkflow(t *testing.T) {
 	snapshot3 := createTimelineSnapshot3(t)
 
 	// Test timeline visualization
-	output, err := runWGOCommand(t, wgoBinary, "changes",
+	output, err := runVainoCommand(t, vainoBinary, "changes",
 		"--from", snapshot1,
 		"--to", snapshot3,
 		"--timeline")
@@ -105,14 +105,14 @@ func TestCorrelationAccuracy(t *testing.T) {
 		t.Skip("Skipping system test in short mode")
 	}
 
-	wgoBinary := buildWGOBinary(t)
-	defer os.Remove(wgoBinary)
+	vainoBinary := buildVainoBinary(t)
+	defer os.Remove(vainoBinary)
 
 	// Test scenario: Scaling + Config change (should NOT be correlated)
 	baselineSnapshot := createBaselineSnapshot(t)
 	mixedChangesSnapshot := createMixedChangesSnapshot(t, baselineSnapshot)
 
-	output, err := runWGOCommand(t, wgoBinary, "changes",
+	output, err := runVainoCommand(t, vainoBinary, "changes",
 		"--from", baselineSnapshot,
 		"--to", mixedChangesSnapshot,
 		"--correlated")
@@ -143,8 +143,8 @@ func TestConfidenceLevels(t *testing.T) {
 		t.Skip("Skipping system test in short mode")
 	}
 
-	wgoBinary := buildWGOBinary(t)
-	defer os.Remove(wgoBinary)
+	vainoBinary := buildVainoBinary(t)
+	defer os.Remove(vainoBinary)
 
 	tests := []struct {
 		name               string
@@ -177,7 +177,7 @@ func TestConfidenceLevels(t *testing.T) {
 			baselineSnapshot := createBaselineSnapshot(t)
 			testSnapshot := tt.snapshotFunc(t, baselineSnapshot)
 
-			output, err := runWGOCommand(t, wgoBinary, "changes",
+			output, err := runVainoCommand(t, vainoBinary, "changes",
 				"--from", baselineSnapshot,
 				"--to", testSnapshot,
 				"--correlated")
@@ -199,15 +199,15 @@ func TestLargeScaleCorrelation(t *testing.T) {
 		t.Skip("Skipping system test in short mode")
 	}
 
-	wgoBinary := buildWGOBinary(t)
-	defer os.Remove(wgoBinary)
+	vainoBinary := buildVainoBinary(t)
+	defer os.Remove(vainoBinary)
 
 	// Create snapshot with 50+ resources
 	baselineSnapshot := createLargeBaselineSnapshot(t, 50)
 	largeChangesSnapshot := createLargeChangesSnapshot(t, baselineSnapshot, 20)
 
 	start := time.Now()
-	output, err := runWGOCommand(t, wgoBinary, "changes",
+	output, err := runVainoCommand(t, vainoBinary, "changes",
 		"--from", baselineSnapshot,
 		"--to", largeChangesSnapshot,
 		"--correlated")
@@ -240,13 +240,13 @@ func TestJSONOutput(t *testing.T) {
 		t.Skip("Skipping system test in short mode")
 	}
 
-	wgoBinary := buildWGOBinary(t)
-	defer os.Remove(wgoBinary)
+	vainoBinary := buildVainoBinary(t)
+	defer os.Remove(vainoBinary)
 
 	baselineSnapshot := createBaselineSnapshot(t)
 	scalingSnapshot := createScalingSnapshot(t, baselineSnapshot)
 
-	output, err := runWGOCommand(t, wgoBinary, "changes",
+	output, err := runVainoCommand(t, vainoBinary, "changes",
 		"--from", baselineSnapshot,
 		"--to", scalingSnapshot,
 		"--output", "json")
@@ -273,21 +273,21 @@ func TestJSONOutput(t *testing.T) {
 
 // Helper functions
 
-func buildWGOBinary(t *testing.T) string {
+func buildVainoBinary(t *testing.T) string {
 	t.Helper()
 
 	tmpDir := t.TempDir()
-	binary := filepath.Join(tmpDir, "wgo")
+	binary := filepath.Join(tmpDir, "vaino")
 
 	cmd := exec.Command("go", "build", "-o", binary, "../../cmd/vaino")
 	if err := cmd.Run(); err != nil {
-		t.Fatalf("Failed to build wgo: %v", err)
+		t.Fatalf("Failed to build vaino: %v", err)
 	}
 
 	return binary
 }
 
-func runWGOCommand(t *testing.T, binary string, args ...string) (string, error) {
+func runVainoCommand(t *testing.T, binary string, args ...string) (string, error) {
 	t.Helper()
 
 	cmd := exec.Command(binary, args...)

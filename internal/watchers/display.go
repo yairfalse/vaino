@@ -174,7 +174,7 @@ func (w *Watcher) displayWatchHeader() {
 	}
 
 	fmt.Printf("\nPress Ctrl+C to stop watching\n")
-	fmt.Printf(strings.Repeat("─", 50) + "\n\n")
+	fmt.Print(strings.Repeat("─", 50) + "\n\n")
 }
 
 // displayStatistics shows periodic statistics (called every N intervals)

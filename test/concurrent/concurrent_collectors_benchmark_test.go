@@ -47,13 +47,13 @@ func BenchmarkSequentialVsConcurrentScanning(b *testing.B) {
 	})
 
 	b.Run("Concurrent", func(b *testing.B) {
-		scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-		defer scanner.Close()
+		concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+		defer concurrentScanner.Close()
 
 		// Register providers
-		scanner.RegisterProvider("aws", aws.NewAWSCollector())
-		scanner.RegisterProvider("gcp", gcp.NewGCPCollector())
-		scanner.RegisterProvider("kubernetes", kubernetes.NewKubernetesCollector())
+		concurrentScanner.RegisterProvider("aws", aws.NewAWSCollector())
+		concurrentScanner.RegisterProvider("gcp", gcp.NewGCPCollector())
+		concurrentScanner.RegisterProvider("kubernetes", kubernetes.NewKubernetesCollector())
 
 		scanConfig := scanner.ScanConfig{
 			Providers: map[string]collectors.CollectorConfig{
@@ -69,7 +69,7 @@ func BenchmarkSequentialVsConcurrentScanning(b *testing.B) {
 		b.ResetTimer()
 
 		for i := 0; i < b.N; i++ {
-			_, _ = scanner.ScanAllProviders(ctx, scanConfig)
+			_, _ = concurrentScanner.ScanAllProviders(ctx, scanConfig)
 		}
 	})
 }
@@ -167,14 +167,14 @@ func BenchmarkConcurrentKubernetesCollection(b *testing.B) {
 
 func BenchmarkResourceMerging(b *testing.B) {
 	// Test resource merging performance
-	scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-	defer scanner.Close()
+	concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+	defer concurrentScanner.Close()
 
 	// Register multiple providers
 	for i := 0; i < 5; i++ {
 		providerName := fmt.Sprintf("provider-%d", i)
 		collector := NewMockConcurrentCollector(providerName, 10*time.Millisecond, false, 1000)
-		scanner.RegisterProvider(providerName, collector)
+		concurrentScanner.RegisterProvider(providerName, collector)
 	}
 
 	// Create scan configuration with many providers
@@ -198,7 +198,7 @@ func BenchmarkResourceMerging(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		result, err := scanner.ScanAllProviders(ctx, config)
+		result, err := concurrentScanner.ScanAllProviders(ctx, config)
 		if err != nil {
 			b.Fatalf("Scan failed: %v", err)
 		}
@@ -258,14 +258,14 @@ func BenchmarkConcurrentScanner_Scalability(b *testing.B) {
 
 	for _, workerCount := range workerCounts {
 		b.Run(fmt.Sprintf("Workers_%d", workerCount), func(b *testing.B) {
-			scanner := scanner.NewConcurrentScanner(workerCount, 30*time.Second)
-			defer scanner.Close()
+			concurrentScanner := scanner.NewConcurrentScanner(workerCount, 30*time.Second)
+			defer concurrentScanner.Close()
 
 			// Register providers
 			for i := 0; i < 10; i++ {
 				providerName := fmt.Sprintf("provider-%d", i)
 				collector := NewMockConcurrentCollector(providerName, 50*time.Millisecond, false, 10)
-				scanner.RegisterProvider(providerName, collector)
+				concurrentScanner.RegisterProvider(providerName, collector)
 			}
 
 			config := scanner.ScanConfig{
@@ -278,7 +278,7 @@ func BenchmarkConcurrentScanner_Scalability(b *testing.B) {
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
-				_, err := scanner.ScanAllProviders(ctx, config)
+				_, err := concurrentScanner.ScanAllProviders(ctx, config)
 				if err != nil {
 					b.Fatalf("Scan failed: %v", err)
 				}
@@ -295,12 +295,12 @@ func BenchmarkConcurrentScanner_LargeResourceCounts(b *testing.B) {
 
 	for _, resourceCount := range resourceCounts {
 		b.Run(fmt.Sprintf("Resources_%d", resourceCount), func(b *testing.B) {
-			scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-			defer scanner.Close()
+			concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+			defer concurrentScanner.Close()
 
 			// Register provider with large resource count
 			collector := NewMockConcurrentCollector("large-provider", 100*time.Millisecond, false, resourceCount)
-			scanner.RegisterProvider("large-provider", collector)
+			concurrentScanner.RegisterProvider("large-provider", collector)
 
 			config := scanner.ScanConfig{
 				Providers: map[string]collectors.CollectorConfig{
@@ -314,7 +314,7 @@ func BenchmarkConcurrentScanner_LargeResourceCounts(b *testing.B) {
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
-				result, err := scanner.ScanAllProviders(ctx, config)
+				result, err := concurrentScanner.ScanAllProviders(ctx, config)
 				if err != nil {
 					b.Fatalf("Scan failed: %v", err)
 				}
@@ -330,13 +330,13 @@ func BenchmarkConcurrentScanner_MemoryUsage(b *testing.B) {
 	// Test memory usage patterns
 	ctx := context.Background()
 
-	scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-	defer scanner.Close()
+	concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+	defer concurrentScanner.Close()
 
 	// Register providers
-	scanner.RegisterProvider("aws", NewMockConcurrentCollector("aws", 10*time.Millisecond, false, 1000))
-	scanner.RegisterProvider("gcp", NewMockConcurrentCollector("gcp", 15*time.Millisecond, false, 500))
-	scanner.RegisterProvider("kubernetes", NewMockConcurrentCollector("kubernetes", 20*time.Millisecond, false, 2000))
+	concurrentScanner.RegisterProvider("aws", NewMockConcurrentCollector("aws", 10*time.Millisecond, false, 1000))
+	concurrentScanner.RegisterProvider("gcp", NewMockConcurrentCollector("gcp", 15*time.Millisecond, false, 500))
+	concurrentScanner.RegisterProvider("kubernetes", NewMockConcurrentCollector("kubernetes", 20*time.Millisecond, false, 2000))
 
 	config := scanner.ScanConfig{
 		Providers: map[string]collectors.CollectorConfig{
@@ -352,7 +352,7 @@ func BenchmarkConcurrentScanner_MemoryUsage(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		result, err := scanner.ScanAllProviders(ctx, config)
+		result, err := concurrentScanner.ScanAllProviders(ctx, config)
 		if err != nil {
 			b.Fatalf("Scan failed: %v", err)
 		}
@@ -364,14 +364,14 @@ func BenchmarkConcurrentScanner_ErrorHandling(b *testing.B) {
 	// Test error handling performance
 	ctx := context.Background()
 
-	scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-	defer scanner.Close()
+	concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+	defer concurrentScanner.Close()
 
 	// Register providers with some that fail
-	scanner.RegisterProvider("success-1", NewMockConcurrentCollector("success-1", 10*time.Millisecond, false, 100))
-	scanner.RegisterProvider("failure-1", NewMockConcurrentCollector("failure-1", 50*time.Millisecond, true, 100))
-	scanner.RegisterProvider("success-2", NewMockConcurrentCollector("success-2", 20*time.Millisecond, false, 200))
-	scanner.RegisterProvider("failure-2", NewMockConcurrentCollector("failure-2", 30*time.Millisecond, true, 150))
+	concurrentScanner.RegisterProvider("success-1", NewMockConcurrentCollector("success-1", 10*time.Millisecond, false, 100))
+	concurrentScanner.RegisterProvider("failure-1", NewMockConcurrentCollector("failure-1", 50*time.Millisecond, true, 100))
+	concurrentScanner.RegisterProvider("success-2", NewMockConcurrentCollector("success-2", 20*time.Millisecond, false, 200))
+	concurrentScanner.RegisterProvider("failure-2", NewMockConcurrentCollector("failure-2", 30*time.Millisecond, true, 150))
 
 	config := scanner.ScanConfig{
 		Providers: map[string]collectors.CollectorConfig{
@@ -388,7 +388,7 @@ func BenchmarkConcurrentScanner_ErrorHandling(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		result, err := scanner.ScanAllProviders(ctx, config)
+		result, err := concurrentScanner.ScanAllProviders(ctx, config)
 		if err != nil {
 			b.Fatalf("Scan failed: %v", err)
 		}

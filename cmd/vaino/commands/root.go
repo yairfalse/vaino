@@ -80,7 +80,6 @@ func init() {
 
 	// Add subcommands
 	rootCmd.AddCommand(newScanCommand())
-	rootCmd.AddCommand(newBaselineCommand())
 	rootCmd.AddCommand(newCheckCommand())
 	rootCmd.AddCommand(newExplainCommand())
 	rootCmd.AddCommand(newDiffCommand())

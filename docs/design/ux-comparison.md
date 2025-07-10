@@ -4,7 +4,7 @@
 
 ### Current Experience (Confusing)
 ```bash
-$ wgo check
+$ vaino check
 ❌ No Baselines Found
 ====================
 
@@ -13,13 +13,13 @@ You need to create a baseline first!
 🎯 DO THIS NOW:
 
   1. Scan your infrastructure (if not done already):
-     wgo scan --provider terraform
+     vaino scan --provider terraform
 
   2. Create a baseline:
-     wgo baseline create --name prod-baseline
+     vaino baseline create --name prod-baseline
 
   3. Then check for drift:
-     wgo check
+     vaino check
 ```
 
 **Problems:**
@@ -29,11 +29,11 @@ You need to create a baseline first!
 
 ### New Experience (Intuitive)
 ```bash
-$ wgo drift
+$ vaino drift
 ℹ️  No previous state found for comparison
 
 💡 TIP: Save a reference state first:
-    wgo scan --save
+    vaino scan --save
 ```
 
 **Benefits:**
@@ -46,16 +46,16 @@ $ wgo drift
 ### Current Experience
 ```bash
 # Must remember baseline name
-$ wgo check --baseline prod-baseline-2025-01-14
+$ vaino check --baseline prod-baseline-2025-01-14
 
 # Or hope the "latest" baseline is what you want
-$ wgo check
+$ vaino check
 ```
 
 ### New Experience
 ```bash
 # Just run drift - automatically uses last saved state
-$ wgo drift
+$ vaino drift
 🔍 Comparing to: 18 hours ago (auto-selected)
 ⚠️  Drift detected in 3 resources
 ```
@@ -65,21 +65,21 @@ $ wgo drift
 ### Current Experience
 ```bash
 # Scan first
-$ wgo scan --provider terraform
+$ vaino scan --provider terraform
 ✅ Collection completed
 📋 Snapshot ID: snapshot-1234567890
 
 # Then create baseline (must remember snapshot ID or rely on defaults)
-$ wgo baseline create --name prod-v1.0 --description "Production baseline v1.0"
+$ vaino baseline create --name prod-v1.0 --description "Production baseline v1.0"
 
 # Now can check drift
-$ wgo diff --baseline prod-v1.0
+$ vaino diff --baseline prod-v1.0
 ```
 
 ### New Experience
 ```bash
 # Single command
-$ wgo scan --save-as prod-v1.0
+$ vaino scan --save-as prod-v1.0
 ✅ Scanned 142 resources
 💾 Saved as: prod-v1.0
 ⚠️  Drift detected in 3 resources (compared to previous scan)
@@ -90,8 +90,8 @@ $ wgo scan --save-as prod-v1.0
 ### Current Experience
 ```bash
 # Must know exact baseline names
-$ wgo baseline list
-$ wgo diff --baseline prod-baseline-2025-01-10
+$ vaino baseline list
+$ vaino diff --baseline prod-baseline-2025-01-10
 
 # No time-based queries
 # No relative references
@@ -100,12 +100,12 @@ $ wgo diff --baseline prod-baseline-2025-01-10
 ### New Experience
 ```bash
 # Natural time-based queries
-$ wgo drift --since yesterday
-$ wgo drift --since "last week"
-$ wgo drift --since 2025-01-10
+$ vaino drift --since yesterday
+$ vaino drift --since "last week"
+$ vaino drift --since 2025-01-10
 
 # Or use saved names
-$ wgo drift --since prod-release-v2.1
+$ vaino drift --since prod-release-v2.1
 ```
 
 ## Scenario 5: Quick Status Check
@@ -114,19 +114,19 @@ $ wgo drift --since prod-release-v2.1
 ```bash
 # No quick way to check drift status
 # Must run full check or diff command
-$ wgo check
+$ vaino check
 # ... lots of output ...
 ```
 
 ### New Experience
 ```bash
 # Quick, quiet check (perfect for CI/CD)
-$ wgo drift --quiet
+$ vaino drift --quiet
 $ echo $?
 1  # Exit code indicates drift detected
 
 # Or get just summary
-$ wgo drift --summary
+$ vaino drift --summary
 ⚠️  3 resources drifted (2 modified, 1 added)
 ```
 
@@ -135,30 +135,30 @@ $ wgo drift --summary
 ### Current Experience
 ```bash
 # Must use snapshots files or baseline names
-$ wgo diff --from snapshot-1.json --to snapshot-2.json
+$ vaino diff --from snapshot-1.json --to snapshot-2.json
 
 # Or baseline to snapshot
-$ wgo diff --baseline prod --to snapshot-new.json
+$ vaino diff --baseline prod --to snapshot-new.json
 ```
 
 ### New Experience
 ```bash
 # Consistent interface for all comparisons
-$ wgo drift --from prod-v1 --to prod-v2
-$ wgo drift --from yesterday --to today
-$ wgo drift --from snapshot1.json --to snapshot2.json
+$ vaino drift --from prod-v1 --to prod-v2
+$ vaino drift --from yesterday --to today
+$ vaino drift --from snapshot1.json --to snapshot2.json
 ```
 
 ## Command Comparison Summary
 
 | Task | Current Commands | New Commands |
 |------|-----------------|--------------|
-| First scan | `wgo scan` | `wgo scan` |
-| Save reference | `wgo scan` + `wgo baseline create --name X` | `wgo scan --save-as X` |
-| Check drift | `wgo check` or `wgo diff --baseline X` | `wgo drift` |
-| List saved states | `wgo baseline list` | `wgo snapshots list` |
-| Compare states | `wgo diff --from X --to Y` | `wgo drift --from X --to Y` |
-| Time-based comparison | Not supported | `wgo drift --since yesterday` |
+| First scan | `vaino scan` | `vaino scan` |
+| Save reference | `vaino scan` + `vaino baseline create --name X` | `vaino scan --save-as X` |
+| Check drift | `vaino check` or `vaino diff --baseline X` | `vaino drift` |
+| List saved states | `vaino baseline list` | `vaino snapshots list` |
+| Compare states | `vaino diff --from X --to Y` | `vaino drift --from X --to Y` |
+| Time-based comparison | Not supported | `vaino drift --since yesterday` |
 
 ## Mental Model Shift
 
@@ -170,7 +170,7 @@ Users must understand the entire workflow and terminology.
 
 ### New: Goal-Oriented
 ```
-What changed? → wgo drift
+What changed? → vaino drift
 ```
 Users can accomplish their goal with minimal understanding of internals.
 

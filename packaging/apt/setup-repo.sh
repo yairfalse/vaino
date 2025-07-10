@@ -5,14 +5,14 @@
 set -e
 
 # Configuration
-REPO_NAME="wgo"
+REPO_NAME="vaino"
 REPO_OWNER="yairfalse"
 REPO_ROOT="/tmp/apt-repo"
 DISTRIBUTIONS=("stable" "testing")
 COMPONENTS=("main")
 ARCHITECTURES=("amd64" "arm64" "armhf")
 GPG_KEY_ID="WGO Package Signing Key"
-GPG_KEY_EMAIL="packages@wgo.sh"
+GPG_KEY_EMAIL="packages@vaino.sh"
 
 # Colors for output
 RED='\033[0;31m'
@@ -88,7 +88,7 @@ EOF
     rm /tmp/gpg-key-config
     
     # Export public key
-    gpg --armor --export "$GPG_KEY_EMAIL" > "${REPO_ROOT}/wgo.gpg"
+    gpg --armor --export "$GPG_KEY_EMAIL" > "${REPO_ROOT}/vaino.gpg"
     
     log_success "GPG key created and exported"
 }
@@ -188,7 +188,7 @@ create_repo_config() {
     cat > "${REPO_ROOT}/sources.list.example" << EOF
 # WGO APT Repository
 # Add this line to your /etc/apt/sources.list or create a new file in /etc/apt/sources.list.d/
-deb https://apt.wgo.sh/ubuntu stable main
+deb https://apt.vaino.sh/ubuntu stable main
 EOF
     
     # Create installation script
@@ -199,10 +199,10 @@ EOF
 set -e
 
 # Add GPG key
-curl -fsSL https://apt.wgo.sh/ubuntu/wgo.gpg | sudo apt-key add -
+curl -fsSL https://apt.vaino.sh/ubuntu/vaino.gpg | sudo apt-key add -
 
 # Add repository
-echo "deb https://apt.wgo.sh/ubuntu stable main" | sudo tee /etc/apt/sources.list.d/wgo.list
+echo "deb https://apt.vaino.sh/ubuntu stable main" | sudo tee /etc/apt/sources.list.d/vaino.list
 
 # Update package list
 sudo apt-get update
@@ -217,7 +217,7 @@ EOF
 # Nginx configuration for WGO APT repository
 server {
     listen 80;
-    server_name apt.wgo.sh;
+    server_name apt.vaino.sh;
     
     # Redirect to HTTPS
     return 301 https://\$server_name\$request_uri;
@@ -225,7 +225,7 @@ server {
 
 server {
     listen 443 ssl http2;
-    server_name apt.wgo.sh;
+    server_name apt.vaino.sh;
     
     # SSL configuration (replace with your certificates)
     ssl_certificate /path/to/your/cert.pem;
@@ -301,17 +301,17 @@ generate_github_pages() {
         
         <h2>Quick Installation</h2>
         <div class="code">
-            curl -fsSL https://apt.wgo.sh/ubuntu/install-repo.sh | sudo bash<br>
+            curl -fsSL https://apt.vaino.sh/ubuntu/install-repo.sh | sudo bash<br>
             sudo apt-get install wgo
         </div>
         
         <h2>Manual Installation</h2>
         <ol>
             <li>Add the GPG key:
-                <div class="code">curl -fsSL https://apt.wgo.sh/ubuntu/wgo.gpg | sudo apt-key add -</div>
+                <div class="code">curl -fsSL https://apt.vaino.sh/ubuntu/vaino.gpg | sudo apt-key add -</div>
             </li>
             <li>Add the repository:
-                <div class="code">echo "deb https://apt.wgo.sh/ubuntu stable main" | sudo tee /etc/apt/sources.list.d/wgo.list</div>
+                <div class="code">echo "deb https://apt.vaino.sh/ubuntu stable main" | sudo tee /etc/apt/sources.list.d/vaino.list</div>
             </li>
             <li>Update and install:
                 <div class="code">sudo apt-get update<br>sudo apt-get install wgo</div>
@@ -370,14 +370,14 @@ main() {
     log_success "APT repository setup completed!"
     echo ""
     echo "Repository location: $REPO_ROOT"
-    echo "GPG public key: ${REPO_ROOT}/wgo.gpg"
+    echo "GPG public key: ${REPO_ROOT}/vaino.gpg"
     echo "Installation script: ${REPO_ROOT}/install-repo.sh"
     echo ""
     echo "Next steps:"
     echo "1. Upload the contents of ${REPO_ROOT}/ubuntu to your web server"
     echo "2. Configure your web server (see nginx.conf.example)"
     echo "3. Set up HTTPS with proper certificates"
-    echo "4. Test the repository with: curl -fsSL https://apt.wgo.sh/ubuntu/install-repo.sh | sudo bash"
+    echo "4. Test the repository with: curl -fsSL https://apt.vaino.sh/ubuntu/install-repo.sh | sudo bash"
 }
 
 # Run main function
