@@ -69,15 +69,15 @@ jobs:
           cache: true
 
       - name: Build binary
-        run: go build -o wgo ./cmd/wgo
+        run: go build -o vaino ./cmd/vaino
 
       - name: Generate completions
         run: |
           mkdir -p completions
-          ./wgo completion bash > completions/wgo.bash
-          ./wgo completion zsh > completions/wgo.zsh  
-          ./wgo completion fish > completions/wgo.fish
-          ./wgo completion powershell > completions/wgo.ps1
+          ./vaino completion bash > completions/vaino.bash
+          ./vaino completion zsh > completions/vaino.zsh  
+          ./vaino completion fish > completions/vaino.fish
+          ./vaino completion powershell > completions/vaino.ps1
 
       - name: Upload completions
         uses: actions/upload-artifact@v4
@@ -160,23 +160,23 @@ jobs:
           
           # Download release binary
           TAG="${{ github.ref_name }}"
-          BINARY_NAME="wgo_${TAG#v}_${OS}_${ARCH}${EXT}"
+          BINARY_NAME="vaino_${TAG#v}_${OS}_${ARCH}${EXT}"
           
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            DOWNLOAD_URL="https://github.com/yairfalse/wgo/releases/download/${TAG}/wgo_${TAG#v}_${OS}_${ARCH}.zip"
+            DOWNLOAD_URL="https://github.com/yairfalse/vaino/releases/download/${TAG}/vaino_${TAG#v}_${OS}_${ARCH}.zip"
             curl -L "$DOWNLOAD_URL" -o release.zip
             unzip release.zip
-            chmod +x wgo${EXT}
+            chmod +x vaino${EXT}
           else
-            DOWNLOAD_URL="https://github.com/yairfalse/wgo/releases/download/${TAG}/wgo_${TAG#v}_${OS}_${ARCH}.tar.gz"
+            DOWNLOAD_URL="https://github.com/yairfalse/vaino/releases/download/${TAG}/vaino_${TAG#v}_${OS}_${ARCH}.tar.gz"
             curl -L "$DOWNLOAD_URL" -o release.tar.gz
             tar -xzf release.tar.gz
-            chmod +x wgo${EXT}
+            chmod +x vaino${EXT}
           fi
           
           # Test binary
-          ./wgo${EXT} version
-          ./wgo${EXT} --help
+          ./vaino${EXT} version
+          ./vaino${EXT} --help
 
   # Send notifications
   notify:
