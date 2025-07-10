@@ -41,7 +41,7 @@ jobs:
 
       - name: Check build
         run: |
-          go build -v ./cmd/wgo
+          go build -v ./cmd/vaino
 
       - name: Validate tag format
         run: |
