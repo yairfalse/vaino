@@ -28,14 +28,14 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 # Generate unique agent ID
 generate_agent_id() {
     local timestamp=$(date +%s)
-    local random=$(shuf -i 1000-9999 -n 1)
+    local random=$((RANDOM % 9000 + 1000))
     echo "agent-${timestamp}-${random}"
 }
 
 # Generate task ID
 generate_task_id() {
     local timestamp=$(date +%s)
-    local random=$(shuf -i 100-999 -n 1)
+    local random=$((RANDOM % 900 + 100))
     echo "task-${timestamp}-${random}"
 }
 
@@ -53,7 +53,7 @@ init_agent_work() {
         cat > "$AGENT_CONFIG_FILE" << EOF
 {
   "version": "1.0.0",
-  "created": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)",
+  "created": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "max_concurrent_agents": 5,
   "branch_prefix": "feature/agent-",
   "task_timeout_minutes": 60,
@@ -85,8 +85,8 @@ register_agent() {
 {
   "id": "$agent_id",
   "status": "active",
-  "created": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)",
-  "last_activity": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)",
+  "created": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "last_activity": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "task_description": "$task_description",
   "branch": "",
   "files_claimed": [],
@@ -156,8 +156,8 @@ create_task() {
   "action": "$action",
   "files": $files_json,
   "status": "active",
-  "created": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)",
-  "started": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)",
+  "created": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "started": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "estimated_duration_minutes": 30,
   "priority": "medium"
 }
@@ -203,7 +203,7 @@ check_file_conflicts() {
   "file": "$file",
   "agent1": "$current_agent",
   "agent2": "$agent_id",
-  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)",
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "resolved": false
 }
 EOF
