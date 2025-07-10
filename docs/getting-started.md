@@ -181,7 +181,7 @@ wgo scan --snapshot-name "post-deployment-$(date +%Y%m%d)"
 - **Quick Help**: `wgo help`
 - **Command Help**: `wgo [command] --help`
 - **Documentation**: All guides in [`docs/`](.)
-- **Issues**: [GitHub Issues](https://github.com/yairfalse/wgo/issues)
+- **Issues**: [GitHub Issues](https://github.com/yairfalse/vaino/issues)
 
 ---
 

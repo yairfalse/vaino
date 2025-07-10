@@ -138,7 +138,7 @@ linters-settings:
     simplify: true
 
   goimports:
-    local-prefixes: github.com/yairfalse/wgo
+    local-prefixes: github.com/yairfalse/vaino
 
   lll:
     line-length: 120

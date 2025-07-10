@@ -110,13 +110,13 @@ docker run --rm \
 
 ## 📥 Direct Download
 
-Download pre-built binaries from the [releases page](https://github.com/yairfalse/wgo/releases).
+Download pre-built binaries from the [releases page](https://github.com/yairfalse/vaino/releases).
 
 ### Linux/macOS
 
 ```bash
 # Download latest release (replace VERSION and PLATFORM)
-curl -L https://github.com/yairfalse/wgo/releases/download/VERSION/wgo_PLATFORM.tar.gz | tar xz
+curl -L https://github.com/yairfalse/vaino/releases/download/VERSION/wgo_PLATFORM.tar.gz | tar xz
 
 # Move to PATH
 sudo mv wgo /usr/local/bin/
@@ -127,7 +127,7 @@ sudo chmod +x /usr/local/bin/wgo
 
 ### Windows
 
-1. Download the `.zip` file from the [releases page](https://github.com/yairfalse/wgo/releases)
+1. Download the `.zip` file from the [releases page](https://github.com/yairfalse/vaino/releases)
 2. Extract the archive
 3. Add the directory to your PATH
 4. Or move `wgo.exe` to a directory already in PATH
@@ -140,7 +140,7 @@ Requirements:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yairfalse/wgo.git
+git clone https://github.com/yairfalse/vaino.git
 cd wgo
 
 # Build and install
@@ -317,6 +317,6 @@ The universal installer will fall back to direct binary download if your package
 
 ## 📞 Support
 
-- [GitHub Issues](https://github.com/yairfalse/wgo/issues)
-- [Documentation](https://github.com/yairfalse/wgo/wiki)
+- [GitHub Issues](https://github.com/yairfalse/vaino/issues)
+- [Documentation](https://github.com/yairfalse/vaino/wiki)
 - [Discord Community](https://discord.gg/wgo)

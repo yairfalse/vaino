@@ -12,7 +12,7 @@ curl -sSL https://install.wgo.sh | bash
 brew install yairfalse/wgo/wgo
 
 # Go install
-go install github.com/yairfalse/wgo/cmd/wgo@latest
+go install github.com/yairfalse/vaino/cmd/wgo@latest
 ```
 
 ## ⚡ Most Common Commands

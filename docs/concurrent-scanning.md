@@ -191,10 +191,10 @@ import (
     "context"
     "time"
     
-    "github.com/yairfalse/wgo/internal/scanner"
-    "github.com/yairfalse/wgo/internal/collectors"
-    "github.com/yairfalse/wgo/internal/collectors/aws"
-    "github.com/yairfalse/wgo/internal/collectors/gcp"
+    "github.com/yairfalse/vaino/internal/scanner"
+    "github.com/yairfalse/vaino/internal/collectors"
+    "github.com/yairfalse/vaino/internal/collectors/aws"
+    "github.com/yairfalse/vaino/internal/collectors/gcp"
 )
 
 func main() {

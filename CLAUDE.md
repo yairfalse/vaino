@@ -85,7 +85,7 @@ VAINO uses a custom error system (`internal/errors`) that provides:
 2. **Homebrew**: `brew install yairfalse/wgo/wgo`
 3. **Package Managers**: APT, YUM, Chocolatey, Scoop
 4. **Docker**: `docker run yairfalse/wgo:latest`
-5. **From Source**: `go install github.com/yairfalse/wgo/cmd/wgo@latest`
+5. **From Source**: `go install github.com/yairfalse/vaino/cmd/wgo@latest`
 
 ## Common Tasks
 

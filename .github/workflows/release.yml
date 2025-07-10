@@ -163,12 +163,12 @@ jobs:
           BINARY_NAME="wgo_${TAG#v}_${OS}_${ARCH}${EXT}"
           
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            DOWNLOAD_URL="https://github.com/yairfalse/wgo/releases/download/${TAG}/wgo_${TAG#v}_${OS}_${ARCH}.zip"
+            DOWNLOAD_URL="https://github.com/yairfalse/vaino/releases/download/${TAG}/wgo_${TAG#v}_${OS}_${ARCH}.zip"
             curl -L "$DOWNLOAD_URL" -o release.zip
             unzip release.zip
             chmod +x wgo${EXT}
           else
-            DOWNLOAD_URL="https://github.com/yairfalse/wgo/releases/download/${TAG}/wgo_${TAG#v}_${OS}_${ARCH}.tar.gz"
+            DOWNLOAD_URL="https://github.com/yairfalse/vaino/releases/download/${TAG}/wgo_${TAG#v}_${OS}_${ARCH}.tar.gz"
             curl -L "$DOWNLOAD_URL" -o release.tar.gz
             tar -xzf release.tar.gz
             chmod +x wgo${EXT}

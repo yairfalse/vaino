@@ -39,7 +39,7 @@ scoop install wgo
 
 This bucket is automatically updated when new releases are published.
 
-For more information, visit: https://github.com/yairfalse/wgo
+For more information, visit: https://github.com/yairfalse/vaino
 EOF
 
 echo "Setup complete! Next steps:"
