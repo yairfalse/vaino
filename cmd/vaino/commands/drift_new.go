@@ -83,7 +83,7 @@ func runDrift(cmd *cobra.Command, args []string) error {
 	}
 
 	// Initialize storage
-	localStorage, err := storage.NewLocalStorage(storage.Config{BaseDir: "./wgo-states"})
+	localStorage, err := storage.NewLocalStorage(storage.Config{BaseDir: "./vaino-states"})
 	if err != nil {
 		return fmt.Errorf("failed to initialize storage: %w", err)
 	}

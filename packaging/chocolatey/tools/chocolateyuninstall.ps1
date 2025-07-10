@@ -1,12 +1,12 @@
 $ErrorActionPreference = 'Stop'
 
-$packageName = 'wgo'
+$packageName = 'vaino'
 $toolsDir = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
 
 # Remove the binary
-$exePath = Join-Path $toolsDir "wgo.exe"
+$exePath = Join-Path $toolsDir "vaino.exe"
 if (Test-Path $exePath) {
-    Uninstall-BinFile -Name 'wgo' -Path $exePath
+    Uninstall-BinFile -Name 'vaino' -Path $exePath
     Remove-Item $exePath -Force
 }
 

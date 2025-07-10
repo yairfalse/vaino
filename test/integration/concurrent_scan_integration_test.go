@@ -55,11 +55,11 @@ func TestConcurrentScanIntegration(t *testing.T) {
 
 	// Test concurrent scanner with real components
 	t.Run("ConcurrentScanner_Integration", func(t *testing.T) {
-		scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-		defer scanner.Close()
+		concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+		defer concurrentScanner.Close()
 
 		// Register actual collectors (they will use mock data since we don't have real credentials)
-		scanner.RegisterProvider("terraform", terraform.NewTerraformCollector())
+		concurrentScanner.RegisterProvider("terraform", terraform.NewTerraformCollector())
 
 		// Create scan configuration
 		config := scanner.ScanConfig{
@@ -80,7 +80,7 @@ func TestConcurrentScanIntegration(t *testing.T) {
 		ctx := context.Background()
 		startTime := time.Now()
 
-		result, err := scanner.ScanAllProviders(ctx, config)
+		result, err := concurrentScanner.ScanAllProviders(ctx, config)
 
 		scanDuration := time.Since(startTime)
 
@@ -156,12 +156,12 @@ func TestConcurrentScanPerformance(t *testing.T) {
 
 		// Test concurrent execution
 		t.Run("Concurrent", func(t *testing.T) {
-			scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-			defer scanner.Close()
+			concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+			defer concurrentScanner.Close()
 
 			// Register providers
 			for name, collector := range mockCollectors {
-				scanner.RegisterProvider(name, collector)
+				concurrentScanner.RegisterProvider(name, collector)
 			}
 
 			// Create scan configuration
@@ -179,7 +179,7 @@ func TestConcurrentScanPerformance(t *testing.T) {
 			ctx := context.Background()
 			startTime := time.Now()
 
-			result, err := scanner.ScanAllProviders(ctx, config)
+			result, err := concurrentScanner.ScanAllProviders(ctx, config)
 
 			concurrentDuration := time.Since(startTime)
 
@@ -206,12 +206,12 @@ func TestConcurrentScanErrorHandling(t *testing.T) {
 		t.Skip("Skipping error handling test in short mode")
 	}
 
-	scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-	defer scanner.Close()
+	concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+	defer concurrentScanner.Close()
 
 	// Register providers with mixed success/failure
-	scanner.RegisterProvider("success", NewMockDelayedCollector("success", 100*time.Millisecond, 10))
-	scanner.RegisterProvider("failure", NewMockFailingCollector("failure", "simulated failure"))
+	concurrentScanner.RegisterProvider("success", NewMockDelayedCollector("success", 100*time.Millisecond, 10))
+	concurrentScanner.RegisterProvider("failure", NewMockFailingCollector("failure", "simulated failure"))
 
 	// Test with FailOnError=false
 	t.Run("ContinueOnError", func(t *testing.T) {
@@ -226,7 +226,7 @@ func TestConcurrentScanErrorHandling(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		result, err := scanner.ScanAllProviders(ctx, config)
+		result, err := concurrentScanner.ScanAllProviders(ctx, config)
 
 		// Should not fail
 		if err != nil {
@@ -256,7 +256,7 @@ func TestConcurrentScanErrorHandling(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		result, err := scanner.ScanAllProviders(ctx, config)
+		result, err := concurrentScanner.ScanAllProviders(ctx, config)
 
 		// Should fail
 		if err == nil {

@@ -3,6 +3,7 @@ package commands
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -10,6 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/yairfalse/vaino/internal/storage"
+	"github.com/yairfalse/vaino/internal/visualization"
+	"golang.org/x/term"
 )
 
 func newTimelineCommand() *cobra.Command {
@@ -27,6 +30,9 @@ For change comparison between snapshots, use: vaino diff`,
   # Show snapshots from last 2 weeks
   vaino timeline --since "2 weeks ago"
 
+  # Show timeline between two snapshots
+  vaino timeline --between snap1 snap2
+
   # Show snapshots for specific provider
   vaino timeline --provider kubernetes
 
@@ -38,9 +44,14 @@ For change comparison between snapshots, use: vaino diff`,
 	// Date/time filters
 	cmd.Flags().StringP("since", "s", "", "show snapshots since date/duration (e.g., '2 weeks ago', '2024-01-01')")
 	cmd.Flags().StringP("until", "u", "", "show snapshots until date (e.g., '2024-01-31')")
+	cmd.Flags().StringSlice("between", nil, "show snapshots between two specific snapshots (e.g., --between snap1,snap2)")
 
 	// Provider filters
 	cmd.Flags().StringSlice("provider", nil, "filter by provider (aws, gcp, kubernetes, terraform)")
+
+	// Tag filters
+	// Removed baselines-only flag - use --tags instead
+	cmd.Flags().StringSlice("tags", nil, "filter by tags (key=value)")
 
 	// Output options
 	cmd.Flags().BoolP("stats", "", false, "show snapshot statistics")
@@ -67,6 +78,14 @@ func runTimeline(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	// Check for --between flag
+	betweenSnapshots, _ := cmd.Flags().GetStringSlice("between")
+	if len(betweenSnapshots) == 2 {
+		return handleTimelineBetween(localStorage, snapshots, betweenSnapshots[0], betweenSnapshots[1], cmd)
+	} else if len(betweenSnapshots) == 1 {
+		return fmt.Errorf("--between requires two snapshot identifiers")
+	}
+
 	// Parse filter options
 	sinceTime, err := parseTimeFilter(cmd, "since")
 	if err != nil {
@@ -79,12 +98,41 @@ func runTimeline(cmd *cobra.Command, args []string) error {
 	}
 
 	providers, _ := cmd.Flags().GetStringSlice("provider")
+	tags, _ := cmd.Flags().GetStringSlice("tags")
 	showStats, _ := cmd.Flags().GetBool("stats")
 	quiet, _ := cmd.Flags().GetBool("quiet")
 	limit, _ := cmd.Flags().GetInt("limit")
 
 	// Filter snapshots
 	filteredSnapshots := filterSnapshots(snapshots, sinceTime, untilTime, "", "", providers)
+
+	// Removed baseline filter - users should use --tags baseline=value instead
+
+	// Apply tag filters
+	if len(tags) > 0 {
+		tagFilter := make(map[string]string)
+		for _, tag := range tags {
+			parts := strings.SplitN(tag, "=", 2)
+			if len(parts) == 2 {
+				tagFilter[parts[0]] = parts[1]
+			}
+		}
+
+		var taggedSnapshots []storage.SnapshotInfo
+		for _, snapshot := range filteredSnapshots {
+			match := true
+			for k, v := range tagFilter {
+				if snapshot.Tags[k] != v {
+					match = false
+					break
+				}
+			}
+			if match {
+				taggedSnapshots = append(taggedSnapshots, snapshot)
+			}
+		}
+		filteredSnapshots = taggedSnapshots
+	}
 
 	// Limit results
 	if limit > 0 && len(filteredSnapshots) > limit {
@@ -93,6 +141,50 @@ func runTimeline(cmd *cobra.Command, args []string) error {
 
 	// Get output format
 	outputFormat, _ := cmd.Flags().GetString("output")
+
+	// Display timeline
+	return displaySnapshotTimeline(filteredSnapshots, outputFormat, showStats, quiet)
+}
+
+func handleTimelineBetween(localStorage storage.Storage, allSnapshots []storage.SnapshotInfo, snap1, snap2 string, cmd *cobra.Command) error {
+	// Find the two snapshots
+	var snapshot1, snapshot2 *storage.SnapshotInfo
+
+	for _, snapshot := range allSnapshots {
+		if snapshot.ID == snap1 || matchesSnapshotTag(snapshot, snap1) {
+			snapshot1 = &snapshot
+		}
+		if snapshot.ID == snap2 || matchesSnapshotTag(snapshot, snap2) {
+			snapshot2 = &snapshot
+		}
+	}
+
+	if snapshot1 == nil {
+		return fmt.Errorf("snapshot not found: %s", snap1)
+	}
+	if snapshot2 == nil {
+		return fmt.Errorf("snapshot not found: %s", snap2)
+	}
+
+	// Ensure snapshot1 is before snapshot2
+	if snapshot1.Timestamp.After(snapshot2.Timestamp) {
+		snapshot1, snapshot2 = snapshot2, snapshot1
+	}
+
+	// Filter snapshots between the two snapshots
+	var filteredSnapshots []storage.SnapshotInfo
+	for _, snapshot := range allSnapshots {
+		if snapshot.Timestamp.After(snapshot1.Timestamp) && snapshot.Timestamp.Before(snapshot2.Timestamp) {
+			filteredSnapshots = append(filteredSnapshots, snapshot)
+		} else if snapshot.Timestamp.Equal(snapshot1.Timestamp) || snapshot.Timestamp.Equal(snapshot2.Timestamp) {
+			filteredSnapshots = append(filteredSnapshots, snapshot)
+		}
+	}
+
+	// Get output options
+	outputFormat, _ := cmd.Flags().GetString("output")
+	showStats, _ := cmd.Flags().GetBool("stats")
+	quiet, _ := cmd.Flags().GetBool("quiet")
 
 	// Display timeline
 	return displaySnapshotTimeline(filteredSnapshots, outputFormat, showStats, quiet)
@@ -204,26 +296,39 @@ func displaySnapshotTimeline(snapshots []storage.SnapshotInfo, outputFormat stri
 		return displayTimelineQuiet(snapshots)
 	}
 
-	// Default text format
-	fmt.Printf("Infrastructure Snapshot Timeline (%d snapshots)\n", len(snapshots))
-	fmt.Println(strings.Repeat("=", 60))
-	fmt.Println()
+	// Get terminal width
+	termWidth := 80
+	if width, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && width > 0 {
+		termWidth = width
+	}
 
-	for _, snapshot := range snapshots {
-		fmt.Printf("📅 %s\n", snapshot.Timestamp.Format("2006-01-02 15:04:05"))
-		fmt.Printf("   Provider: %s\n", snapshot.Provider)
-		fmt.Printf("   Resources: %d\n", snapshot.ResourceCount)
-		fmt.Printf("   ID: %s\n", snapshot.ID)
-
-		if len(snapshot.Tags) > 0 {
-			fmt.Print("   Tags: ")
-			var tags []string
-			for k, v := range snapshot.Tags {
-				tags = append(tags, fmt.Sprintf("%s=%s", k, v))
-			}
-			fmt.Println(strings.Join(tags, ", "))
-		}
+	// Display beautiful graph timeline
+	if len(snapshots) > 0 {
+		graph := visualization.CreateSimpleTimeline(snapshots, termWidth)
+		fmt.Println(graph)
 		fmt.Println()
+	}
+
+	// Show detailed list if fewer than 10 snapshots
+	if len(snapshots) <= 10 {
+		fmt.Println("Snapshot Details:")
+		fmt.Println(strings.Repeat("-", 60))
+		for _, snapshot := range snapshots {
+			fmt.Printf("📅 %s\n", snapshot.Timestamp.Format("2006-01-02 15:04:05"))
+			fmt.Printf("   Provider: %s\n", snapshot.Provider)
+			fmt.Printf("   Resources: %d\n", snapshot.ResourceCount)
+			fmt.Printf("   ID: %s\n", snapshot.ID)
+
+			if len(snapshot.Tags) > 0 {
+				fmt.Print("   Tags: ")
+				var tags []string
+				for k, v := range snapshot.Tags {
+					tags = append(tags, fmt.Sprintf("%s=%s", k, v))
+				}
+				fmt.Println(strings.Join(tags, ", "))
+			}
+			fmt.Println()
+		}
 	}
 
 	if showStats {
@@ -304,4 +409,14 @@ func displaySnapshotStats(snapshots []storage.SnapshotInfo) {
 		fmt.Printf("  %s: %d snapshots\n", provider, count)
 	}
 	fmt.Println()
+}
+
+// matchesSnapshotTag checks if a snapshot has any tag value matching the given string
+func matchesSnapshotTag(snapshot storage.SnapshotInfo, value string) bool {
+	for _, tagValue := range snapshot.Tags {
+		if tagValue == value {
+			return true
+		}
+	}
+	return false
 }

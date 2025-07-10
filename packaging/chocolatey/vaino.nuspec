@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
   <metadata>
-    <id>wgo</id>
+    <id>vaino</id>
     <version>$version$</version>
-    <packageSourceUrl>https://github.com/yairfalse/wgo/tree/main/packaging/chocolatey</packageSourceUrl>
+    <packageSourceUrl>https://github.com/yairfalse/vaino/tree/main/packaging/chocolatey</packageSourceUrl>
     <owners>yairfalse</owners>
-    <title>WGO (What's Going On)</title>
+    <title>VAINO (What's Going On)</title>
     <authors>Yair and Contributors</authors>
-    <projectUrl>https://github.com/yairfalse/wgo</projectUrl>
-    <iconUrl>https://raw.githubusercontent.com/yairfalse/wgo/main/assets/logo.png</iconUrl>
-    <copyright>2024 WGO Contributors</copyright>
-    <licenseUrl>https://github.com/yairfalse/wgo/blob/main/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/yairfalse/vaino</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/yairfalse/vaino/main/assets/logo.png</iconUrl>
+    <copyright>2024 VAINO Contributors</copyright>
+    <licenseUrl>https://github.com/yairfalse/vaino/blob/main/LICENSE</licenseUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <projectSourceUrl>https://github.com/yairfalse/wgo</projectSourceUrl>
-    <docsUrl>https://github.com/yairfalse/wgo/blob/main/README.md</docsUrl>
-    <bugTrackerUrl>https://github.com/yairfalse/wgo/issues</bugTrackerUrl>
+    <projectSourceUrl>https://github.com/yairfalse/vaino</projectSourceUrl>
+    <docsUrl>https://github.com/yairfalse/vaino/blob/main/README.md</docsUrl>
+    <bugTrackerUrl>https://github.com/yairfalse/vaino/issues</bugTrackerUrl>
     <tags>infrastructure drift-detection terraform aws gcp kubernetes devops monitoring cli</tags>
     <summary>Git diff for infrastructure - simple drift detection</summary>
     <description><![CDATA[
-# WGO - What's Going On
+# VAINO - What's Going On
 
-WGO is "git diff" for your infrastructure - see what changed, when, and why.
+VAINO is "git diff" for your infrastructure - see what changed, when, and why.
 
 ## Features
 
@@ -34,10 +34,10 @@ WGO is "git diff" for your infrastructure - see what changed, when, and why.
 
 ```powershell
 # Auto-discover and scan infrastructure
-wgo scan
+vaino scan
 
 # Compare current state with baseline
-wgo diff
+vaino diff
 
 # Scan specific provider
 wgo scan --provider aws --region us-east-1

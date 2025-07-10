@@ -5,13 +5,13 @@
 set -e
 
 # Configuration
-REPO_NAME="wgo"
+REPO_NAME="vaino"
 REPO_OWNER="yairfalse"
 REPO_ROOT="/tmp/yum-repo"
 DISTRIBUTIONS=("el8" "el9" "fedora37" "fedora38" "fedora39")
 ARCHITECTURES=("x86_64" "aarch64" "armv7hl")
 GPG_KEY_ID="WGO Package Signing Key"
-GPG_KEY_EMAIL="packages@wgo.sh"
+GPG_KEY_EMAIL="packages@vaino.sh"
 
 # Colors for output
 RED='\033[0;31m'
@@ -90,7 +90,7 @@ EOF
     rm /tmp/gpg-key-config
     
     # Export public key
-    gpg --armor --export "$GPG_KEY_EMAIL" > "${REPO_ROOT}/wgo.gpg"
+    gpg --armor --export "$GPG_KEY_EMAIL" > "${REPO_ROOT}/vaino.gpg"
     
     # Configure RPM signing
     cat > ~/.rpmmacros << EOF
@@ -138,7 +138,7 @@ build_rpm() {
     mkdir -p "$build_dir"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
     
     # Copy spec file
-    cp packaging/yum/wgo.spec "$build_dir/SPECS/"
+    cp packaging/yum/vaino.spec "$build_dir/SPECS/"
     
     # Build the RPM
     rpmbuild --define="_topdir $build_dir" \
@@ -202,13 +202,13 @@ create_repo_config() {
     log_info "Creating repository configuration files..."
     
     # Create main repository configuration
-    cat > "${REPO_ROOT}/wgo.repo" << EOF
+    cat > "${REPO_ROOT}/vaino.repo" << EOF
 [wgo]
 name=WGO Repository
-baseurl=https://yum.wgo.sh/rhel/\$releasever/\$basearch/
+baseurl=https://yum.vaino.sh/rhel/\$releasever/\$basearch/
 enabled=1
 gpgcheck=1
-gpgkey=https://yum.wgo.sh/rhel/wgo.gpg
+gpgkey=https://yum.vaino.sh/rhel/vaino.gpg
 EOF
     
     # Create distribution-specific configurations
@@ -216,10 +216,10 @@ EOF
         cat > "${REPO_ROOT}/wgo-${dist}.repo" << EOF
 [wgo-${dist}]
 name=WGO Repository for ${dist}
-baseurl=https://yum.wgo.sh/rhel/${dist}/\$basearch/
+baseurl=https://yum.vaino.sh/rhel/${dist}/\$basearch/
 enabled=1
 gpgcheck=1
-gpgkey=https://yum.wgo.sh/rhel/wgo.gpg
+gpgkey=https://yum.vaino.sh/rhel/vaino.gpg
 EOF
     done
     
@@ -253,11 +253,11 @@ fi
 
 # Add GPG key
 echo "Adding WGO GPG key..."
-rpm --import https://yum.wgo.sh/rhel/wgo.gpg
+rpm --import https://yum.vaino.sh/rhel/wgo.gpg
 
 # Add repository
 echo "Adding WGO repository..."
-curl -fsSL https://yum.wgo.sh/rhel/wgo-${DIST}.repo -o /etc/yum.repos.d/wgo.repo
+curl -fsSL https://yum.vaino.sh/rhel/wgo-${DIST}.repo -o /etc/yum.repos.d/vaino.repo
 
 # Update metadata
 if command -v dnf >/dev/null 2>&1; then
@@ -343,17 +343,17 @@ generate_github_pages() {
         
         <h2>Quick Installation</h2>
         <div class="code">
-            curl -fsSL https://yum.wgo.sh/rhel/install-repo.sh | sudo bash<br>
+            curl -fsSL https://yum.vaino.sh/rhel/install-repo.sh | sudo bash<br>
             sudo dnf install wgo
         </div>
         
         <h2>Manual Installation</h2>
         <ol>
             <li>Add the GPG key:
-                <div class="code">sudo rpm --import https://yum.wgo.sh/rhel/wgo.gpg</div>
+                <div class="code">sudo rpm --import https://yum.vaino.sh/rhel/wgo.gpg</div>
             </li>
             <li>Add the repository:
-                <div class="code">sudo curl -fsSL https://yum.wgo.sh/rhel/wgo.repo -o /etc/yum.repos.d/wgo.repo</div>
+                <div class="code">sudo curl -fsSL https://yum.vaino.sh/rhel/vaino.repo -o /etc/yum.repos.d/vaino.repo</div>
             </li>
             <li>Install WGO:
                 <div class="code">sudo dnf install wgo</div>
@@ -368,7 +368,7 @@ EOF
         <div class="distro">
             <h3>${dist}</h3>
             <div class="code">
-                sudo curl -fsSL https://yum.wgo.sh/rhel/wgo-${dist}.repo -o /etc/yum.repos.d/wgo.repo
+                sudo curl -fsSL https://yum.vaino.sh/rhel/wgo-${dist}.repo -o /etc/yum.repos.d/vaino.repo
             </div>
         </div>
 EOF
@@ -431,7 +431,7 @@ main() {
     echo "1. Upload the contents of ${REPO_ROOT}/rhel to your web server"
     echo "2. Configure your web server to serve the repository"
     echo "3. Set up HTTPS with proper certificates"
-    echo "4. Test the repository with: curl -fsSL https://yum.wgo.sh/rhel/install-repo.sh | sudo bash"
+    echo "4. Test the repository with: curl -fsSL https://yum.vaino.sh/rhel/install-repo.sh | sudo bash"
 }
 
 # Run main function

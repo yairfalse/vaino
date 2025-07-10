@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	wgoBinary = "../../wgo"
+	vainoBinary = "../../vaino"
 )
 
 func TestMain(m *testing.M) {
 	// Build the binary before running tests
-	cmd := exec.Command("go", "build", "-o", wgoBinary, "../../cmd/vaino")
+	cmd := exec.Command("go", "build", "-o", vainoBinary, "../../cmd/vaino")
 	if err := cmd.Run(); err != nil {
 		panic("Failed to build vaino binary: " + err.Error())
 	}
@@ -24,13 +24,13 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	// Cleanup
-	os.Remove(wgoBinary)
+	os.Remove(vainoBinary)
 
 	os.Exit(code)
 }
 
-func runWGOIntegration(args ...string) (string, string, error) {
-	cmd := exec.Command(wgoBinary, args...)
+func runVainoIntegration(args ...string) (string, string, error) {
+	cmd := exec.Command(vainoBinary, args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -40,7 +40,7 @@ func runWGOIntegration(args ...string) (string, string, error) {
 }
 
 func TestVAINO_Help(t *testing.T) {
-	stdout, stderr, err := runWGOIntegration("--help")
+	stdout, stderr, err := runVainoIntegration("--help")
 	if err != nil {
 		t.Fatalf("vaino --help failed: %v\nstderr: %s", err, stderr)
 	}
@@ -64,7 +64,7 @@ func TestVAINO_Help(t *testing.T) {
 }
 
 func TestVAINO_Version(t *testing.T) {
-	stdout, stderr, err := runWGOIntegration("version")
+	stdout, stderr, err := runVainoIntegration("version")
 	if err != nil {
 		t.Fatalf("vaino version failed: %v\nstderr: %s", err, stderr)
 	}
@@ -75,7 +75,7 @@ func TestVAINO_Version(t *testing.T) {
 }
 
 func TestVAINO_BaselineHelp(t *testing.T) {
-	stdout, stderr, err := runWGOIntegration("baseline", "--help")
+	stdout, stderr, err := runVainoIntegration("baseline", "--help")
 	if err != nil {
 		t.Fatalf("vaino baseline --help failed: %v\nstderr: %s", err, stderr)
 	}
@@ -97,7 +97,7 @@ func TestVAINO_BaselineHelp(t *testing.T) {
 }
 
 func TestVAINO_ScanHelp(t *testing.T) {
-	stdout, stderr, err := runWGOIntegration("scan", "--help")
+	stdout, stderr, err := runVainoIntegration("scan", "--help")
 	if err != nil {
 		t.Fatalf("vaino scan --help failed: %v\nstderr: %s", err, stderr)
 	}
@@ -120,7 +120,7 @@ func TestVAINO_ScanHelp(t *testing.T) {
 }
 
 func TestVAINO_CheckHelp(t *testing.T) {
-	stdout, stderr, err := runWGOIntegration("check", "--help")
+	stdout, stderr, err := runVainoIntegration("check", "--help")
 	if err != nil {
 		t.Fatalf("vaino check --help failed: %v\nstderr: %s", err, stderr)
 	}
@@ -143,7 +143,7 @@ func TestVAINO_BaselineCreate(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Test baseline create command
-	stdout, stderr, err := runWGOIntegration("baseline", "create", "--name", "test-baseline", "--config", filepath.Join(tmpDir, "config.yaml"))
+	stdout, stderr, err := runVainoIntegration("baseline", "create", "--name", "test-baseline", "--config", filepath.Join(tmpDir, "config.yaml"))
 
 	// Should show "not implemented" message but not error
 	if err != nil {
@@ -163,7 +163,7 @@ func TestVAINO_BaselineCreate(t *testing.T) {
 func TestVAINO_BaselineList(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	stdout, stderr, err := runWGOIntegration("baseline", "list", "--config", filepath.Join(tmpDir, "config.yaml"))
+	stdout, stderr, err := runVainoIntegration("baseline", "list", "--config", filepath.Join(tmpDir, "config.yaml"))
 
 	// Should show "not implemented" message but not error
 	if err != nil {
@@ -178,7 +178,7 @@ func TestVAINO_BaselineList(t *testing.T) {
 func TestVAINO_ScanTerraform(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	stdout, stderr, err := runWGOIntegration("scan", "--provider", "terraform", "--path", tmpDir, "--config", filepath.Join(tmpDir, "config.yaml"))
+	stdout, stderr, err := runVainoIntegration("scan", "--provider", "terraform", "--path", tmpDir, "--config", filepath.Join(tmpDir, "config.yaml"))
 
 	// Should show scan output but may error due to no state files
 	if err != nil {
@@ -191,7 +191,7 @@ func TestVAINO_ScanTerraform(t *testing.T) {
 }
 
 func TestVAINO_InvalidCommand(t *testing.T) {
-	_, stderr, err := runWGOIntegration("invalid-command")
+	_, stderr, err := runVainoIntegration("invalid-command")
 
 	if err == nil {
 		t.Error("Expected invalid command to return error")
@@ -206,7 +206,7 @@ func TestVAINO_RequiredFlags(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Test baseline create without required name flag
-	_, stderr, err := runWGOIntegration("baseline", "create", "--config", filepath.Join(tmpDir, "config.yaml"))
+	_, stderr, err := runVainoIntegration("baseline", "create", "--config", filepath.Join(tmpDir, "config.yaml"))
 
 	if err == nil {
 		t.Error("Expected baseline create without name to return error")
@@ -223,7 +223,7 @@ func TestVAINO_OutputFormats(t *testing.T) {
 
 	for _, format := range formats {
 		t.Run("format_"+format, func(t *testing.T) {
-			stdout, stderr, err := runWGOIntegration("baseline", "list", "--output", format, "--config", filepath.Join(tmpDir, "config.yaml"))
+			stdout, stderr, err := runVainoIntegration("baseline", "list", "--output", format, "--config", filepath.Join(tmpDir, "config.yaml"))
 
 			// Should not error due to invalid format
 			if err != nil {
@@ -257,7 +257,7 @@ logging:
 		t.Fatalf("Failed to create config file: %v", err)
 	}
 
-	stdout, stderr, err := runWGOIntegration("baseline", "list", "--config", configFile)
+	stdout, stderr, err := runVainoIntegration("baseline", "list", "--config", configFile)
 
 	if err != nil {
 		t.Logf("baseline list with config stderr: %s", stderr)
@@ -277,7 +277,7 @@ func TestVAINO_GlobalFlags(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Test verbose flag
-	stdout, stderr, err := runWGOIntegration("version", "--verbose", "--config", filepath.Join(tmpDir, "config.yaml"))
+	stdout, stderr, err := runVainoIntegration("version", "--verbose", "--config", filepath.Join(tmpDir, "config.yaml"))
 
 	if err != nil {
 		t.Logf("version with verbose stderr: %s", stderr)
@@ -288,7 +288,7 @@ func TestVAINO_GlobalFlags(t *testing.T) {
 	}
 
 	// Test debug flag
-	stdout, stderr, err = runWGOIntegration("version", "--debug", "--config", filepath.Join(tmpDir, "config.yaml"))
+	stdout, stderr, err = runVainoIntegration("version", "--debug", "--config", filepath.Join(tmpDir, "config.yaml"))
 
 	if err != nil {
 		t.Logf("version with debug stderr: %s", stderr)

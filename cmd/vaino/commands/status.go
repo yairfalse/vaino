@@ -14,8 +14,8 @@ import (
 func newStatusCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
-		Short: "Show WGO system and provider status",
-		Long: `Display comprehensive status information about WGO configuration,
+		Short: "Show VAINO system and provider status",
+		Long: `Display comprehensive status information about VAINO configuration,
 providers, authentication, and recent activity.`,
 		RunE: runStatus,
 	}
@@ -28,7 +28,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	// System Status
 	fmt.Println("System Status:")
-	fmt.Printf("  WGO Version: %s\n", getVersion())
+	fmt.Printf("  VAINO Version: %s\n", getVersion())
 
 	configFile := viper.ConfigFileUsed()
 	if configFile == "" {

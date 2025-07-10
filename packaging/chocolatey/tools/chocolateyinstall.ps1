@@ -1,8 +1,8 @@
 $ErrorActionPreference = 'Stop'
 
 $toolsDir   = "$(Split-Path -parent $MyInvocation.MyCommand.Definition)"
-$packageName = 'wgo'
-$url64      = 'https://github.com/yairfalse/wgo/releases/download/v$version$/wgo_Windows_x86_64.zip'
+$packageName = 'vaino'
+$url64      = 'https://github.com/yairfalse/vaino/releases/download/v$version$/vaino_Windows_x86_64.zip'
 
 $packageArgs = @{
   packageName   = $packageName
@@ -14,16 +14,16 @@ $packageArgs = @{
 
 Install-ChocolateyZipPackage @packageArgs
 
-# Create shim for wgo.exe
-$exePath = Join-Path $toolsDir "wgo.exe"
-Install-BinFile -Name 'wgo' -Path $exePath
+# Create shim for vaino.exe
+$exePath = Join-Path $toolsDir "vaino.exe"
+Install-BinFile -Name 'vaino' -Path $exePath
 
 Write-Host "$packageName has been installed successfully!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Quick Start:" -ForegroundColor Yellow
-Write-Host "  wgo scan                  # Auto-discover and scan infrastructure"
-Write-Host "  wgo diff                  # Compare infrastructure states"
-Write-Host "  wgo scan --provider aws   # Scan AWS resources"
-Write-Host "  wgo --help               # Show all commands"
+Write-Host "  vaino scan                  # Auto-discover and scan infrastructure"
+Write-Host "  vaino diff                  # Compare infrastructure states"
+Write-Host "  vaino scan --provider aws   # Scan AWS resources"
+Write-Host "  vaino --help               # Show all commands"
 Write-Host ""
-Write-Host "Documentation: https://github.com/yairfalse/wgo" -ForegroundColor Cyan
+Write-Host "Documentation: https://github.com/yairfalse/vaino" -ForegroundColor Cyan

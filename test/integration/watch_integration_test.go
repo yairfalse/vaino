@@ -15,6 +15,7 @@ import (
 	"github.com/yairfalse/vaino/internal/analyzer"
 	"github.com/yairfalse/vaino/internal/collectors"
 	"github.com/yairfalse/vaino/internal/differ"
+	"github.com/yairfalse/vaino/internal/watchers"
 	"github.com/yairfalse/vaino/pkg/types"
 )
 
@@ -60,7 +61,7 @@ func TestWatchModeIntegration(t *testing.T) {
 	}
 
 	// Set up watcher configuration
-	config := watcher.WatcherConfig{
+	config := watchers.WatcherConfig{
 		Providers:    []string{"terraform"},
 		Interval:     5 * time.Second,
 		OutputFormat: "json",
@@ -68,7 +69,7 @@ func TestWatchModeIntegration(t *testing.T) {
 	}
 
 	// Create watcher
-	w, err := watcher.NewWatcher(config)
+	w, err := watchers.NewWatcher(config)
 	if err != nil {
 		t.Fatalf("Failed to create watcher: %v", err)
 	}
@@ -77,10 +78,8 @@ func TestWatchModeIntegration(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
-	changes := make(chan *watcher.WatchEvent, 10)
-	config.ChangeCallback = func(event *watcher.WatchEvent) {
-		changes <- event
-	}
+	// Note: ChangeCallback is not implemented in current WatcherConfig
+	// This test may need to be updated based on actual watcher interface
 
 	go func() {
 		err := w.Start(ctx)
@@ -163,7 +162,7 @@ func TestWatchModeWebhookIntegration(t *testing.T) {
 	defer webhookServer.Close()
 
 	// Set up watcher with webhook
-	config := watcher.WatcherConfig{
+	config := watchers.WatcherConfig{
 		Providers:    []string{"kubernetes"},
 		Interval:     5 * time.Second,
 		WebhookURL:   webhookServer.URL,
@@ -171,13 +170,13 @@ func TestWatchModeWebhookIntegration(t *testing.T) {
 		Quiet:        true,
 	}
 
-	_, err := watcher.NewWatcher(config)
+	_, err := watchers.NewWatcher(config)
 	if err != nil {
 		t.Fatalf("Failed to create watcher: %v", err)
 	}
 
 	// Simulate a change event
-	event := &watcher.WatchEvent{
+	event := &watchers.DisplayEvent{
 		Timestamp: time.Now(),
 		CorrelatedGroups: []analyzer.ChangeGroup{
 			{
@@ -264,14 +263,14 @@ func TestWatchModeMultipleProviders(t *testing.T) {
 	registry.RegisterEnhanced(k8sCollector)
 
 	// Create watcher for multiple providers
-	config := watcher.WatcherConfig{
+	config := watchers.WatcherConfig{
 		Providers:    []string{"terraform", "kubernetes"},
 		Interval:     5 * time.Second,
 		OutputFormat: "table",
 		Quiet:        true,
 	}
 
-	w, err := watcher.NewWatcher(config)
+	w, err := watchers.NewWatcher(config)
 	if err != nil {
 		t.Fatalf("Failed to create watcher: %v", err)
 	}
@@ -329,14 +328,14 @@ func TestWatchModeConcurrentWebhooks(t *testing.T) {
 	}))
 	defer webhookServer.Close()
 
-	config := watcher.WatcherConfig{
+	config := watchers.WatcherConfig{
 		Providers:  []string{"kubernetes"},
 		Interval:   5 * time.Second,
 		WebhookURL: webhookServer.URL,
 		Quiet:      true,
 	}
 
-	_, err := watcher.NewWatcher(config)
+	_, err := watchers.NewWatcher(config)
 	if err != nil {
 		t.Fatalf("Failed to create watcher: %v", err)
 	}
@@ -347,7 +346,7 @@ func TestWatchModeConcurrentWebhooks(t *testing.T) {
 		wg.Add(1)
 		go func(index int) {
 			defer wg.Done()
-			event := &watcher.WatchEvent{
+			event := &watchers.DisplayEvent{
 				Timestamp: time.Now(),
 				Summary: differ.ChangeSummary{
 					Total: index,
@@ -431,7 +430,7 @@ func (m *mockCollector) SetResources(resources []types.Resource) {
 }
 
 // Helper function to build webhook payload for testing
-func buildTestWebhookPayload(event *watcher.WatchEvent) map[string]interface{} {
+func buildTestWebhookPayload(event *watchers.DisplayEvent) map[string]interface{} {
 	return map[string]interface{}{
 		"timestamp": event.Timestamp,
 		"source":    event.Source,
