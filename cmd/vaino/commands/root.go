@@ -87,6 +87,8 @@ func init() {
 	rootCmd.AddCommand(newSimpleDiffCommand()) // New simple changes command
 	rootCmd.AddCommand(newWatchCommand())      // Real-time watch mode
 	rootCmd.AddCommand(catchUpCmd)             // Empathetic catch-up summary
+	rootCmd.AddCommand(newTimelineCommand())   // Timeline view of snapshots
+	rootCmd.AddCommand(newHistoryCommand())    // History browsing
 	rootCmd.AddCommand(newAuthCommand())
 	rootCmd.AddCommand(newVersionCommand())
 	rootCmd.AddCommand(newConfigureCommand())   // Configuration wizard
