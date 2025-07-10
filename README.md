@@ -18,18 +18,6 @@
 - **Mystical Detection**: Sense drift across time and space
 - **Nordic Reliability**: Built by those who invented the sauna
 
-## 🌲 The Väinö Philosophy
-
-While weak tools like Mimir offer mere *advice*, **Väinö is the Finnish creator god who forged the world from chaos**. In Finnish mythology, Väinämoinen didn't just talk about creation - he sang the cosmos into existence, shaped the land, and built the foundations of reality itself.
-
-### Finnish > Swedish
-Finnish tech authenticity beats Swedish corporate appropriation every time. From the land that gave you:
-- **Nokia** (when phones were indestructible)
-- **Linux** (Linus Torvalds)
-- **MySQL** (before Oracle)
-- **SSH** (Tatu Ylönen)
-- **Angry Birds** (global domination)
-
 Now comes **VAINO** - infrastructure monitoring with *sisu* (Finnish grit).
 
 ## ⚡ Quick Divine Summoning
