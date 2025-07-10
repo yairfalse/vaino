@@ -150,18 +150,39 @@ func (tg *TimelineGraph) renderDateLabels(width int) string {
 		labels[i] = ' '
 	}
 
-	// Calculate how many labels we can fit
-	labelWidth := 6 // "Jan 1 " format
-	maxLabels := width / labelWidth
+	// Only show labels at the start, end, and where snapshots exist
+	labelPositions := []labelPosition{}
 
-	// Determine label positions
-	labelPositions := tg.calculateLabelPositions(maxLabels, width)
+	// Always show start and end
+	labelPositions = append(labelPositions, labelPosition{position: 0, priority: 100})
+	labelPositions = append(labelPositions, labelPosition{position: width - 1, priority: 100})
 
+	// Add positions for each unique day with snapshots
+	dayPositions := make(map[string]int)
+	for _, snapshot := range tg.snapshots {
+		day := snapshot.Timestamp.Format("Jan2")
+		pos := tg.calculatePosition(snapshot.Timestamp, width)
+		if pos >= 0 && pos < width {
+			if existingPos, exists := dayPositions[day]; !exists || pos < existingPos {
+				dayPositions[day] = pos
+			}
+		}
+	}
+
+	// Add unique day positions
+	for _, pos := range dayPositions {
+		if pos > 5 && pos < width-5 { // Avoid overlapping with start/end
+			labelPositions = append(labelPositions, labelPosition{position: pos, priority: 50})
+		}
+	}
+
+	// Place labels ensuring no overlap
+	placedLabels := make(map[int]bool)
 	for _, pos := range labelPositions {
 		timestamp := tg.calculateTimestamp(pos.position, width)
 		label := timestamp.Format("Jan2")
 
-		// Place label centered at position
+		// Find a position that doesn't overlap
 		start := pos.position - len(label)/2
 		if start < 0 {
 			start = 0
@@ -170,9 +191,21 @@ func (tg *TimelineGraph) renderDateLabels(width int) string {
 			start = width - len(label)
 		}
 
-		for i, ch := range label {
-			if start+i < width {
-				labels[start+i] = ch
+		// Check for overlap
+		canPlace := true
+		for i := start; i < start+len(label)+1 && i < width; i++ {
+			if placedLabels[i] {
+				canPlace = false
+				break
+			}
+		}
+
+		if canPlace {
+			for i, ch := range label {
+				if start+i < width {
+					labels[start+i] = ch
+					placedLabels[start+i] = true
+				}
 			}
 		}
 	}

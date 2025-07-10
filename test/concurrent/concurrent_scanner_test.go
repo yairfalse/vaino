@@ -98,8 +98,8 @@ func (m *MockConcurrentCollector) GetCollectCalls() int {
 }
 
 func TestConcurrentScanner_Basic(t *testing.T) {
-	scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-	defer scanner.Close()
+	concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+	defer concurrentScanner.Close()
 
 	// Register mock collectors
 	collectors := map[string]*MockConcurrentCollector{
@@ -109,7 +109,7 @@ func TestConcurrentScanner_Basic(t *testing.T) {
 	}
 
 	for name, collector := range collectors {
-		scanner.RegisterProvider(name, collector)
+		concurrentScanner.RegisterProvider(name, collector)
 	}
 
 	// Create scan configuration
@@ -189,8 +189,8 @@ func TestConcurrentScanner_Basic(t *testing.T) {
 }
 
 func TestConcurrentScanner_WithErrors(t *testing.T) {
-	scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-	defer scanner.Close()
+	concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+	defer concurrentScanner.Close()
 
 	// Register mock collectors with one that fails
 	collectors := map[string]*MockConcurrentCollector{
@@ -200,7 +200,7 @@ func TestConcurrentScanner_WithErrors(t *testing.T) {
 	}
 
 	for name, collector := range collectors {
-		scanner.RegisterProvider(name, collector)
+		concurrentScanner.RegisterProvider(name, collector)
 	}
 
 	// Create scan configuration
@@ -256,8 +256,8 @@ func TestConcurrentScanner_WithErrors(t *testing.T) {
 }
 
 func TestConcurrentScanner_FailOnError(t *testing.T) {
-	scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-	defer scanner.Close()
+	concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+	defer concurrentScanner.Close()
 
 	// Register mock collectors with one that fails
 	collectors := map[string]*MockConcurrentCollector{
@@ -266,7 +266,7 @@ func TestConcurrentScanner_FailOnError(t *testing.T) {
 	}
 
 	for name, collector := range collectors {
-		scanner.RegisterProvider(name, collector)
+		concurrentScanner.RegisterProvider(name, collector)
 	}
 
 	// Create scan configuration with FailOnError=true
@@ -295,12 +295,12 @@ func TestConcurrentScanner_FailOnError(t *testing.T) {
 }
 
 func TestConcurrentScanner_Timeout(t *testing.T) {
-	scanner := scanner.NewConcurrentScanner(4, 1*time.Second) // Short timeout
-	defer scanner.Close()
+	concurrentScanner := scanner.NewConcurrentScanner(4, 1*time.Second) // Short timeout
+	defer concurrentScanner.Close()
 
 	// Register mock collector with long delay
 	slowCollector := NewMockConcurrentCollector("slow", 5*time.Second, false, 5)
-	scanner.RegisterProvider("slow", slowCollector)
+	concurrentScanner.RegisterProvider("slow", slowCollector)
 
 	// Create scan configuration
 	config := scanner.ScanConfig{
@@ -337,15 +337,15 @@ func TestConcurrentScanner_Timeout(t *testing.T) {
 }
 
 func TestConcurrentScanner_ResourceDeduplication(t *testing.T) {
-	scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-	defer scanner.Close()
+	concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+	defer concurrentScanner.Close()
 
 	// Create collectors that return overlapping resources
 	aws1 := NewMockConcurrentCollector("aws-1", 100*time.Millisecond, false, 3)
 	aws2 := NewMockConcurrentCollector("aws-2", 100*time.Millisecond, false, 3)
 
-	scanner.RegisterProvider("aws-1", aws1)
-	scanner.RegisterProvider("aws-2", aws2)
+	concurrentScanner.RegisterProvider("aws-1", aws1)
+	concurrentScanner.RegisterProvider("aws-2", aws2)
 
 	// Create scan configuration
 	config := scanner.ScanConfig{
@@ -382,8 +382,8 @@ func TestConcurrentScanner_ResourceDeduplication(t *testing.T) {
 }
 
 func TestConcurrentScanner_PreferredOrder(t *testing.T) {
-	scanner := scanner.NewConcurrentScanner(1, 30*time.Second) // Single worker to test order
-	defer scanner.Close()
+	concurrentScanner := scanner.NewConcurrentScanner(1, 30*time.Second) // Single worker to test order
+	defer concurrentScanner.Close()
 
 	// Register mock collectors
 	collectors := map[string]*MockConcurrentCollector{
@@ -393,7 +393,7 @@ func TestConcurrentScanner_PreferredOrder(t *testing.T) {
 	}
 
 	for name, collector := range collectors {
-		scanner.RegisterProvider(name, collector)
+		concurrentScanner.RegisterProvider(name, collector)
 	}
 
 	// Create scan configuration with preferred order
@@ -427,12 +427,12 @@ func TestConcurrentScanner_PreferredOrder(t *testing.T) {
 }
 
 func TestConcurrentScanner_Stats(t *testing.T) {
-	scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-	defer scanner.Close()
+	concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+	defer concurrentScanner.Close()
 
 	// Register some providers
-	scanner.RegisterProvider("aws", NewMockConcurrentCollector("aws", 100*time.Millisecond, false, 5))
-	scanner.RegisterProvider("gcp", NewMockConcurrentCollector("gcp", 150*time.Millisecond, false, 3))
+	concurrentScanner.RegisterProvider("aws", NewMockConcurrentCollector("aws", 100*time.Millisecond, false, 5))
+	concurrentScanner.RegisterProvider("gcp", NewMockConcurrentCollector("gcp", 150*time.Millisecond, false, 3))
 
 	// Get stats
 	stats := scanner.GetStats()
@@ -454,12 +454,12 @@ func TestConcurrentScanner_Stats(t *testing.T) {
 }
 
 func TestConcurrentScanner_SkipMerging(t *testing.T) {
-	scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-	defer scanner.Close()
+	concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+	defer concurrentScanner.Close()
 
 	// Register mock collectors
-	scanner.RegisterProvider("aws", NewMockConcurrentCollector("aws", 100*time.Millisecond, false, 5))
-	scanner.RegisterProvider("gcp", NewMockConcurrentCollector("gcp", 150*time.Millisecond, false, 3))
+	concurrentScanner.RegisterProvider("aws", NewMockConcurrentCollector("aws", 100*time.Millisecond, false, 5))
+	concurrentScanner.RegisterProvider("gcp", NewMockConcurrentCollector("gcp", 150*time.Millisecond, false, 3))
 
 	// Create scan configuration with skip merging
 	config := scanner.ScanConfig{
@@ -492,13 +492,13 @@ func TestConcurrentScanner_SkipMerging(t *testing.T) {
 }
 
 func BenchmarkConcurrentScanner_Performance(b *testing.B) {
-	scanner := scanner.NewConcurrentScanner(4, 30*time.Second)
-	defer scanner.Close()
+	concurrentScanner := scanner.NewConcurrentScanner(4, 30*time.Second)
+	defer concurrentScanner.Close()
 
 	// Register mock collectors
-	scanner.RegisterProvider("aws", NewMockConcurrentCollector("aws", 10*time.Millisecond, false, 100))
-	scanner.RegisterProvider("gcp", NewMockConcurrentCollector("gcp", 15*time.Millisecond, false, 50))
-	scanner.RegisterProvider("kubernetes", NewMockConcurrentCollector("kubernetes", 20*time.Millisecond, false, 200))
+	concurrentScanner.RegisterProvider("aws", NewMockConcurrentCollector("aws", 10*time.Millisecond, false, 100))
+	concurrentScanner.RegisterProvider("gcp", NewMockConcurrentCollector("gcp", 15*time.Millisecond, false, 50))
+	concurrentScanner.RegisterProvider("kubernetes", NewMockConcurrentCollector("kubernetes", 20*time.Millisecond, false, 200))
 
 	config := scanner.ScanConfig{
 		Providers: map[string]collectors.CollectorConfig{

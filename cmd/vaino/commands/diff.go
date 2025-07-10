@@ -40,8 +40,8 @@ By default, compares current infrastructure state with the last scan automatical
   # Silent mode for scripts (like git diff --quiet)
   vaino diff --quiet && echo "All good!" || echo "Changes detected!"
 
-  # Compare with specific baseline
-  vaino diff --baseline prod-v1.0
+  # Compare with specific snapshot
+  vaino diff --from prod-v1.0
 
   # Compare two specific snapshots
   vaino diff --from snapshot-1.json --to snapshot-2.json
@@ -55,7 +55,7 @@ By default, compares current infrastructure state with the last scan automatical
 	}
 
 	// Flags - Unix-style like git diff
-	cmd.Flags().String("baseline", "", "baseline name to compare against")
+	// Removed baseline flag - use --from instead
 	cmd.Flags().String("from", "", "source snapshot file")
 	cmd.Flags().String("to", "", "target snapshot file")
 	cmd.Flags().String("format", "", "output format (unix, simple, name-only, stat, json, yaml)")
@@ -237,7 +237,7 @@ func formatTableReport(report *differ.DriftReport, summaryOnly bool, showUnchang
 	}
 
 	if report.Summary.ChangedResources == 0 {
-		output.WriteString("\nNo drift detected - infrastructure matches baseline\n")
+		output.WriteString("\nNo drift detected - infrastructure matches reference snapshot\n")
 	} else {
 		output.WriteString(fmt.Sprintf("\nDrift detected in %d resources\n", report.Summary.ChangedResources))
 	}
@@ -247,7 +247,7 @@ func formatTableReport(report *differ.DriftReport, summaryOnly bool, showUnchang
 
 func runDiff(cmd *cobra.Command, args []string) error {
 	// Parse flags
-	baseline, _ := cmd.Flags().GetString("baseline")
+	// baseline flag removed
 	from, _ := cmd.Flags().GetString("from")
 	to, _ := cmd.Flags().GetString("to")
 	format, _ := cmd.Flags().GetString("format")
@@ -270,7 +270,7 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	}
 
 	// Auto-detect last scan if no inputs provided
-	if baseline == "" && from == "" && to == "" {
+	if from == "" && to == "" {
 		// Try to find the most recent scan in ~/.vaino
 		homeDir, _ := os.UserHomeDir()
 		vainoDir := filepath.Join(homeDir, ".vaino")
@@ -373,29 +373,19 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	}
 
 	// Validate inputs after auto-detection
-	if baseline == "" && (from == "" || to == "") {
+	if from == "" || to == "" {
 		return vainoerrors.New(vainoerrors.ErrorTypeValidation, vainoerrors.ProviderUnknown,
 			"Missing required arguments").
 			WithCause("Must specify snapshots to compare").
 			WithSolutions(
 				"Run 'vaino diff' (auto-detects last scan)",
 				"Use 'vaino diff --from snapshot1.json --to snapshot2.json'",
-				"Use 'vaino diff --baseline prod-v1.0'",
+				"Use 'vaino diff --from prod-v1.0'",
 			).
 			WithHelp("vaino diff --help")
 	}
 
-	if baseline != "" && (from != "" || to != "") {
-		return vainoerrors.New(vainoerrors.ErrorTypeValidation, vainoerrors.ProviderUnknown,
-			"Conflicting arguments").
-			WithCause("Cannot use --baseline with --from/--to").
-			WithSolutions(
-				"Use either --baseline OR --from/--to, not both",
-				"Example: vaino diff --baseline prod-v1.0",
-				"Example: vaino diff --from old.json --to new.json",
-			).
-			WithHelp("vaino diff --help")
-	}
+	// Removed baseline validation
 
 	// Validate format
 	validFormats := []string{"table", "json", "yaml", "markdown", "unix", "simple", "name-only", "stat"}
@@ -417,7 +407,7 @@ func runDiff(cmd *cobra.Command, args []string) error {
 
 	// Initialize storage
 	storageConfig := storage.Config{BaseDir: "./snapshots"}
-	localStorage, err := storage.NewLocalStorage(storageConfig)
+	_, err := storage.NewLocalStorage(storageConfig)
 	if err != nil {
 		return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
 			"Storage initialization failed").
@@ -433,92 +423,50 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	// Load snapshots
 	var fromSnapshot, toSnapshot *types.Snapshot
 
-	if baseline != "" {
-		// Loading baseline
-		baselineData, err := localStorage.LoadBaseline(baseline)
-		if err != nil {
+	// Loading snapshots for comparison
+	fromSnapshot, err = loadSnapshotFromFile(from)
+	if err != nil {
+		if os.IsNotExist(err) {
 			return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
-				fmt.Sprintf("Baseline '%s' not found", baseline)).
-				WithCause(err.Error()).
+				fmt.Sprintf("Snapshot file not found: %s", from)).
+				WithCause("File does not exist").
 				WithSolutions(
-					"List available baselines: vaino baseline list",
-					"Create a baseline: vaino baseline create --name <name>",
-					"Check baseline name spelling",
+					"Check file path and spelling",
+					"Use absolute paths for clarity",
+					"List available snapshots: ls ~/.vaino/history/",
 				).
-				WithHelp("vaino baseline --help")
+				WithHelp("vaino scan --help")
 		}
-		fromSnapshot, err = localStorage.LoadSnapshot(baselineData.SnapshotID)
-		if err != nil {
+		return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
+			"Failed to load snapshot").
+			WithCause(err.Error()).
+			WithSolutions(
+				"Ensure file is valid JSON",
+				"Check file permissions",
+			).
+			WithHelp("vaino diff --help")
+	}
+	toSnapshot, err = loadSnapshotFromFile(to)
+	if err != nil {
+		if os.IsNotExist(err) {
 			return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
-				"Failed to load baseline snapshot data").
-				WithCause(err.Error()).
+				fmt.Sprintf("Snapshot file not found: %s", to)).
+				WithCause("File does not exist").
 				WithSolutions(
-					"Baseline may be corrupted",
-					"Recreate baseline: vaino baseline create --name <name>",
+					"Check file path and spelling",
+					"Use absolute paths for clarity",
+					"Run 'vaino scan' to create new snapshot",
 				).
-				WithHelp("vaino baseline --help")
+				WithHelp("vaino scan --help")
 		}
-
-		// Loading current snapshot
-		snapshots, err := localStorage.ListSnapshots()
-		if err != nil {
-			return fmt.Errorf("failed to list snapshots: %w", err)
-		}
-		if len(snapshots) == 0 {
-			return fmt.Errorf("no current snapshots found. Run 'vaino scan' first")
-		}
-		// Load the most recent snapshot
-		toSnapshot, err = localStorage.LoadSnapshot(snapshots[0].ID)
-		if err != nil {
-			return fmt.Errorf("failed to load current snapshot: %w", err)
-		}
-		// Comparing baseline with current state
-	} else {
-		// Loading snapshots for comparison
-		fromSnapshot, err = loadSnapshotFromFile(from)
-		if err != nil {
-			if os.IsNotExist(err) {
-				return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
-					fmt.Sprintf("Snapshot file not found: %s", from)).
-					WithCause("File does not exist").
-					WithSolutions(
-						"Check file path and spelling",
-						"Use absolute paths for clarity",
-						"List available snapshots: ls ~/.vaino/history/",
-					).
-					WithHelp("vaino scan --help")
-			}
-			return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
-				"Failed to load snapshot").
-				WithCause(err.Error()).
-				WithSolutions(
-					"Ensure file is valid JSON",
-					"Check file permissions",
-				).
-				WithHelp("vaino diff --help")
-		}
-		toSnapshot, err = loadSnapshotFromFile(to)
-		if err != nil {
-			if os.IsNotExist(err) {
-				return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
-					fmt.Sprintf("Snapshot file not found: %s", to)).
-					WithCause("File does not exist").
-					WithSolutions(
-						"Check file path and spelling",
-						"Use absolute paths for clarity",
-						"Run 'vaino scan' to create new snapshot",
-					).
-					WithHelp("vaino scan --help")
-			}
-			return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
-				"Failed to load snapshot").
-				WithCause(err.Error()).
-				WithSolutions(
-					"Ensure file is valid JSON",
-					"Check file permissions",
-				).
-				WithHelp("vaino diff --help")
-		}
+		return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
+			"Failed to load snapshot").
+			WithCause(err.Error()).
+			WithSolutions(
+				"Ensure file is valid JSON",
+				"Check file permissions",
+			).
+			WithHelp("vaino diff --help")
 	}
 
 	// Parse minimum severity

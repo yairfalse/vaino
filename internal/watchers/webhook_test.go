@@ -48,7 +48,7 @@ func TestWatcher_SendWebhook(t *testing.T) {
 	}
 
 	// Create test event
-	event := &WatchEvent{
+	event := &DisplayEvent{
 		Timestamp: time.Now(),
 		CorrelatedGroups: []analyzer.ChangeGroup{
 			{
@@ -74,9 +74,9 @@ func TestWatcher_SendWebhook(t *testing.T) {
 	}
 
 	// Send webhook
-	err = watcher.sendWebhook(event)
+	err = watcher.SendWebhook(event)
 	if err != nil {
-		t.Errorf("sendWebhook failed: %v", err)
+		t.Errorf("SendWebhook failed: %v", err)
 	}
 
 	// Verify received payload
@@ -134,14 +134,14 @@ func TestWatcher_SendWebhook_ServerError(t *testing.T) {
 		t.Fatalf("NewWatcher failed: %v", err)
 	}
 
-	event := &WatchEvent{
+	event := &DisplayEvent{
 		Timestamp: time.Now(),
 		Summary:   differ.ChangeSummary{Total: 1},
 		Source:    "test",
 	}
 
 	// Should return error for server error
-	err = watcher.sendWebhook(event)
+	err = watcher.SendWebhook(event)
 	if err == nil {
 		t.Error("Expected error for server error response")
 	}
@@ -161,14 +161,14 @@ func TestWatcher_SendWebhook_NoURL(t *testing.T) {
 		t.Fatalf("NewWatcher failed: %v", err)
 	}
 
-	event := &WatchEvent{
+	event := &DisplayEvent{
 		Timestamp: time.Now(),
 		Summary:   differ.ChangeSummary{Total: 1},
 		Source:    "test",
 	}
 
 	// Should not send webhook if no URL configured
-	err = watcher.sendWebhook(event)
+	err = watcher.SendWebhook(event)
 	if err != nil {
 		t.Errorf("Unexpected error when no webhook URL: %v", err)
 	}
@@ -188,7 +188,7 @@ func TestBuildWebhookPayload(t *testing.T) {
 	}
 
 	now := time.Now()
-	event := &WatchEvent{
+	event := &DisplayEvent{
 		Timestamp: now,
 		CorrelatedGroups: []analyzer.ChangeGroup{
 			{
@@ -323,12 +323,12 @@ func TestGetSlackColor(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		event         *WatchEvent
+		event         *DisplayEvent
 		expectedColor string
 	}{
 		{
 			name: "high confidence changes",
-			event: &WatchEvent{
+			event: &DisplayEvent{
 				CorrelatedGroups: []analyzer.ChangeGroup{
 					{Confidence: "high"},
 				},
@@ -338,7 +338,7 @@ func TestGetSlackColor(t *testing.T) {
 		},
 		{
 			name: "removed resources",
-			event: &WatchEvent{
+			event: &DisplayEvent{
 				CorrelatedGroups: []analyzer.ChangeGroup{
 					{Confidence: "medium"},
 				},
@@ -348,7 +348,7 @@ func TestGetSlackColor(t *testing.T) {
 		},
 		{
 			name: "added resources",
-			event: &WatchEvent{
+			event: &DisplayEvent{
 				CorrelatedGroups: []analyzer.ChangeGroup{
 					{Confidence: "medium"},
 				},
@@ -358,7 +358,7 @@ func TestGetSlackColor(t *testing.T) {
 		},
 		{
 			name: "modified resources only",
-			event: &WatchEvent{
+			event: &DisplayEvent{
 				CorrelatedGroups: []analyzer.ChangeGroup{
 					{Confidence: "medium"},
 				},
@@ -404,7 +404,7 @@ func BenchmarkBuildWebhookPayload(b *testing.B) {
 		}
 	}
 
-	event := &WatchEvent{
+	event := &DisplayEvent{
 		Timestamp: now,
 		CorrelatedGroups: []analyzer.ChangeGroup{
 			{

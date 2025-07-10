@@ -236,7 +236,7 @@ func TestHandleTimelineBetween(t *testing.T) {
 		{
 			ID:        "snap1",
 			Timestamp: time.Now().Add(-48 * time.Hour),
-			Tags:      map[string]string{"baseline": "baseline1"},
+			Tags:      map[string]string{"version": "v1.0", "environment": "production"},
 		},
 		{
 			ID:        "snap2",
@@ -245,87 +245,94 @@ func TestHandleTimelineBetween(t *testing.T) {
 		{
 			ID:        "snap3",
 			Timestamp: time.Now(),
-			Tags:      map[string]string{"baseline": "baseline2"},
+			Tags:      map[string]string{"version": "v2.0", "environment": "staging"},
 		},
 	}
 
-	// Test that it correctly identifies baselines
-	var base1, base2 *storage.SnapshotInfo
+	// Test that it correctly identifies snapshots by tag values
+	var snap1, snap3 *storage.SnapshotInfo
 	for i, snapshot := range snapshots {
-		if snapshot.Tags["baseline"] == "baseline1" {
-			base1 = &snapshots[i]
+		if snapshot.Tags["version"] == "v1.0" {
+			snap1 = &snapshots[i]
 		}
-		if snapshot.Tags["baseline"] == "baseline2" {
-			base2 = &snapshots[i]
+		if snapshot.Tags["version"] == "v2.0" {
+			snap3 = &snapshots[i]
 		}
 	}
 
-	assert.NotNil(t, base1)
-	assert.NotNil(t, base2)
-	assert.Equal(t, "baseline1", base1.Tags["baseline"])
-	assert.Equal(t, "baseline2", base2.Tags["baseline"])
+	assert.NotNil(t, snap1)
+	assert.NotNil(t, snap3)
+	assert.Equal(t, "v1.0", snap1.Tags["version"])
+	assert.Equal(t, "v2.0", snap3.Tags["version"])
 }
 
-func TestSortBaselines(t *testing.T) {
+func TestFilterSnapshotsByTags(t *testing.T) {
 	now := time.Now()
-	baselines := []storage.SnapshotInfo{
+	snapshots := []storage.SnapshotInfo{
 		{
 			ID:        "snap1",
 			Timestamp: now.Add(-48 * time.Hour),
-			Tags:      map[string]string{"baseline": "prod-v1"},
+			Tags:      map[string]string{"environment": "production", "version": "v1"},
 		},
 		{
 			ID:        "snap2",
 			Timestamp: now.Add(-24 * time.Hour),
-			Tags:      map[string]string{"baseline": "dev-v2"},
+			Tags:      map[string]string{"environment": "development", "version": "v2"},
 		},
 		{
 			ID:        "snap3",
 			Timestamp: now,
-			Tags:      map[string]string{"baseline": "staging-v3"},
+			Tags:      map[string]string{"environment": "staging", "version": "v3"},
 		},
 	}
 
 	tests := []struct {
 		name          string
-		sortBy        string
-		reverse       bool
-		expectedFirst string
+		tagFilter     map[string]string
+		expectedCount int
+		expectedIDs   []string
 	}{
 		{
-			name:          "sort by name",
-			sortBy:        "name",
-			reverse:       false,
-			expectedFirst: "dev-v2",
+			name:          "filter by environment production",
+			tagFilter:     map[string]string{"environment": "production"},
+			expectedCount: 1,
+			expectedIDs:   []string{"snap1"},
 		},
 		{
-			name:          "sort by name reverse",
-			sortBy:        "name",
-			reverse:       true,
-			expectedFirst: "staging-v3",
+			name:          "filter by version v2",
+			tagFilter:     map[string]string{"version": "v2"},
+			expectedCount: 1,
+			expectedIDs:   []string{"snap2"},
 		},
 		{
-			name:          "sort by created",
-			sortBy:        "created",
-			reverse:       false,
-			expectedFirst: "prod-v1",
-		},
-		{
-			name:          "sort by created reverse",
-			sortBy:        "created",
-			reverse:       true,
-			expectedFirst: "staging-v3",
+			name:          "filter by multiple tags",
+			tagFilter:     map[string]string{"environment": "staging", "version": "v3"},
+			expectedCount: 1,
+			expectedIDs:   []string{"snap3"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Make a copy to avoid modifying the original
-			testBaselines := make([]storage.SnapshotInfo, len(baselines))
-			copy(testBaselines, baselines)
+			// Test tag filtering logic
+			var filtered []storage.SnapshotInfo
+			for _, snapshot := range snapshots {
+				match := true
+				for k, v := range tt.tagFilter {
+					if snapshot.Tags[k] != v {
+						match = false
+						break
+					}
+				}
+				if match {
+					filtered = append(filtered, snapshot)
+				}
+			}
 
-			sortBaselines(testBaselines, tt.sortBy, tt.reverse)
-			assert.Equal(t, tt.expectedFirst, testBaselines[0].Tags["baseline"])
+			assert.Equal(t, tt.expectedCount, len(filtered))
+			for i, id := range tt.expectedIDs {
+				assert.Equal(t, id, filtered[i].ID)
+			}
 		})
 	}
 }

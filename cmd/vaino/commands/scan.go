@@ -27,8 +27,8 @@ func newScanCommand() *cobra.Command {
 		Long: `Scan discovers and collects the current state of your infrastructure
 from various providers (Terraform, AWS, Kubernetes) and creates a snapshot.
 
-This snapshot can be used as a baseline for future drift detection or 
-compared against existing baselines to identify changes.`,
+This snapshot can be used as a reference point for future drift detection or 
+compared against other snapshots to identify changes.`,
 		Example: `  # Scan Terraform state
   vaino scan --provider terraform --path ./terraform
 

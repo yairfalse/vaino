@@ -88,7 +88,7 @@ func BenchmarkWebhookSending(b *testing.B) {
 		b.Fatalf("Failed to create watcher: %v", err)
 	}
 
-	event := &watchers.WatchEvent{
+	event := &watchers.DisplayEvent{
 		Timestamp: time.Now(),
 		Summary:   differ.ChangeSummary{Total: 10},
 		Source:    "benchmark",
@@ -132,7 +132,7 @@ func TestWatcherScalability(t *testing.T) {
 
 			// Measure processing time
 			start := time.Now()
-			event := &watchers.WatchEvent{
+			event := &watchers.DisplayEvent{
 				Timestamp:  time.Now(),
 				RawChanges: changes,
 				Source:     "test",
@@ -183,7 +183,7 @@ func TestWatcherConcurrency(t *testing.T) {
 				changes := generateChangesWithPrefix(10, fmt.Sprintf("worker-%d", workerID))
 
 				// Process changes
-				event := &watchers.WatchEvent{
+				event := &watchers.DisplayEvent{
 					Timestamp:  time.Now(),
 					RawChanges: changes,
 					Source:     fmt.Sprintf("worker-%d", workerID),
