@@ -17,32 +17,30 @@ var (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "vaino",
-	Short: "Ancient Finnish wisdom for modern infrastructure",
-	Long: `VAINO - The Finnish creator god who actually BUILDS things.
+	Short: "Infrastructure drift detection and monitoring",
+	Long: `VAINO - Infrastructure drift detection and monitoring tool.
 
-Unlike weak advisory tools, Väinö brings ancient Finnish wisdom to modern 
-infrastructure monitoring. The creator god who forged the world from chaos
-now watches over your cloud resources with divine insight.
+Named after Väinö from Finnish mythology.
 
-DIVINE POWERS:
-- Forge clarity from infrastructure chaos
-- Ancient wisdom meets modern DevOps
-- Creator god energy vs passive advice-giving
-- Finnish authenticity over Swedish appropriation
+VAINO helps you detect and monitor infrastructure changes across multiple 
+cloud providers and Infrastructure as Code tools. Think of it as "git diff" 
+for your infrastructure.
 
-SUMMON VÄINÖ'S POWER:
-  vaino diff            # Divine insight into what changed
-  vaino scan            # The creator's watchful eye  
-  vaino diff --stat     # Mystical change statistics
-  vaino diff --quiet    # Silent divine knowledge
+CORE FEATURES:
+- Multi-provider support (AWS, GCP, Kubernetes, Terraform)
+- Real-time drift detection
+- Unix-style output for automation
+- Multiple output formats (JSON, YAML, table, markdown)
+- Continuous monitoring capabilities
 
-THE CREATOR WATCHES:
-  🌲 Terraform state realms
-  ☁️  AWS cloud kingdoms  
-  ⚓ Kubernetes vessel fleets
-  🔥 And all infrastructure you create...
+QUICK START:
+  vaino scan              # Scan your infrastructure
+  vaino diff              # Show changes since last scan
+  vaino diff --stat       # Show change statistics
+  vaino diff --quiet      # Silent mode for scripting
 
-"In the beginning was the Void. Then Väinö sang the world into being."`,
+SUPPORTED PROVIDERS:
+  Terraform, AWS, Kubernetes, GCP`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Handle --version flag
 		if showVersion, _ := cmd.Flags().GetBool("version"); showVersion {

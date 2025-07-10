@@ -6,109 +6,109 @@ Essential commands and patterns for daily use.
 
 ```bash
 # One-line install
-curl -sSL https://install.wgo.sh | bash
+curl -sSL https://install.vaino.sh | bash
 
 # Homebrew (macOS)
-brew install yairfalse/wgo/wgo
+brew install yairfalse/vaino/vaino
 
 # Go install
-go install github.com/yairfalse/wgo/cmd/wgo@latest
+go install github.com/yairfalse/vaino/cmd/vaino@latest
 ```
 
 ## ⚡ Most Common Commands
 
 ```bash
 # Scan current infrastructure
-wgo scan
+vaino scan
 
 # See what changed
-wgo diff
+vaino diff
 
 # Check system status
-wgo status
+vaino status
 
 # Get help
-wgo --help
+vaino --help
 ```
 
 ## 📊 Scanning Infrastructure
 
 ### Basic Scans
 ```bash
-wgo scan                                    # Auto-detect everything
-wgo scan --provider terraform              # Scan Terraform only
-wgo scan --provider aws --region us-east-1 # Scan AWS in specific region
-wgo scan --provider gcp --project my-proj  # Scan GCP project
-wgo scan --provider kubernetes             # Scan Kubernetes cluster
+vaino scan                                    # Auto-detect everything
+vaino scan --provider terraform              # Scan Terraform only
+vaino scan --provider aws --region us-east-1 # Scan AWS in specific region
+vaino scan --provider gcp --project my-proj  # Scan GCP project
+vaino scan --provider kubernetes             # Scan Kubernetes cluster
 ```
 
 ### Advanced Scans
 ```bash
-wgo scan --all                              # Scan all providers
-wgo scan --output-file state.json          # Save to file
-wgo scan --snapshot-name "pre-deploy"      # Custom snapshot name
-wgo scan --quiet                           # Silent mode for scripts
+vaino scan --all                              # Scan all providers
+vaino scan --output-file state.json          # Save to file
+vaino scan --snapshot-name "pre-deploy"      # Custom snapshot name
+vaino scan --quiet                           # Silent mode for scripts
 ```
 
 ## 🔍 Detecting Changes
 
 ### Basic Diff
 ```bash
-wgo diff                          # Compare with last scan
-wgo diff snapshot1 snapshot2      # Compare specific snapshots
-wgo diff --stat                   # Show summary only
-wgo diff --quiet                  # Silent (exit code indicates changes)
+vaino diff                          # Compare with last scan
+vaino diff snapshot1 snapshot2      # Compare specific snapshots
+vaino diff --stat                   # Show summary only
+vaino diff --quiet                  # Silent (exit code indicates changes)
 ```
 
 ### Filtered Diff
 ```bash
-wgo diff --severity high          # Only high-severity changes
-wgo diff --format json           # JSON output
-wgo diff --baseline prod-v1       # Compare against baseline
+vaino diff --severity high          # Only high-severity changes
+vaino diff --format json           # JSON output
+vaino diff --baseline prod-v1       # Compare against baseline
 ```
 
 ## 📋 Baseline Management
 
 ```bash
-wgo baseline create --name "prod-v1.0"     # Create baseline
-wgo baseline list                          # List all baselines
-wgo baseline show prod-v1.0                # Show baseline details
-wgo baseline delete old-baseline           # Delete baseline
+vaino baseline create --name "prod-v1.0"     # Create baseline
+vaino baseline list                          # List all baselines
+vaino baseline show prod-v1.0                # Show baseline details
+vaino baseline delete old-baseline           # Delete baseline
 ```
 
 ## 🛠️ Configuration
 
 ```bash
-wgo configure                     # Interactive setup
-wgo configure aws                 # Configure AWS provider
-wgo check-config                  # Validate configuration
-wgo status --provider aws         # Check AWS connectivity
+vaino configure                     # Interactive setup
+vaino configure aws                 # Configure AWS provider
+vaino check-config                  # Validate configuration
+vaino status --provider aws         # Check AWS connectivity
 ```
 
 ## 📁 Provider-Specific Examples
 
 ### Terraform
 ```bash
-wgo scan --provider terraform --path ./infrastructure
-wgo scan --provider terraform --state-file terraform.tfstate
+vaino scan --provider terraform --path ./infrastructure
+vaino scan --provider terraform --state-file terraform.tfstate
 ```
 
 ### AWS
 ```bash
-wgo scan --provider aws --region us-east-1,us-west-2
-wgo scan --provider aws --profile production
+vaino scan --provider aws --region us-east-1,us-west-2
+vaino scan --provider aws --profile production
 ```
 
 ### GCP
 ```bash
-wgo scan --provider gcp --project my-project-123
-wgo scan --provider gcp --region us-central1,us-east1
+vaino scan --provider gcp --project my-project-123
+vaino scan --provider gcp --region us-central1,us-east1
 ```
 
 ### Kubernetes
 ```bash
-wgo scan --provider kubernetes --context production
-wgo scan --provider kubernetes --namespace default,monitoring
+vaino scan --provider kubernetes --context production
+vaino scan --provider kubernetes --namespace default,monitoring
 ```
 
 ## 🔄 Automation & CI/CD
@@ -116,31 +116,31 @@ wgo scan --provider kubernetes --namespace default,monitoring
 ### Basic Automation
 ```bash
 # Check for changes (exit code indicates drift)
-wgo diff --quiet && echo "No changes" || echo "Drift detected"
+vaino diff --quiet && echo "No changes" || echo "Drift detected"
 
 # Daily monitoring
-wgo scan --snapshot-name "daily-$(date +%Y%m%d)"
+vaino scan --snapshot-name "daily-$(date +%Y%m%d)"
 ```
 
 ### CI/CD Pipeline
 ```bash
 # Scan and save results
-wgo scan --provider terraform --output-file scan-results.json
+vaino scan --provider terraform --output-file scan-results.json
 
 # Compare against baseline
-wgo diff --baseline production-baseline --format json > diff-report.json
+vaino diff --baseline production-baseline --format json > diff-report.json
 
 # Fail build if high-severity drift
-wgo diff --severity high --quiet || exit 1
+vaino diff --severity high --quiet || exit 1
 ```
 
 ## 📊 Output Formats
 
 ```bash
-wgo scan --format table           # Human-readable table (default)
-wgo scan --format json            # Machine-readable JSON
-wgo scan --format yaml            # YAML format
-wgo scan --format markdown        # Markdown table
+vaino scan --format table           # Human-readable table (default)
+vaino scan --format json            # Machine-readable JSON
+vaino scan --format yaml            # YAML format
+vaino scan --format markdown        # Markdown table
 ```
 
 ## 🎯 Exit Codes
@@ -156,10 +156,10 @@ wgo scan --format markdown        # Markdown table
 ### Daily Drift Check
 ```bash
 #!/bin/bash
-wgo scan --quiet
-if ! wgo diff --quiet; then
+vaino scan --quiet
+if ! vaino diff --quiet; then
   echo "⚠️ Infrastructure drift detected!"
-  wgo diff --format markdown | mail -s "Drift Alert" team@company.com
+  vaino diff --format markdown | mail -s "Drift Alert" team@company.com
 fi
 ```
 
@@ -167,8 +167,8 @@ fi
 ```bash
 #!/bin/bash
 echo "Checking infrastructure before deployment..."
-wgo scan --snapshot-name "pre-deploy-$(date +%Y%m%d-%H%M)"
-wgo diff --baseline production-baseline --severity high --quiet
+vaino scan --snapshot-name "pre-deploy-$(date +%Y%m%d-%H%M)"
+vaino diff --baseline production-baseline --severity high --quiet
 if [ $? -eq 1 ]; then
   echo "❌ High-severity drift detected. Please review before deploying."
   exit 1
@@ -180,10 +180,10 @@ echo "✅ No critical drift detected. Safe to deploy."
 ```bash
 #!/bin/bash
 # Create dated backup
-wgo scan --all --output-file "backup-$(date +%Y%m%d).json"
+vaino scan --all --output-file "backup-$(date +%Y%m%d).json"
 
 # Create baseline for current state
-wgo baseline create --name "backup-$(date +%Y%m%d)" \
+vaino baseline create --name "backup-$(date +%Y%m%d)" \
   --description "Automated backup of infrastructure state"
 ```
 
@@ -192,10 +192,10 @@ wgo baseline create --name "backup-$(date +%Y%m%d)" \
 #!/bin/bash
 for env in prod staging dev; do
   echo "Checking $env environment..."
-  wgo scan --provider terraform --path "./environments/$env" \
+  vaino scan --provider terraform --path "./environments/$env" \
     --snapshot-name "$env-$(date +%Y%m%d)"
   
-  wgo diff --baseline "$env-baseline" --quiet || \
+  vaino diff --baseline "$env-baseline" --quiet || \
     echo "⚠️ Drift in $env environment"
 done
 ```
@@ -221,9 +221,9 @@ docker run --rm -v $(pwd):/workspace yairfalse/wgo:latest \
 
 ```bash
 # Install completions
-wgo completion bash > /etc/bash_completion.d/wgo
-wgo completion zsh > /usr/local/share/zsh/site-functions/_wgo
-wgo completion fish > ~/.config/fish/completions/wgo.fish
+vaino completion bash > /etc/bash_completion.d/wgo
+vaino completion zsh > /usr/local/share/zsh/site-functions/_wgo
+vaino completion fish > ~/.config/fish/completions/wgo.fish
 ```
 
 ## 🆘 Troubleshooting
@@ -231,17 +231,17 @@ wgo completion fish > ~/.config/fish/completions/wgo.fish
 ### Common Issues
 ```bash
 # Check configuration
-wgo check-config
+vaino check-config
 
 # Verify authentication
-wgo status --provider aws
-wgo status --provider gcp
+vaino status --provider aws
+vaino status --provider gcp
 
 # Debug mode
-wgo --debug scan
+vaino --debug scan
 
 # Verbose output
-wgo --verbose diff
+vaino --verbose diff
 ```
 
 ### Reset Configuration
@@ -250,7 +250,7 @@ wgo --verbose diff
 rm -rf ~/.wgo
 
 # Reconfigure
-wgo configure
+vaino configure
 ```
 
 ## 🔗 Environment Variables
@@ -286,29 +286,29 @@ export VAINO_LOG_LEVEL=debug
 
 1. **Use snapshots for rollback points**:
    ```bash
-   wgo scan --snapshot-name "before-major-change"
+   vaino scan --snapshot-name "before-major-change"
    ```
 
 2. **Combine with jq for filtering**:
    ```bash
-   wgo scan --format json | jq '.resources[] | select(.type == "aws_instance")'
+   vaino scan --format json | jq '.resources[] | select(.type == "aws_instance")'
    ```
 
 3. **Set up aliases**:
    ```bash
-   alias wgo-prod='wgo --config ~/.wgo/prod-config.yaml'
-   alias wgo-staging='wgo --config ~/.wgo/staging-config.yaml'
+   alias wgo-prod='vaino --config ~/.wgo/prod-config.yaml'
+   alias wgo-staging='vaino --config ~/.wgo/staging-config.yaml'
    ```
 
 4. **Use baselines for environments**:
    ```bash
-   wgo baseline create --name "prod-baseline"
-   wgo baseline create --name "staging-baseline"
+   vaino baseline create --name "prod-baseline"
+   vaino baseline create --name "staging-baseline"
    ```
 
 5. **Monitor with watch**:
    ```bash
-   wgo watch --interval 30s --provider terraform
+   vaino watch --interval 30s --provider terraform
    ```
 
 ---

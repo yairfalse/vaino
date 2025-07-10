@@ -1,125 +1,99 @@
-# VAINO ⚡🌲 
-### *The Finnish Creator God for Modern Infrastructure*
+# VAINO
 
-> *"In the beginning was the Void. Then Väinö sang the world into being."*
+**Infrastructure drift detection and monitoring tool**
 
-**VAINO** brings ancient Finnish wisdom to modern infrastructure monitoring. Unlike weak advisory tools that merely whisper suggestions, Väinö is the **Finnish creator god who actually BUILDS things** - now watching over your cloud resources with divine insight and Nordic authenticity.
+*Named after Väinö from Finnish mythology*
 
-[![Ancient Wisdom](https://img.shields.io/badge/wisdom-ancient%20finnish-blue)](https://github.com/yairfalse/vaino)
-[![Creator God](https://img.shields.io/badge/power-creator%20god-gold)](https://github.com/yairfalse/vaino)
-[![Finnish Authenticity](https://img.shields.io/badge/origin-100%25%20finnish-lightblue)](https://github.com/yairfalse/vaino)
-[![Anti-Mimir](https://img.shields.io/badge/vs-weak%20talking%20heads-red)](https://github.com/yairfalse/vaino)
+[![Build Status](https://github.com/yairfalse/vaino/workflows/CI/badge.svg)](https://github.com/yairfalse/vaino/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Report Card](https://goreportcard.com/badge/github.com/yairfalse/vaino)](https://goreportcard.com/report/github.com/yairfalse/vaino)
 
-## 🔥 Divine Powers
+VAINO helps you detect and monitor infrastructure drift across multiple cloud providers and Infrastructure as Code tools. Think of it as "git diff" for your infrastructure - track changes over time and quickly identify what's different between deployments.
 
-- **Creator God Energy**: Forge clarity from infrastructure chaos
-- **Ancient Wisdom**: Finnish authenticity over Swedish appropriation  
-- **Divine Insight**: The creator's watchful eye on your infrastructure
-- **Mystical Detection**: Sense drift across time and space
-- **Nordic Reliability**: Built by those who invented the sauna
+## Features
 
-Now comes **VAINO** - infrastructure monitoring with *sisu* (Finnish grit).
+- **Multi-Provider Support**: AWS, GCP, Kubernetes, Terraform
+- **Drift Detection**: Compare infrastructure states over time
+- **Unix-Style Output**: Clean, scriptable output for automation
+- **Multiple Formats**: JSON, YAML, table, and markdown output
+- **Real-time Monitoring**: Watch for changes as they happen
+- **CI/CD Integration**: Perfect for automated infrastructure validation
 
-## ⚡ Quick Divine Summoning
+## Quick Start
 
-### The Sacred Installation Ritual
+### Installation
 
 ```bash
-# Universal Divine Installation
+# Universal installer
 curl -sSL https://install.vaino.sh | bash
 
-# Or choose your divine blessing:
-brew install yairfalse/vaino/vaino        # macOS devotees
-sudo apt install vaino                    # Debian disciples  
-sudo dnf install vaino                    # Red Hat righteous
-scoop install vaino                       # Windows worshippers
+# Package managers
+brew install yairfalse/vaino/vaino  # macOS
+sudo apt install vaino              # Debian/Ubuntu
+sudo dnf install vaino              # Red Hat/Fedora
 ```
 
-### First Divine Vision
+### Basic Usage
 
 ```bash
-# Summon Väinö's watchful eye
+# Scan your infrastructure
 vaino scan
 
-# Divine insight into what changed
+# Check for changes
 vaino diff
 
-# The creator's mystical statistics  
+# Get summary statistics
 vaino diff --stat
 
-# Silent divine knowledge (for scripts)
-vaino diff --quiet
+# Monitor continuously
+vaino watch
 ```
 
-## 🌟 Divine Commands
+## Core Commands
 
-### The Creator's Arsenal
+### Scanning
 
 ```bash
-# 👁️ DIVINE SCANNING - The Creator's Watchful Eye
-vaino scan                    # Auto-discover and scan all realms
-vaino scan --provider aws     # Focus divine attention on AWS
-vaino scan --provider k8s     # Watch over Kubernetes vessels
-
-# 🔮 MYSTICAL DETECTION - Ancient Wisdom Reveals All  
-vaino diff                    # See what the mortals have changed
-vaino diff --stat             # Mystical change statistics
-vaino diff --baseline last    # Compare to the last divine snapshot
-
-# ⚖️ DIVINE JUDGMENT - The Creator Decides
-vaino check                   # Judge infrastructure worthiness
-vaino check --drift-only      # Focus on the unfaithful changes
-
-# 🕰️ ETERNAL WATCH - Time Means Nothing to Gods
-vaino watch                   # Continuous divine surveillance
-vaino watch --interval 30s    # More frequent divine attention
-
-# 🌌 DIVINE AUTHORITY - Creator God Commands
-vaino version                 # Behold the creator's current form
-vaino auth setup              # Establish divine credentials
-vaino configure               # Sacred configuration rituals
+vaino scan                        # Auto-discover and scan all providers
+vaino scan --provider aws         # Scan AWS resources
+vaino scan --provider kubernetes  # Scan Kubernetes cluster
+vaino scan --provider terraform   # Scan Terraform state
 ```
 
-## 🌲 The Sacred Realms Väinö Watches
-
-### Infrastructure Domains Under Divine Protection
-
-| **Realm** | **Divine Coverage** | **Creator's Notes** |
-|-----------|-------------------|-------------------|
-| 🌲 **Terraform** | State files, plans, modules | *"Where mortals attempt creation"* |
-| ☁️ **AWS** | EC2, S3, RDS, Lambda, IAM | *"The American cloud kingdom"* |
-| ⚓ **Kubernetes** | Pods, services, deployments | *"Vessels on the digital seas"* |
-| 🌀 **GCP** | Compute, storage, networking | *"Google's attempt at godhood"* |
-
-*More realms await the creator's divine expansion...*
-
-## 📊 Divine Output Formats
-
-Väinö speaks in the tongues mortals understand:
+### Drift Detection
 
 ```bash
-# Sacred Table Format (default)
-vaino diff --output table
-
-# Divine JSON Scrolls  
-vaino diff --output json
-
-# Mystical YAML Runes
-vaino diff --output yaml
-
-# Mortal-Readable Markdown
-vaino diff --output markdown
+vaino diff                        # Show changes since last scan
+vaino diff --stat                 # Show change statistics
+vaino diff --baseline production  # Compare against named baseline
+vaino diff --quiet                # Silent mode (exit code only)
 ```
 
-## 🏛️ Sacred Configuration
+### Continuous Monitoring
 
-### The Divine Config Path: `~/.vaino/config.yaml`
+```bash
+vaino watch                       # Monitor for changes
+vaino watch --interval 30s        # Custom check interval
+vaino check                       # One-time drift check
+```
+
+## Supported Providers
+
+| Provider | Resources | Notes |
+|----------|-----------|-------|
+| **AWS** | EC2, S3, RDS, Lambda, IAM | Requires AWS CLI configuration |
+| **Kubernetes** | Pods, services, deployments | Uses current kubectl context |
+| **Terraform** | State files, plans | Supports local and remote state |
+| **GCP** | Compute, storage, networking | Requires gcloud authentication |
+
+## Configuration
+
+### Config File: `~/.vaino/config.yaml`
 
 ```yaml
-# The Creator's Sacred Configuration
 providers:
   aws:
-    regions: ["us-east-1", "eu-north-1"]  # Include the Nordic realm
+    regions: ["us-east-1", "us-west-2"]
     profile: "production"
   
   kubernetes:
@@ -130,161 +104,132 @@ providers:
 
 output:
   format: "table"
-  no_color: false  # Väinö loves colorful displays
+  no_color: false
 
 storage:
   base_path: "~/.vaino/snapshots"
   retention_days: 30
 ```
 
-### Sacred Environment Variables
+### Environment Variables
 
 ```bash
-# Divine Authentication
+# Provider authentication
 export AWS_PROFILE=production
 export KUBECONFIG=~/.kube/config
 
-# Väinö's Sacred Settings
-export VAINO_VERBOSE=true
-export VAINO_DEBUG=false
+# VAINO settings
 export VAINO_CONFIG=~/.vaino/config.yaml
+export VAINO_VERBOSE=true
 ```
 
-## 🎯 Real-World Divine Interventions
+## Output Formats
 
-### The Daily Divine Ritual
+VAINO supports multiple output formats for different use cases:
+
 ```bash
-# Morning divine inspection
-vaino scan && vaino diff --stat
+vaino diff --output table      # Human-readable table (default)
+vaino diff --output json       # Machine-readable JSON
+vaino diff --output yaml       # YAML format
+vaino diff --output markdown   # Markdown for documentation
+```
 
-# If the creator sees changes
-if [ $? -eq 1 ]; then
-    echo "🔥 Väinö has detected divine drift!"
-    vaino diff --output markdown > daily-changes.md
+## Real-World Examples
+
+### Daily Infrastructure Check
+
+```bash
+#!/bin/bash
+# Daily infrastructure monitoring script
+
+vaino scan
+if vaino diff --quiet; then
+    echo "✅ No infrastructure drift detected"
+else
+    echo "⚠️ Infrastructure changes detected:"
+    vaino diff --stat
+    vaino diff --output markdown > changes.md
 fi
 ```
 
-### CI/CD Pipeline with Divine Blessing
+### CI/CD Integration
+
 ```yaml
-# .github/workflows/divine-monitoring.yml
-name: "Väinö's Divine Infrastructure Watch"
+# .github/workflows/infrastructure-check.yml
+name: Infrastructure Drift Check
 
 on:
   schedule:
-    - cron: "0 8 * * *"  # Daily at 8 AM (Finnish time preferred)
+    - cron: "0 8 * * *"  # Daily at 8 AM
 
 jobs:
-  divine-scan:
+  check-drift:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Divine VAINO
+      
+      - name: Install VAINO
         run: curl -sSL https://install.vaino.sh | bash
       
-      - name: Summon Divine Scan  
+      - name: Scan Infrastructure
         run: vaino scan --output json > current-state.json
         
-      - name: Divine Drift Detection
+      - name: Check for Drift
         run: |
           if vaino diff --quiet; then
-            echo "✅ All realms remain under divine order"
+            echo "✅ No infrastructure drift"
           else
-            echo "⚡ Divine drift detected!"
+            echo "⚠️ Drift detected!"
             vaino diff --output markdown >> $GITHUB_STEP_SUMMARY
           fi
 ```
 
-### Terraform Integration with Divine Wisdom
+### Terraform Workflow
+
 ```bash
-# Before applying Terraform plans
+# Before applying changes
 terraform plan -out=plan.tfplan
 vaino scan --provider terraform
 
-# Apply with divine blessing
+# Apply changes
 terraform apply plan.tfplan
-vaino scan --provider terraform
 
-# Divine verification
+# Verify changes
+vaino scan --provider terraform
 vaino diff --provider terraform
 ```
 
-## 🛡️ Divine Security & Best Practices
+## Security
 
-### Sacred Secrets Management
-```bash
-# Väinö respects your secrets
-vaino scan --exclude-secrets
-vaino diff --mask-sensitive
+VAINO is designed with security in mind:
 
-# Divine authentication patterns
-vaino auth verify-aws
-vaino auth verify-k8s
-```
+- **Read-only access**: Never modifies your infrastructure
+- **Credential respect**: Uses existing provider authentication
+- **Secret filtering**: Automatically excludes sensitive data
+- **Local storage**: Snapshots stored locally by default
 
-### The Creator's Wisdom for Teams
-```bash
-# Baseline creation for divine consistency
-vaino scan --create-baseline production-$(date +%Y%m%d)
+## Documentation
 
-# Team-wide divine alignment
-vaino diff --baseline production-latest --output markdown
-```
+- [Installation Guide](./docs/INSTALLATION.md) - Detailed installation instructions
+- [Configuration Reference](./docs/configuration.md) - Complete configuration options
+- [Provider Setup](./docs/providers/) - Provider-specific setup guides
+- [Examples](./docs/examples/) - Real-world usage examples
+- [Troubleshooting](./docs/troubleshooting.md) - Common issues and solutions
 
-## 📚 Sacred Documentation & Divine Learning
+## Contributing
 
-### Quick Divine References
-- [Commands Reference](./docs/commands/) - All divine powers explained
-- [Configuration Guide](./docs/configuration/) - Sacred setup rituals
-- [Provider Documentation](./docs/providers/) - Realm-specific wisdom
-- [Integration Examples](./docs/examples/) - Divine implementation patterns
+We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
-### Finnish Mythology & The Väinö Legend
+## Support
 
-**Väinämoinen** is the central figure in Finnish mythology - the eternal sage and creator god who sang the world into existence. Unlike passive advisors, Väinö:
+- **Issues**: [GitHub Issues](https://github.com/yairfalse/vaino/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yairfalse/vaino/discussions)
+- **Documentation**: [docs/](./docs/)
 
-- 🎵 **Sang the cosmos into being** (active creation vs passive advice)
-- 🌍 **Forged the world from chaos** (infrastructure from complexity)  
-- ⚔️ **Built the Sampo** (the mythical wealth-generator)
-- 🔥 **Commands the elements** (total infrastructure control)
-- 🌲 **Embodies Finnish sisu** (unbreakable determination)
+## License
 
-*This is not just monitoring software - this is channeling the divine power of creation itself.*
-
-## 🤝 Join the Divine Community
-
-### Sacred Support Channels
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/yairfalse/vaino/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/yairfalse/vaino/discussions)  
-- 🌲 **Divine Chat**: [Discord #vaino-devs](https://discord.gg/vaino)
-- 📧 **Divine Messages**: [vaino@finnish.dev](mailto:vaino@finnish.dev)
-
-### Contributing to Divine Creation
-The creator welcomes mortal contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for sacred development rituals.
-
-### Divine Appreciation
-If VAINO has blessed your infrastructure, consider:
-- ⭐ **Star the Divine Repository**
-- 🌲 **Share the Finnish Wisdom** 
-- 💰 **Divine Sponsorship**: [GitHub Sponsors](https://github.com/sponsors/yairfalse)
-
-## 📜 Sacred License
-
-VAINO is blessed under the **MIT License** - see [LICENSE](./LICENSE) for divine terms.
+VAINO is released under the [MIT License](./LICENSE).
 
 ---
 
-## 🌌 The Creator's Final Words
-
-*"Where weak tools whisper advice, VAINO commands reality. Where others offer suggestions, the Finnish creator god forges solutions. This is not monitoring - this is divine creation in action."*
-
-**Built with 🔥 Finnish sisu and ⚡ creator god energy**
-
-*Väinö watches. Väinö knows. Väinö builds.*
-
----
-
-[![Finnish Power](https://img.shields.io/badge/built%20with-finnish%20sisu-blue?style=for-the-badge)](https://en.wikipedia.org/wiki/Sisu)
-[![Creator God](https://img.shields.io/badge/powered%20by-divine%20creation-gold?style=for-the-badge)](https://en.wikipedia.org/wiki/V%C3%A4in%C3%A4m%C3%B6inen)
-[![Anti-Mimir](https://img.shields.io/badge/destroys-weak%20talking%20heads-red?style=for-the-badge)](https://github.com/yairfalse/vaino)
-
-*VAINO - Because your infrastructure deserves a creator god, not a talking head.* ⚡🌲
+**VAINO** - Infrastructure drift detection made simple.
