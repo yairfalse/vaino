@@ -7,7 +7,7 @@ VAINO can be installed on any platform with a single command. Choose the method 
 The universal installer automatically detects your system and installs VAINO:
 
 ```bash
-curl -sSL https://install.wgo.sh | bash
+curl -sSL https://install.vaino.sh | bash
 ```
 
 This script will:
@@ -21,14 +21,14 @@ This script will:
 ### macOS (Homebrew)
 
 ```bash
-brew install yairfalse/wgo/wgo
+brew install yairfalse/vaino/vaino
 ```
 
 Or tap the repository first:
 
 ```bash
-brew tap yairfalse/wgo
-brew install wgo
+brew tap yairfalse/vaino
+brew install vaino
 ```
 
 ### Linux
@@ -37,38 +37,38 @@ brew install wgo
 
 ```bash
 # Add VAINO repository
-curl -fsSL https://apt.wgo.sh/ubuntu/wgo.gpg | sudo apt-key add -
-echo "deb https://apt.wgo.sh/ubuntu stable main" | sudo tee /etc/apt/sources.list.d/wgo.list
+curl -fsSL https://apt.vaino.sh/ubuntu/vaino.gpg | sudo apt-key add -
+echo "deb https://apt.vaino.sh/ubuntu stable main" | sudo tee /etc/apt/sources.list.d/vaino.list
 
 # Install VAINO
 sudo apt-get update
-sudo apt-get install wgo
+sudo apt-get install vaino
 ```
 
 #### RHEL/CentOS/Fedora (YUM/DNF)
 
 ```bash
 # Add VAINO repository
-sudo curl -fsSL https://yum.wgo.sh/rhel/wgo.repo -o /etc/yum.repos.d/wgo.repo
+sudo curl -fsSL https://yum.vaino.sh/rhel/vaino.repo -o /etc/yum.repos.d/vaino.repo
 
 # Install VAINO (use dnf on Fedora/RHEL 8+)
-sudo yum install wgo
+sudo yum install vaino
 # or
-sudo dnf install wgo
+sudo dnf install vaino
 ```
 
 #### Arch Linux (AUR)
 
 ```bash
-yay -S wgo-bin
+yay -S vaino-bin
 # or
-paru -S wgo-bin
+paru -S vaino-bin
 ```
 
 #### Snap (Universal Linux Package)
 
 ```bash
-sudo snap install wgo
+sudo snap install vaino
 ```
 
 ### Windows
@@ -76,14 +76,14 @@ sudo snap install wgo
 #### Chocolatey
 
 ```powershell
-choco install wgo
+choco install vaino
 ```
 
 #### Scoop
 
 ```powershell
-scoop bucket add wgo https://github.com/yairfalse/scoop-wgo
-scoop install wgo
+scoop bucket add vaino https://github.com/yairfalse/scoop-vaino
+scoop install vaino
 ```
 
 #### WSL (Windows Subsystem for Linux)
@@ -96,41 +96,41 @@ Run VAINO in a container:
 
 ```bash
 # Run a single command
-docker run --rm -v $(pwd):/workspace yairfalse/wgo:latest scan
+docker run --rm -v $(pwd):/workspace yairfalse/vaino:latest scan
 
 # Interactive mode
-docker run --rm -it -v $(pwd):/workspace yairfalse/wgo:latest
+docker run --rm -it -v $(pwd):/workspace yairfalse/vaino:latest
 
 # With AWS credentials
 docker run --rm \
   -v $(pwd):/workspace \
-  -v ~/.aws:/home/wgo/.aws:ro \
-  yairfalse/wgo:latest scan --provider aws
+  -v ~/.aws:/home/vaino/.aws:ro \
+  yairfalse/vaino:latest scan --provider aws
 ```
 
 ## 📥 Direct Download
 
-Download pre-built binaries from the [releases page](https://github.com/yairfalse/wgo/releases).
+Download pre-built binaries from the [releases page](https://github.com/yairfalse/vaino/releases).
 
 ### Linux/macOS
 
 ```bash
 # Download latest release (replace VERSION and PLATFORM)
-curl -L https://github.com/yairfalse/wgo/releases/download/VERSION/wgo_PLATFORM.tar.gz | tar xz
+curl -L https://github.com/yairfalse/vaino/releases/download/VERSION/vaino_PLATFORM.tar.gz | tar xz
 
 # Move to PATH
-sudo mv wgo /usr/local/bin/
+sudo mv vaino /usr/local/bin/
 
 # Make executable
-sudo chmod +x /usr/local/bin/wgo
+sudo chmod +x /usr/local/bin/vaino
 ```
 
 ### Windows
 
-1. Download the `.zip` file from the [releases page](https://github.com/yairfalse/wgo/releases)
+1. Download the `.zip` file from the [releases page](https://github.com/yairfalse/vaino/releases)
 2. Extract the archive
 3. Add the directory to your PATH
-4. Or move `wgo.exe` to a directory already in PATH
+4. Or move `vaino.exe` to a directory already in PATH
 
 ## 🔧 Build from Source
 
@@ -140,11 +140,11 @@ Requirements:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yairfalse/wgo.git
-cd wgo
+git clone https://github.com/yairfalse/vaino.git
+cd vaino
 
 # Build and install
-go install ./cmd/wgo
+go install ./cmd/vaino
 
 # Or use make
 make install
@@ -158,41 +158,41 @@ Shell completions are automatically installed with most package managers. For ma
 
 ```bash
 # Generate completion script
-wgo completion bash > wgo-completion.bash
+vaino completion bash > vaino-completion.bash
 
 # Install for current user
 mkdir -p ~/.local/share/bash-completion/completions
-mv wgo-completion.bash ~/.local/share/bash-completion/completions/wgo
+mv vaino-completion.bash ~/.local/share/bash-completion/completions/vaino
 
 # Or install system-wide
-sudo mv wgo-completion.bash /etc/bash_completion.d/wgo
+sudo mv vaino-completion.bash /etc/bash_completion.d/vaino
 ```
 
 ### Zsh
 
 ```bash
 # Generate completion script
-wgo completion zsh > _wgo
+vaino completion zsh > _vaino
 
 # Install
-sudo mv _wgo /usr/local/share/zsh/site-functions/
+sudo mv _vaino /usr/local/share/zsh/site-functions/
 ```
 
 ### Fish
 
 ```bash
 # Generate and install
-wgo completion fish > ~/.config/fish/completions/wgo.fish
+vaino completion fish > ~/.config/fish/completions/vaino.fish
 ```
 
 ### PowerShell
 
 ```powershell
 # Generate completion script
-wgo completion powershell > wgo.ps1
+vaino completion powershell > vaino.ps1
 
 # Install (add to profile)
-echo ". $(pwd)/wgo.ps1" >> $PROFILE
+echo ". $(pwd)/vaino.ps1" >> $PROFILE
 ```
 
 ## ✅ Verify Installation
@@ -201,13 +201,13 @@ After installation, verify VAINO is working:
 
 ```bash
 # Check version
-wgo version
+vaino version
 
 # Get help
-wgo --help
+vaino --help
 
 # Run a test scan
-wgo scan
+vaino scan
 ```
 
 ## 🆙 Updating
@@ -218,21 +218,21 @@ Use your package manager's update command:
 
 ```bash
 # Homebrew
-brew upgrade wgo
+brew upgrade vaino
 
 # APT
-sudo apt-get update && sudo apt-get upgrade wgo
+sudo apt-get update && sudo apt-get upgrade vaino
 
 # YUM/DNF
-sudo yum update wgo
+sudo yum update vaino
 # or
-sudo dnf update wgo
+sudo dnf update vaino
 
 # Chocolatey
-choco upgrade wgo
+choco upgrade vaino
 
 # Scoop
-scoop update wgo
+scoop update vaino
 ```
 
 ### Universal Installer
@@ -240,7 +240,7 @@ scoop update wgo
 Re-run the install script:
 
 ```bash
-curl -sSL https://install.wgo.sh | bash
+curl -sSL https://install.vaino.sh | bash
 ```
 
 ## 🗑️ Uninstalling
@@ -249,36 +249,36 @@ curl -sSL https://install.wgo.sh | bash
 
 ```bash
 # Homebrew
-brew uninstall wgo
+brew uninstall vaino
 
 # APT
-sudo apt-get remove wgo
+sudo apt-get remove vaino
 
 # YUM/DNF
-sudo yum remove wgo
+sudo yum remove vaino
 # or
-sudo dnf remove wgo
+sudo dnf remove vaino
 
 # Chocolatey
-choco uninstall wgo
+choco uninstall vaino
 
 # Scoop
-scoop uninstall wgo
+scoop uninstall vaino
 ```
 
 ### Manual Uninstall
 
 ```bash
 # Remove binary
-sudo rm /usr/local/bin/wgo
+sudo rm /usr/local/bin/vaino
 
 # Remove completions
-sudo rm /etc/bash_completion.d/wgo
-sudo rm /usr/local/share/zsh/site-functions/_wgo
-rm ~/.config/fish/completions/wgo.fish
+sudo rm /etc/bash_completion.d/vaino
+sudo rm /usr/local/share/zsh/site-functions/_vaino
+rm ~/.config/fish/completions/vaino.fish
 
 # Remove configuration
-rm -rf ~/.wgo
+rm -rf ~/.vaino
 ```
 
 ## 🤔 Troubleshooting
@@ -295,7 +295,7 @@ source ~/.bashrc
 ### Permission denied
 
 The installer needs write access to `/usr/local/bin`. Either:
-- Run with `sudo`: `curl -sSL https://install.wgo.sh | sudo bash`
+- Run with `sudo`: `curl -sSL https://install.vaino.sh | sudo bash`
 - Install to a user directory and add to PATH
 
 ### Certificate errors
@@ -308,7 +308,7 @@ sudo apt-get install ca-certificates  # Debian/Ubuntu
 sudo yum install ca-certificates      # RHEL/CentOS
 
 # Or bypass (not recommended)
-curl -sSLk https://install.wgo.sh | bash
+curl -sSLk https://install.vaino.sh | bash
 ```
 
 ### Package manager not detected
@@ -317,6 +317,6 @@ The universal installer will fall back to direct binary download if your package
 
 ## 📞 Support
 
-- [GitHub Issues](https://github.com/yairfalse/wgo/issues)
-- [Documentation](https://github.com/yairfalse/wgo/wiki)
-- [Discord Community](https://discord.gg/wgo)
+- [GitHub Issues](https://github.com/yairfalse/vaino/issues)
+- [Documentation](https://github.com/yairfalse/vaino/wiki)
+- [Discord Community](https://discord.gg/vaino)
