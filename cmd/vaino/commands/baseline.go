@@ -1,9 +1,14 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/yairfalse/vaino/internal/storage"
 )
 
 func newBaselineCommand() *cobra.Command {
@@ -153,17 +158,73 @@ func runBaselineCreate(cmd *cobra.Command, args []string) error {
 }
 
 func runBaselineList(cmd *cobra.Command, args []string) error {
-	fmt.Println("📋 Infrastructure Baselines")
-	fmt.Println("===========================")
+	cfg := GetConfig()
 
-	fmt.Println("\n⚠️  Baseline listing not yet implemented")
-	fmt.Println("This command will show:")
-	fmt.Println("  • Baseline name and description")
-	fmt.Println("  • Creation and update timestamps")
-	fmt.Println("  • Resource counts by provider")
-	fmt.Println("  • Associated tags")
+	// Initialize storage
+	localStorage := storage.NewLocal(cfg.Storage.BasePath)
 
-	return nil
+	// Get all snapshots
+	snapshots, err := localStorage.ListSnapshots()
+	if err != nil {
+		return fmt.Errorf("failed to list snapshots: %w", err)
+	}
+
+	// Filter for baselines (snapshots with baseline tag)
+	var baselines []storage.SnapshotInfo
+	filter, _ := cmd.Flags().GetString("filter")
+	tags, _ := cmd.Flags().GetStringSlice("tags")
+
+	// Create tag filter map
+	tagFilter := make(map[string]string)
+	for _, tag := range tags {
+		parts := strings.SplitN(tag, "=", 2)
+		if len(parts) == 2 {
+			tagFilter[parts[0]] = parts[1]
+		}
+	}
+
+	for _, snapshot := range snapshots {
+		// Check if it's a baseline
+		baselineName, isBaseline := snapshot.Tags["baseline"]
+		if !isBaseline {
+			continue
+		}
+
+		// Apply name filter
+		if filter != "" && !strings.Contains(strings.ToLower(baselineName), strings.ToLower(filter)) {
+			continue
+		}
+
+		// Apply tag filters
+		skipSnapshot := false
+		for k, v := range tagFilter {
+			if snapshot.Tags[k] != v {
+				skipSnapshot = true
+				break
+			}
+		}
+		if skipSnapshot {
+			continue
+		}
+
+		baselines = append(baselines, snapshot)
+	}
+
+	if len(baselines) == 0 {
+		fmt.Println("No baselines found. Create one with 'vaino baseline create'")
+		return nil
+	}
+
+	// Sort baselines
+	sortBy, _ := cmd.Flags().GetString("sort")
+	reverse, _ := cmd.Flags().GetBool("reverse")
+
+	sortBaselines(baselines, sortBy, reverse)
+
+	// Get output format
+	outputFormat, _ := cmd.Flags().GetString("output")
+
+	return displayBaselines(baselines, outputFormat)
 }
 
 func runBaselineShow(cmd *cobra.Command, args []string) error {
@@ -194,5 +255,98 @@ func runBaselineDelete(cmd *cobra.Command, args []string) error {
 	fmt.Printf("🗑️  Deleting baseline: %s\n", baselineName)
 	fmt.Println("\n⚠️  Baseline deletion not yet implemented")
 
+	return nil
+}
+
+// Helper functions for baseline listing
+
+func sortBaselines(baselines []storage.SnapshotInfo, sortBy string, reverse bool) {
+	sort.Slice(baselines, func(i, j int) bool {
+		var result bool
+		switch sortBy {
+		case "name":
+			result = baselines[i].Tags["baseline"] < baselines[j].Tags["baseline"]
+		case "updated":
+			// For now, use timestamp as update time
+			result = baselines[i].Timestamp.Before(baselines[j].Timestamp)
+		default: // "created"
+			result = baselines[i].Timestamp.Before(baselines[j].Timestamp)
+		}
+
+		if reverse {
+			return !result
+		}
+		return result
+	})
+}
+
+func displayBaselines(baselines []storage.SnapshotInfo, outputFormat string) error {
+	if outputFormat == "json" {
+		return baselineOutputJSON(baselines)
+	}
+
+	// Default table format
+	fmt.Println("📋 Infrastructure Baselines")
+	fmt.Println("===========================")
+	fmt.Println()
+
+	fmt.Printf("%-25s %-20s %-12s %-8s %-30s\n", "NAME", "CREATED", "PROVIDER", "RESOURCES", "DESCRIPTION")
+	fmt.Println(strings.Repeat("-", 100))
+
+	for _, baseline := range baselines {
+		name := baseline.Tags["baseline"]
+		description := baseline.Tags["description"]
+		if description == "" {
+			description = "-"
+		}
+		if len(description) > 30 {
+			description = description[:27] + "..."
+		}
+
+		fmt.Printf("%-25s %-20s %-12s %-8d %-30s\n",
+			truncateString(name, 25),
+			baseline.Timestamp.Format("2006-01-02 15:04"),
+			baseline.Provider,
+			baseline.ResourceCount,
+			description)
+	}
+
+	fmt.Printf("\nTotal: %d baselines\n", len(baselines))
+	fmt.Println("\n💡 Use 'vaino baseline show <name>' to see details")
+
+	return nil
+}
+
+func baselineOutputJSON(baselines []storage.SnapshotInfo) error {
+	// Convert to a cleaner structure for JSON output
+	type BaselineInfo struct {
+		Name          string            `json:"name"`
+		ID            string            `json:"id"`
+		Created       time.Time         `json:"created"`
+		Provider      string            `json:"provider"`
+		ResourceCount int               `json:"resource_count"`
+		Description   string            `json:"description,omitempty"`
+		Tags          map[string]string `json:"tags,omitempty"`
+	}
+
+	var baselineList []BaselineInfo
+	for _, baseline := range baselines {
+		info := BaselineInfo{
+			Name:          baseline.Tags["baseline"],
+			ID:            baseline.ID,
+			Created:       baseline.Timestamp,
+			Provider:      baseline.Provider,
+			ResourceCount: baseline.ResourceCount,
+			Description:   baseline.Tags["description"],
+			Tags:          baseline.Tags,
+		}
+		baselineList = append(baselineList, info)
+	}
+
+	jsonData, err := json.MarshalIndent(baselineList, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %w", err)
+	}
+	fmt.Println(string(jsonData))
 	return nil
 }
