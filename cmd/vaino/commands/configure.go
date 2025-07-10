@@ -8,15 +8,15 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	wgoerrors "github.com/yairfalse/wgo/internal/errors"
-	"github.com/yairfalse/wgo/pkg/config"
+	vainoerrors "github.com/yairfalse/vaino/internal/errors"
+	"github.com/yairfalse/vaino/pkg/config"
 	"gopkg.in/yaml.v3"
 )
 
 var configureCmd = &cobra.Command{
 	Use:   "configure [provider]",
-	Short: "Interactive configuration wizard for WGO",
-	Long: `Configure WGO providers through an interactive wizard.
+	Short: "Interactive configuration wizard for VAINO",
+	Long: `Configure VAINO providers through an interactive wizard.
 
 This command helps you set up:
 - Provider authentication
@@ -25,9 +25,9 @@ This command helps you set up:
 - API settings
 
 Examples:
-  wgo configure              # Interactive setup for all providers
-  wgo configure gcp          # Configure only GCP
-  wgo configure aws          # Configure only AWS`,
+  vaino configure              # Interactive setup for all providers
+  vaino configure gcp          # Configure only GCP
+  vaino configure aws          # Configure only AWS`,
 	RunE: runConfigure,
 }
 
@@ -44,12 +44,12 @@ func runConfigure(cmd *cobra.Command, args []string) error {
 		cfg = &config.Config{
 			Providers: config.ProvidersConfig{},
 			Storage: config.StorageConfig{
-				BaseDir: filepath.Join(os.Getenv("HOME"), ".wgo", "storage"),
+				BaseDir: filepath.Join(os.Getenv("HOME"), ".vaino", "storage"),
 			},
 		}
 	}
 
-	fmt.Println("WGO Configuration Wizard")
+	fmt.Println("VAINO Configuration Wizard")
 	fmt.Println("=========================")
 	fmt.Println()
 
@@ -75,7 +75,7 @@ func runConfigure(cmd *cobra.Command, args []string) error {
 		}
 
 		if len(providers) == 0 {
-			return wgoerrors.New(wgoerrors.ErrorTypeConfiguration, wgoerrors.ProviderUnknown,
+			return vainoerrors.New(vainoerrors.ErrorTypeConfiguration, vainoerrors.ProviderUnknown,
 				"No providers detected").
 				WithCause("No cloud provider CLIs found").
 				WithSolutions(
@@ -83,7 +83,7 @@ func runConfigure(cmd *cobra.Command, args []string) error {
 					"Install AWS CLI for AWS",
 					"Install kubectl for Kubernetes",
 				).
-				WithHelp("wgo help providers")
+				WithHelp("vaino help providers")
 		}
 
 		fmt.Printf("\nConfigure all %d detected providers? [Y/n]: ", len(providers))
@@ -132,24 +132,24 @@ func runConfigure(cmd *cobra.Command, args []string) error {
 	}
 
 	// Save configuration
-	configPath := filepath.Join(os.Getenv("HOME"), ".wgo", "config.yaml")
+	configPath := filepath.Join(os.Getenv("HOME"), ".vaino", "config.yaml")
 	if err := saveConfig(cfg, configPath); err != nil {
-		return wgoerrors.New(wgoerrors.ErrorTypeFileSystem, wgoerrors.ProviderUnknown,
+		return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
 			"Failed to save configuration").
 			WithCause(err.Error()).
 			WithSolutions(
 				"Check directory permissions",
-				"Ensure ~/.wgo directory exists",
-				"Try creating manually: mkdir -p ~/.wgo",
+				"Ensure ~/.vaino directory exists",
+				"Try creating manually: mkdir -p ~/.vaino",
 			).
-			WithHelp("wgo check-config")
+			WithHelp("vaino check-config")
 	}
 
 	fmt.Printf("\nConfiguration saved to %s\n", configPath)
 	fmt.Println("\nNext steps:")
-	fmt.Println("  1. Run 'wgo check-config' to verify configuration")
-	fmt.Println("  2. Run 'wgo scan' to create your first snapshot")
-	fmt.Println("  3. Run 'wgo help' for more information")
+	fmt.Println("  1. Run 'vaino check-config' to verify configuration")
+	fmt.Println("  2. Run 'vaino scan' to create your first snapshot")
+	fmt.Println("  3. Run 'vaino help' for more information")
 
 	return nil
 }
@@ -311,7 +311,7 @@ func createDefaultConfig(configPath string) error {
 			},
 		},
 		Storage: config.StorageConfig{
-			BaseDir: filepath.Join(os.Getenv("HOME"), ".wgo", "storage"),
+			BaseDir: filepath.Join(os.Getenv("HOME"), ".vaino", "storage"),
 		},
 	}
 

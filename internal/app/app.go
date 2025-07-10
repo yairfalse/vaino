@@ -2,10 +2,10 @@ package app
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/yairfalse/wgo/internal/cache"
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/logger"
-	"github.com/yairfalse/wgo/internal/storage"
+	"github.com/yairfalse/vaino/internal/cache"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/internal/logger"
+	"github.com/yairfalse/vaino/internal/storage"
 )
 
 type Config struct {
@@ -68,19 +68,19 @@ func (a *App) createScanCommand() *cobra.Command {
 		Short: "Scan infrastructure for changes",
 		Long:  `Scan your infrastructure providers for changes`,
 		Example: `  # List available providers
-  wgo scan
+  vaino scan
 
   # Scan Terraform state files
-  wgo scan --provider terraform
+  vaino scan --provider terraform
 
   # Scan specific state file
-  wgo scan --provider terraform --state-file ./terraform.tfstate
+  vaino scan --provider terraform --state-file ./terraform.tfstate
 
   # Auto-discover and scan
-  wgo scan --provider terraform --auto-discover
+  vaino scan --provider terraform --auto-discover
 
   # Save output to file
-  wgo scan --provider terraform --output snapshot.json`,
+  vaino scan --provider terraform --output snapshot.json`,
 		Run: func(cmd *cobra.Command, args []string) {
 			a.runScanCommand(cmd, args)
 		},
@@ -154,7 +154,7 @@ func (a *App) createConfigCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "config",
 		Short: "Manage configuration",
-		Long:  `View and manage wgo configuration`,
+		Long:  `View and manage vaino configuration`,
 		Run: func(cmd *cobra.Command, args []string) {
 			a.runConfigCommand(cmd, args)
 		},

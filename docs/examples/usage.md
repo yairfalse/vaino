@@ -1,8 +1,8 @@
-# WGO Configuration & Usage Examples
+# VAINO Configuration & Usage Examples
 
 ## Quick Start
 
-### 1. Initialize WGO in your infrastructure repository
+### 1. Initialize VAINO in your infrastructure repository
 ```bash
 cd /path/to/your/infrastructure
 wgo setup
@@ -89,11 +89,11 @@ providers:
 
 ### 1. Automatic Baselines on Tags
 ```bash
-# Tag a release - WGO will auto-create baseline
+# Tag a release - VAINO will auto-create baseline
 git tag v1.0.0
 git push origin v1.0.0
 
-# WGO automatically creates baseline from current state
+# VAINO automatically creates baseline from current state
 wgo baseline list
 ```
 
@@ -160,14 +160,14 @@ wgo analyze compliance-report.json --focus security
 
 ### Development
 ```bash
-export WGO_TERRAFORM_STATE_PATH=./dev/terraform.tfstate
-export WGO_DEBUG=true
+export VAINO_TERRAFORM_STATE_PATH=./dev/terraform.tfstate
+export VAINO_DEBUG=true
 wgo scan --provider terraform
 ```
 
 ### Production
 ```bash
-export WGO_TERRAFORM_STATE_PATH=./prod/terraform.tfstate
+export VAINO_TERRAFORM_STATE_PATH=./prod/terraform.tfstate
 export AWS_PROFILE=production
 export KUBECONFIG=~/.kube/prod-config
 wgo scan --all
@@ -175,7 +175,7 @@ wgo scan --all
 
 ### CI/CD
 ```bash
-export WGO_VERBOSE=true
+export VAINO_VERBOSE=true
 export ANTHROPIC_API_KEY=$CI_ANTHROPIC_KEY
 wgo scan --all --output-file ci-scan-$BUILD_NUMBER.json
 wgo check --baseline main-branch --fail-on-drift

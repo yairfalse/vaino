@@ -1,8 +1,8 @@
-# WGO Testing Strategy & Organization
+# VAINO Testing Strategy & Organization
 
 ## Overview
 
-WGO uses a modular testing approach to avoid running all tests when only specific components change. This strategy provides faster feedback cycles and more efficient development workflows.
+VAINO uses a modular testing approach to avoid running all tests when only specific components change. This strategy provides faster feedback cycles and more efficient development workflows.
 
 ## Test Categories
 

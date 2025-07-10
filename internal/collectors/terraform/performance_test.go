@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/collectors"
+	"github.com/yairfalse/vaino/internal/collectors"
 )
 
 // TestParallelProcessingPerformance tests parallel state file processing

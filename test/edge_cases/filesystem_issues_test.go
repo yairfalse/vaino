@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // TestCorruptedFiles tests scenarios with corrupted configuration and state files

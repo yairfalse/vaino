@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/differ"
+	"github.com/yairfalse/vaino/internal/differ"
 )
 
 func TestFormatCorrelatedChanges_EmptyGroups(t *testing.T) {

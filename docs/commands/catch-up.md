@@ -258,7 +258,7 @@ After running catch-up:
 ## Customization
 
 ### Business Hours
-The classifier considers business hours when categorizing changes. Default is Mon-Fri 9 AM-5 PM, but this can be configured in your WGO config file.
+The classifier considers business hours when categorizing changes. Default is Mon-Fri 9 AM-5 PM, but this can be configured in your VAINO config file.
 
 ### Change Patterns
 You can customize how changes are classified by adding patterns to your configuration:

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/analyzer"
+	"github.com/yairfalse/vaino/internal/analyzer"
 )
 
 // BenchmarkOriginalVsConcurrentCorrelation compares original vs concurrent correlation

@@ -6,12 +6,12 @@ import (
 	"sort"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/differ"
-	"github.com/yairfalse/wgo/internal/logger"
-	"github.com/yairfalse/wgo/internal/storage"
-	"github.com/yairfalse/wgo/pkg/config"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/internal/differ"
+	"github.com/yairfalse/vaino/internal/logger"
+	"github.com/yairfalse/vaino/internal/storage"
+	"github.com/yairfalse/vaino/pkg/config"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // Options configures the catch-up analysis

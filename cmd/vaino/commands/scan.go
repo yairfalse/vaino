@@ -9,15 +9,15 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/collectors/aws"
-	"github.com/yairfalse/wgo/internal/collectors/gcp"
-	"github.com/yairfalse/wgo/internal/collectors/kubernetes"
-	"github.com/yairfalse/wgo/internal/collectors/terraform"
-	"github.com/yairfalse/wgo/internal/discovery"
-	wgoerrors "github.com/yairfalse/wgo/internal/errors"
-	"github.com/yairfalse/wgo/pkg/config"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/internal/collectors/aws"
+	"github.com/yairfalse/vaino/internal/collectors/gcp"
+	"github.com/yairfalse/vaino/internal/collectors/kubernetes"
+	"github.com/yairfalse/vaino/internal/collectors/terraform"
+	"github.com/yairfalse/vaino/internal/discovery"
+	vainoerrors "github.com/yairfalse/vaino/internal/errors"
+	"github.com/yairfalse/vaino/pkg/config"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 func newScanCommand() *cobra.Command {
@@ -30,25 +30,25 @@ from various providers (Terraform, AWS, Kubernetes) and creates a snapshot.
 This snapshot can be used as a baseline for future drift detection or 
 compared against existing baselines to identify changes.`,
 		Example: `  # Scan Terraform state
-  wgo scan --provider terraform --path ./terraform
+  vaino scan --provider terraform --path ./terraform
 
   # Scan AWS resources in multiple regions
-  wgo scan --provider aws --region us-east-1,us-west-2
+  vaino scan --provider aws --region us-east-1,us-west-2
 
   # Scan Kubernetes cluster
-  wgo scan --provider kubernetes --context prod --namespace default,kube-system
+  vaino scan --provider kubernetes --context prod --namespace default,kube-system
 
   # Scan GCP resources
-  wgo scan --provider gcp
+  vaino scan --provider gcp
 
   # Scan GCP with specific project and regions  
-  wgo scan --provider gcp --project my-project-123 --region us-central1,us-east1
+  vaino scan --provider gcp --project my-project-123 --region us-central1,us-east1
 
   # Scan GCP with custom credentials
-  wgo scan --provider gcp --credentials ./service-account.json
+  vaino scan --provider gcp --credentials ./service-account.json
 
   # Scan all providers and save with custom name
-  wgo scan --all --output-file my-snapshot.json`,
+  vaino scan --all --output-file my-snapshot.json`,
 		RunE: runScan,
 	}
 
@@ -148,7 +148,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 			// Check if this is first run
 			homeDir, _ := os.UserHomeDir()
-			configPath := filepath.Join(homeDir, ".wgo", "config.yaml")
+			configPath := filepath.Join(homeDir, ".vaino", "config.yaml")
 			isFirstRun := false
 			if _, err := os.Stat(configPath); os.IsNotExist(err) {
 				isFirstRun = true
@@ -189,19 +189,19 @@ func runScan(cmd *cobra.Command, args []string) error {
 			fmt.Println("QUICK START - Choose your provider:")
 			fmt.Println()
 			fmt.Println("  For Terraform projects:")
-			fmt.Println("    wgo scan --provider terraform")
+			fmt.Println("    vaino scan --provider terraform")
 			fmt.Println()
 			fmt.Println("  For Google Cloud:")
-			fmt.Println("    wgo scan --provider gcp --project YOUR-PROJECT-ID")
+			fmt.Println("    vaino scan --provider gcp --project YOUR-PROJECT-ID")
 			fmt.Println()
 			fmt.Println("  For AWS:")
-			fmt.Println("    wgo scan --provider aws --region us-east-1")
+			fmt.Println("    vaino scan --provider aws --region us-east-1")
 			fmt.Println()
 			fmt.Println("  For Kubernetes:")
-			fmt.Println("    wgo scan --provider kubernetes")
+			fmt.Println("    vaino scan --provider kubernetes")
 			fmt.Println()
-			fmt.Println("TIP: Run 'wgo status' to check your configuration")
-			fmt.Println("        Run 'wgo configure' for interactive setup")
+			fmt.Println("TIP: Run 'vaino status' to check your configuration")
+			fmt.Println("        Run 'vaino configure' for interactive setup")
 			fmt.Println()
 			return nil
 		}
@@ -224,14 +224,14 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// Get collector
 	collector, err := enhancedRegistry.GetEnhanced(provider)
 	if err != nil {
-		return wgoerrors.New(wgoerrors.ErrorTypeProvider, wgoerrors.Provider(provider),
+		return vainoerrors.New(vainoerrors.ErrorTypeProvider, vainoerrors.Provider(provider),
 			fmt.Sprintf("Failed to initialize %s collector", provider)).
 			WithCause(err.Error()).
 			WithSolutions(
 				fmt.Sprintf("Ensure %s provider is properly installed", provider),
-				"Run 'wgo check-config' to diagnose issues",
+				"Run 'vaino check-config' to diagnose issues",
 			).
-			WithHelp(fmt.Sprintf("wgo help %s", provider))
+			WithHelp(fmt.Sprintf("vaino help %s", provider))
 	}
 
 	// Check collector status
@@ -318,18 +318,18 @@ func runScan(cmd *cobra.Command, args []string) error {
 		switch provider {
 		case "gcp":
 			if projectID, _ := cmd.Flags().GetString("project"); projectID == "" {
-				return wgoerrors.GCPProjectError()
+				return vainoerrors.GCPProjectError()
 			}
-			return wgoerrors.GCPAuthenticationError(err)
+			return vainoerrors.GCPAuthenticationError(err)
 		case "aws":
 			if region, _ := cmd.Flags().GetString("region"); region == "" && os.Getenv("AWS_REGION") == "" {
-				return wgoerrors.AWSRegionError()
+				return vainoerrors.AWSRegionError()
 			}
-			return wgoerrors.AWSCredentialsError(err)
+			return vainoerrors.AWSCredentialsError(err)
 		case "kubernetes":
-			return wgoerrors.KubernetesConnectionError("", err)
+			return vainoerrors.KubernetesConnectionError("", err)
 		case "terraform":
-			return wgoerrors.TerraformStateError(filepath.Join(statePaths...))
+			return vainoerrors.TerraformStateError(filepath.Join(statePaths...))
 		default:
 			return fmt.Errorf("configuration validation failed: %w", err)
 		}
@@ -346,26 +346,26 @@ func runScan(cmd *cobra.Command, args []string) error {
 		switch provider {
 		case "gcp":
 			if strings.Contains(errStr, "403") || strings.Contains(errStr, "permission") {
-				return wgoerrors.PermissionError(wgoerrors.ProviderGCP, "GCP APIs")
+				return vainoerrors.PermissionError(vainoerrors.ProviderGCP, "GCP APIs")
 			}
 			if strings.Contains(errStr, "could not find default credentials") {
-				return wgoerrors.GCPAuthenticationError(err)
+				return vainoerrors.GCPAuthenticationError(err)
 			}
-			return wgoerrors.New(wgoerrors.ErrorTypeProvider, wgoerrors.ProviderGCP, "Resource collection failed").
+			return vainoerrors.New(vainoerrors.ErrorTypeProvider, vainoerrors.ProviderGCP, "Resource collection failed").
 				WithCause(err.Error()).
 				WithSolutions("Check GCP permissions", "Verify API is enabled").
-				WithHelp("wgo help gcp")
+				WithHelp("vaino help gcp")
 		case "aws":
 			if strings.Contains(errStr, "UnauthorizedOperation") || strings.Contains(errStr, "AccessDenied") {
-				return wgoerrors.PermissionError(wgoerrors.ProviderAWS, "AWS resources")
+				return vainoerrors.PermissionError(vainoerrors.ProviderAWS, "AWS resources")
 			}
 			if strings.Contains(errStr, "ExpiredToken") {
-				return wgoerrors.AWSCredentialsError(err)
+				return vainoerrors.AWSCredentialsError(err)
 			}
-			return wgoerrors.New(wgoerrors.ErrorTypeProvider, wgoerrors.ProviderAWS, "Resource collection failed").
+			return vainoerrors.New(vainoerrors.ErrorTypeProvider, vainoerrors.ProviderAWS, "Resource collection failed").
 				WithCause(err.Error()).
 				WithSolutions("Check AWS permissions", "Verify credentials").
-				WithHelp("wgo help aws")
+				WithHelp("vaino help aws")
 		default:
 			return fmt.Errorf("collection failed: %w", err)
 		}
@@ -393,7 +393,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	// Save to history directory for time-based comparisons
 	homeDir, _ := os.UserHomeDir()
-	historyDir := filepath.Join(homeDir, ".wgo", "history")
+	historyDir := filepath.Join(homeDir, ".vaino", "history")
 	os.MkdirAll(historyDir, 0755)
 
 	// Create timestamped filename
@@ -404,8 +404,8 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}
 
 	// Also save as last-scan for quick access
-	wgoDir := filepath.Join(homeDir, ".wgo")
-	lastScanPath := filepath.Join(wgoDir, fmt.Sprintf("last-scan-%s.json", provider))
+	vainoDir := filepath.Join(homeDir, ".vaino")
+	lastScanPath := filepath.Join(vainoDir, fmt.Sprintf("last-scan-%s.json", provider))
 	if err := saveSnapshotToFile(snapshot, lastScanPath); err != nil {
 		log("Warning: Failed to save automatic snapshot: %v\n", err)
 	}
@@ -419,7 +419,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	log("\nSnapshot saved - use 'wgo diff' to detect changes\n")
+	log("\nSnapshot saved - use 'vaino diff' to detect changes\n")
 	return nil
 }
 

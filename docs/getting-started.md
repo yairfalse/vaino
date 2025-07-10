@@ -1,10 +1,10 @@
-# Getting Started with WGO
+# Getting Started with VAINO
 
-**WGO** (*"What's Going On?"*) is the infrastructure drift detection tool that works like `git diff` for your infrastructure. This guide will get you up and running in under 5 minutes.
+**VAINO** (*"What's Going On?"*) is the infrastructure drift detection tool that works like `git diff` for your infrastructure. This guide will get you up and running in under 5 minutes.
 
 ## Prerequisites
 
-Before you begin, make sure you have WGO installed. See the [Installation Guide](installation.md) for all installation methods.
+Before you begin, make sure you have VAINO installed. See the [Installation Guide](installation.md) for all installation methods.
 
 **Quick install:**
 ```bash
@@ -20,7 +20,7 @@ wgo --help
 ## First Scan - 30 Seconds
 
 ### Auto-Discovery (Easiest)
-WGO automatically detects your infrastructure:
+VAINO automatically detects your infrastructure:
 
 ```bash
 wgo scan

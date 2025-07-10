@@ -1,6 +1,6 @@
-# WGO Unix-Style Output Examples
+# VAINO Unix-Style Output Examples
 
-WGO now follows Unix philosophy - simple, composable output that works well with other tools.
+VAINO now follows Unix philosophy - simple, composable output that works well with other tools.
 
 ## Default Output (like `git diff`)
 
@@ -121,4 +121,4 @@ echo "✓ Infrastructure matches baseline"
 4. **No scores or risk ratings** - Just facts about what changed
 5. **Minimal decoration** - No emojis, boxes, or colors by default
 
-This makes WGO a true "git diff for infrastructure" - simple, reliable, and composable.
+This makes VAINO a true "git diff for infrastructure" - simple, reliable, and composable.

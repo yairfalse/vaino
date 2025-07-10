@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // LocalStorage implements the Storage interface using local filesystem
@@ -40,7 +40,7 @@ func NewLocalStorage(config Config) (*LocalStorage, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to get user home directory: %w", err)
 		}
-		config.BaseDir = filepath.Join(homeDir, ".wgo")
+		config.BaseDir = filepath.Join(homeDir, ".vaino")
 	}
 
 	storage := &LocalStorage{

@@ -1,4 +1,4 @@
-module github.com/yairfalse/wgo
+module github.com/yairfalse/vaino
 
 go 1.24.0
 

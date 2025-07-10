@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // ResourceNormalizer converts Terraform resources to WGO Resource format

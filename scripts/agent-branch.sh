@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Agent Branch Management System for WGO
+# Agent Branch Management System for VAINO
 # Enables multiple claude-code instances to work simultaneously without conflicts
 
 set -euo pipefail
@@ -448,7 +448,7 @@ main() {
             cleanup_agents
             ;;
         "help"|*)
-            echo "Agent Branch Management System for WGO"
+            echo "Agent Branch Management System for VAINO"
             echo "Usage: $0 [command]"
             echo
             echo "Commands:"

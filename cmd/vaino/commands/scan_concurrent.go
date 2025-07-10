@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/collectors/aws"
-	"github.com/yairfalse/wgo/internal/collectors/gcp"
-	"github.com/yairfalse/wgo/internal/collectors/kubernetes"
-	"github.com/yairfalse/wgo/internal/collectors/terraform"
-	"github.com/yairfalse/wgo/internal/scanner"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/internal/collectors/aws"
+	"github.com/yairfalse/vaino/internal/collectors/gcp"
+	"github.com/yairfalse/vaino/internal/collectors/kubernetes"
+	"github.com/yairfalse/vaino/internal/collectors/terraform"
+	"github.com/yairfalse/vaino/internal/scanner"
 )
 
 // addConcurrentScanFlags adds flags specific to concurrent scanning
@@ -254,19 +254,19 @@ Concurrent mode can provide 3-10x performance improvements by parallelizing:
 - Connection pooling and reuse
 - Optimized resource merging and deduplication`,
 		Example: `  # Sequential scan (default)
-  wgo scan --provider terraform --path ./terraform
+  vaino scan --provider terraform --path ./terraform
 
   # Concurrent scan of all providers
-  wgo scan --all --concurrent --max-workers 8
+  vaino scan --all --concurrent --max-workers 8
 
   # Concurrent scan with specific providers
-  wgo scan --concurrent --max-workers 4 \
+  vaino scan --concurrent --max-workers 4 \
     --provider aws --region us-east-1 \
     --provider gcp --project my-project \
     --provider kubernetes --namespace default
 
   # Concurrent scan with performance tuning
-  wgo scan --all --concurrent \
+  vaino scan --all --concurrent \
     --max-workers 8 \
     --scan-timeout 10m \
     --preferred-order kubernetes,aws,gcp`,

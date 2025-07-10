@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# WGO Performance Testing Script
-# Comprehensive performance testing and benchmarking for WGO
+# VAINO Performance Testing Script
+# Comprehensive performance testing and benchmarking for VAINO
 
 set -euo pipefail
 
@@ -39,7 +39,7 @@ log_error() {
 # Usage function
 usage() {
     cat << EOF
-WGO Performance Testing Script
+VAINO Performance Testing Script
 
 Usage: $0 [OPTIONS] [TEST_TYPE]
 
@@ -346,7 +346,7 @@ generate_report() {
     local report_file="$RESULTS_DIR/performance_report_$TIMESTAMP.md"
     
     cat > "$report_file" << EOF
-# WGO Performance Test Report
+# VAINO Performance Test Report
 
 **Generated:** $(date)
 **Timestamp:** $TIMESTAMP
@@ -482,7 +482,7 @@ main() {
     SYSTEM_CHECK=${SYSTEM_CHECK:-false}
     VERBOSE=${VERBOSE:-false}
     
-    log_info "Starting WGO performance testing..."
+    log_info "Starting VAINO performance testing..."
     log_info "Test type: $test_type"
     log_info "Results directory: $RESULTS_DIR"
     

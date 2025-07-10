@@ -1,4 +1,4 @@
-# WGO Quick Reference
+# VAINO Quick Reference
 
 Essential commands and patterns for daily use.
 
@@ -267,9 +267,9 @@ export GOOGLE_CLOUD_PROJECT=my-project
 # Kubernetes
 export KUBECONFIG=~/.kube/config
 
-# WGO
-export WGO_CONFIG=/path/to/config.yaml
-export WGO_LOG_LEVEL=debug
+# VAINO
+export VAINO_CONFIG=/path/to/config.yaml
+export VAINO_LOG_LEVEL=debug
 ```
 
 ## 📖 File Locations

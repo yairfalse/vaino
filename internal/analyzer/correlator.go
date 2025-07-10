@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/differ"
+	"github.com/yairfalse/vaino/internal/differ"
 )
 
 // ChangeGroup represents a group of related changes

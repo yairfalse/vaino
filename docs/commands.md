@@ -1,6 +1,6 @@
 # Commands Reference
 
-Complete reference for all WGO commands with examples and use cases.
+Complete reference for all VAINO commands with examples and use cases.
 
 ## Core Commands
 
@@ -118,7 +118,7 @@ echo $? # 0 = no changes, 1 = changes detected
 
 ### `wgo status`
 
-Show WGO system status and provider connectivity.
+Show VAINO system status and provider connectivity.
 
 **Basic Usage:**
 ```bash
@@ -147,7 +147,7 @@ wgo status --format json
 
 **Output Example:**
 ```
-WGO System Status
+VAINO System Status
 ================
 Version: v1.0.0
 Config:  ~/.wgo/config.yaml
@@ -303,7 +303,7 @@ wgo watch --correlation
 
 **Output Example:**
 ```
-🔍 WGO Watch Mode - Real-time Infrastructure Monitoring
+🔍 VAINO Watch Mode - Real-time Infrastructure Monitoring
 =====================================================
 Provider: terraform | Interval: 60s | Started: 2024-01-15 14:30:00
 
@@ -464,7 +464,7 @@ wgo version --format json
 
 **Output:**
 ```
-WGO (What's Going On) version v1.0.0
+VAINO (What's Going On) version v1.0.0
   commit: a1b2c3d
   built: 2024-01-15T10:30:00Z
   built by: goreleaser
@@ -518,7 +518,7 @@ These flags work with all commands:
 
 ## Exit Codes
 
-WGO uses standard Unix exit codes:
+VAINO uses standard Unix exit codes:
 
 - `0` - Success (no changes detected for diff commands)
 - `1` - Changes detected (for diff commands) or general errors

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // ConcurrentCorrelator correlates events across different providers

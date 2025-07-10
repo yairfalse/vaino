@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 func TestSimpleDiffer_NewSimpleDiffer(t *testing.T) {

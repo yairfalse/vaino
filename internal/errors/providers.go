@@ -7,7 +7,7 @@ import (
 )
 
 // GCPAuthenticationError creates a GCP authentication error with guidance
-func GCPAuthenticationError(originalErr error) *WGOError {
+func GCPAuthenticationError(originalErr error) *VAINOError {
 	err := New(ErrorTypeAuthentication, ProviderGCP, "GCP authentication failed")
 
 	// Detect specific authentication issues
@@ -42,13 +42,13 @@ func GCPAuthenticationError(originalErr error) *WGOError {
 	}
 
 	err.WithVerify("gcloud auth list")
-	err.WithHelp("wgo configure gcp")
+	err.WithHelp("vaino configure gcp")
 
 	return err
 }
 
 // GCPProjectError creates a GCP project configuration error
-func GCPProjectError() *WGOError {
+func GCPProjectError() *VAINOError {
 	err := New(ErrorTypeConfiguration, ProviderGCP, "GCP project not configured")
 
 	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
@@ -59,17 +59,17 @@ func GCPProjectError() *WGOError {
 	err.WithSolutions(
 		fmt.Sprintf(`export GOOGLE_CLOUD_PROJECT="%s"`, projectID),
 		`gcloud config set project your-project-id`,
-		`wgo configure gcp`,
+		`vaino configure gcp`,
 	)
 
 	err.WithVerify("gcloud config get-value project")
-	err.WithHelp("wgo configure --help")
+	err.WithHelp("vaino configure --help")
 
 	return err
 }
 
 // AWSCredentialsError creates an AWS credentials error with guidance
-func AWSCredentialsError(originalErr error) *WGOError {
+func AWSCredentialsError(originalErr error) *VAINOError {
 	err := New(ErrorTypeAuthentication, ProviderAWS, "AWS credentials not found")
 	err.WithCause("No valid credential source detected")
 
@@ -97,13 +97,13 @@ func AWSCredentialsError(originalErr error) *WGOError {
 	}
 
 	err.WithVerify("aws sts get-caller-identity")
-	err.WithHelp("wgo configure aws")
+	err.WithHelp("vaino configure aws")
 
 	return err
 }
 
 // AWSRegionError creates an AWS region configuration error
-func AWSRegionError() *WGOError {
+func AWSRegionError() *VAINOError {
 	err := New(ErrorTypeConfiguration, ProviderAWS, "AWS region not specified")
 
 	err.WithSolutions(
@@ -113,13 +113,13 @@ func AWSRegionError() *WGOError {
 	)
 
 	err.WithVerify("aws configure get region")
-	err.WithHelp("wgo configure aws")
+	err.WithHelp("vaino configure aws")
 
 	return err
 }
 
 // KubernetesConnectionError creates a Kubernetes connection error
-func KubernetesConnectionError(context string, originalErr error) *WGOError {
+func KubernetesConnectionError(context string, originalErr error) *VAINOError {
 	err := New(ErrorTypeNetwork, ProviderKubernetes, "Kubernetes connection failed")
 
 	if context != "" {
@@ -136,13 +136,13 @@ func KubernetesConnectionError(context string, originalErr error) *WGOError {
 	)
 
 	err.WithVerify("kubectl cluster-info")
-	err.WithHelp("wgo configure kubernetes")
+	err.WithHelp("vaino configure kubernetes")
 
 	return err
 }
 
 // KubernetesConfigError creates a Kubernetes configuration error
-func KubernetesConfigError() *WGOError {
+func KubernetesConfigError() *VAINOError {
 	err := New(ErrorTypeConfiguration, ProviderKubernetes, "Kubernetes configuration not found")
 	err.WithCause("No kubeconfig file found")
 
@@ -154,13 +154,13 @@ func KubernetesConfigError() *WGOError {
 	)
 
 	err.WithVerify("kubectl config current-context")
-	err.WithHelp("wgo configure kubernetes")
+	err.WithHelp("vaino configure kubernetes")
 
 	return err
 }
 
 // TerraformStateError creates a Terraform state error
-func TerraformStateError(path string) *WGOError {
+func TerraformStateError(path string) *VAINOError {
 	err := New(ErrorTypeFileSystem, ProviderTerraform, "No terraform state files found")
 
 	if path != "" {
@@ -171,19 +171,19 @@ func TerraformStateError(path string) *WGOError {
 
 	err.WithSolutions(
 		`Run from terraform project directory`,
-		`Configure state paths in ~/.wgo/config.yaml`,
+		`Configure state paths in ~/.vaino/config.yaml`,
 		`Specify path with --path flag`,
 		`Check if using remote state backend`,
 	)
 
 	err.WithVerify("terraform show")
-	err.WithHelp("wgo configure terraform")
+	err.WithHelp("vaino configure terraform")
 
 	return err
 }
 
 // TerraformVersionError creates a Terraform version compatibility error
-func TerraformVersionError(required, found string) *WGOError {
+func TerraformVersionError(required, found string) *VAINOError {
 	err := New(ErrorTypeValidation, ProviderTerraform, "Terraform version mismatch")
 	err.WithCause(fmt.Sprintf("Required: %s, Found: %s", required, found))
 
@@ -194,13 +194,13 @@ func TerraformVersionError(required, found string) *WGOError {
 	)
 
 	err.WithVerify("terraform version")
-	err.WithHelp("wgo help terraform")
+	err.WithHelp("vaino help terraform")
 
 	return err
 }
 
 // PermissionError creates a generic permission error
-func PermissionError(provider Provider, resource string) *WGOError {
+func PermissionError(provider Provider, resource string) *VAINOError {
 	err := New(ErrorTypePermission, provider, fmt.Sprintf("Permission denied accessing %s", resource))
 
 	switch provider {
@@ -229,13 +229,13 @@ func PermissionError(provider Provider, resource string) *WGOError {
 		err.WithVerify("kubectl auth can-i --list")
 	}
 
-	err.WithHelp(fmt.Sprintf("wgo configure %s", strings.ToLower(string(provider))))
+	err.WithHelp(fmt.Sprintf("vaino configure %s", strings.ToLower(string(provider))))
 
 	return err
 }
 
 // NetworkError creates a network connectivity error
-func NetworkError(provider Provider, endpoint string) *WGOError {
+func NetworkError(provider Provider, endpoint string) *VAINOError {
 	err := New(ErrorTypeNetwork, provider, "Network connection failed")
 	err.WithCause(fmt.Sprintf("Cannot reach %s", endpoint))
 
@@ -252,7 +252,7 @@ func NetworkError(provider Provider, endpoint string) *WGOError {
 		err.WithVerify("aws ec2 describe-regions")
 	}
 
-	err.WithHelp("wgo help troubleshooting")
+	err.WithHelp("vaino help troubleshooting")
 
 	return err
 }

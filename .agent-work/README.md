@@ -1,6 +1,6 @@
 # Agent Work Directory
 
-This directory contains the Agent Branch Management System for WGO, enabling multiple claude-code instances to work simultaneously without conflicts.
+This directory contains the Agent Branch Management System for VAINO, enabling multiple claude-code instances to work simultaneously without conflicts.
 
 ## Directory Structure
 

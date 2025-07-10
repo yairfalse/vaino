@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// DefaultsManager handles smart defaults for WGO configuration
+// DefaultsManager handles smart defaults for VAINO configuration
 type DefaultsManager struct {
 	workingDir string
 }
@@ -57,17 +57,17 @@ func (dm *DefaultsManager) getDefaultStoragePath() string {
 	for _, marker := range projectMarkers {
 		if _, err := os.Stat(filepath.Join(dm.workingDir, marker)); err == nil {
 			// Use project-local storage
-			return filepath.Join(dm.workingDir, ".wgo")
+			return filepath.Join(dm.workingDir, ".vaino")
 		}
 	}
 
 	// Use user home directory
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return "./.wgo" // Fallback to current directory
+		return "./.vaino" // Fallback to current directory
 	}
 
-	return filepath.Join(homeDir, ".wgo")
+	return filepath.Join(homeDir, ".vaino")
 }
 
 // getDefaultCachePath returns a smart default for cache

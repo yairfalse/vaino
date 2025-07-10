@@ -29,7 +29,7 @@ func TestCLIBasicCommands(t *testing.T) {
 			args:        []string{"--help"},
 			expectError: false,
 			expectContains: []string{
-				"WGO (What's Going On)",
+				"VAINO (What's Going On)",
 				"infrastructure drift detection tool",
 				"Available Commands:",
 			},
@@ -39,7 +39,7 @@ func TestCLIBasicCommands(t *testing.T) {
 			args:        []string{"version"},
 			expectError: false,
 			expectContains: []string{
-				"wgo version",
+				"vaino version",
 			},
 		},
 		{

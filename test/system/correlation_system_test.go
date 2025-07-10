@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // TestCorrelationSystemWorkflow tests the complete correlation workflow
@@ -19,7 +19,7 @@ func TestCorrelationSystemWorkflow(t *testing.T) {
 		t.Skip("Skipping system test in short mode")
 	}
 
-	// Build wgo binary for testing
+	// Build vaino binary for testing
 	wgoBinary := buildWGOBinary(t)
 	defer os.Remove(wgoBinary)
 
@@ -279,7 +279,7 @@ func buildWGOBinary(t *testing.T) string {
 	tmpDir := t.TempDir()
 	binary := filepath.Join(tmpDir, "wgo")
 
-	cmd := exec.Command("go", "build", "-o", binary, "../../cmd/wgo")
+	cmd := exec.Command("go", "build", "-o", binary, "../../cmd/vaino")
 	if err := cmd.Run(); err != nil {
 		t.Fatalf("Failed to build wgo: %v", err)
 	}

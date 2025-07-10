@@ -163,7 +163,7 @@ func (c *InfraConfig) GetEnabledProviders() []string {
 
 // InitConfigFile creates a default config file if it doesn't exist
 func InitConfigFile() error {
-	configDir := filepath.Join(os.Getenv("HOME"), ".wgo")
+	configDir := filepath.Join(os.Getenv("HOME"), ".vaino")
 	configFile := filepath.Join(configDir, "config.yaml")
 
 	// Check if config file already exists

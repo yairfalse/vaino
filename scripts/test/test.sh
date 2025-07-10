@@ -2,7 +2,7 @@
 
 set -e
 
-echo "🧪 Running WGO Test Suite"
+echo "🧪 Running VAINO Test Suite"
 echo "=========================="
 
 # Colors for output
@@ -36,8 +36,8 @@ run_test() {
 }
 
 # Build the application first
-echo -e "${BLUE}🔨 Building WGO...${NC}"
-go build -o ./wgo ./cmd/wgo
+echo -e "${BLUE}🔨 Building VAINO...${NC}"
+go build -o ./vaino ./cmd/vaino
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Build successful${NC}"
 else
@@ -50,13 +50,13 @@ echo ""
 echo -e "${YELLOW}📋 UNIT TESTS${NC}"
 echo "=============="
 
-run_test "Terraform Collector Tests" "go test -v github.com/yairfalse/wgo/internal/collectors/terraform" 30s
-run_test "Collectors Registry Tests" "go test -v github.com/yairfalse/wgo/internal/collectors" 15s
-run_test "Types Package Tests" "go test -v github.com/yairfalse/wgo/pkg/types" 15s
-run_test "Logger Package Tests" "go test -v github.com/yairfalse/wgo/internal/logger" 10s
+run_test "Terraform Collector Tests" "go test -v github.com/yairfalse/vaino/internal/collectors/terraform" 30s
+run_test "Collectors Registry Tests" "go test -v github.com/yairfalse/vaino/internal/collectors" 15s
+run_test "Types Package Tests" "go test -v github.com/yairfalse/vaino/pkg/types" 15s
+run_test "Logger Package Tests" "go test -v github.com/yairfalse/vaino/internal/logger" 10s
 # Skip problematic cache and storage tests for now
-# run_test "Cache Package Tests" "go test -v github.com/yairfalse/wgo/internal/cache -timeout 20s" 25s
-# run_test "Storage Package Tests" "go test -v github.com/yairfalse/wgo/internal/storage -timeout 20s" 25s
+# run_test "Cache Package Tests" "go test -v github.com/yairfalse/vaino/internal/cache -timeout 20s" 25s
+# run_test "Storage Package Tests" "go test -v github.com/yairfalse/vaino/internal/storage -timeout 20s" 25s
 
 # 2. Linting
 echo -e "${YELLOW}🔍 LINTING${NC}"
@@ -69,9 +69,9 @@ run_test "Go Fmt Check" "test -z \$(gofmt -l .)" 10s
 echo -e "${YELLOW}🚀 PERFORMANCE TESTS${NC}"
 echo "===================="
 
-run_test "Terraform Parallel Processing" "go test -v github.com/yairfalse/wgo/internal/collectors/terraform -run TestParallelProcessingPerformance" 30s
-run_test "Terraform Streaming Parser" "go test -v github.com/yairfalse/wgo/internal/collectors/terraform -run TestStreamingParserPerformance" 30s
-run_test "Terraform Concurrency" "go test -v github.com/yairfalse/wgo/internal/collectors/terraform -run TestParallelParserConcurrency" 30s
+run_test "Terraform Parallel Processing" "go test -v github.com/yairfalse/vaino/internal/collectors/terraform -run TestParallelProcessingPerformance" 30s
+run_test "Terraform Streaming Parser" "go test -v github.com/yairfalse/vaino/internal/collectors/terraform -run TestStreamingParserPerformance" 30s
+run_test "Terraform Concurrency" "go test -v github.com/yairfalse/vaino/internal/collectors/terraform -run TestParallelParserConcurrency" 30s
 
 # 4. Integration Tests
 echo -e "${YELLOW}🔗 INTEGRATION TESTS${NC}"
@@ -111,9 +111,9 @@ cat > test-fixtures/test.tfstate << EOF
 }
 EOF
 
-run_test "CLI Help Command" "./wgo --help > /dev/null" 10s
-run_test "CLI Version Command" "./wgo version > /dev/null" 10s
-run_test "Terraform Scan with Test File" "./wgo scan --provider terraform --state-file test-fixtures/test.tfstate > /dev/null" 15s
+run_test "CLI Help Command" "./vaino --help > /dev/null" 10s
+run_test "CLI Version Command" "./vaino version > /dev/null" 10s
+run_test "Terraform Scan with Test File" "./vaino scan --provider terraform --state-file test-fixtures/test.tfstate > /dev/null" 15s
 
 # 5. End-to-End Tests
 echo -e "${YELLOW}🎯 END-TO-END TESTS${NC}"
@@ -122,15 +122,15 @@ echo "==================="
 # Test full workflow
 run_test "E2E: Scan -> Baseline -> Check" "
     # Scan
-    ./wgo scan --provider terraform --state-file test-fixtures/test.tfstate --output-file e2e-snapshot.json > /dev/null 2>&1
+    ./vaino scan --provider terraform --state-file test-fixtures/test.tfstate --output-file e2e-snapshot.json > /dev/null 2>&1
     # Create baseline
-    ./wgo baseline create --name e2e-test --description 'E2E test baseline' --snapshot-file e2e-snapshot.json > /dev/null 2>&1
+    ./vaino baseline create --name e2e-test --description 'E2E test baseline' --snapshot-file e2e-snapshot.json > /dev/null 2>&1
     # Check (should show no drift)
-    ./wgo check --baseline e2e-test --current-file e2e-snapshot.json > /dev/null 2>&1
+    ./vaino check --baseline e2e-test --current-file e2e-snapshot.json > /dev/null 2>&1
 " 20s
 
 # Cleanup
-rm -f ./wgo e2e-snapshot.json
+rm -f ./vaino e2e-snapshot.json
 rm -rf test-fixtures
 
 # Results Summary

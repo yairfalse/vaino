@@ -4,12 +4,12 @@
 
 set -e
 
-PACKAGE_NAME="wgo"
+PACKAGE_NAME="vaino"
 VERSION="${1:-dev}"
 ARCH="${2:-amd64}"
 BUILD_DIR="build/deb"
 
-echo "Building DEB package for WGO ${VERSION} (${ARCH})..."
+echo "Building DEB package for VAINO ${VERSION} (${ARCH})..."
 
 # Create package structure
 mkdir -p "${BUILD_DIR}/DEBIAN"
@@ -29,9 +29,9 @@ Depends: git
 Recommends: terraform, awscli
 Section: utils
 Priority: optional
-Homepage: https://github.com/yairfalse/wgo
+Homepage: https://github.com/yairfalse/vaino
 Description: Git diff for infrastructure - simple drift detection
- WGO (What's Going On) is a comprehensive infrastructure drift detection tool
+ VAINO (What's Going On) is a comprehensive infrastructure drift detection tool
  that helps you track changes in your infrastructure over time.
  .
  Features:
@@ -49,9 +49,9 @@ set -e
 
 case "$1" in
     configure)
-        echo "WGO installed successfully!"
-        echo "Run 'wgo version' to verify installation"
-        echo "Run 'wgo --help' to get started"
+        echo "VAINO installed successfully!"
+        echo "Run 'vaino version' to verify installation"
+        echo "Run 'vaino --help' to get started"
         ;;
     abort-upgrade|abort-remove|abort-deconfigure)
         ;;

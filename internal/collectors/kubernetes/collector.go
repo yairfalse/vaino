@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/collectors"
-	wgoerrors "github.com/yairfalse/wgo/internal/errors"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/collectors"
+	vainoerrors "github.com/yairfalse/vaino/internal/errors"
+	"github.com/yairfalse/vaino/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -62,7 +62,7 @@ func (k *KubernetesCollector) Collect(ctx context.Context, config collectors.Col
 	if err != nil {
 		// Check if it's an authentication error
 		if isKubernetesAuthError(err) {
-			return nil, wgoerrors.New(wgoerrors.ErrorTypeAuthentication, wgoerrors.ProviderKubernetes,
+			return nil, vainoerrors.New(vainoerrors.ErrorTypeAuthentication, vainoerrors.ProviderKubernetes,
 				"Kubernetes authentication failed").
 				WithCause(err.Error()).
 				WithSolutions(
@@ -72,7 +72,7 @@ func (k *KubernetesCollector) Collect(ctx context.Context, config collectors.Col
 					"Check if your cluster credentials have expired",
 				).
 				WithVerify("kubectl cluster-info").
-				WithHelp("wgo validate kubernetes")
+				WithHelp("vaino validate kubernetes")
 		}
 
 		return nil, fmt.Errorf("failed to initialize Kubernetes client: %w", err)

@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/yairfalse/wgo/internal/differ"
-	"github.com/yairfalse/wgo/internal/storage"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/differ"
+	"github.com/yairfalse/vaino/internal/storage"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // newDriftCommand creates the new simplified drift detection command
@@ -22,22 +22,22 @@ to previously saved reference points.
 By default, compares to the most recent saved state. Use --since to compare
 to specific reference points by name, date, or relative time.`,
 		Example: `  # Show drift from last saved state
-  wgo drift
+  vaino drift
   
   # Compare to specific saved state
-  wgo drift --since prod-release-v2.1
-  wgo drift --since yesterday
-  wgo drift --since "3 days ago"
-  wgo drift --since 2025-01-10
+  vaino drift --since prod-release-v2.1
+  vaino drift --since yesterday
+  vaino drift --since "3 days ago"
+  vaino drift --since 2025-01-10
   
   # Compare between two states
-  wgo drift --from prod-v1 --to prod-v2
+  vaino drift --from prod-v1 --to prod-v2
   
   # Filter results
-  wgo drift --severity high --provider gcp
+  vaino drift --severity high --provider gcp
   
   # Export results
-  wgo drift --format json --output drift-report.json`,
+  vaino drift --format json --output drift-report.json`,
 		RunE: runDrift,
 	}
 
@@ -117,7 +117,7 @@ func runDrift(cmd *cobra.Command, args []string) error {
 				if !quiet {
 					fmt.Println("ℹ️  No previous state found for comparison")
 					fmt.Println("\n💡 TIP: Save a reference state first:")
-					fmt.Println("    wgo scan --save")
+					fmt.Println("    vaino scan --save")
 				}
 				return nil
 			}
@@ -359,9 +359,9 @@ func displayDriftSummary(report *differ.DriftReport) {
 
 	// Next steps
 	fmt.Println("\n💡 Next Steps:")
-	fmt.Println("  • Review changes: wgo drift --format markdown")
-	fmt.Println("  • Get AI analysis: wgo explain")
-	fmt.Println("  • Save new reference: wgo scan --save")
+	fmt.Println("  • Review changes: vaino drift --format markdown")
+	fmt.Println("  • Get AI analysis: vaino explain")
+	fmt.Println("  • Save new reference: vaino scan --save")
 }
 
 func getIgnoreFields(cmd *cobra.Command) []string {

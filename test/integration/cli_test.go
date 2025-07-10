@@ -15,9 +15,9 @@ const (
 
 func TestMain(m *testing.M) {
 	// Build the binary before running tests
-	cmd := exec.Command("go", "build", "-o", wgoBinary, "../../cmd/wgo")
+	cmd := exec.Command("go", "build", "-o", wgoBinary, "../../cmd/vaino")
 	if err := cmd.Run(); err != nil {
-		panic("Failed to build wgo binary: " + err.Error())
+		panic("Failed to build vaino binary: " + err.Error())
 	}
 
 	// Run tests
@@ -39,15 +39,15 @@ func runWGOIntegration(args ...string) (string, string, error) {
 	return stdout.String(), stderr.String(), err
 }
 
-func TestWGO_Help(t *testing.T) {
+func TestVAINO_Help(t *testing.T) {
 	stdout, stderr, err := runWGOIntegration("--help")
 	if err != nil {
-		t.Fatalf("wgo --help failed: %v\nstderr: %s", err, stderr)
+		t.Fatalf("vaino --help failed: %v\nstderr: %s", err, stderr)
 	}
 
 	// Check that help output contains expected content
 	expectedContent := []string{
-		"WGO (What's Going On)",
+		"VAINO (What's Going On)",
 		"infrastructure drift detection tool",
 		"Available Commands:",
 		"baseline",
@@ -63,21 +63,21 @@ func TestWGO_Help(t *testing.T) {
 	}
 }
 
-func TestWGO_Version(t *testing.T) {
+func TestVAINO_Version(t *testing.T) {
 	stdout, stderr, err := runWGOIntegration("version")
 	if err != nil {
-		t.Fatalf("wgo version failed: %v\nstderr: %s", err, stderr)
+		t.Fatalf("vaino version failed: %v\nstderr: %s", err, stderr)
 	}
 
-	if !strings.Contains(stdout, "wgo version") {
-		t.Errorf("Expected version output to contain 'wgo version', got: %s", stdout)
+	if !strings.Contains(stdout, "vaino version") {
+		t.Errorf("Expected version output to contain 'vaino version', got: %s", stdout)
 	}
 }
 
-func TestWGO_BaselineHelp(t *testing.T) {
+func TestVAINO_BaselineHelp(t *testing.T) {
 	stdout, stderr, err := runWGOIntegration("baseline", "--help")
 	if err != nil {
-		t.Fatalf("wgo baseline --help failed: %v\nstderr: %s", err, stderr)
+		t.Fatalf("vaino baseline --help failed: %v\nstderr: %s", err, stderr)
 	}
 
 	expectedContent := []string{
@@ -96,10 +96,10 @@ func TestWGO_BaselineHelp(t *testing.T) {
 	}
 }
 
-func TestWGO_ScanHelp(t *testing.T) {
+func TestVAINO_ScanHelp(t *testing.T) {
 	stdout, stderr, err := runWGOIntegration("scan", "--help")
 	if err != nil {
-		t.Fatalf("wgo scan --help failed: %v\nstderr: %s", err, stderr)
+		t.Fatalf("vaino scan --help failed: %v\nstderr: %s", err, stderr)
 	}
 
 	expectedContent := []string{
@@ -119,10 +119,10 @@ func TestWGO_ScanHelp(t *testing.T) {
 	}
 }
 
-func TestWGO_CheckHelp(t *testing.T) {
+func TestVAINO_CheckHelp(t *testing.T) {
 	stdout, stderr, err := runWGOIntegration("check", "--help")
 	if err != nil {
-		t.Fatalf("wgo check --help failed: %v\nstderr: %s", err, stderr)
+		t.Fatalf("vaino check --help failed: %v\nstderr: %s", err, stderr)
 	}
 
 	expectedContent := []string{
@@ -139,7 +139,7 @@ func TestWGO_CheckHelp(t *testing.T) {
 	}
 }
 
-func TestWGO_BaselineCreate(t *testing.T) {
+func TestVAINO_BaselineCreate(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Test baseline create command
@@ -160,7 +160,7 @@ func TestWGO_BaselineCreate(t *testing.T) {
 	}
 }
 
-func TestWGO_BaselineList(t *testing.T) {
+func TestVAINO_BaselineList(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	stdout, stderr, err := runWGOIntegration("baseline", "list", "--config", filepath.Join(tmpDir, "config.yaml"))
@@ -175,7 +175,7 @@ func TestWGO_BaselineList(t *testing.T) {
 	}
 }
 
-func TestWGO_ScanTerraform(t *testing.T) {
+func TestVAINO_ScanTerraform(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	stdout, stderr, err := runWGOIntegration("scan", "--provider", "terraform", "--path", tmpDir, "--config", filepath.Join(tmpDir, "config.yaml"))
@@ -190,7 +190,7 @@ func TestWGO_ScanTerraform(t *testing.T) {
 	}
 }
 
-func TestWGO_InvalidCommand(t *testing.T) {
+func TestVAINO_InvalidCommand(t *testing.T) {
 	_, stderr, err := runWGOIntegration("invalid-command")
 
 	if err == nil {
@@ -202,7 +202,7 @@ func TestWGO_InvalidCommand(t *testing.T) {
 	}
 }
 
-func TestWGO_RequiredFlags(t *testing.T) {
+func TestVAINO_RequiredFlags(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Test baseline create without required name flag
@@ -217,7 +217,7 @@ func TestWGO_RequiredFlags(t *testing.T) {
 	}
 }
 
-func TestWGO_OutputFormats(t *testing.T) {
+func TestVAINO_OutputFormats(t *testing.T) {
 	tmpDir := t.TempDir()
 	formats := []string{"table", "json", "yaml", "markdown"}
 
@@ -238,7 +238,7 @@ func TestWGO_OutputFormats(t *testing.T) {
 	}
 }
 
-func TestWGO_ConfigFile(t *testing.T) {
+func TestVAINO_ConfigFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	configFile := filepath.Join(tmpDir, "test-config.yaml")
 
@@ -273,7 +273,7 @@ logging:
 	}
 }
 
-func TestWGO_GlobalFlags(t *testing.T) {
+func TestVAINO_GlobalFlags(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Test verbose flag

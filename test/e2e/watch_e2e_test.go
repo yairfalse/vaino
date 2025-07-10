@@ -24,7 +24,7 @@ func TestWatchCommandE2E(t *testing.T) {
 		t.Skip("Skipping E2E test in short mode")
 	}
 
-	// Build the wgo binary
+	// Build the vaino binary
 	binPath := buildWGO(t)
 
 	// Test basic watch functionality
@@ -273,7 +273,7 @@ func buildWGO(t *testing.T) string {
 	t.Helper()
 
 	binPath := filepath.Join(t.TempDir(), "wgo")
-	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/wgo")
+	cmd := exec.Command("go", "build", "-o", binPath, "../../cmd/vaino")
 
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("Failed to build wgo: %v\nOutput: %s", err, output)

@@ -1,5 +1,5 @@
 #!/bin/bash
-# WGO Universal Installation Script
+# VAINO Universal Installation Script
 # Supports: Linux (x64, arm64), macOS (x64, arm64), Windows (via WSL)
 # Auto-detects package managers and falls back to direct binary download
 
@@ -7,7 +7,7 @@ set -e
 
 # Configuration
 REPO_OWNER="yairfalse"
-REPO_NAME="wgo"
+REPO_NAME="vaino"
 INSTALL_DIR="/usr/local/bin"
 TEMP_DIR=$(mktemp -d)
 
@@ -82,8 +82,8 @@ try_package_manager_install() {
     # macOS - Homebrew
     if [[ "$os" == "darwin" ]] && command_exists brew; then
         log_info "Installing via Homebrew..."
-        brew tap "$REPO_OWNER/wgo" 2>/dev/null || true
-        if brew install wgo; then
+        brew tap "$REPO_OWNER/vaino" 2>/dev/null || true
+        if brew install vaino; then
             log_success "Installed via Homebrew"
             return 0
         fi
@@ -94,7 +94,7 @@ try_package_manager_install() {
         # Try snap first (works on many distros)
         if command_exists snap; then
             log_info "Installing via Snap..."
-            if sudo snap install wgo; then
+            if sudo snap install vaino; then
                 log_success "Installed via Snap"
                 return 0
             fi
@@ -104,12 +104,12 @@ try_package_manager_install() {
         if command_exists apt-get; then
             log_info "Detected Debian/Ubuntu system"
             # Check if our APT repo is available
-            if curl -s https://apt.wgo.sh/ubuntu/dists/stable/Release >/dev/null 2>&1; then
-                log_info "Adding WGO APT repository..."
-                curl -fsSL https://apt.wgo.sh/ubuntu/wgo.gpg | sudo apt-key add -
-                echo "deb https://apt.wgo.sh/ubuntu stable main" | sudo tee /etc/apt/sources.list.d/wgo.list
+            if curl -s https://apt.vaino.sh/ubuntu/dists/stable/Release >/dev/null 2>&1; then
+                log_info "Adding VAINO APT repository..."
+                curl -fsSL https://apt.vaino.sh/ubuntu/vaino.gpg | sudo apt-key add -
+                echo "deb https://apt.vaino.sh/ubuntu stable main" | sudo tee /etc/apt/sources.list.d/vaino.list
                 sudo apt-get update
-                if sudo apt-get install -y wgo; then
+                if sudo apt-get install -y vaino; then
                     log_success "Installed via APT"
                     return 0
                 fi
@@ -120,16 +120,16 @@ try_package_manager_install() {
         if command_exists yum || command_exists dnf; then
             log_info "Detected RHEL/CentOS/Fedora system"
             # Check if our YUM repo is available
-            if curl -s https://yum.wgo.sh/rhel/wgo.repo >/dev/null 2>&1; then
-                log_info "Adding WGO YUM repository..."
-                sudo curl -fsSL https://yum.wgo.sh/rhel/wgo.repo -o /etc/yum.repos.d/wgo.repo
+            if curl -s https://yum.vaino.sh/rhel/vaino.repo >/dev/null 2>&1; then
+                log_info "Adding VAINO YUM repository..."
+                sudo curl -fsSL https://yum.vaino.sh/rhel/vaino.repo -o /etc/yum.repos.d/vaino.repo
                 if command_exists dnf; then
-                    if sudo dnf install -y wgo; then
+                    if sudo dnf install -y vaino; then
                         log_success "Installed via DNF"
                         return 0
                     fi
                 else
-                    if sudo yum install -y wgo; then
+                    if sudo yum install -y vaino; then
                         log_success "Installed via YUM"
                         return 0
                     fi
@@ -140,7 +140,7 @@ try_package_manager_install() {
         # Arch Linux - AUR
         if command_exists pacman && command_exists yay; then
             log_info "Installing via AUR..."
-            if yay -S wgo-bin --noconfirm; then
+            if yay -S vaino-bin --noconfirm; then
                 log_success "Installed via AUR"
                 return 0
             fi
@@ -151,7 +151,7 @@ try_package_manager_install() {
     if [[ "$os" == "windows" ]]; then
         if command_exists choco; then
             log_info "Installing via Chocolatey..."
-            if choco install wgo -y; then
+            if choco install vaino -y; then
                 log_success "Installed via Chocolatey"
                 return 0
             fi
@@ -159,8 +159,8 @@ try_package_manager_install() {
         
         if command_exists scoop; then
             log_info "Installing via Scoop..."
-            scoop bucket add wgo https://github.com/$REPO_OWNER/scoop-wgo
-            if scoop install wgo; then
+            scoop bucket add vaino https://github.com/$REPO_OWNER/scoop-vaino
+            if scoop install vaino; then
                 log_success "Installed via Scoop"
                 return 0
             fi
@@ -224,7 +224,7 @@ install_binary() {
     local arch=$2
     local version=$3
     
-    log_info "Installing WGO $version via direct download..."
+    log_info "Installing VAINO $version via direct download..."
     
     # Construct download URL
     local ext=""
@@ -242,7 +242,7 @@ install_binary() {
     local download_arch="$arch"
     
     local url="https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$version/${REPO_NAME}_${download_os}_${download_arch}${ext}"
-    local download_file="$TEMP_DIR/wgo${ext}"
+    local download_file="$TEMP_DIR/vaino${ext}"
     local checksum_url="https://github.com/$REPO_OWNER/$REPO_NAME/releases/download/$version/checksums.txt"
     local checksum_file="$TEMP_DIR/checksums.txt"
     
@@ -250,7 +250,7 @@ install_binary() {
     
     # Download the file
     if ! curl -fsSL "$url" -o "$download_file"; then
-        log_error "Failed to download WGO"
+        log_error "Failed to download VAINO"
         exit 1
     fi
     
@@ -271,8 +271,8 @@ install_binary() {
     fi
     
     # Find the binary
-    local binary_name="wgo"
-    [[ "$os" == "windows" ]] && binary_name="wgo.exe"
+    local binary_name="vaino"
+    [[ "$os" == "windows" ]] && binary_name="vaino.exe"
     
     if [[ ! -f "$binary_name" ]]; then
         log_error "Binary not found in archive"
@@ -290,7 +290,7 @@ install_binary() {
         sudo mv "$binary_name" "$INSTALL_DIR/"
     fi
     
-    log_success "WGO installed successfully to $INSTALL_DIR/wgo"
+    log_success "VAINO installed successfully to $INSTALL_DIR/vaino"
 }
 
 # Install shell completions
@@ -299,12 +299,12 @@ install_completions() {
     
     # Bash completion
     if [[ -d /etc/bash_completion.d ]] || [[ -d /usr/local/etc/bash_completion.d ]]; then
-        wgo completion bash > "$TEMP_DIR/wgo.bash" 2>/dev/null || true
-        if [[ -f "$TEMP_DIR/wgo.bash" ]]; then
+        vaino completion bash > "$TEMP_DIR/vaino.bash" 2>/dev/null || true
+        if [[ -f "$TEMP_DIR/vaino.bash" ]]; then
             if [[ -d /usr/local/etc/bash_completion.d ]]; then
-                sudo cp "$TEMP_DIR/wgo.bash" /usr/local/etc/bash_completion.d/wgo
+                sudo cp "$TEMP_DIR/vaino.bash" /usr/local/etc/bash_completion.d/vaino
             else
-                sudo cp "$TEMP_DIR/wgo.bash" /etc/bash_completion.d/wgo
+                sudo cp "$TEMP_DIR/vaino.bash" /etc/bash_completion.d/vaino
             fi
             log_success "Bash completions installed"
         fi
@@ -312,12 +312,12 @@ install_completions() {
     
     # Zsh completion
     if [[ -d /usr/local/share/zsh/site-functions ]] || [[ -d /usr/share/zsh/site-functions ]]; then
-        wgo completion zsh > "$TEMP_DIR/_wgo" 2>/dev/null || true
-        if [[ -f "$TEMP_DIR/_wgo" ]]; then
+        vaino completion zsh > "$TEMP_DIR/_vaino" 2>/dev/null || true
+        if [[ -f "$TEMP_DIR/_vaino" ]]; then
             if [[ -d /usr/local/share/zsh/site-functions ]]; then
-                sudo cp "$TEMP_DIR/_wgo" /usr/local/share/zsh/site-functions/_wgo
+                sudo cp "$TEMP_DIR/_vaino" /usr/local/share/zsh/site-functions/_vaino
             else
-                sudo cp "$TEMP_DIR/_wgo" /usr/share/zsh/site-functions/_wgo
+                sudo cp "$TEMP_DIR/_vaino" /usr/share/zsh/site-functions/_vaino
             fi
             log_success "Zsh completions installed"
         fi
@@ -325,26 +325,26 @@ install_completions() {
     
     # Fish completion
     if command_exists fish && [[ -d ~/.config/fish/completions ]]; then
-        wgo completion fish > ~/.config/fish/completions/wgo.fish 2>/dev/null || true
+        vaino completion fish > ~/.config/fish/completions/vaino.fish 2>/dev/null || true
         log_success "Fish completions installed"
     fi
 }
 
 # Verify installation
 verify_installation() {
-    if command_exists wgo; then
-        log_success "WGO installation verified!"
-        wgo version
+    if command_exists vaino; then
+        log_success "VAINO installation verified!"
+        vaino version
         echo ""
         log_info "Quick start:"
-        echo "  wgo scan                  # Auto-discover and scan infrastructure"
-        echo "  wgo diff                  # Compare infrastructure states"
-        echo "  wgo scan --provider aws   # Scan AWS resources"
-        echo "  wgo --help               # Show all commands"
+        echo "  vaino scan                  # Auto-discover and scan infrastructure"
+        echo "  vaino diff                  # Compare infrastructure states"
+        echo "  vaino scan --provider aws   # Scan AWS resources"
+        echo "  vaino --help               # Show all commands"
         echo ""
         log_info "Documentation: https://github.com/$REPO_OWNER/$REPO_NAME"
     else
-        log_error "WGO installation failed - 'wgo' command not found"
+        log_error "VAINO installation failed - 'vaino' command not found"
         log_info "You may need to add $INSTALL_DIR to your PATH"
         exit 1
     fi
@@ -357,7 +357,7 @@ cleanup() {
 
 # Main installation flow
 main() {
-    echo "🚀 WGO Installer"
+    echo "🚀 VAINO Installer"
     echo "================"
     echo ""
     

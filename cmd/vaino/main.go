@@ -1,6 +1,6 @@
 package main
 
-import "github.com/yairfalse/wgo/cmd/wgo/commands"
+import "github.com/yairfalse/vaino/cmd/vaino/commands"
 
 var (
 	version   = "dev"

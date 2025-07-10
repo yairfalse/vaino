@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // SimpleChange represents a simple change between two states

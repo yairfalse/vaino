@@ -60,7 +60,7 @@ cat > "$SCALED" << 'EOF'
 EOF
 
 # Test correlation
-OUTPUT=$(./wgo changes --from "$BASELINE" --to "$SCALED" --correlated 2>&1)
+OUTPUT=$(./vaino changes --from "$BASELINE" --to "$SCALED" --correlated 2>&1)
 
 # Verify scaling was detected
 if ! echo "$OUTPUT" | grep -q "test-app Scaling"; then

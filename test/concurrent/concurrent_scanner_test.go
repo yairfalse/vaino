@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/scanner"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/internal/scanner"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // MockConcurrentCollector implements EnhancedCollector for testing

@@ -16,8 +16,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/yairfalse/wgo/internal/differ"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/differ"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // TestE2EAWSDriftDetection tests the complete end-to-end workflow
@@ -26,19 +26,19 @@ func TestE2EAWSDriftDetection(t *testing.T) {
 		t.Skip("Skipping E2E test in short mode")
 	}
 
-	// Check if wgo binary exists
+	// Check if vaino binary exists
 	wgoBinary := "./wgo"
 	if _, err := os.Stat(wgoBinary); os.IsNotExist(err) {
 		// Try to build it
-		cmd := exec.Command("go", "build", "-o", wgoBinary, "./cmd/wgo")
+		cmd := exec.Command("go", "build", "-o", wgoBinary, "./cmd/vaino")
 		if err := cmd.Run(); err != nil {
-			t.Skip("Could not build wgo binary")
+			t.Skip("Could not build vaino binary")
 		}
 		defer os.Remove(wgoBinary)
 	}
 
 	// Create temp directory for test outputs
-	tmpDir, err := ioutil.TempDir("", "wgo-e2e-test")
+	tmpDir, err := ioutil.TempDir("", "vaino-e2e-test")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
@@ -111,7 +111,7 @@ func TestE2EAWSProviderFeatures(t *testing.T) {
 
 	wgoBinary := "./wgo"
 	if _, err := os.Stat(wgoBinary); os.IsNotExist(err) {
-		t.Skip("wgo binary not found")
+		t.Skip("vaino binary not found")
 	}
 
 	// Test auto-discovery
@@ -167,10 +167,10 @@ func TestE2EGitLikeDiff(t *testing.T) {
 
 	wgoBinary := "./wgo"
 	if _, err := os.Stat(wgoBinary); os.IsNotExist(err) {
-		t.Skip("wgo binary not found")
+		t.Skip("vaino binary not found")
 	}
 
-	tmpDir, err := ioutil.TempDir("", "wgo-e2e-diff")
+	tmpDir, err := ioutil.TempDir("", "vaino-e2e-diff")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 

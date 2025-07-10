@@ -1,6 +1,6 @@
 # Performance Results
 
-This directory contains performance benchmark results for the WGO project.
+This directory contains performance benchmark results for the VAINO project - measuring the divine power of the Finnish creator god.
 
 ## Structure
 

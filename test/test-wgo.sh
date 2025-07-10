@@ -1,5 +1,5 @@
 #!/bin/bash
-# WGO Test Runner - Tests WGO against the test environment
+# VAINO Test Runner - Tests VAINO against the test environment
 
 set -e
 
@@ -31,14 +31,14 @@ check_env() {
 }
 
 run_tests() {
-    echo "🧪 WGO Integration Tests"
+    echo "🧪 VAINO Integration Tests"
     echo "======================="
     
     check_env
     
     # Test 1: Kubernetes Scan
     print_test "Testing Kubernetes scan..."
-    if wgo scan --provider kubernetes --namespace test-workloads; then
+    if vaino scan --provider kubernetes --namespace test-workloads; then
         print_success "Kubernetes scan completed"
     else
         print_fail "Kubernetes scan failed"
@@ -46,7 +46,7 @@ run_tests() {
     
     # Test 2: Create baseline
     print_test "Creating baseline..."
-    if wgo baseline create --name k8s-test-baseline --description "Test K8s baseline"; then
+    if vaino baseline create --name k8s-test-baseline --description "Test K8s baseline"; then
         print_success "Baseline created"
     else
         print_fail "Baseline creation failed"
@@ -59,7 +59,7 @@ run_tests() {
     
     # Test 4: Check for drift
     print_test "Checking for drift..."
-    if wgo check; then
+    if vaino check; then
         print_fail "No drift detected (expected drift!)"
     else
         print_success "Drift detected as expected"
@@ -67,20 +67,20 @@ run_tests() {
     
     # Test 5: View diff
     print_test "Viewing differences..."
-    if wgo diff; then
+    if vaino diff; then
         print_success "Diff command completed"
     else
         print_fail "Diff command failed"
     fi
     
     # Test 6: AWS scan (if LocalStack running)
-    if docker ps | grep -q wgo-localstack; then
+    if docker ps | grep -q vaino-localstack; then
         print_test "Testing AWS scan (LocalStack)..."
         export AWS_ACCESS_KEY_ID=test
         export AWS_SECRET_ACCESS_KEY=test
         export AWS_ENDPOINT_URL=http://localhost:4566
         
-        if wgo scan --provider aws --region us-east-1; then
+        if vaino scan --provider aws --region us-east-1; then
             print_success "AWS scan completed"
         else
             print_fail "AWS scan failed"
@@ -89,7 +89,7 @@ run_tests() {
     
     # Test 7: Authentication commands
     print_test "Testing auth status..."
-    if wgo auth status; then
+    if vaino auth status; then
         print_success "Auth status command works"
     else
         print_fail "Auth status failed"
@@ -109,7 +109,7 @@ quick_scan() {
     echo "🔍 Quick Kubernetes Scan Test"
     echo "============================"
     
-    wgo scan --provider kubernetes --namespace test-workloads
+    vaino scan --provider kubernetes --namespace test-workloads
     
     echo ""
     echo "📊 Resources found in test environment"
@@ -124,7 +124,7 @@ case "${1:-}" in
         quick_scan
         ;;
     *)
-        echo "WGO Test Runner"
+        echo "VAINO Test Runner"
         echo ""
         echo "Usage: $0 {full|scan}"
         echo ""

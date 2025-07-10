@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // EventType represents different types of watch events

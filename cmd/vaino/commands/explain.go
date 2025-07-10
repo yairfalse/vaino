@@ -14,19 +14,19 @@ func newExplainCommand() *cobra.Command {
 drift, changes, or specific resources. Uses Claude AI to provide insights
 about root causes, risks, and remediation steps.`,
 		Example: `  # Explain latest drift report
-  wgo explain
+  vaino explain
 
   # Explain specific drift report
-  wgo explain --drift-report drift-report-123.json
+  vaino explain --drift-report drift-report-123.json
 
   # Explain changes in a resource
-  wgo explain --resource ec2-instance-123 --provider aws
+  vaino explain --resource ec2-instance-123 --provider aws
 
   # Get security-focused analysis
-  wgo explain --focus security --drift-report latest
+  vaino explain --focus security --drift-report latest
 
   # Save analysis to file
-  wgo explain --drift-report latest --output-file analysis.md --format markdown`,
+  vaino explain --drift-report latest --output-file analysis.md --format markdown`,
 		RunE: runExplain,
 	}
 
@@ -93,7 +93,7 @@ func runExplain(cmd *cobra.Command, args []string) error {
 	if config != nil && config.Claude.APIKey == "" {
 		fmt.Println("\n💡 To enable AI features:")
 		fmt.Println("   Set CLAUDE_API_KEY or ANTHROPIC_API_KEY environment variable")
-		fmt.Println("   Or configure it in ~/.wgo/config.yaml")
+		fmt.Println("   Or configure it in ~/.vaino/config.yaml")
 	}
 
 	return nil

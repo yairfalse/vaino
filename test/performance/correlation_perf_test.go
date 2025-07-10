@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/analyzer"
-	"github.com/yairfalse/wgo/internal/differ"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/analyzer"
+	"github.com/yairfalse/vaino/internal/differ"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // BenchmarkCorrelationEngine benchmarks the correlation engine with different change set sizes

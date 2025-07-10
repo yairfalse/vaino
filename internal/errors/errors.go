@@ -30,8 +30,8 @@ const (
 	ProviderUnknown    Provider = "Unknown"
 )
 
-// WGOError represents a user-friendly error with actionable guidance
-type WGOError struct {
+// VAINOError represents a user-friendly error with actionable guidance
+type VAINOError struct {
 	Type        ErrorType
 	Provider    Provider
 	Message     string
@@ -43,7 +43,7 @@ type WGOError struct {
 }
 
 // Error implements the error interface
-func (e *WGOError) Error() string {
+func (e *VAINOError) Error() string {
 	var sb strings.Builder
 
 	// Main error message
@@ -81,7 +81,7 @@ func (e *WGOError) Error() string {
 }
 
 // Format implements fmt.Formatter for custom formatting
-func (e *WGOError) Format(f fmt.State, verb rune) {
+func (e *VAINOError) Format(f fmt.State, verb rune) {
 	switch verb {
 	case 's':
 		fmt.Fprintf(f, "%s", e.Error())
@@ -95,9 +95,9 @@ func (e *WGOError) Format(f fmt.State, verb rune) {
 	}
 }
 
-// New creates a new WGOError
-func New(errType ErrorType, provider Provider, message string) *WGOError {
-	return &WGOError{
+// New creates a new VAINOError
+func New(errType ErrorType, provider Provider, message string) *VAINOError {
+	return &VAINOError{
 		Type:        errType,
 		Provider:    provider,
 		Message:     message,
@@ -106,25 +106,25 @@ func New(errType ErrorType, provider Provider, message string) *WGOError {
 }
 
 // WithCause adds cause information
-func (e *WGOError) WithCause(cause string) *WGOError {
+func (e *VAINOError) WithCause(cause string) *VAINOError {
 	e.Cause = cause
 	return e
 }
 
 // WithSolutions adds solution steps
-func (e *WGOError) WithSolutions(solutions ...string) *WGOError {
+func (e *VAINOError) WithSolutions(solutions ...string) *VAINOError {
 	e.Solutions = append(e.Solutions, solutions...)
 	return e
 }
 
 // WithVerify adds verification command
-func (e *WGOError) WithVerify(verify string) *WGOError {
+func (e *VAINOError) WithVerify(verify string) *VAINOError {
 	e.Verify = verify
 	return e
 }
 
 // WithHelp adds help command
-func (e *WGOError) WithHelp(help string) *WGOError {
+func (e *VAINOError) WithHelp(help string) *VAINOError {
 	e.Help = help
 	return e
 }
@@ -155,13 +155,13 @@ func detectEnvironment() string {
 
 // IsUserError checks if error requires user action
 func IsUserError(err error) bool {
-	_, ok := err.(*WGOError)
+	_, ok := err.(*VAINOError)
 	return ok
 }
 
 // GetExitCode returns appropriate exit code for error type
 func GetExitCode(err error) int {
-	wgoErr, ok := err.(*WGOError)
+	wgoErr, ok := err.(*VAINOError)
 	if !ok {
 		return 1 // Generic error
 	}

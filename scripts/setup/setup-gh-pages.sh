@@ -37,7 +37,7 @@ else
 <html>
 <head>
     <meta charset="utf-8">
-    <title>WGO Performance Benchmarks</title>
+    <title>VAINO Performance Benchmarks</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 40px; }
         .header { text-align: center; margin-bottom: 40px; }
@@ -46,7 +46,7 @@ else
 </head>
 <body>
     <div class="header">
-        <h1>🚀 WGO Performance Benchmarks</h1>
+        <h1>🚀 VAINO Performance Benchmarks</h1>
         <p>Infrastructure drift detection tool performance tracking</p>
     </div>
     <div class="benchmark-container">
@@ -55,16 +55,16 @@ else
     
     <script>
         // Benchmark data will be inserted here by GitHub Actions
-        console.log('WGO Benchmark tracking initialized');
+        console.log('VAINO Benchmark tracking initialized');
     </script>
 </body>
 </html>
 EOF
     
     cat > README.md << 'EOF'
-# WGO Benchmark Results
+# VAINO Benchmark Results
 
-This branch contains performance benchmark results for the WGO infrastructure drift detection tool.
+This branch contains performance benchmark results for the VAINO infrastructure drift detection tool.
 
 ## Latest Performance Metrics
 
@@ -76,7 +76,7 @@ This branch contains performance benchmark results for the WGO infrastructure dr
 ## Benchmark History
 
 Benchmark results are automatically updated on every commit to the main branch.
-View the interactive charts at: https://yourusername.github.io/wgo/
+View the interactive charts at: https://yourusername.github.io/vaino/
 
 ## Key Performance Targets
 
@@ -106,6 +106,6 @@ echo "🎯 Next steps:"
 echo "1. Enable GitHub Pages in your repository settings"
 echo "2. Set source to 'gh-pages' branch"  
 echo "3. Uncomment the benchmark-action step in .github/workflows/benchmark.yml"
-echo "4. Your benchmarks will be available at: https://yourusername.github.io/wgo/"
+echo "4. Your benchmarks will be available at: https://yourusername.github.io/vaino/"
 echo ""
 echo "📊 Benchmark tracking is now ready!"

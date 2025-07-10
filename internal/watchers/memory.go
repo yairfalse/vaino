@@ -8,7 +8,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // MemoryManager manages memory optimization for long-running watch operations

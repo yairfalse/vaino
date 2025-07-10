@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/yairfalse/wgo/internal/catchup"
-	"github.com/yairfalse/wgo/internal/logger"
-	"github.com/yairfalse/wgo/internal/storage"
-	"github.com/yairfalse/wgo/pkg/config"
+	"github.com/yairfalse/vaino/internal/catchup"
+	"github.com/yairfalse/vaino/internal/logger"
+	"github.com/yairfalse/vaino/internal/storage"
+	"github.com/yairfalse/vaino/pkg/config"
 )
 
 var (
@@ -30,16 +30,16 @@ about the current state of your infrastructure.
 
 Examples:
   # Auto-detect absence period and show changes
-  wgo catch-up
+  vaino catch-up
 
   # Show changes from the last 2 weeks
-  wgo catch-up --since "2 weeks ago"
+  vaino catch-up --since "2 weeks ago"
 
   # Use comfort mode for reassuring tone
-  wgo catch-up --comfort-mode
+  vaino catch-up --comfort-mode
 
   # Update baselines after reviewing changes
-  wgo catch-up --sync-state`,
+  vaino catch-up --sync-state`,
 	RunE: runCatchUp,
 }
 

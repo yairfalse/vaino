@@ -479,7 +479,7 @@ func TestConfigurationOverrides(t *testing.T) {
 			overrides: []map[string]interface{}{
 				{
 					"storage": map[string]interface{}{
-						"base_path": "${WGO_STORAGE_PATH:/tmp/override}",
+						"base_path": "${VAINO_STORAGE_PATH:/tmp/override}",
 					},
 				},
 			},

@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // RemoteStateHandler handles remote Terraform state backends

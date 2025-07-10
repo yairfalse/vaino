@@ -1,5 +1,5 @@
 #!/bin/bash
-# GCP Authentication Diagnostic Script for WGO
+# GCP Authentication Diagnostic Script for VAINO
 
 set -e
 
@@ -19,7 +19,7 @@ fi
 
 PROJECT_ID=$1
 
-echo -e "${BLUE}WGO GCP Authentication Diagnostics${NC}"
+echo -e "${BLUE}VAINO GCP Authentication Diagnostics${NC}"
 echo "===================================="
 echo -e "Project: ${YELLOW}$PROJECT_ID${NC}"
 echo ""
@@ -88,7 +88,7 @@ else
     echo "   Run: gcloud auth application-default login"
 fi
 
-# 5. Test project access (what wgo does)
+# 5. Test project access (what vaino does)
 echo -e "\n${YELLOW}5. Testing Project Access:${NC}"
 
 # First try with gcloud
@@ -102,7 +102,7 @@ else
     echo "   Cannot access project with gcloud"
 fi
 
-# Try direct API call (mimicking wgo)
+# Try direct API call (mimicking vaino)
 echo -n "   Testing direct API call... "
 ACCESS_TOKEN=$(gcloud auth application-default print-access-token 2>/dev/null || echo "")
 if [ -n "$ACCESS_TOKEN" ]; then
@@ -194,8 +194,8 @@ fi
 if [ $ISSUES -eq 0 ]; then
     echo -e "${GREEN}✓ No authentication issues detected${NC}"
     echo ""
-    echo "If WGO still fails, try:"
-    echo "1. Enable verbose logging: export WGO_LOG_LEVEL=debug"
+    echo "If VAINO still fails, try:"
+    echo "1. Enable verbose logging: export VAINO_LOG_LEVEL=debug"
     echo "2. Check if required APIs are enabled in your project"
     echo "3. Verify quota limits haven't been exceeded"
 else
@@ -208,11 +208,11 @@ echo "Environment variables:"
 echo "   GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT:-<not set>}"
 echo "   GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-<not set>}"
 
-# Test with wgo if available
-if [ -f "./wgo" ]; then
-    echo -e "\n${YELLOW}9. Testing with WGO:${NC}"
-    echo "Running: ./wgo scan --provider gcp --project $PROJECT_ID"
-    ./wgo scan --provider gcp --project "$PROJECT_ID" 2>&1 | head -20
+# Test with vaino if available
+if [ -f "./vaino" ]; then
+    echo -e "\n${YELLOW}9. Testing with VAINO:${NC}"
+    echo "Running: ./vaino scan --provider gcp --project $PROJECT_ID"
+    ./vaino scan --provider gcp --project "$PROJECT_ID" 2>&1 | head -20
 fi
 
 echo -e "\n${BLUE}Diagnostic complete!${NC}"

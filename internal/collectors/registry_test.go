@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // Use the MockCollector from registry.go

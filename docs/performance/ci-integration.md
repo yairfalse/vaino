@@ -1,6 +1,6 @@
 # Performance Testing CI/CD Integration Guide
 
-This document explains how WGO's performance testing framework is integrated with CI/CD pipelines and when each type of test runs.
+This document explains how VAINO's performance testing framework is integrated with CI/CD pipelines and when each type of test runs.
 
 ## 🚀 Performance Testing Strategy
 
@@ -316,4 +316,4 @@ go tool pprof heap-profile.prof
 - **Performance Tracking**: Long-term performance database
 - **Benchmarking Service**: External performance validation service
 
-This comprehensive performance testing integration ensures WGO maintains excellent performance characteristics while providing early detection of regressions and comprehensive validation for releases.
+This comprehensive performance testing integration ensures VAINO maintains excellent performance characteristics while providing early detection of regressions and comprehensive validation for releases.

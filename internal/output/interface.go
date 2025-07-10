@@ -3,7 +3,7 @@ package output
 import (
 	"io"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // OutputFormat represents the available output formats

@@ -1,6 +1,6 @@
-# WGO Test Environment
+# VAINO Test Environment
 
-Easy-to-use test environment for WGO that works on both macOS and Ubuntu.
+Easy-to-use test environment for VAINO that works on both macOS and Ubuntu.
 
 ## Quick Start
 

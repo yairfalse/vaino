@@ -36,11 +36,11 @@ fi
 
 # Step 1: Initial scan
 print_step "1. Running initial Kubernetes scan"
-wgo scan --provider kubernetes --namespace test-workloads
+vaino scan --provider kubernetes --namespace test-workloads
 
 # Step 2: Create baseline
 print_step "2. Creating baseline (before JarJar)"
-wgo baseline create --name before-jarjar --description "State before JarJar arrives"
+vaino baseline create --name before-jarjar --description "State before JarJar arrives"
 
 print_info "Current pods:"
 kubectl get pods -n test-workloads --no-headers | wc -l | xargs echo "Pod count:"
@@ -60,14 +60,14 @@ kubectl logs jarjar -n test-workloads --tail=3 || true
 
 # Step 4: Scan again
 print_step "4. Scanning again (with JarJar)"
-wgo scan --provider kubernetes --namespace test-workloads
+vaino scan --provider kubernetes --namespace test-workloads
 
 # Step 5: Check for drift
 print_step "5. Checking for drift"
 echo "Expected: Drift should be detected (new pod added)"
 echo ""
 
-if wgo check --baseline before-jarjar; then
+if vaino check --baseline before-jarjar; then
     echo -e "${RED}❌ No drift detected - This is wrong! JarJar should cause drift!${NC}"
 else
     echo -e "${GREEN}✅ Drift detected correctly! JarJar has disturbed the force!${NC}"
@@ -75,7 +75,7 @@ fi
 
 # Step 6: Show the diff
 print_step "6. Viewing the differences"
-wgo diff || true
+vaino diff || true
 
 # Step 7: Let's make JarJar even more annoying by scaling him
 print_step "7. Making JarJar multiply (creating more pods)"
@@ -106,11 +106,11 @@ sleep 5
 
 # Step 8: Final scan
 print_step "8. Final scan (with JarJar army)"
-wgo scan --provider kubernetes --namespace test-workloads
+vaino scan --provider kubernetes --namespace test-workloads
 
 # Step 9: Check drift again
 print_step "9. Checking drift again"
-wgo check --baseline before-jarjar || true
+vaino check --baseline before-jarjar || true
 
 # Summary
 echo ""
@@ -125,4 +125,4 @@ echo ""
 echo "🧹 Cleanup Commands:"
 echo "  Remove JarJar:      kubectl delete -f $SCRIPT_DIR/jarjar.yaml"
 echo "  Remove JarJar army: kubectl delete deployment jarjar-army -n test-workloads"
-echo "  Remove baseline:    wgo baseline delete before-jarjar"
+echo "  Remove baseline:    vaino baseline delete before-jarjar"

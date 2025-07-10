@@ -1,14 +1,14 @@
 #!/bin/bash
-# Script to publish WGO to YUM/DNF repository
+# Script to publish VAINO to YUM/DNF repository
 # Called by GitHub Actions after release
 
 set -e
 
-REPO_URL="https://yum.wgo.sh/rhel"
+REPO_URL="https://yum.vaino.sh/rhel"
 REPO_DIR="/tmp/yum-repo"
 PACKAGE_DIR="packages"
 
-echo "📦 Publishing WGO to YUM repository..."
+echo "📦 Publishing VAINO to YUM repository..."
 
 # Create repository structure
 mkdir -p "${REPO_DIR}/7/x86_64"
@@ -37,27 +37,27 @@ for version in 7 8 9; do
 done
 
 # Create .repo file
-cat > "${REPO_DIR}/wgo.repo" << EOF
-[wgo]
-name=WGO Repository
+cat > "${REPO_DIR}/vaino.repo" << EOF
+[vaino]
+name=VAINO Repository
 baseurl=${REPO_URL}/\$releasever/\$basearch
 enabled=1
 gpgcheck=1
-gpgkey=${REPO_URL}/RPM-GPG-KEY-wgo
+gpgkey=${REPO_URL}/RPM-GPG-KEY-vaino
 metadata_expire=300
 
-[wgo-source]
-name=WGO Source Repository
+[vaino-source]
+name=VAINO Source Repository
 baseurl=${REPO_URL}/\$releasever/SRPMS
 enabled=0
 gpgcheck=1
-gpgkey=${REPO_URL}/RPM-GPG-KEY-wgo
+gpgkey=${REPO_URL}/RPM-GPG-KEY-vaino
 metadata_expire=300
 EOF
 
 # Export GPG public key if signing
 if [[ -n "${PACKAGE_SIGNING_KEY}" ]]; then
-    gpg --armor --export wgo@example.com > "${REPO_DIR}/RPM-GPG-KEY-wgo"
+    gpg --armor --export vaino@example.com > "${REPO_DIR}/RPM-GPG-KEY-vaino"
 fi
 
 echo "✅ YUM repository structure created successfully"
@@ -65,8 +65,8 @@ echo "✅ YUM repository structure created successfully"
 # Upload to S3 or other hosting service
 # This is a placeholder - replace with actual upload logic
 echo "📤 Uploading to YUM repository..."
-# aws s3 sync "${REPO_DIR}/" "s3://yum.wgo.sh/" --delete
+# aws s3 sync "${REPO_DIR}/" "s3://yum.vaino.sh/" --delete
 # or
-# rsync -avz "${REPO_DIR}/" "yum.wgo.sh:/var/www/yum/"
+# rsync -avz "${REPO_DIR}/" "yum.vaino.sh:/var/www/yum/"
 
 echo "✅ YUM repository published successfully"

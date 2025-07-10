@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/analyzer"
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/differ"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/analyzer"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/internal/differ"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // TestWatchModeIntegration tests watch mode with real collectors

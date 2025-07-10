@@ -1,13 +1,13 @@
 package app
 
 import (
-	"github.com/yairfalse/wgo/internal/cache"
-	"github.com/yairfalse/wgo/internal/collectors"
-	"github.com/yairfalse/wgo/internal/collectors/aws"
-	"github.com/yairfalse/wgo/internal/collectors/kubernetes"
-	"github.com/yairfalse/wgo/internal/collectors/terraform"
-	"github.com/yairfalse/wgo/internal/logger"
-	"github.com/yairfalse/wgo/internal/storage"
+	"github.com/yairfalse/vaino/internal/cache"
+	"github.com/yairfalse/vaino/internal/collectors"
+	"github.com/yairfalse/vaino/internal/collectors/aws"
+	"github.com/yairfalse/vaino/internal/collectors/kubernetes"
+	"github.com/yairfalse/vaino/internal/collectors/terraform"
+	"github.com/yairfalse/vaino/internal/logger"
+	"github.com/yairfalse/vaino/internal/storage"
 )
 
 type AppFactory struct{}

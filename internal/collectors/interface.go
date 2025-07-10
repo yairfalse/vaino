@@ -3,7 +3,7 @@ package collectors
 import (
 	"context"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // CollectorConfig holds configuration for a collector

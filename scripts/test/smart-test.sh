@@ -81,7 +81,7 @@ analyze_changes() {
             internal/collectors/*)
                 components="$components collectors"
                 ;;
-            cmd/wgo/commands/*)
+            cmd/vaino/commands/*)
                 components="$components commands"
                 ;;
             pkg/config/*)
@@ -128,7 +128,7 @@ run_component_test() {
             test_cmd="go test -v -timeout $TIMEOUT ./internal/collectors/..."
             ;;
         commands)
-            test_cmd="go test -v -timeout $TIMEOUT ./cmd/wgo/commands/..."
+            test_cmd="go test -v -timeout $TIMEOUT ./cmd/vaino/commands/..."
             ;;
         config)
             test_cmd="go test -v -timeout $TIMEOUT ./pkg/config/..."

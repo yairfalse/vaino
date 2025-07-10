@@ -1,7 +1,7 @@
 package analyzer
 
 import (
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // Analyzer provides analysis capabilities for drift reports

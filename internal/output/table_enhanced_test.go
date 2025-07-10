@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yairfalse/wgo/internal/differ"
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/internal/differ"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 func TestEnhancedTableRenderer_RenderDriftReport_Comprehensive(t *testing.T) {

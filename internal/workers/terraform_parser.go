@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/yairfalse/wgo/pkg/types"
+	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // TerraformStateFile represents a Terraform state file

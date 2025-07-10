@@ -1,6 +1,6 @@
 # Terraform Drift Detection
 
-Real-world examples of using WGO to detect and manage Terraform drift.
+Real-world examples of using VAINO to detect and manage Terraform drift.
 
 ## Scenario: Web Application Infrastructure
 
@@ -231,7 +231,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Install WGO
+      - name: Install VAINO
         run: curl -sSL https://install.wgo.sh | bash
       
       - name: Configure AWS credentials
@@ -428,4 +428,4 @@ wgo scan --format json | jq '.metadata.resource_count' >> resource-count-history
 wgo baseline show prod-baseline --format json > compliance-baseline-$(date +%Y%m%d).json
 ```
 
-This comprehensive example shows how WGO can be integrated into a real-world Terraform workflow to maintain infrastructure compliance and quickly detect unauthorized changes.
+This comprehensive example shows how VAINO can be integrated into a real-world Terraform workflow to maintain infrastructure compliance and quickly detect unauthorized changes.

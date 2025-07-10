@@ -1,465 +1,302 @@
-# WGO 🛡️
+# VAINO ⚡🌲 
+### *The Finnish Creator God for Modern Infrastructure*
 
-**What's Going On with your infrastructure?**
+> *"In the beginning was the Void. Then Väinö sang the world into being."*
 
-> Simple infrastructure scanning and drift detection across Terraform, AWS, and Kubernetes. Know what's actually running vs what you think is running.
+**VAINO** brings ancient Finnish wisdom to modern infrastructure monitoring. Unlike weak advisory tools that merely whisper suggestions, Väinö is the **Finnish creator god who actually BUILDS things** - now watching over your cloud resources with divine insight and Nordic authenticity.
 
----
+[![Ancient Wisdom](https://img.shields.io/badge/wisdom-ancient%20finnish-blue)](https://github.com/yairfalse/vaino)
+[![Creator God](https://img.shields.io/badge/power-creator%20god-gold)](https://github.com/yairfalse/vaino)
+[![Finnish Authenticity](https://img.shields.io/badge/origin-100%25%20finnish-lightblue)](https://github.com/yairfalse/vaino)
+[![Anti-Mimir](https://img.shields.io/badge/vs-weak%20talking%20heads-red)](https://github.com/yairfalse/vaino)
 
-## 🔥 The Problem
+## 🔥 Divine Powers
 
-Infrastructure drift is the **#1 pain point** for DevOps and SRE teams in 2024:
+- **Creator God Energy**: Forge clarity from infrastructure chaos
+- **Ancient Wisdom**: Finnish authenticity over Swedish appropriation  
+- **Divine Insight**: The creator's watchful eye on your infrastructure
+- **Mystical Detection**: Sense drift across time and space
+- **Nordic Reliability**: Built by those who invented the sauna
 
-- **33% of SRE time** is spent on toil caused by configuration drift
-- **Manual changes** in cloud consoles break infrastructure-as-code workflows
-- **Security vulnerabilities** emerge from unexpected configuration changes
-- Teams managing **dozens of environments** struggle to maintain consistency
-- **Alert fatigue** from reactive monitoring instead of proactive detection
+## 🌲 The Väinö Philosophy
 
-> *"Configuration drift can impact system stability, performance, and security... lead to unexpected software behavior, compatibility issues, and security vulnerabilities"* - Industry Research 2024
+While weak tools like Mimir offer mere *advice*, **Väinö is the Finnish creator god who forged the world from chaos**. In Finnish mythology, Väinämoinen didn't just talk about creation - he sang the cosmos into existence, shaped the land, and built the foundations of reality itself.
 
-## ✨ The Solution
+### Finnish > Swedish
+Finnish tech authenticity beats Swedish corporate appropriation every time. From the land that gave you:
+- **Nokia** (when phones were indestructible)
+- **Linux** (Linus Torvalds)
+- **MySQL** (before Oracle)
+- **SSH** (Tatu Ylönen)
+- **Angry Birds** (global domination)
 
-WGO provides **simple infrastructure visibility** with:
+Now comes **VAINO** - infrastructure monitoring with *sisu* (Finnish grit).
 
-🔍 **Clear Infrastructure Scanning** - See what's actually deployed across your environments  
-🌐 **Multi-Provider Support** - Terraform, AWS, and Kubernetes in one tool  
-⚡ **Fast Scanning** - Smart caching for quick infrastructure snapshots  
-🛡️ **Drift Detection** - Compare actual state with your Terraform configurations  
-📊 **Clean Reporting** - Multiple output formats that are easy to understand  
-🎯 **No Complexity** - Simple commands, clear results  
+## ⚡ Quick Divine Summoning
 
----
-
-## 🚀 Quick Start
-
-### Installation
-
-```bash
-# Download latest release
-curl -L https://github.com/yairfalse/wgo/releases/latest/download/wgo-linux-amd64.tar.gz | tar xz
-sudo mv wgo /usr/local/bin/
-
-# Or install with Go
-go install github.com/yairfalse/wgo/cmd/wgo@latest
-
-# Or build from source
-git clone https://github.com/yairfalse/wgo.git
-cd wgo && task build
-```
-
-### Essential Setup
+### The Sacred Installation Ritual
 
 ```bash
-# 1. Initialize WGO
-wgo config init
+# Universal Divine Installation
+curl -sSL https://install.vaino.sh | bash
 
-# 2. Scan your infrastructure
-wgo scan --provider terraform --provider aws
-
-# 3. See what's going on
-wgo status
-
-# 4. Compare with Terraform state
-wgo check --terraform-state ./terraform.tfstate
+# Or choose your divine blessing:
+brew install yairfalse/vaino/vaino        # macOS devotees
+sudo apt install vaino                    # Debian disciples  
+sudo dnf install vaino                    # Red Hat righteous
+scoop install vaino                       # Windows worshippers
 ```
 
----
-
-## 💡 Core Features
-
-### 🔍 **Multi-Provider Scanning**
+### First Divine Vision
 
 ```bash
-# Scan Terraform state
-wgo scan --provider terraform --state-path ./terraform/*.tfstate
+# Summon Väinö's watchful eye
+vaino scan
 
-# Scan AWS resources  
-wgo scan --provider aws --regions us-east-1,us-west-2 --services ec2,s3,rds
+# Divine insight into what changed
+vaino diff
 
-# Scan Kubernetes clusters
-wgo scan --provider kubernetes --contexts prod,staging --namespaces default,kube-system
+# The creator's mystical statistics  
+vaino diff --stat
 
-# Scan everything at once
-wgo scan --provider terraform --provider aws --provider kubernetes
+# Silent divine knowledge (for scripts)
+vaino diff --quiet
 ```
 
-### 🧠 **Infrastructure Status**
+## 🌟 Divine Commands
+
+### The Creator's Arsenal
 
 ```bash
-# See what's going on across all providers
-wgo status
+# 👁️ DIVINE SCANNING - The Creator's Watchful Eye
+vaino scan                    # Auto-discover and scan all realms
+vaino scan --provider aws     # Focus divine attention on AWS
+vaino scan --provider k8s     # Watch over Kubernetes vessels
 
-# View last scan results
-wgo status --latest
+# 🔮 MYSTICAL DETECTION - Ancient Wisdom Reveals All  
+vaino diff                    # See what the mortals have changed
+vaino diff --stat             # Mystical change statistics
+vaino diff --baseline last    # Compare to the last divine snapshot
 
-# Get detailed infrastructure summary
-wgo status --detailed --format table
+# ⚖️ DIVINE JUDGMENT - The Creator Decides
+vaino check                   # Judge infrastructure worthiness
+vaino check --drift-only      # Focus on the unfaithful changes
 
-# Check specific provider status
-wgo status --provider aws --regions us-east-1
+# 🕰️ ETERNAL WATCH - Time Means Nothing to Gods
+vaino watch                   # Continuous divine surveillance
+vaino watch --interval 30s    # More frequent divine attention
+
+# 🌌 DIVINE AUTHORITY - Creator God Commands
+vaino version                 # Behold the creator's current form
+vaino auth setup              # Establish divine credentials
+vaino configure               # Sacred configuration rituals
 ```
 
-### 🔍 **Drift Detection**
+## 🌲 The Sacred Realms Väinö Watches
+
+### Infrastructure Domains Under Divine Protection
+
+| **Realm** | **Divine Coverage** | **Creator's Notes** |
+|-----------|-------------------|-------------------|
+| 🌲 **Terraform** | State files, plans, modules | *"Where mortals attempt creation"* |
+| ☁️ **AWS** | EC2, S3, RDS, Lambda, IAM | *"The American cloud kingdom"* |
+| ⚓ **Kubernetes** | Pods, services, deployments | *"Vessels on the digital seas"* |
+| 🌀 **GCP** | Compute, storage, networking | *"Google's attempt at godhood"* |
+
+*More realms await the creator's divine expansion...*
+
+## 📊 Divine Output Formats
+
+Väinö speaks in the tongues mortals understand:
 
 ```bash
-# Compare current AWS state with Terraform
-wgo check --terraform-state ./terraform.tfstate --provider aws
+# Sacred Table Format (default)
+vaino diff --output table
 
-# Compare Kubernetes with manifests
-wgo check --k8s-manifests ./k8s/ --provider kubernetes
+# Divine JSON Scrolls  
+vaino diff --output json
 
-# Show detailed differences
-wgo diff --terraform-state ./terraform.tfstate --format markdown
+# Mystical YAML Runes
+vaino diff --output yaml
+
+# Mortal-Readable Markdown
+vaino diff --output markdown
 ```
 
-### ⚡ **Smart Caching**
+## 🏛️ Sacred Configuration
 
-```bash
-# View cache statistics
-wgo cache stats
-
-# Clear cache
-wgo cache clear
-
-# Configure cache settings
-wgo config set cache.default_ttl 2h
-wgo config set cache.max_size 512MB
-```
-
----
-
-## 🏗️ Architecture
-
-WGO follows a modular, extensible architecture:
-
-```
-┌─────────────────┐
-│   CLI Layer     │  ← User interface (cobra commands)
-├─────────────────┤
-│  Collectors     │  ← Data gathering (Terraform, AWS, K8s) 
-├─────────────────┤
-│  Differ Engine  │  ← Compare states, detect drift
-├─────────────────┤
-│  Storage        │  ← Local JSON files, scan history
-├─────────────────┤
-│  Outputter      │  ← Format results (JSON, table, markdown)
-└─────────────────┘
-```
-
-### Key Components
-
-- **Collectors**: Gather infrastructure data from multiple providers
-- **Differ Engine**: Compare current state with Terraform configurations  
-- **Storage**: Scan history and caching
-- **Outputter**: Clean, readable output formats
-
----
-
-## ⚙️ Configuration
-
-Create `~/.wgo/config.yaml`:
+### The Divine Config Path: `~/.vaino/config.yaml`
 
 ```yaml
-cache:
-  enabled: true
-  default_ttl: "1h"
-  max_size: "256MB"
-  cleanup_interval: "5m"
-
-collectors:
-  terraform:
-    state_paths:
-      - "./terraform/*.tfstate"
-      - "s3://my-bucket/terraform.tfstate"
-  
+# The Creator's Sacred Configuration
+providers:
   aws:
-    regions: ["us-east-1", "us-west-2"]
-    profile: "default"
-    services: ["ec2", "s3", "rds", "lambda", "iam"]
+    regions: ["us-east-1", "eu-north-1"]  # Include the Nordic realm
+    profile: "production"
   
   kubernetes:
-    contexts: ["prod", "staging"]
-    namespaces: ["default", "kube-system", "istio-system"]
-    resources: ["deployments", "services", "configmaps", "secrets"]
-
-storage:
-  base_path: "~/.wgo"
-  max_history: 30
-  compress_scans: true
+    contexts: ["production", "staging"]
+    
+  terraform:
+    state_paths: ["./infrastructure/"]
 
 output:
-  default_format: "table"
-  color: true
-  verbose: false
+  format: "table"
+  no_color: false  # Väinö loves colorful displays
+
+storage:
+  base_path: "~/.vaino/snapshots"
+  retention_days: 30
 ```
+
+### Sacred Environment Variables
+
+```bash
+# Divine Authentication
+export AWS_PROFILE=production
+export KUBECONFIG=~/.kube/config
+
+# Väinö's Sacred Settings
+export VAINO_VERBOSE=true
+export VAINO_DEBUG=false
+export VAINO_CONFIG=~/.vaino/config.yaml
+```
+
+## 🎯 Real-World Divine Interventions
+
+### The Daily Divine Ritual
+```bash
+# Morning divine inspection
+vaino scan && vaino diff --stat
+
+# If the creator sees changes
+if [ $? -eq 1 ]; then
+    echo "🔥 Väinö has detected divine drift!"
+    vaino diff --output markdown > daily-changes.md
+fi
+```
+
+### CI/CD Pipeline with Divine Blessing
+```yaml
+# .github/workflows/divine-monitoring.yml
+name: "Väinö's Divine Infrastructure Watch"
+
+on:
+  schedule:
+    - cron: "0 8 * * *"  # Daily at 8 AM (Finnish time preferred)
+
+jobs:
+  divine-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Divine VAINO
+        run: curl -sSL https://install.vaino.sh | bash
+      
+      - name: Summon Divine Scan  
+        run: vaino scan --output json > current-state.json
+        
+      - name: Divine Drift Detection
+        run: |
+          if vaino diff --quiet; then
+            echo "✅ All realms remain under divine order"
+          else
+            echo "⚡ Divine drift detected!"
+            vaino diff --output markdown >> $GITHUB_STEP_SUMMARY
+          fi
+```
+
+### Terraform Integration with Divine Wisdom
+```bash
+# Before applying Terraform plans
+terraform plan -out=plan.tfplan
+vaino scan --provider terraform
+
+# Apply with divine blessing
+terraform apply plan.tfplan
+vaino scan --provider terraform
+
+# Divine verification
+vaino diff --provider terraform
+```
+
+## 🛡️ Divine Security & Best Practices
+
+### Sacred Secrets Management
+```bash
+# Väinö respects your secrets
+vaino scan --exclude-secrets
+vaino diff --mask-sensitive
+
+# Divine authentication patterns
+vaino auth verify-aws
+vaino auth verify-k8s
+```
+
+### The Creator's Wisdom for Teams
+```bash
+# Baseline creation for divine consistency
+vaino scan --create-baseline production-$(date +%Y%m%d)
+
+# Team-wide divine alignment
+vaino diff --baseline production-latest --output markdown
+```
+
+## 📚 Sacred Documentation & Divine Learning
+
+### Quick Divine References
+- [Commands Reference](./docs/commands/) - All divine powers explained
+- [Configuration Guide](./docs/configuration/) - Sacred setup rituals
+- [Provider Documentation](./docs/providers/) - Realm-specific wisdom
+- [Integration Examples](./docs/examples/) - Divine implementation patterns
+
+### Finnish Mythology & The Väinö Legend
+
+**Väinämoinen** is the central figure in Finnish mythology - the eternal sage and creator god who sang the world into existence. Unlike passive advisors, Väinö:
+
+- 🎵 **Sang the cosmos into being** (active creation vs passive advice)
+- 🌍 **Forged the world from chaos** (infrastructure from complexity)  
+- ⚔️ **Built the Sampo** (the mythical wealth-generator)
+- 🔥 **Commands the elements** (total infrastructure control)
+- 🌲 **Embodies Finnish sisu** (unbreakable determination)
+
+*This is not just monitoring software - this is channeling the divine power of creation itself.*
+
+## 🤝 Join the Divine Community
+
+### Sacred Support Channels
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/yairfalse/vaino/issues)
+- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/yairfalse/vaino/discussions)  
+- 🌲 **Divine Chat**: [Discord #vaino-devs](https://discord.gg/vaino)
+- 📧 **Divine Messages**: [vaino@finnish.dev](mailto:vaino@finnish.dev)
+
+### Contributing to Divine Creation
+The creator welcomes mortal contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for sacred development rituals.
+
+### Divine Appreciation
+If VAINO has blessed your infrastructure, consider:
+- ⭐ **Star the Divine Repository**
+- 🌲 **Share the Finnish Wisdom** 
+- 💰 **Divine Sponsorship**: [GitHub Sponsors](https://github.com/sponsors/yairfalse)
+
+## 📜 Sacred License
+
+VAINO is blessed under the **MIT License** - see [LICENSE](./LICENSE) for divine terms.
 
 ---
 
-## 📖 Usage Examples
+## 🌌 The Creator's Final Words
 
-### Daily Operations
+*"Where weak tools whisper advice, VAINO commands reality. Where others offer suggestions, the Finnish creator god forges solutions. This is not monitoring - this is divine creation in action."*
 
-```bash
-# Morning infrastructure check - "What's going on?"
-wgo status --all-providers
+**Built with 🔥 Finnish sisu and ⚡ creator god energy**
 
-# Quick security scan
-wgo scan --provider aws --services iam,security-groups --format table
-
-# Weekly comprehensive scan
-wgo scan --all-providers --output weekly-scan-$(date +%Y%m%d).json
-```
-
-### CI/CD Integration
-
-```bash
-# Pre-deployment infrastructure check
-wgo scan --provider terraform --fail-on-issues
-
-# Post-deployment drift detection
-wgo check --terraform-state ./terraform.tfstate --provider aws
-
-# Automated reporting
-wgo scan --all-providers --format html > reports/infrastructure-$(date +%Y%m%d).html
-```
-
-### Troubleshooting
-
-```bash
-# When things break - quickly see what's different
-wgo check --terraform-state ./terraform.tfstate --format table
-
-# Compare environments
-wgo scan --provider aws --profile prod > prod.json
-wgo scan --provider aws --profile staging > staging.json
-wgo diff --file1 prod.json --file2 staging.json
-```
+*Väinö watches. Väinö knows. Väinö builds.*
 
 ---
 
-## 🛠️ Development
+[![Finnish Power](https://img.shields.io/badge/built%20with-finnish%20sisu-blue?style=for-the-badge)](https://en.wikipedia.org/wiki/Sisu)
+[![Creator God](https://img.shields.io/badge/powered%20by-divine%20creation-gold?style=for-the-badge)](https://en.wikipedia.org/wiki/V%C3%A4in%C3%A4m%C3%B6inen)
+[![Anti-Mimir](https://img.shields.io/badge/destroys-weak%20talking%20heads-red?style=for-the-badge)](https://github.com/yairfalse/vaino)
 
-### Prerequisites
-
-- Go 1.21+
-- [Task](https://taskfile.dev/) (recommended)
-- [golangci-lint](https://golangci-lint.run/)
-- Valid cloud provider credentials
-
-### Build & Test
-
-```bash
-# Install dependencies
-task deps
-
-# Run tests
-task test
-
-# Build for current platform
-task build
-
-# Build for all platforms
-task build:all
-
-# Run linting
-task lint
-
-# Generate documentation
-task docs
-```
-
-### Project Structure
-
-```
-wgo/
-├── cmd/wgo/              # CLI application entry point
-├── internal/             # Private application code
-│   ├── collectors/       # Infrastructure collectors
-│   │   ├── terraform/    # Terraform state parsing
-│   │   ├── aws/         # AWS SDK integration
-│   │   ├── kubernetes/  # Kubernetes client-go
-│   │   └── interface.go # Collector interface
-│   ├── differ/          # Drift detection engine
-│   ├── storage/         # Data persistence
-│   ├── cache/           # Caching layer
-│   └── output/          # Result formatting
-├── pkg/types/           # Public data types
-├── test/                # Test data and integration tests
-├── examples/            # Usage examples
-├── docs/                # Documentation
-└── scripts/             # Build and deployment scripts
-```
-
----
-
-## 🌟 Provider Support
-
-### ✅ Terraform
-- Local `.tfstate` files
-- Remote state backends (S3, Azure, GCS)
-- Multiple workspaces
-- All resource types
-- State locking detection
-
-### ✅ AWS
-- **Compute**: EC2 instances, Lambda functions
-- **Storage**: S3 buckets, EBS volumes
-- **Database**: RDS instances, DynamoDB tables
-- **Security**: IAM roles, Security Groups
-- **Networking**: VPCs, Load Balancers
-- Multi-region support
-
-### ✅ Kubernetes
-- **Workloads**: Deployments, StatefulSets, DaemonSets, Jobs
-- **Networking**: Services, Ingresses, NetworkPolicies
-- **Storage**: PVs, PVCs, StorageClasses
-- **Configuration**: ConfigMaps, Secrets, ServiceAccounts
-- **Security**: RBAC, SecurityContexts
-- **Custom Resources**: CRDs and instances
-- Multi-cluster support
-
-### 🔄 Coming Soon
-- **Google Cloud Platform**: Compute Engine, Cloud Storage, GKE
-- **Azure**: Virtual Machines, Storage Accounts, AKS
-- **GitOps**: ArgoCD, Flux applications
-- **Monitoring**: Prometheus, Grafana configurations
-
----
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-**Claude API Key Not Found**
-```bash
-# WGO works without AI - this is for future versions
-# Current version focuses on simple scanning and drift detection
-```
-
-**AWS Credentials**
-```bash
-aws configure
-# Or use IAM roles, environment variables
-```
-
-**Kubernetes Access**
-```bash
-kubectl config current-context
-kubectl config get-contexts
-```
-
-**Debug Mode**
-```bash
-wgo scan --verbose --debug
-wgo check --verbose --debug --log-level debug
-```
-
-### Performance Tuning
-
-```bash
-# Increase cache size for large infrastructures
-wgo config set cache.max_size 1GB
-
-# Adjust TTL for frequently changing resources
-wgo config set cache.aws_ttl 5m
-wgo config set cache.k8s_ttl 2m
-
-# Parallel scanning for faster execution
-wgo config set collectors.parallel_limit 10
-```
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how to get started:
-
-1. **Fork** the repository
-2. **Create** your feature branch (`git checkout -b feature/amazing-feature`)
-3. **Make** your changes and add tests
-4. **Run** linting and tests (`task lint test`)
-5. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-6. **Push** to the branch (`git push origin feature/amazing-feature`)
-7. **Open** a Pull Request
-
-### Development Guidelines
-
-- Follow Go best practices and idioms
-- Add tests for new functionality
-- Update documentation for user-facing changes
-- Use conventional commit messages
-- Ensure all CI checks pass
-
-### Areas for Contribution
-
-- 🔌 **New Providers**: GCP, Azure, GitOps tools
-- 📊 **Output Formats**: Custom templates, integrations
-- ⚡ **Performance**: Caching strategies, parallel processing
-- 🛡️ **Security**: Compliance checks, vulnerability detection
-- 🧠 **Future AI**: Claude integration for analysis
-
----
-
-## 📈 Roadmap
-
-### Q1 2025
-- ✅ Core Terraform, AWS, Kubernetes support
-- ✅ Smart caching and performance optimization
-- 🔄 Advanced drift detection
-- 🔄 Security scanning features
-
-### Q2 2025
-- 📋 Claude AI analysis integration
-- 📋 Google Cloud Platform support
-- 📋 Azure integration
-- 📋 GitOps drift detection (ArgoCD, Flux)
-- 📋 Compliance reporting (SOC2, PCI, HIPAA)
-
-### Q3 2025
-- 📋 Real-time monitoring (eBPF-based)
-- 📋 Predictive analysis
-- 📋 Auto-remediation suggestions
-- 📋 Cost impact analysis
-- 📋 Enterprise features (RBAC, audit logs)
-- ✅ Smart caching and performance optimization
-- 🔄 Advanced security analysis
-- 🔄 Historical trend analysis
-
-### Q2 2025
-- 📋 Google Cloud Platform support
-- 📋 Azure integration
-- 📋 GitOps drift detection (ArgoCD, Flux)
-- 📋 Compliance reporting (SOC2, PCI, HIPAA)
-- 📋 Slack/Teams notifications
-
-### Q3 2025
-- 📋 Real-time monitoring (eBPF-based)
-- 📋 Predictive drift analysis
-- 📋 Auto-remediation suggestions
-- 📋 Cost impact analysis
-- 📋 Enterprise features (RBAC, audit logs)
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- [Polar Signals](https://www.polarsignals.com/) for eBPF inspiration
-- The Go community for excellent tooling
-- DevOps practitioners sharing their pain points and feedback
-
----
-
-<div align="center">
-
-**What's Going On with your infrastructure?** 🔍
-
-[Get Started](https://github.com/yairfalse/wgo/releases) • [Documentation](https://github.com/yairfalse/wgo/docs) • [Contributing](https://github.com/yairfalse/wgo/CONTRIBUTING.md) • [Discord](https://discord.gg/wgo)
-
-</div>
+*VAINO - Because your infrastructure deserves a creator god, not a talking head.* ⚡🌲

@@ -1,6 +1,6 @@
 # Configuration Reference
 
-WGO works out of the box with zero configuration, but can be customized for advanced workflows and team environments.
+VAINO works out of the box with zero configuration, but can be customized for advanced workflows and team environments.
 
 ## Configuration File
 
@@ -43,7 +43,7 @@ providers:
     regions: ["us-east-1", "us-west-2", "eu-west-1"]
     profile: "default"
     assume_role:
-      role_arn: "arn:aws:iam::123456789012:role/WGORole"
+      role_arn: "arn:aws:iam::123456789012:role/VAINORole"
       session_name: "wgo-session"
     exclude_services: ["cloudtrail", "cloudwatch"]
   
@@ -190,7 +190,7 @@ providers:
     
     # Role assumption
     assume_role:
-      role_arn: "arn:aws:iam::123456789012:role/WGORole"
+      role_arn: "arn:aws:iam::123456789012:role/VAINORole"
       session_name: "wgo-session"
       external_id: "unique-external-id"
     
@@ -390,7 +390,7 @@ output:
 
 ## Environment Variables
 
-WGO respects standard environment variables:
+VAINO respects standard environment variables:
 
 ### AWS
 ```bash
@@ -413,12 +413,12 @@ export KUBECONFIG=~/.kube/config
 export KUBE_CONTEXT=production
 ```
 
-### WGO-Specific
+### VAINO-Specific
 ```bash
-export WGO_CONFIG=/path/to/config.yaml
-export WGO_LOG_LEVEL=debug
-export WGO_NO_COLOR=true
-export WGO_CACHE_DIR=/tmp/wgo-cache
+export VAINO_CONFIG=/path/to/config.yaml
+export VAINO_LOG_LEVEL=debug
+export VAINO_NO_COLOR=true
+export VAINO_CACHE_DIR=/tmp/wgo-cache
 ```
 
 ## Configuration Inheritance
@@ -464,7 +464,7 @@ wgo check-config --verbose
 
 ### Configuration Errors
 
-WGO provides clear error messages for configuration issues:
+VAINO provides clear error messages for configuration issues:
 
 ```bash
 $ wgo check-config

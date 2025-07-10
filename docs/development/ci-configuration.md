@@ -2,7 +2,7 @@
 
 ## Overview
 
-WGO uses an intelligent CI/CD system that avoids running all tests on every change. Instead, it uses selective testing to only run tests for components that have actually changed.
+VAINO uses an intelligent CI/CD system that avoids running all tests on every change. Instead, it uses selective testing to only run tests for components that have actually changed.
 
 ## Workflow Architecture
 

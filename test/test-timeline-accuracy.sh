@@ -68,7 +68,7 @@ cat > "$SNAPSHOT3" << 'EOF'
 EOF
 
 # Test timeline
-OUTPUT=$(./wgo changes --from "$SNAPSHOT1" --to "$SNAPSHOT3" --timeline 2>&1)
+OUTPUT=$(./vaino changes --from "$SNAPSHOT1" --to "$SNAPSHOT3" --timeline 2>&1)
 
 # Verify timeline output
 if ! echo "$OUTPUT" | grep -q "📅 Change Timeline"; then
