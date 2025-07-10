@@ -1,10 +1,10 @@
-# WGO Release Process Documentation
+# VAINO Release Process Documentation
 
-This document describes the complete release process for WGO, including preparation, automation, and post-release steps.
+This document describes the complete release process for VAINO, including preparation, automation, and post-release steps.
 
 ## Overview
 
-WGO uses a fully automated release pipeline that:
+VAINO uses a fully automated release pipeline that:
 - Builds binaries for multiple platforms
 - Creates packages for various package managers
 - Publishes Docker images

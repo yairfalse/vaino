@@ -4,7 +4,7 @@
 
 set -e
 
-PACKAGE_NAME="wgo"
+PACKAGE_NAME="vaino"
 VERSION="${1:-dev}"
 ARCH="${2:-x86_64}"
 DIST="${3:-el9}"
@@ -66,7 +66,7 @@ create_build_env() {
     mkdir -p "$BUILD_DIR"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
     
     # Copy spec file
-    cp packaging/yum/wgo.spec "$BUILD_DIR/SPECS/"
+    cp packaging/yum/vaino.spec "$BUILD_DIR/SPECS/"
     
     log_success "Build environment created"
 }
@@ -76,15 +76,15 @@ prepare_source() {
     log_info "Preparing source archive..."
     
     # Create source directory
-    local src_dir="${BUILD_DIR}/SOURCES/wgo-${VERSION}"
+    local src_dir="${BUILD_DIR}/SOURCES/vaino-${VERSION}"
     mkdir -p "$src_dir"
     
     # Copy binary
-    if [[ -f "wgo" ]]; then
-        cp wgo "$src_dir/"
-        chmod +x "$src_dir/wgo"
+    if [[ -f "vaino" ]]; then
+        cp vaino "$src_dir/"
+        chmod +x "$src_dir/vaino"
     else
-        log_error "wgo binary not found. Please build it first with: go build -o wgo ./cmd/wgo"
+        log_error "vaino binary not found. Please build it first with: go build -o vaino ./cmd/vaino"
         exit 1
     fi
     
@@ -100,14 +100,14 @@ prepare_source() {
     # Generate completions
     log_info "Generating shell completions..."
     mkdir -p "$src_dir/completions"
-    ./wgo completion bash > "$src_dir/completions/wgo.bash" 2>/dev/null || log_warn "Failed to generate bash completion"
-    ./wgo completion zsh > "$src_dir/completions/wgo.zsh" 2>/dev/null || log_warn "Failed to generate zsh completion"
-    ./wgo completion fish > "$src_dir/completions/wgo.fish" 2>/dev/null || log_warn "Failed to generate fish completion"
+    ./vaino completion bash > "$src_dir/completions/vaino.bash" 2>/dev/null || log_warn "Failed to generate bash completion"
+    ./vaino completion zsh > "$src_dir/completions/vaino.zsh" 2>/dev/null || log_warn "Failed to generate zsh completion"
+    ./vaino completion fish > "$src_dir/completions/vaino.fish" 2>/dev/null || log_warn "Failed to generate fish completion"
     
     # Create source tarball
     cd "${BUILD_DIR}/SOURCES"
-    tar -czf "wgo-${VERSION}.tar.gz" "wgo-${VERSION}/"
-    rm -rf "wgo-${VERSION}/"
+    tar -czf "vaino-${VERSION}.tar.gz" "vaino-${VERSION}/"
+    rm -rf "vaino-${VERSION}/"
     cd - > /dev/null
     
     log_success "Source archive prepared"
@@ -122,7 +122,7 @@ build_rpm() {
              --define="version $VERSION" \
              --define="dist .${DIST}" \
              --target="$ARCH" \
-             -ba "$BUILD_DIR/SPECS/wgo.spec"
+             -ba "$BUILD_DIR/SPECS/vaino.spec"
     
     # Find the built RPM
     local rpm_file
@@ -152,7 +152,7 @@ build_rpm() {
 # Test the built package
 test_package() {
     local rpm_file
-    rpm_file=$(find . -name "wgo-*.rpm" -not -name "*.src.rpm" -type f | head -1)
+    rpm_file=$(find . -name "vaino-*.rpm" -not -name "*.src.rpm" -type f | head -1)
     
     if [[ ! -f "$rpm_file" ]]; then
         log_error "No RPM file found for testing"
@@ -173,7 +173,7 @@ test_package() {
     log_info "Running package checks..."
     
     # Check if binary is executable
-    if rpm -qlp "$rpm_file" | grep -q "/usr/bin/wgo"; then
+    if rpm -qlp "$rpm_file" | grep -q "/usr/bin/vaino"; then
         log_success "Binary is included in package"
     else
         log_error "Binary is missing from package"
@@ -221,7 +221,7 @@ main() {
     echo "Next steps:"
     echo "1. Sign the package: rpm --addsign *.rpm"
     echo "2. Add to repository: ./packaging/yum/setup-repo.sh"
-    echo "3. Test installation: sudo dnf install ./wgo-*.rpm"
+    echo "3. Test installation: sudo dnf install ./vaino-*.rpm"
 }
 
 # Set up cleanup trap

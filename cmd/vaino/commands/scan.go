@@ -142,7 +142,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		} else {
 			// No auto-discovery possible, show helpful guidance
 			// Enhanced first-run experience
-			fmt.Println("\nWelcome to WGO")
+			fmt.Println("\nWelcome to VAINO")
 			fmt.Println("==================")
 			fmt.Println()
 
@@ -155,7 +155,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 			}
 
 			if isFirstRun {
-				fmt.Println("First run detected! Let me set up WGO for you...")
+				fmt.Println("First run detected! Let me set up VAINO for you...")
 				fmt.Println()
 
 				// Run auto-detection

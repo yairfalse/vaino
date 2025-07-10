@@ -25,8 +25,8 @@ var (
 // checkConfigCmd represents the check-config command
 var checkConfigCmd = &cobra.Command{
 	Use:   "check-config",
-	Short: "Validate WGO configuration and provider connectivity",
-	Long: `Check WGO configuration for all providers and verify connectivity.
+	Short: "Validate VAINO configuration and provider connectivity",
+	Long: `Check VAINO configuration for all providers and verify connectivity.
 
 This command helps diagnose configuration issues by:
 - Validating configuration files
@@ -54,7 +54,7 @@ func runCheckConfig(cmd *cobra.Command, args []string) error {
 	_ = color.YellowString("[WARN]") // warnSymbol - reserved for future use
 
 	if !checkQuiet {
-		fmt.Println("Checking WGO configuration...")
+		fmt.Println("Checking VAINO configuration...")
 		fmt.Println()
 	}
 

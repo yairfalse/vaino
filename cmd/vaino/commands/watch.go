@@ -18,7 +18,7 @@ var watchCmd = &cobra.Command{
 	Short: "Real-time infrastructure monitoring",
 	Long: `Watch infrastructure for real-time changes with smart correlation.
 
-WGO watch mode continuously monitors your infrastructure and displays
+VAINO watch mode continuously monitors your infrastructure and displays
 changes as they happen, with intelligent correlation to group related
 changes together.
 

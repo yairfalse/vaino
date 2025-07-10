@@ -342,8 +342,8 @@ func runDiff(cmd *cobra.Command, args []string) error {
 				case err := <-done:
 					if err != nil {
 						// Check if it's a known error type
-						if wgoErr, ok := err.(*vainoerrors.VAINOError); ok {
-							return wgoErr
+						if vainoErr, ok := err.(*vainoerrors.VAINOError); ok {
+							return vainoErr
 						}
 						return vainoerrors.New(vainoerrors.ErrorTypeProvider, vainoerrors.Provider(providerName),
 							"Failed to scan current infrastructure").
@@ -499,7 +499,7 @@ func runDiff(cmd *cobra.Command, args []string) error {
 			"Comparison failed").
 			WithCause(err.Error()).
 			WithSolutions(
-				"Ensure snapshots are from compatible WGO versions",
+				"Ensure snapshots are from compatible VAINO versions",
 				"Check that snapshots contain valid resource data",
 				"Try regenerating snapshots with 'vaino scan'",
 			).

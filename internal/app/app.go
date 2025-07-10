@@ -43,8 +43,8 @@ func (a *App) GetCommands() []*cobra.Command {
 func (a *App) createVersionCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
-		Short: "Print the version number of wgo",
-		Long:  `All software has versions. This is wgo's`,
+		Short: "Print the version number of vaino",
+		Long:  `All software has versions. This is vaino's`,
 		Run: func(cmd *cobra.Command, args []string) {
 			a.runVersionCommand(cmd, args)
 		},
