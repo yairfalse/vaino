@@ -18,17 +18,17 @@ func (n *Normalizer) NormalizeECSCluster(cluster ecsTypes.Cluster) types.Resourc
 		Region:   n.region,
 		Configuration: map[string]interface{}{
 			"cluster_name":                       aws.ToString(cluster.ClusterName),
-			"status":                             string(cluster.Status),
-			"running_tasks_count":                aws.ToInt32(cluster.RunningTasksCount),
-			"pending_tasks_count":                aws.ToInt32(cluster.PendingTasksCount),
-			"active_services_count":              aws.ToInt32(cluster.ActiveServicesCount),
+			"status":                             aws.ToString(cluster.Status),
+			"running_tasks_count":                cluster.RunningTasksCount,
+			"pending_tasks_count":                cluster.PendingTasksCount,
+			"active_services_count":              cluster.ActiveServicesCount,
 			"statistics":                         normalizeECSStatistics(cluster.Statistics),
 			"capacity_providers":                 cluster.CapacityProviders,
 			"default_capacity_provider_strategy": normalizeCapacityProviderStrategy(cluster.DefaultCapacityProviderStrategy),
 		},
 		Tags: normalizeECSTags(cluster.Tags),
 		Metadata: types.ResourceMetadata{
-			UpdatedAt: aws.ToTime(cluster.CreatedAt),
+			CreatedAt: time.Now(), // ECS clusters don't have creation timestamp
 		},
 	}
 }
@@ -45,10 +45,10 @@ func (n *Normalizer) NormalizeECSService(service ecsTypes.Service, clusterArn st
 			"service_name":               aws.ToString(service.ServiceName),
 			"cluster_arn":                clusterArn,
 			"task_definition":            aws.ToString(service.TaskDefinition),
-			"desired_count":              aws.ToInt32(service.DesiredCount),
-			"running_count":              aws.ToInt32(service.RunningCount),
-			"pending_count":              aws.ToInt32(service.PendingCount),
-			"status":                     string(service.Status),
+			"desired_count":              service.DesiredCount,
+			"running_count":              service.RunningCount,
+			"pending_count":              service.PendingCount,
+			"status":                     aws.ToString(service.Status),
 			"launch_type":                string(service.LaunchType),
 			"platform_version":           aws.ToString(service.PlatformVersion),
 			"capacity_provider_strategy": normalizeCapacityProviderStrategy(service.CapacityProviderStrategy),
@@ -58,7 +58,7 @@ func (n *Normalizer) NormalizeECSService(service ecsTypes.Service, clusterArn st
 		Tags: normalizeECSTags(service.Tags),
 		Metadata: types.ResourceMetadata{
 			CreatedAt: aws.ToTime(service.CreatedAt),
-			UpdatedAt: aws.ToTime(service.UpdatedAt),
+			UpdatedAt: time.Now(), // ECS services don't have UpdatedAt field
 		},
 	}
 }
@@ -92,7 +92,7 @@ func (n *Normalizer) NormalizeECSTask(task ecsTypes.Task, clusterArn string) typ
 		Tags: normalizeECSTags(task.Tags),
 		Metadata: types.ResourceMetadata{
 			CreatedAt: aws.ToTime(task.CreatedAt),
-			UpdatedAt: aws.ToTime(task.UpdatedAt),
+			UpdatedAt: time.Now(), // ECS tasks don't have UpdatedAt field
 		},
 	}
 }
@@ -120,7 +120,6 @@ func (n *Normalizer) NormalizeEKSCluster(cluster eksTypes.Cluster) types.Resourc
 		Tags: cluster.Tags,
 		Metadata: types.ResourceMetadata{
 			CreatedAt: aws.ToTime(cluster.CreatedAt),
-			UpdatedAt: aws.ToTime(cluster.UpdatedAt),
 		},
 	}
 }
@@ -177,7 +176,6 @@ func (n *Normalizer) NormalizeEKSFargateProfile(profile eksTypes.FargateProfile,
 		Tags: profile.Tags,
 		Metadata: types.ResourceMetadata{
 			CreatedAt: aws.ToTime(profile.CreatedAt),
-			UpdatedAt: aws.ToTime(profile.UpdatedAt),
 		},
 	}
 }
@@ -199,8 +197,8 @@ func normalizeCapacityProviderStrategy(strategy []ecsTypes.CapacityProviderStrat
 	for _, item := range strategy {
 		result = append(result, map[string]interface{}{
 			"capacity_provider": aws.ToString(item.CapacityProvider),
-			"weight":            aws.ToInt32(item.Weight),
-			"base":              aws.ToInt32(item.Base),
+			"weight":            item.Weight,
+			"base":              item.Base,
 		})
 	}
 	return result

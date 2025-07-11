@@ -568,4 +568,16 @@ func hasSecurityChanges(diff ResourceDiff) bool {
 	return false
 }
 
-// Note: isCriticalResource function is defined in enterprise_engine_impl.go
+// isCriticalResource determines if a resource is critical
+func isCriticalResource(resource types.Resource) bool {
+	criticalTypes := map[string]bool{
+		"aws_iam_role":            true,
+		"aws_security_group":      true,
+		"aws_kms_key":             true,
+		"kubernetes_secret":       true,
+		"gcp_service_account":     true,
+		"aws_rds_cluster":         true,
+		"aws_elasticache_cluster": true,
+	}
+	return criticalTypes[resource.Type]
+}
