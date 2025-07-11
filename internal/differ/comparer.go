@@ -13,6 +13,12 @@ type DefaultComparer struct {
 	options DiffOptions
 }
 
+// Compare compares two resources and returns changes with error handling
+func (c *DefaultComparer) Compare(baseline, current types.Resource) ([]Change, error) {
+	changes := c.CompareResources(baseline, current)
+	return changes, nil
+}
+
 // CompareResources compares two resources and returns a list of changes
 func (c *DefaultComparer) CompareResources(baseline, current types.Resource) []Change {
 	var changes []Change

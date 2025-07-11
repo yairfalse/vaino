@@ -8,7 +8,7 @@ import (
 	"github.com/yairfalse/vaino/pkg/types"
 )
 
-// CollectEC2Resources collects EC2 instances and security groups
+// CollectEC2Resources collects EC2 instances, security groups, volumes, snapshots, and key pairs
 func (c *AWSCollector) CollectEC2Resources(ctx context.Context) ([]types.Resource, error) {
 	var resources []types.Resource
 
@@ -25,6 +25,27 @@ func (c *AWSCollector) CollectEC2Resources(ctx context.Context) ([]types.Resourc
 		return nil, fmt.Errorf("failed to collect security groups: %w", err)
 	}
 	resources = append(resources, securityGroups...)
+
+	// TODO: Collect EBS volumes (enhanced feature)
+	// volumes, err := c.collectEBSVolumes(ctx)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to collect EBS volumes: %w", err)
+	// }
+	// resources = append(resources, volumes...)
+
+	// TODO: Collect EBS snapshots (enhanced feature)
+	// snapshots, err := c.collectEBSSnapshots(ctx)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to collect EBS snapshots: %w", err)
+	// }
+	// resources = append(resources, snapshots...)
+
+	// TODO: Collect key pairs (enhanced feature)
+	// keyPairs, err := c.collectKeyPairs(ctx)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to collect key pairs: %w", err)
+	// }
+	// resources = append(resources, keyPairs...)
 
 	return resources, nil
 }

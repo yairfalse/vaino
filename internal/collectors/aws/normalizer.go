@@ -285,3 +285,92 @@ func parseTimeString(timeStr *string) time.Time {
 	}
 	return t
 }
+
+// NormalizeEBSVolume converts an EBS volume to VAINO format
+func (n *Normalizer) NormalizeEBSVolume(volume ec2Types.Volume) types.Resource {
+	return types.Resource{
+		ID:       aws.ToString(volume.VolumeId),
+		Type:     "aws_ebs_volume",
+		Provider: "aws",
+		Name:     getVolumeNameFromTags(volume.Tags),
+		Region:   n.region,
+		Configuration: map[string]interface{}{
+			"size":              aws.ToInt32(volume.Size),
+			"volume_type":       string(volume.VolumeType),
+			"state":             string(volume.State),
+			"availability_zone": aws.ToString(volume.AvailabilityZone),
+			"encrypted":         aws.ToBool(volume.Encrypted),
+			"snapshot_id":       aws.ToString(volume.SnapshotId),
+			"iops":              aws.ToInt32(volume.Iops),
+			"throughput":        aws.ToInt32(volume.Throughput),
+		},
+		Tags: convertAWSTags(volume.Tags),
+		Metadata: types.ResourceMetadata{
+			CreatedAt: aws.ToTime(volume.CreateTime),
+		},
+	}
+}
+
+// NormalizeEBSSnapshot converts an EBS snapshot to VAINO format
+func (n *Normalizer) NormalizeEBSSnapshot(snapshot ec2Types.Snapshot) types.Resource {
+	return types.Resource{
+		ID:       aws.ToString(snapshot.SnapshotId),
+		Type:     "aws_ebs_snapshot",
+		Provider: "aws",
+		Name:     getSnapshotNameFromTags(snapshot.Tags),
+		Region:   n.region,
+		Configuration: map[string]interface{}{
+			"volume_id":   aws.ToString(snapshot.VolumeId),
+			"description": aws.ToString(snapshot.Description),
+			"state":       string(snapshot.State),
+			"progress":    aws.ToString(snapshot.Progress),
+			"volume_size": aws.ToInt32(snapshot.VolumeSize),
+			"encrypted":   aws.ToBool(snapshot.Encrypted),
+			"owner_id":    aws.ToString(snapshot.OwnerId),
+		},
+		Tags: convertAWSTags(snapshot.Tags),
+		Metadata: types.ResourceMetadata{
+			CreatedAt: aws.ToTime(snapshot.StartTime),
+		},
+	}
+}
+
+// NormalizeKeyPair converts an EC2 key pair to VAINO format
+func (n *Normalizer) NormalizeKeyPair(keyPair ec2Types.KeyPairInfo) types.Resource {
+	return types.Resource{
+		ID:       aws.ToString(keyPair.KeyPairId),
+		Type:     "aws_key_pair",
+		Provider: "aws",
+		Name:     aws.ToString(keyPair.KeyName),
+		Region:   n.region,
+		Configuration: map[string]interface{}{
+			"key_name":        aws.ToString(keyPair.KeyName),
+			"key_fingerprint": aws.ToString(keyPair.KeyFingerprint),
+			"key_type":        string(keyPair.KeyType),
+		},
+		Tags: convertAWSTags(keyPair.Tags),
+		Metadata: types.ResourceMetadata{
+			CreatedAt: aws.ToTime(keyPair.CreateTime),
+		},
+	}
+}
+
+// getVolumeNameFromTags extracts the Name tag from volume tags
+func getVolumeNameFromTags(tags []ec2Types.Tag) string {
+	for _, tag := range tags {
+		if aws.ToString(tag.Key) == "Name" {
+			return aws.ToString(tag.Value)
+		}
+	}
+	return ""
+}
+
+// getSnapshotNameFromTags extracts the Name tag from snapshot tags
+func getSnapshotNameFromTags(tags []ec2Types.Tag) string {
+	for _, tag := range tags {
+		if aws.ToString(tag.Key) == "Name" {
+			return aws.ToString(tag.Value)
+		}
+	}
+	return ""
+}

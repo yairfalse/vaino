@@ -11,9 +11,8 @@ import (
 type DefaultResourceMatcher struct{}
 
 // Match matches resources between baseline and current snapshots
-// Returns a map of baseline ID -> current ID for matched resources,
-// plus slices of added and removed resources
-func (m *DefaultResourceMatcher) Match(baseline, current []types.Resource) (map[string]string, []types.Resource, []types.Resource) {
+// Returns matched resource pairs, plus slices of added and removed resources
+func (m *DefaultResourceMatcher) Match(baseline, current []types.Resource) ([]ResourceMatch, []types.Resource, []types.Resource) {
 	matches := make(map[string]string)
 	baselineMap := make(map[string]types.Resource)
 	currentMap := make(map[string]types.Resource)
@@ -73,7 +72,20 @@ func (m *DefaultResourceMatcher) Match(baseline, current []types.Resource) (map[
 		}
 	}
 
-	return matches, added, removed
+	// Convert map matches to ResourceMatch slice
+	var resourceMatches []ResourceMatch
+	for baselineID, currentID := range matches {
+		if baselineResource, exists := baselineMap[baselineID]; exists {
+			if currentResource, exists := currentMap[currentID]; exists {
+				resourceMatches = append(resourceMatches, ResourceMatch{
+					Baseline: baselineResource,
+					Current:  currentResource,
+				})
+			}
+		}
+	}
+
+	return resourceMatches, added, removed
 }
 
 // fuzzyMatch attempts to match resources based on name, type, and other attributes
@@ -233,7 +245,7 @@ func NewSmartResourceMatcher() *SmartResourceMatcher {
 }
 
 // Match uses multiple strategies to find the best matches
-func (m *SmartResourceMatcher) Match(baseline, current []types.Resource) (map[string]string, []types.Resource, []types.Resource) {
+func (m *SmartResourceMatcher) Match(baseline, current []types.Resource) ([]ResourceMatch, []types.Resource, []types.Resource) {
 	matches := make(map[string]string)
 
 	// Apply strategies in order of priority
@@ -275,7 +287,20 @@ func (m *SmartResourceMatcher) Match(baseline, current []types.Resource) (map[st
 		}
 	}
 
-	return matches, added, removed
+	// Convert map matches to ResourceMatch slice
+	var resourceMatches []ResourceMatch
+	for baselineID, currentID := range matches {
+		if baselineResource, exists := baselineMap[baselineID]; exists {
+			if currentResource, exists := currentMap[currentID]; exists {
+				resourceMatches = append(resourceMatches, ResourceMatch{
+					Baseline: baselineResource,
+					Current:  currentResource,
+				})
+			}
+		}
+	}
+
+	return resourceMatches, added, removed
 }
 
 // idMatchingStrategy matches resources by exact ID

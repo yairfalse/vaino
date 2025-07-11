@@ -42,7 +42,7 @@ func (d *DifferEngine) Compare(baseline, current *types.Snapshot) (*DriftReport,
 	startTime := time.Now()
 
 	// Match resources between snapshots
-	matches, added, removed := d.matcher.Match(baseline.Resources, current.Resources)
+	resourceMatches, added, removed := d.matcher.Match(baseline.Resources, current.Resources)
 
 	var resourceChanges []ResourceDiff
 	var allChanges []Change
@@ -112,19 +112,9 @@ func (d *DifferEngine) Compare(baseline, current *types.Snapshot) (*DriftReport,
 	}
 
 	// Process modified resources
-	baselineResourceMap := make(map[string]types.Resource)
-	for _, resource := range baseline.Resources {
-		baselineResourceMap[resource.ID] = resource
-	}
-
-	currentResourceMap := make(map[string]types.Resource)
-	for _, resource := range current.Resources {
-		currentResourceMap[resource.ID] = resource
-	}
-
-	for baselineID, currentID := range matches {
-		baselineResource := baselineResourceMap[baselineID]
-		currentResource := currentResourceMap[currentID]
+	for _, match := range resourceMatches {
+		baselineResource := match.Baseline
+		currentResource := match.Current
 
 		changes := d.comparer.CompareResources(baselineResource, currentResource)
 		if len(changes) > 0 {
@@ -170,11 +160,11 @@ func (d *DifferEngine) Compare(baseline, current *types.Snapshot) (*DriftReport,
 		Timestamp:       time.Now(),
 		Summary:         summary,
 		ResourceChanges: resourceChanges,
-		Metadata: ReportMetadata{
-			ComparisonDuration: time.Since(startTime),
-			BaselineTimestamp:  baseline.Timestamp,
-			CurrentTimestamp:   current.Timestamp,
-			DifferVersion:      "1.0.0",
+		Metadata: map[string]interface{}{
+			"comparison_duration": time.Since(startTime),
+			"baseline_timestamp":  baseline.Timestamp,
+			"current_timestamp":   current.Timestamp,
+			"differ_version":      "1.0.0",
 		},
 	}
 
