@@ -16,7 +16,7 @@ import (
 	"github.com/yairfalse/vaino/pkg/types"
 )
 
-// TestLargeDatasetScaling tests WGO with progressively larger datasets
+// TestLargeDatasetScaling tests VAINO with progressively larger datasets
 func TestLargeDatasetScaling(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping large dataset test in short mode")

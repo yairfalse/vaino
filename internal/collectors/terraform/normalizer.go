@@ -8,7 +8,7 @@ import (
 	"github.com/yairfalse/vaino/pkg/types"
 )
 
-// ResourceNormalizer converts Terraform resources to WGO Resource format
+// ResourceNormalizer converts Terraform resources to VAINO Resource format
 type ResourceNormalizer struct {
 	typeMapping map[string]ResourceTypeInfo
 }
@@ -29,7 +29,7 @@ func NewResourceNormalizer() *ResourceNormalizer {
 	}
 }
 
-// NormalizeResources converts a Terraform state to WGO resources
+// NormalizeResources converts a Terraform state to VAINO resources
 func (n *ResourceNormalizer) NormalizeResources(tfState *TerraformState) ([]types.Resource, error) {
 	var resources []types.Resource
 
@@ -53,7 +53,7 @@ func (n *ResourceNormalizer) NormalizeResources(tfState *TerraformState) ([]type
 	return resources, nil
 }
 
-// normalizeResource converts a single Terraform resource instance to WGO Resource
+// normalizeResource converts a single Terraform resource instance to VAINO Resource
 func (n *ResourceNormalizer) normalizeResource(tfResource TerraformResource, instance TerraformInstance, instanceIndex int) (types.Resource, error) {
 	// Get type info for normalization
 	typeInfo := n.getTypeInfo(tfResource.Type)

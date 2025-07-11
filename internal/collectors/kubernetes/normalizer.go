@@ -10,7 +10,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 )
 
-// ResourceNormalizer converts Kubernetes resources to WGO Resource format
+// ResourceNormalizer converts Kubernetes resources to VAINO Resource format
 type ResourceNormalizer struct{}
 
 // NewResourceNormalizer creates a new resource normalizer
@@ -18,7 +18,7 @@ func NewResourceNormalizer() *ResourceNormalizer {
 	return &ResourceNormalizer{}
 }
 
-// NormalizeDeployment converts a Kubernetes Deployment to WGO Resource
+// NormalizeDeployment converts a Kubernetes Deployment to VAINO Resource
 func (n *ResourceNormalizer) NormalizeDeployment(dep *appsv1.Deployment) types.Resource {
 	config := n.extractDeploymentConfig(dep)
 
@@ -43,7 +43,7 @@ func (n *ResourceNormalizer) NormalizeDeployment(dep *appsv1.Deployment) types.R
 	}
 }
 
-// NormalizeStatefulSet converts a Kubernetes StatefulSet to WGO Resource
+// NormalizeStatefulSet converts a Kubernetes StatefulSet to VAINO Resource
 func (n *ResourceNormalizer) NormalizeStatefulSet(ss *appsv1.StatefulSet) types.Resource {
 	config := n.extractStatefulSetConfig(ss)
 
@@ -68,7 +68,7 @@ func (n *ResourceNormalizer) NormalizeStatefulSet(ss *appsv1.StatefulSet) types.
 	}
 }
 
-// NormalizeDaemonSet converts a Kubernetes DaemonSet to WGO Resource
+// NormalizeDaemonSet converts a Kubernetes DaemonSet to VAINO Resource
 func (n *ResourceNormalizer) NormalizeDaemonSet(ds *appsv1.DaemonSet) types.Resource {
 	config := n.extractDaemonSetConfig(ds)
 
@@ -93,7 +93,7 @@ func (n *ResourceNormalizer) NormalizeDaemonSet(ds *appsv1.DaemonSet) types.Reso
 	}
 }
 
-// NormalizeService converts a Kubernetes Service to WGO Resource
+// NormalizeService converts a Kubernetes Service to VAINO Resource
 func (n *ResourceNormalizer) NormalizeService(svc *corev1.Service) types.Resource {
 	config := n.extractServiceConfig(svc)
 
@@ -117,7 +117,7 @@ func (n *ResourceNormalizer) NormalizeService(svc *corev1.Service) types.Resourc
 	}
 }
 
-// NormalizeIngress converts a Kubernetes Ingress to WGO Resource
+// NormalizeIngress converts a Kubernetes Ingress to VAINO Resource
 func (n *ResourceNormalizer) NormalizeIngress(ing *networkingv1.Ingress) types.Resource {
 	config := n.extractIngressConfig(ing)
 
@@ -139,7 +139,7 @@ func (n *ResourceNormalizer) NormalizeIngress(ing *networkingv1.Ingress) types.R
 	}
 }
 
-// NormalizeConfigMap converts a Kubernetes ConfigMap to WGO Resource
+// NormalizeConfigMap converts a Kubernetes ConfigMap to VAINO Resource
 func (n *ResourceNormalizer) NormalizeConfigMap(cm *corev1.ConfigMap) types.Resource {
 	config := n.extractConfigMapConfig(cm)
 
@@ -162,7 +162,7 @@ func (n *ResourceNormalizer) NormalizeConfigMap(cm *corev1.ConfigMap) types.Reso
 	}
 }
 
-// NormalizeSecret converts a Kubernetes Secret to WGO Resource
+// NormalizeSecret converts a Kubernetes Secret to VAINO Resource
 func (n *ResourceNormalizer) NormalizeSecret(secret *corev1.Secret) types.Resource {
 	config := n.extractSecretConfig(secret)
 
@@ -186,7 +186,7 @@ func (n *ResourceNormalizer) NormalizeSecret(secret *corev1.Secret) types.Resour
 	}
 }
 
-// NormalizePersistentVolume converts a Kubernetes PersistentVolume to WGO Resource
+// NormalizePersistentVolume converts a Kubernetes PersistentVolume to VAINO Resource
 func (n *ResourceNormalizer) NormalizePersistentVolume(pv *corev1.PersistentVolume) types.Resource {
 	config := n.extractPersistentVolumeConfig(pv)
 
@@ -209,7 +209,7 @@ func (n *ResourceNormalizer) NormalizePersistentVolume(pv *corev1.PersistentVolu
 	}
 }
 
-// NormalizePersistentVolumeClaim converts a Kubernetes PVC to WGO Resource
+// NormalizePersistentVolumeClaim converts a Kubernetes PVC to VAINO Resource
 func (n *ResourceNormalizer) NormalizePersistentVolumeClaim(pvc *corev1.PersistentVolumeClaim) types.Resource {
 	config := n.extractPersistentVolumeClaimConfig(pvc)
 
@@ -233,7 +233,7 @@ func (n *ResourceNormalizer) NormalizePersistentVolumeClaim(pvc *corev1.Persiste
 	}
 }
 
-// NormalizeServiceAccount converts a Kubernetes ServiceAccount to WGO Resource
+// NormalizeServiceAccount converts a Kubernetes ServiceAccount to VAINO Resource
 func (n *ResourceNormalizer) NormalizeServiceAccount(sa *corev1.ServiceAccount) types.Resource {
 	config := n.extractServiceAccountConfig(sa)
 
@@ -256,7 +256,7 @@ func (n *ResourceNormalizer) NormalizeServiceAccount(sa *corev1.ServiceAccount) 
 	}
 }
 
-// NormalizeRole converts a Kubernetes Role to WGO Resource
+// NormalizeRole converts a Kubernetes Role to VAINO Resource
 func (n *ResourceNormalizer) NormalizeRole(role *rbacv1.Role) types.Resource {
 	config := n.extractRoleConfig(role)
 
@@ -279,7 +279,7 @@ func (n *ResourceNormalizer) NormalizeRole(role *rbacv1.Role) types.Resource {
 	}
 }
 
-// NormalizeRoleBinding converts a Kubernetes RoleBinding to WGO Resource
+// NormalizeRoleBinding converts a Kubernetes RoleBinding to VAINO Resource
 func (n *ResourceNormalizer) NormalizeRoleBinding(rb *rbacv1.RoleBinding) types.Resource {
 	config := n.extractRoleBindingConfig(rb)
 

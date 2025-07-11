@@ -452,7 +452,7 @@
       "configuration": {
         "rules": [
           {
-            "host": "test.wgo.local",
+            "host": "test.vaino.local",
             "http": {
               "paths": [
                 {

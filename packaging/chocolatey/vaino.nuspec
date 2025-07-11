@@ -40,13 +40,13 @@ vaino scan
 vaino diff
 
 # Scan specific provider
-wgo scan --provider aws --region us-east-1
+vaino scan --provider aws --region us-east-1
 
 # Compare with previous scan
-wgo diff --since yesterday
+vaino diff --since yesterday
 ```
 
-## Why WGO?
+## Why VAINO?
 
 - **Simple**: Just like `git diff`, but for infrastructure
 - **Fast**: Efficient scanning and comparison
@@ -54,9 +54,9 @@ wgo diff --since yesterday
 - **Scriptable**: Unix-style output for automation
 - **Secure**: All data stays local
 
-This package installs the WGO command-line tool to track and detect infrastructure drift.
+This package installs the VAINO command-line tool to track and detect infrastructure drift.
 ]]></description>
-    <releaseNotes>https://github.com/yairfalse/wgo/releases/tag/v$version$</releaseNotes>
+    <releaseNotes>https://github.com/yairfalse/vaino/releases/tag/v$version$</releaseNotes>
   </metadata>
   <files>
     <file src="tools\**" target="tools" />

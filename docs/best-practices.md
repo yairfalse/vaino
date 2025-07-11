@@ -56,7 +56,7 @@ wgo baseline create --name "$(git rev-parse --short HEAD)" \
 
 **Use Service Accounts:**
 ```yaml
-# ~/.wgo/config.yaml
+# ~/.vaino/config.yaml
 providers:
   aws:
     # Use IAM roles instead of access keys
@@ -103,7 +103,7 @@ wgo scan --include-secrets --format json > public-log.json
 
 **Secure Configuration:**
 ```yaml
-# ~/.wgo/config.yaml
+# ~/.vaino/config.yaml
 storage:
   encryption: true
   key_file: "/etc/wgo/encryption.key"
@@ -123,7 +123,7 @@ output:
 
 **Provider-Specific Optimization:**
 ```yaml
-# ~/.wgo/config.yaml
+# ~/.vaino/config.yaml
 providers:
   aws:
     # Scan only critical regions

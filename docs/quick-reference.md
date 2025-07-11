@@ -247,7 +247,7 @@ vaino --verbose diff
 ### Reset Configuration
 ```bash
 # Remove all configuration
-rm -rf ~/.wgo
+rm -rf ~/.vaino
 
 # Reconfigure
 vaino configure
@@ -275,11 +275,11 @@ export VAINO_LOG_LEVEL=debug
 ## 📖 File Locations
 
 ```bash
-~/.wgo/config.yaml              # Main configuration
-~/.wgo/snapshots/               # Stored snapshots
-~/.wgo/baselines/               # Baseline files
-~/.wgo/cache/                   # Cache directory
-~/.wgo/logs/                    # Log files
+~/.vaino/config.yaml              # Main configuration
+~/.vaino/snapshots/               # Stored snapshots
+~/.vaino/baselines/               # Baseline files
+~/.vaino/cache/                   # Cache directory
+~/.vaino/logs/                    # Log files
 ```
 
 ## 💡 Pro Tips
@@ -296,8 +296,8 @@ export VAINO_LOG_LEVEL=debug
 
 3. **Set up aliases**:
    ```bash
-   alias wgo-prod='vaino --config ~/.wgo/prod-config.yaml'
-   alias wgo-staging='vaino --config ~/.wgo/staging-config.yaml'
+   alias vaino-prod='vaino --config ~/.vaino/prod-config.yaml'
+   alias vaino-staging='vaino --config ~/.vaino/staging-config.yaml'
    ```
 
 4. **Use baselines for environments**:

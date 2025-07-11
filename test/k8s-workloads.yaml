@@ -1,4 +1,4 @@
-# Test workloads for WGO scanning
+# Test workloads for VAINO scanning
 ---
 apiVersion: v1
 kind: Namespace
@@ -445,7 +445,7 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-  - host: test.wgo.local
+  - host: test.vaino.local
     http:
       paths:
       - path: /

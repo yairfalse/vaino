@@ -1,6 +1,6 @@
 #!/bin/bash
-# APT Repository Setup Script for WGO
-# This script sets up a complete APT repository for distributing WGO packages
+# APT Repository Setup Script for VAINO
+# This script sets up a complete APT repository for distributing VAINO packages
 
 set -e
 
@@ -11,7 +11,7 @@ REPO_ROOT="/tmp/apt-repo"
 DISTRIBUTIONS=("stable" "testing")
 COMPONENTS=("main")
 ARCHITECTURES=("amd64" "arm64" "armhf")
-GPG_KEY_ID="WGO Package Signing Key"
+GPG_KEY_ID="VAINO Package Signing Key"
 GPG_KEY_EMAIL="packages@vaino.sh"
 
 # Colors for output
@@ -70,7 +70,7 @@ create_gpg_key() {
     
     # Generate key configuration
     cat > /tmp/gpg-key-config << EOF
-%echo Generating GPG key for WGO package signing
+%echo Generating GPG key for VAINO package signing
 Key-Type: RSA
 Key-Length: 4096
 Subkey-Type: RSA
@@ -186,7 +186,7 @@ create_repo_config() {
     
     # Create sources.list example
     cat > "${REPO_ROOT}/sources.list.example" << EOF
-# WGO APT Repository
+# VAINO APT Repository
 # Add this line to your /etc/apt/sources.list or create a new file in /etc/apt/sources.list.d/
 deb https://apt.vaino.sh/ubuntu stable main
 EOF
@@ -194,7 +194,7 @@ EOF
     # Create installation script
     cat > "${REPO_ROOT}/install-repo.sh" << 'EOF'
 #!/bin/bash
-# WGO APT Repository Installation Script
+# VAINO APT Repository Installation Script
 
 set -e
 
@@ -207,14 +207,14 @@ echo "deb https://apt.vaino.sh/ubuntu stable main" | sudo tee /etc/apt/sources.l
 # Update package list
 sudo apt-get update
 
-echo "WGO APT repository added successfully!"
-echo "You can now install WGO with: sudo apt-get install wgo"
+echo "VAINO APT repository added successfully!"
+echo "You can now install VAINO with: sudo apt-get install vaino"
 EOF
     chmod +x "${REPO_ROOT}/install-repo.sh"
     
     # Create nginx configuration example
     cat > "${REPO_ROOT}/nginx.conf.example" << EOF
-# Nginx configuration for WGO APT repository
+# Nginx configuration for VAINO APT repository
 server {
     listen 80;
     server_name apt.vaino.sh;
@@ -284,7 +284,7 @@ generate_github_pages() {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>WGO APT Repository</title>
+    <title>VAINO APT Repository</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; }
         .container { max-width: 800px; margin: 0 auto; }
@@ -295,14 +295,14 @@ generate_github_pages() {
 <body>
     <div class="container">
         <div class="header">
-            <h1>WGO APT Repository</h1>
-            <p>Official APT repository for WGO (What's Going On)</p>
+            <h1>VAINO APT Repository</h1>
+            <p>Official APT repository for VAINO (What's Going On)</p>
         </div>
         
         <h2>Quick Installation</h2>
         <div class="code">
             curl -fsSL https://apt.vaino.sh/ubuntu/install-repo.sh | sudo bash<br>
-            sudo apt-get install wgo
+            sudo apt-get install vaino
         </div>
         
         <h2>Manual Installation</h2>
@@ -314,7 +314,7 @@ generate_github_pages() {
                 <div class="code">echo "deb https://apt.vaino.sh/ubuntu stable main" | sudo tee /etc/apt/sources.list.d/vaino.list</div>
             </li>
             <li>Update and install:
-                <div class="code">sudo apt-get update<br>sudo apt-get install wgo</div>
+                <div class="code">sudo apt-get update<br>sudo apt-get install vaino</div>
             </li>
         </ol>
         
@@ -342,7 +342,7 @@ EOF
 
 # Main execution
 main() {
-    echo "🚀 WGO APT Repository Setup"
+    echo "🚀 VAINO APT Repository Setup"
     echo "=========================="
     echo ""
     

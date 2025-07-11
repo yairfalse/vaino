@@ -28,7 +28,7 @@ The AWS provider supports multiple authentication methods:
 
 3. **AWS Profiles**:
    ```bash
-   wgo scan --provider aws --profile production
+   vaino scan --provider aws --profile production
    ```
 
 4. **IAM Roles** (when running on EC2)
@@ -37,16 +37,16 @@ The AWS provider supports multiple authentication methods:
 
 ```bash
 # Scan AWS resources in default region
-wgo scan --provider aws
+vaino scan --provider aws
 
 # Scan specific region
-wgo scan --provider aws --region us-west-2
+vaino scan --provider aws --region us-west-2
 
 # Scan with specific profile
-wgo scan --provider aws --profile production
+vaino scan --provider aws --profile production
 
 # Save output to file
-wgo scan --provider aws --output-file aws-snapshot.json
+vaino scan --provider aws --output-file aws-snapshot.json
 ```
 
 ## Testing
@@ -92,8 +92,8 @@ go test -v -tags=integration ./internal/collectors/aws/aws_system_test.go
 End-to-end tests verify the complete drift detection workflow:
 
 ```bash
-# Build wgo first
-go build -o wgo ./cmd/wgo
+# Build vaino first
+go build -o vaino ./cmd/vaino
 
 # Run E2E tests
 go test -v -tags=e2e ./test/e2e/aws_drift_detection_test.go

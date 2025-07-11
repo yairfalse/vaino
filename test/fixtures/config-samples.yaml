@@ -1,9 +1,9 @@
-# Sample WGO configuration files for testing
+# Sample VAINO configuration files for testing
 
 # Basic configuration
 basic: |
   storage:
-    base_path: ~/.wgo
+    base_path: ~/.vaino
   output:
     format: table
   logging:
@@ -12,7 +12,7 @@ basic: |
 # Development configuration
 development: |
   storage:
-    base_path: ./test-data/.wgo
+    base_path: ./test-data/.vaino
   output:
     format: json
     pretty: true
@@ -60,7 +60,7 @@ production: |
 # Comprehensive configuration with all options
 comprehensive: |
   storage:
-    base_path: ~/.wgo
+    base_path: ~/.vaino
     backend: local
   output:
     format: json
@@ -106,4 +106,4 @@ comprehensive: |
     default_ttl: "1h"
     cleanup_interval: "10m"
     persist_to_disk: true
-    persist_path: "~/.wgo/cache"
+    persist_path: "~/.vaino/cache"

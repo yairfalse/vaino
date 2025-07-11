@@ -1,4 +1,4 @@
-# Performance Testing Makefile for WGO
+# Performance Testing Makefile for VAINO
 # Provides comprehensive performance testing and benchmarking capabilities
 
 .PHONY: all clean setup benchmarks stress-test memory-test concurrent-test large-dataset-test performance-report
@@ -256,7 +256,7 @@ check-system:
 
 # Help target
 help:
-	@echo "WGO Performance Testing Makefile"
+	@echo "VAINO Performance Testing Makefile"
 	@echo ""
 	@echo "Targets:"
 	@echo "  all              - Run setup, benchmarks, and generate report"

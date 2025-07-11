@@ -30,7 +30,7 @@ Add these secrets to your GitHub repository (Settings → Secrets and variables 
 
 | Secret | Description | How to Get |
 |--------|-------------|------------|
-| `GPG_PRIVATE_KEY` | Private GPG key for signing | `gpg --armor --export-secret-keys packages@wgo.sh` |
+| `GPG_PRIVATE_KEY` | Private GPG key for signing | `gpg --armor --export-secret-keys packages@vaino.sh` |
 | `GPG_PASSPHRASE` | GPG key passphrase | Set when creating GPG key |
 | `HOMEBREW_TAP_GITHUB_TOKEN` | GitHub token for Homebrew tap | GitHub → Settings → Developer settings → Personal access tokens |
 | `SCOOP_GITHUB_TOKEN` | GitHub token for Scoop bucket | Same as above |
@@ -175,13 +175,13 @@ goreleaser release --clean
 ### Homebrew Tap
 ```bash
 # Create tap repository
-gh repo create yairfalse/homebrew-wgo --public
+gh repo create yairfalse/homebrew-vaino --public
 ```
 
 ### Scoop Bucket
 ```bash
 # Create bucket repository
-gh repo create yairfalse/scoop-wgo --public
+gh repo create yairfalse/scoop-vaino --public
 ```
 
 ## Troubleshooting
@@ -212,14 +212,14 @@ gh repo create yairfalse/scoop-wgo --public
 
 ```bash
 # Test local build
-go build -o wgo ./cmd/wgo
+go build -o vaino ./cmd/vaino
 
 # Test package building
 ./packaging/apt/build-deb.sh test amd64
 ./packaging/yum/build-rpm.sh test x86_64
 
 # Test Docker build
-docker build -t wgo:test .
+docker build -t vaino:test .
 
 # Test installation script
 bash scripts/setup/install.sh

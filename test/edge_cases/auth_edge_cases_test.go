@@ -194,7 +194,7 @@ func TestInsufficientPermissions(t *testing.T) {
 	}{
 		{
 			name:        "gcp_compute_read_only",
-			scenario:    "User has read-only access but WGO needs broader permissions",
+			scenario:    "User has read-only access but VAINO needs broader permissions",
 			expectError: true,
 			errorType:   vainoerrors.ErrorTypePermission,
 		},
