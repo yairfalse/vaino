@@ -24,6 +24,7 @@ func newScanCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "scan",
 		Short: "Scan infrastructure for current state",
+		SilenceUsage: true,
 		Long: `Scan discovers and collects the current state of your infrastructure
 from various providers (Terraform, AWS, Kubernetes) and creates a snapshot.
 
@@ -96,10 +97,6 @@ func runScan(cmd *cobra.Command, args []string) error {
 		if !quiet {
 			fmt.Printf(format, args...)
 		}
-	}
-
-	if !quiet {
-		fmt.Println("Scanning infrastructure...")
 	}
 
 	provider, _ := cmd.Flags().GetString("provider")
@@ -284,7 +281,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}
 
 	// Perform collection
-	log("Collecting...\n")
+	if !quiet {
+		fmt.Println("Scanning infrastructure...")
+	}
 	startTime := time.Now()
 
 	snapshot, err := collector.Collect(ctx, config)
