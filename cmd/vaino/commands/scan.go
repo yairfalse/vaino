@@ -99,8 +99,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}
 
 	if !quiet {
-		fmt.Println("Infrastructure Scan")
-		fmt.Println("===================")
+		fmt.Println("Scanning infrastructure...")
 	}
 
 	provider, _ := cmd.Flags().GetString("provider")
@@ -133,18 +132,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	if !scanAll && provider == "" {
 		// Generate smart defaults and auto-discover infrastructure
-		log("Auto-discovering infrastructure...\n")
-		smartConfig, err := defaultsManager.GenerateSmartDefaults()
+		_, err := defaultsManager.GenerateSmartDefaults()
 		if err != nil {
 			return fmt.Errorf("failed to generate smart defaults: %w", err)
-		}
-
-		// Show user-friendly feedback about what was detected
-		if !quiet {
-			feedback := defaultsManager.GetUserFriendlyFeedback(smartConfig)
-			for _, line := range feedback {
-				fmt.Println(line)
-			}
 		}
 
 		discovery := discovery.NewTerraformDiscovery()
@@ -154,71 +144,16 @@ func runScan(cmd *cobra.Command, args []string) error {
 			// Found Terraform state files, use terraform provider
 			provider = "terraform"
 			autoDiscover = true
-			fmt.Printf("Found %d Terraform state file(s), using terraform provider\n", len(stateFiles))
+			log("Found %d Terraform state file(s)\n", len(stateFiles))
 		} else {
 			// No auto-discovery possible, show helpful guidance
-			// Enhanced first-run experience
-			fmt.Println("\nWelcome to VAINO")
-			fmt.Println("==================")
-			fmt.Println()
-
-			// Check if this is first run
-			homeDir, _ := os.UserHomeDir()
-			configPath := filepath.Join(homeDir, ".vaino", "config.yaml")
-			isFirstRun := false
-			if _, err := os.Stat(configPath); os.IsNotExist(err) {
-				isFirstRun = true
-			}
-
-			if isFirstRun {
-				fmt.Println("First run detected! Let me set up VAINO for you...")
-				fmt.Println()
-
-				// Run auto-detection
-				detector := config.NewProviderDetector()
-				detectionResults := detector.DetectAll()
-
-				availableProviders := []string{}
-				fmt.Println("Detecting available providers:")
-				for provider, result := range detectionResults {
-					if provider == "terraform" && result.StateFiles > 0 {
-						fmt.Printf("  [OK] %s: %d state files found\n", provider, result.StateFiles)
-						availableProviders = append(availableProviders, provider)
-					} else if result.Available && provider != "terraform" {
-						fmt.Printf("  [OK] %s: %s\n", provider, result.Status)
-						availableProviders = append(availableProviders, provider)
-					}
-				}
-
-				if len(availableProviders) > 0 {
-					fmt.Println()
-					fmt.Println("Creating default configuration...")
-					if err := createDefaultConfig(configPath); err == nil {
-						fmt.Printf("Configuration created at: %s\n", configPath)
-					}
-				}
-			}
-
-			fmt.Println()
-			fmt.Println("I couldn't auto-detect your infrastructure to scan.")
-			fmt.Println()
-			fmt.Println("QUICK START - Choose your provider:")
-			fmt.Println()
-			fmt.Println("  For Terraform projects:")
-			fmt.Println("    vaino scan --provider terraform")
-			fmt.Println()
-			fmt.Println("  For Google Cloud:")
-			fmt.Println("    vaino scan --provider gcp --project YOUR-PROJECT-ID")
-			fmt.Println()
-			fmt.Println("  For AWS:")
-			fmt.Println("    vaino scan --provider aws --region us-east-1")
-			fmt.Println()
-			fmt.Println("  For Kubernetes:")
-			fmt.Println("    vaino scan --provider kubernetes")
-			fmt.Println()
-			fmt.Println("TIP: Run 'vaino status' to check your configuration")
-			fmt.Println("        Run 'vaino configure' for interactive setup")
-			fmt.Println()
+			fmt.Println("\nNo infrastructure auto-detected.")
+			fmt.Println("\nChoose your provider:")
+			fmt.Println("  vaino scan --provider terraform")
+			fmt.Println("  vaino scan --provider aws --region us-east-1")
+			fmt.Println("  vaino scan --provider gcp --project YOUR-PROJECT-ID")
+			fmt.Println("  vaino scan --provider kubernetes")
+			fmt.Println("\nTip: Run 'vaino configure' for setup")
 			return nil
 		}
 	}
@@ -260,13 +195,11 @@ func runScan(cmd *cobra.Command, args []string) error {
 	var config collectors.CollectorConfig
 
 	if autoDiscover {
-		fmt.Println("Auto-discovering configuration...")
 		discoveredConfig, err := collector.AutoDiscover()
 		if err != nil {
 			return fmt.Errorf("auto-discovery failed: %w", err)
 		}
 		config = discoveredConfig
-		log("Found %d state paths\n", len(config.StatePaths))
 	} else if len(statePaths) > 0 {
 		config.StatePaths = statePaths
 	} else {
@@ -324,7 +257,6 @@ func runScan(cmd *cobra.Command, args []string) error {
 	// Generate snapshot name if not provided
 	if snapshotName == "" {
 		snapshotName = defaultsManager.GenerateAutoName("scan")
-		log("Auto-generated snapshot name: %s\n", snapshotName)
 	}
 	config.Config["snapshot_name"] = snapshotName
 
@@ -352,7 +284,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}
 
 	// Perform collection
-	log("Collecting resources from %s...\n", provider)
+	log("Collecting...\n")
 	startTime := time.Now()
 
 	snapshot, err := collector.Collect(ctx, config)
@@ -403,20 +335,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	// Display results
 	if !quiet {
-		fmt.Printf("\nCollection completed in %v\n", collectionTime)
-		fmt.Printf("Snapshot ID: %s\n", snapshot.ID)
-		fmt.Printf("Resources found: %d\n", len(snapshot.Resources))
-
-		// Group resources by type
-		byType := make(map[string]int)
-		for _, resource := range snapshot.Resources {
-			byType[resource.Type]++
-		}
-
-		fmt.Println("\nResource breakdown:")
-		for resourceType, count := range byType {
-			fmt.Printf("  - %s: %d\n", resourceType, count)
-		}
+		fmt.Printf("✓ Found %d resources in %v\n", len(snapshot.Resources), collectionTime)
 	}
 
 	// Save to history directory for time-based comparisons
@@ -447,7 +366,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	log("\nSnapshot saved - use 'vaino diff' to detect changes\n")
+	log("Use 'vaino diff' to detect changes\n")
 	return nil
 }
 
