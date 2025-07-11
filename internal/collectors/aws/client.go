@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
 // EC2ClientInterface defines the EC2 client methods we use
@@ -37,6 +38,7 @@ type AWSClients struct {
 	DynamoDBStreams *dynamodbstreams.Client
 	ECS             *ecs.Client
 	EKS             *eks.Client
+	STS             *sts.Client
 	Config          aws.Config
 }
 
@@ -81,6 +83,7 @@ func NewAWSClients(ctx context.Context, clientConfig ClientConfig) (*AWSClients,
 		DynamoDBStreams: dynamodbstreams.NewFromConfig(cfg),
 		ECS:             ecs.NewFromConfig(cfg),
 		EKS:             eks.NewFromConfig(cfg),
+		STS:             sts.NewFromConfig(cfg),
 		Config:          cfg,
 	}
 
@@ -94,14 +97,10 @@ func (c *AWSClients) GetRegion() string {
 
 // ValidateCredentials tests AWS credentials by making a simple API call
 func (c *AWSClients) ValidateCredentials(ctx context.Context) error {
-	// Use STS GetCallerIdentity to validate credentials
-	_, err := c.IAM.GetUser(ctx, &iam.GetUserInput{})
+	// Use STS GetCallerIdentity to validate credentials - works with any valid AWS credentials
+	_, err := c.STS.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
 	if err != nil {
-		// If GetUser fails, try listing IAM users (works with most policies)
-		_, err = c.IAM.ListUsers(ctx, &iam.ListUsersInput{MaxItems: aws.Int32(1)})
-		if err != nil {
-			return fmt.Errorf("failed to validate AWS credentials: %w", err)
-		}
+		return fmt.Errorf("failed to validate AWS credentials: %w", err)
 	}
 	return nil
 }

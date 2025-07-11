@@ -82,6 +82,11 @@ func (p *StateParser) ParseStateFile(filePath string) (*TerraformState, error) {
 		return nil, fmt.Errorf("failed to read state file: %w", err)
 	}
 
+	return p.ParseStateFromBytes(data)
+}
+
+// ParseStateFromBytes parses Terraform state from byte data
+func (p *StateParser) ParseStateFromBytes(data []byte) (*TerraformState, error) {
 	if len(data) == 0 {
 		return &TerraformState{
 			Version:   4,
@@ -91,7 +96,7 @@ func (p *StateParser) ParseStateFile(filePath string) (*TerraformState, error) {
 
 	var state TerraformState
 	if err := json.Unmarshal(data, &state); err != nil {
-		return nil, fmt.Errorf("failed to parse state file JSON: %w", err)
+		return nil, fmt.Errorf("failed to parse state JSON: %w", err)
 	}
 
 	// Handle legacy state format (version < 4)

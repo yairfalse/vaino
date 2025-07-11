@@ -21,11 +21,12 @@ func NewTerraformDiscovery() *TerraformDiscovery {
 	}
 }
 
-// StateFile represents a discovered Terraform state file
+// StateFile represents a discovered Terraform file (state or config)
 type StateFile struct {
 	Path          string `json:"path"`
 	RelativePath  string `json:"relative_path"`
 	Size          int64  `json:"size"`
+	Type          string `json:"type"` // "state" or "config"
 	ResourceCount int    `json:"resource_count,omitempty"`
 }
 
@@ -62,8 +63,8 @@ func (td *TerraformDiscovery) DiscoverStateFiles(rootPath string) ([]StateFile, 
 			return nil
 		}
 
-		// Skip directories and non-tfstate files
-		if info.IsDir() || !td.isTerraformStateFile(path) {
+		// Skip directories and non-terraform files
+		if info.IsDir() || (!td.isTerraformStateFile(path) && !td.isTerraformConfigFile(path)) {
 			return nil
 		}
 
@@ -77,15 +78,29 @@ func (td *TerraformDiscovery) DiscoverStateFiles(rootPath string) ([]StateFile, 
 			return nil
 		}
 
+		// Determine file type
+		fileType := "config"
+		if td.isTerraformStateFile(path) {
+			fileType = "state"
+		}
+
 		stateFile := StateFile{
 			Path:         path,
 			RelativePath: relPath,
 			Size:         info.Size(),
+			Type:         fileType,
 		}
 
-		// Try to get resource count from state file
-		if count, err := td.getResourceCount(path); err == nil {
-			stateFile.ResourceCount = count
+		// Try to get resource count
+		if fileType == "state" {
+			if count, err := td.getResourceCount(path); err == nil {
+				stateFile.ResourceCount = count
+			}
+		} else {
+			// For config files, we can estimate resources by counting resource blocks
+			if count, err := td.getConfigResourceCount(path); err == nil {
+				stateFile.ResourceCount = count
+			}
 		}
 
 		stateFiles = append(stateFiles, stateFile)
@@ -113,6 +128,23 @@ func (td *TerraformDiscovery) isTerraformStateFile(path string) bool {
 
 	// Check for .tfstate.backup extension
 	if strings.HasSuffix(filename, ".tfstate.backup") {
+		return true
+	}
+
+	return false
+}
+
+// isTerraformConfigFile checks if a file is a Terraform configuration file
+func (td *TerraformDiscovery) isTerraformConfigFile(path string) bool {
+	filename := filepath.Base(path)
+
+	// Check for .tf extension
+	if strings.HasSuffix(filename, ".tf") {
+		return true
+	}
+
+	// Check for .tf.json extension
+	if strings.HasSuffix(filename, ".tf.json") {
 		return true
 	}
 
@@ -171,6 +203,24 @@ func (td *TerraformDiscovery) getResourceCount(path string) (int, error) {
 	return 0, nil
 }
 
+// getConfigResourceCount attempts to count resources in a Terraform config file
+func (td *TerraformDiscovery) getConfigResourceCount(path string) (int, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return 0, err
+	}
+
+	contentStr := string(content)
+
+	// Count resource blocks - look for "resource " declarations
+	count := strings.Count(contentStr, "resource \"")
+
+	// Also count data sources
+	count += strings.Count(contentStr, "data \"")
+
+	return count, nil
+}
+
 // sortStateFiles sorts state files by preference
 func (td *TerraformDiscovery) sortStateFiles(files []StateFile) {
 	// Priority order:
@@ -214,9 +264,21 @@ func (td *TerraformDiscovery) getFileScore(file StateFile) int {
 
 	score := 0
 
+	// Prefer config files when no state files exist (common with remote backends like S3)
+	if file.Type == "config" {
+		score += 1000 // Config files are primary indicators of Terraform projects
+	} else {
+		score += 2000 // State files still preferred when they exist
+	}
+
 	// Prefer terraform.tfstate
 	if filename == "terraform.tfstate" {
 		score += 1000
+	}
+
+	// Prefer main.tf for config files
+	if filename == "main.tf" && file.Type == "config" {
+		score += 800
 	}
 
 	// Prefer root directory
