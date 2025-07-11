@@ -15,13 +15,18 @@ type Differ interface {
 
 // DriftReport represents the complete result of a drift comparison
 type DriftReport struct {
-	ID              string         `json:"id"`
-	BaselineID      string         `json:"baseline_id"`
-	CurrentID       string         `json:"current_id"`
-	Timestamp       time.Time      `json:"timestamp"`
-	Summary         DriftSummary   `json:"summary"`
-	ResourceChanges []ResourceDiff `json:"resource_changes"`
-	Metadata        ReportMetadata `json:"metadata"`
+	ID              string                 `json:"id"`
+	BaselineID      string                 `json:"baseline_id"`
+	CurrentID       string                 `json:"current_id"`
+	Timestamp       time.Time              `json:"timestamp"`
+	Summary         DriftSummary           `json:"summary"`
+	ResourceChanges []ResourceDiff         `json:"resource_changes"`
+	AllChanges      []Change               `json:"all_changes,omitempty"`
+	Metadata        map[string]interface{} `json:"metadata"`
+
+	// Enterprise features
+	ComplianceReport *ComplianceReport `json:"compliance_report,omitempty"`
+	ExecutiveSummary *ExecutiveSummary `json:"executive_summary,omitempty"`
 }
 
 // DriftSummary provides high-level statistics about the drift
@@ -31,23 +36,36 @@ type DriftSummary struct {
 	AddedResources    int                   `json:"added_resources"`
 	RemovedResources  int                   `json:"removed_resources"`
 	ModifiedResources int                   `json:"modified_resources"`
+	TotalChanges      int                   `json:"total_changes"`
 	ChangesByCategory map[DriftCategory]int `json:"changes_by_category"`
 	ChangesBySeverity map[RiskLevel]int     `json:"changes_by_severity"`
 	OverallRisk       RiskLevel             `json:"overall_risk"`
 	RiskScore         float64               `json:"risk_score"`
+	RiskAssessment    string                `json:"risk_assessment"`
+	ComplianceStatus  string                `json:"compliance_status"`
+	Timestamp         time.Time             `json:"timestamp"`
+
+	// Enterprise summary fields
+	CriticalChanges   int                    `json:"critical_changes"`
+	HighRiskChanges   int                    `json:"high_risk_changes"`
+	MediumRiskChanges int                    `json:"medium_risk_changes"`
+	LowRiskChanges    int                    `json:"low_risk_changes"`
+	Metadata          map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // ResourceDiff represents changes to a specific resource
 type ResourceDiff struct {
-	ResourceID   string        `json:"resource_id"`
-	ResourceType string        `json:"resource_type"`
-	Provider     string        `json:"provider"`
-	DriftType    ChangeType    `json:"drift_type"`
-	Changes      []Change      `json:"changes"`
-	Severity     RiskLevel     `json:"severity"`
-	Category     DriftCategory `json:"category"`
-	RiskScore    float64       `json:"risk_score"`
-	Description  string        `json:"description"`
+	ResourceID   string                 `json:"resource_id"`
+	ResourceType string                 `json:"resource_type"`
+	Provider     string                 `json:"provider"`
+	DriftType    ChangeType             `json:"drift_type"`
+	Changes      []Change               `json:"changes"`
+	Severity     RiskLevel              `json:"severity"`
+	Category     DriftCategory          `json:"category"`
+	Categories   []DriftCategory        `json:"categories,omitempty"`
+	RiskScore    float64                `json:"risk_score"`
+	Description  string                 `json:"description"`
+	Metadata     map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // DifferChange represents a specific configuration change in the differ context
@@ -100,21 +118,12 @@ const (
 	DriftCategoryCompute  DriftCategory = "compute"
 )
 
-// ReportMetadata contains metadata about the drift report
-type ReportMetadata struct {
-	ComparisonDuration time.Duration     `json:"comparison_duration"`
-	BaselineTimestamp  time.Time         `json:"baseline_timestamp"`
-	CurrentTimestamp   time.Time         `json:"current_timestamp"`
-	DifferVersion      string            `json:"differ_version"`
-	Filters            []string          `json:"filters,omitempty"`
-	Tags               map[string]string `json:"tags,omitempty"`
-}
-
 // DiffOptions configures how the comparison is performed
 type DiffOptions struct {
 	IgnoreFields    []string          `json:"ignore_fields,omitempty"`
 	IgnoreResources []string          `json:"ignore_resources,omitempty"`
 	IgnoreProviders []string          `json:"ignore_providers,omitempty"`
+	IgnoreMetadata  bool              `json:"ignore_metadata,omitempty"`
 	MinRiskLevel    RiskLevel         `json:"min_risk_level,omitempty"`
 	Categories      []DriftCategory   `json:"categories,omitempty"`
 	Tags            map[string]string `json:"tags,omitempty"`
@@ -122,7 +131,7 @@ type DiffOptions struct {
 
 // ResourceMatcher defines how resources are matched between snapshots
 type ResourceMatcher interface {
-	Match(baseline, current []types.Resource) (map[string]string, []types.Resource, []types.Resource)
+	Match(baseline, current []types.Resource) ([]ResourceMatch, []types.Resource, []types.Resource)
 }
 
 // ChangeClassifier categorizes and scores changes
@@ -134,6 +143,13 @@ type ChangeClassifier interface {
 
 // Comparer performs deep comparison of resource configurations
 type Comparer interface {
+	Compare(baseline, current types.Resource) ([]Change, error)
 	CompareResources(baseline, current types.Resource) []Change
 	CompareConfiguration(basePath string, baseline, current map[string]interface{}) []Change
+}
+
+// ResourceMatch represents a matched pair of resources between snapshots
+type ResourceMatch struct {
+	Baseline types.Resource
+	Current  types.Resource
 }

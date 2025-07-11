@@ -6,6 +6,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodbstreams"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
@@ -24,12 +26,14 @@ type EC2ClientInterface interface {
 
 // AWSClients holds all AWS service clients
 type AWSClients struct {
-	EC2    EC2ClientInterface
-	S3     *s3.Client
-	RDS    *rds.Client
-	Lambda *lambda.Client
-	IAM    *iam.Client
-	Config aws.Config
+	EC2             EC2ClientInterface
+	S3              *s3.Client
+	RDS             *rds.Client
+	Lambda          *lambda.Client
+	IAM             *iam.Client
+	DynamoDB        *dynamodb.Client
+	DynamoDBStreams *dynamodbstreams.Client
+	Config          aws.Config
 }
 
 // ClientConfig holds configuration for AWS client creation
@@ -64,12 +68,14 @@ func NewAWSClients(ctx context.Context, clientConfig ClientConfig) (*AWSClients,
 
 	// Create service clients
 	clients := &AWSClients{
-		EC2:    ec2.NewFromConfig(cfg),
-		S3:     s3.NewFromConfig(cfg),
-		RDS:    rds.NewFromConfig(cfg),
-		Lambda: lambda.NewFromConfig(cfg),
-		IAM:    iam.NewFromConfig(cfg),
-		Config: cfg,
+		EC2:             ec2.NewFromConfig(cfg),
+		S3:              s3.NewFromConfig(cfg),
+		RDS:             rds.NewFromConfig(cfg),
+		Lambda:          lambda.NewFromConfig(cfg),
+		IAM:             iam.NewFromConfig(cfg),
+		DynamoDB:        dynamodb.NewFromConfig(cfg),
+		DynamoDBStreams: dynamodbstreams.NewFromConfig(cfg),
+		Config:          cfg,
 	}
 
 	return clients, nil

@@ -170,11 +170,11 @@ func (d *DifferEngine) Compare(baseline, current *types.Snapshot) (*DriftReport,
 		Timestamp:       time.Now(),
 		Summary:         summary,
 		ResourceChanges: resourceChanges,
-		Metadata: ReportMetadata{
-			ComparisonDuration: time.Since(startTime),
-			BaselineTimestamp:  baseline.Timestamp,
-			CurrentTimestamp:   current.Timestamp,
-			DifferVersion:      "1.0.0",
+		Metadata: map[string]interface{}{
+			"comparison_duration": time.Since(startTime),
+			"baseline_timestamp":  baseline.Timestamp,
+			"current_timestamp":   current.Timestamp,
+			"differ_version":      "1.0.0",
 		},
 	}
 

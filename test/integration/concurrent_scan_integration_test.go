@@ -356,7 +356,7 @@ func (m *MockFailingCollector) Status() string {
 }
 
 func (m *MockFailingCollector) Collect(ctx context.Context, config collectors.CollectorConfig) (*types.Snapshot, error) {
-	return nil, fmt.Errorf(m.error)
+	return nil, fmt.Errorf("%s", m.error)
 }
 
 func (m *MockFailingCollector) Validate(config collectors.CollectorConfig) error {

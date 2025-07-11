@@ -102,13 +102,13 @@ func TestConcurrentScanner_Basic(t *testing.T) {
 	defer concurrentScanner.Close()
 
 	// Register mock collectors
-	collectors := map[string]*MockConcurrentCollector{
+	mockCollectors := map[string]*MockConcurrentCollector{
 		"aws":        NewMockConcurrentCollector("aws", 100*time.Millisecond, false, 5),
 		"gcp":        NewMockConcurrentCollector("gcp", 150*time.Millisecond, false, 3),
 		"kubernetes": NewMockConcurrentCollector("kubernetes", 200*time.Millisecond, false, 8),
 	}
 
-	for name, collector := range collectors {
+	for name, collector := range mockCollectors {
 		concurrentScanner.RegisterProvider(name, collector)
 	}
 
@@ -128,7 +128,7 @@ func TestConcurrentScanner_Basic(t *testing.T) {
 	ctx := context.Background()
 	startTime := time.Now()
 
-	result, err := scanner.ScanAllProviders(ctx, config)
+	result, err := concurrentScanner.ScanAllProviders(ctx, config)
 
 	scanDuration := time.Since(startTime)
 
@@ -152,7 +152,7 @@ func TestConcurrentScanner_Basic(t *testing.T) {
 			t.Errorf("Provider %s failed: %v", providerName, providerResult.Error)
 		}
 
-		expectedCount := collectors[providerName].resourceCount
+		expectedCount := mockCollectors[providerName].resourceCount
 		if len(providerResult.Snapshot.Resources) != expectedCount {
 			t.Errorf("Provider %s: expected %d resources, got %d",
 				providerName, expectedCount, len(providerResult.Snapshot.Resources))
@@ -193,13 +193,13 @@ func TestConcurrentScanner_WithErrors(t *testing.T) {
 	defer concurrentScanner.Close()
 
 	// Register mock collectors with one that fails
-	collectors := map[string]*MockConcurrentCollector{
+	mockCollectors := map[string]*MockConcurrentCollector{
 		"aws":        NewMockConcurrentCollector("aws", 100*time.Millisecond, false, 5),
 		"gcp":        NewMockConcurrentCollector("gcp", 150*time.Millisecond, true, 3), // This one fails
 		"kubernetes": NewMockConcurrentCollector("kubernetes", 200*time.Millisecond, false, 8),
 	}
 
-	for name, collector := range collectors {
+	for name, collector := range mockCollectors {
 		concurrentScanner.RegisterProvider(name, collector)
 	}
 
@@ -217,7 +217,7 @@ func TestConcurrentScanner_WithErrors(t *testing.T) {
 
 	// Perform concurrent scan
 	ctx := context.Background()
-	result, err := scanner.ScanAllProviders(ctx, config)
+	result, err := concurrentScanner.ScanAllProviders(ctx, config)
 
 	// Should not fail with FailOnError=false
 	if err != nil {
@@ -260,12 +260,12 @@ func TestConcurrentScanner_FailOnError(t *testing.T) {
 	defer concurrentScanner.Close()
 
 	// Register mock collectors with one that fails
-	collectors := map[string]*MockConcurrentCollector{
+	mockCollectors := map[string]*MockConcurrentCollector{
 		"aws": NewMockConcurrentCollector("aws", 100*time.Millisecond, false, 5),
 		"gcp": NewMockConcurrentCollector("gcp", 150*time.Millisecond, true, 3), // This one fails
 	}
 
-	for name, collector := range collectors {
+	for name, collector := range mockCollectors {
 		concurrentScanner.RegisterProvider(name, collector)
 	}
 
@@ -282,7 +282,7 @@ func TestConcurrentScanner_FailOnError(t *testing.T) {
 
 	// Perform concurrent scan
 	ctx := context.Background()
-	result, err := scanner.ScanAllProviders(ctx, config)
+	result, err := concurrentScanner.ScanAllProviders(ctx, config)
 
 	// Should fail with FailOnError=true
 	if err == nil {
@@ -316,7 +316,7 @@ func TestConcurrentScanner_Timeout(t *testing.T) {
 	ctx := context.Background()
 	startTime := time.Now()
 
-	result, err := scanner.ScanAllProviders(ctx, config)
+	result, err := concurrentScanner.ScanAllProviders(ctx, config)
 
 	scanDuration := time.Since(startTime)
 
@@ -360,7 +360,7 @@ func TestConcurrentScanner_ResourceDeduplication(t *testing.T) {
 
 	// Perform concurrent scan
 	ctx := context.Background()
-	result, err := scanner.ScanAllProviders(ctx, config)
+	result, err := concurrentScanner.ScanAllProviders(ctx, config)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
@@ -386,13 +386,13 @@ func TestConcurrentScanner_PreferredOrder(t *testing.T) {
 	defer concurrentScanner.Close()
 
 	// Register mock collectors
-	collectors := map[string]*MockConcurrentCollector{
+	mockCollectors := map[string]*MockConcurrentCollector{
 		"aws":        NewMockConcurrentCollector("aws", 100*time.Millisecond, false, 1),
 		"gcp":        NewMockConcurrentCollector("gcp", 100*time.Millisecond, false, 1),
 		"kubernetes": NewMockConcurrentCollector("kubernetes", 100*time.Millisecond, false, 1),
 	}
 
-	for name, collector := range collectors {
+	for name, collector := range mockCollectors {
 		concurrentScanner.RegisterProvider(name, collector)
 	}
 
@@ -410,7 +410,7 @@ func TestConcurrentScanner_PreferredOrder(t *testing.T) {
 
 	// Perform concurrent scan
 	ctx := context.Background()
-	result, err := scanner.ScanAllProviders(ctx, config)
+	result, err := concurrentScanner.ScanAllProviders(ctx, config)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
@@ -435,7 +435,7 @@ func TestConcurrentScanner_Stats(t *testing.T) {
 	concurrentScanner.RegisterProvider("gcp", NewMockConcurrentCollector("gcp", 150*time.Millisecond, false, 3))
 
 	// Get stats
-	stats := scanner.GetStats()
+	stats := concurrentScanner.GetStats()
 
 	// Check stats
 	if stats["registered_providers"] != 2 {
@@ -474,7 +474,7 @@ func TestConcurrentScanner_SkipMerging(t *testing.T) {
 
 	// Perform concurrent scan
 	ctx := context.Background()
-	result, err := scanner.ScanAllProviders(ctx, config)
+	result, err := concurrentScanner.ScanAllProviders(ctx, config)
 
 	if err != nil {
 		t.Fatalf("Expected no error, got: %v", err)
@@ -515,7 +515,7 @@ func BenchmarkConcurrentScanner_Performance(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		ctx := context.Background()
-		result, err := scanner.ScanAllProviders(ctx, config)
+		result, err := concurrentScanner.ScanAllProviders(ctx, config)
 		if err != nil {
 			b.Fatalf("Scan failed: %v", err)
 		}

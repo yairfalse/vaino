@@ -574,7 +574,7 @@ func (env *e2eEnvironment) saveSnapshot(filename string, snapshot *types.Snapsho
 }
 
 func (env *e2eEnvironment) runWGO(args ...string) (string, error) {
-	cmd := exec.Command(env.vainoBinary, args...)
+	cmd := exec.Command(env.wgoBinary, args...)
 	cmd.Dir = env.tmpDir
 	output, err := cmd.CombinedOutput()
 	return string(output), err
