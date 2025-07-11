@@ -464,7 +464,7 @@ func TestProviderIntegration(t *testing.T) {
 // Helper functions
 
 func runWGOCLI(args ...string) (string, string, error) {
-	cmd := exec.Command("./wgo", args...)
+	cmd := exec.Command("./vaino", args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

@@ -27,7 +27,7 @@ func TestE2EAWSDriftDetection(t *testing.T) {
 	}
 
 	// Check if vaino binary exists
-	wgoBinary := "./wgo"
+	wgoBinary := "./vaino"
 	if _, err := os.Stat(wgoBinary); os.IsNotExist(err) {
 		// Try to build it
 		cmd := exec.Command("go", "build", "-o", wgoBinary, "./cmd/vaino")
@@ -109,7 +109,7 @@ func TestE2EAWSProviderFeatures(t *testing.T) {
 		t.Skip("Skipping E2E test in short mode")
 	}
 
-	wgoBinary := "./wgo"
+	wgoBinary := "./vaino"
 	if _, err := os.Stat(wgoBinary); os.IsNotExist(err) {
 		t.Skip("vaino binary not found")
 	}
@@ -165,7 +165,7 @@ func TestE2EGitLikeDiff(t *testing.T) {
 		t.Skip("Skipping E2E test in short mode")
 	}
 
-	wgoBinary := "./wgo"
+	wgoBinary := "./vaino"
 	if _, err := os.Stat(wgoBinary); os.IsNotExist(err) {
 		t.Skip("vaino binary not found")
 	}
