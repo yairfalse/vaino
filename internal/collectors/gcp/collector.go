@@ -48,6 +48,8 @@ func (c *GCPCollector) Status() string {
 }
 
 func (c *GCPCollector) Collect(ctx context.Context, config collectors.CollectorConfig) (*types.Snapshot, error) {
+	startTime := time.Now()
+
 	// Extract GCP configuration
 	gcpConfig := c.extractGCPConfig(config)
 
@@ -56,47 +58,74 @@ func (c *GCPCollector) Collect(ctx context.Context, config collectors.CollectorC
 		return nil, err
 	}
 
+	// Initialize GCP clients
+	clientPool, err := NewGCPClientPool(ctx, GCPClientConfig{
+		ProjectID:       gcpConfig.ProjectID,
+		CredentialsFile: gcpConfig.CredentialsFile,
+		Regions:         gcpConfig.Regions,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize GCP clients: %w", err)
+	}
+
+	var allResources []types.Resource
+
+	// Collect resources from different services
+	services := []struct {
+		name      string
+		collector func(ctx context.Context, clientPool *GCPServicePool, projectID string, regions []string) ([]types.Resource, error)
+	}{
+		{"Compute Engine", c.collectComputeResources},
+		{"Storage", c.collectStorageResources},
+		{"Network", c.collectNetworkResources},
+	}
+
+	for _, service := range services {
+		resources, err := service.collector(ctx, clientPool, gcpConfig.ProjectID, gcpConfig.Regions)
+		if err != nil {
+			// Check for authentication errors
+			if isGCPAuthError(err) {
+				return nil, vainoerrors.New(vainoerrors.ErrorTypeAuthentication, vainoerrors.ProviderGCP,
+					fmt.Sprintf("Authentication failed for %s service", service.name)).
+					WithCause(err.Error()).
+					WithSolutions(
+						"Verify GCP credentials are configured correctly",
+						"Check GOOGLE_APPLICATION_CREDENTIALS environment variable",
+						"Ensure service account has required permissions",
+						"Verify project ID is correct",
+					).
+					WithVerify("gcloud auth application-default print-access-token").
+					WithHelp("vaino validate gcp")
+			}
+
+			// For other errors, log and continue
+			fmt.Printf("Warning: Failed to collect %s resources: %v\n", service.name, err)
+			continue
+		}
+		allResources = append(allResources, resources...)
+	}
+
+	collectionTime := time.Since(startTime)
+
+	// Create snapshot
 	snapshot := &types.Snapshot{
 		ID:        fmt.Sprintf("gcp-scan-%d", time.Now().Unix()),
 		Provider:  "gcp",
 		Timestamp: time.Now(),
-		Resources: []types.Resource{},
+		Resources: allResources,
 		Metadata: types.SnapshotMetadata{
 			CollectorVersion: c.version,
+			CollectionTime:   collectionTime,
+			ResourceCount:    len(allResources),
+			Regions:          gcpConfig.Regions,
 			AdditionalData: map[string]interface{}{
-				"scan_config": config,
+				"project_id":    gcpConfig.ProjectID,
+				"scan_config":   config,
+				"regions_count": len(gcpConfig.Regions),
 			},
 		},
 	}
 
-	// For now, return a basic snapshot indicating GCP scanning is functional
-	// This would be expanded to actually collect GCP resources
-	resources := []types.Resource{
-		{
-			ID:       "gcp-placeholder-1",
-			Type:     "compute_instance",
-			Name:     "placeholder-instance",
-			Provider: "gcp",
-			Region:   gcpConfig.Region,
-			Configuration: map[string]interface{}{
-				"machine_type": "e2-micro",
-				"status":       "running",
-			},
-			Metadata: types.ResourceMetadata{
-				CreatedAt: time.Now(),
-				Version:   "1",
-				AdditionalData: map[string]interface{}{
-					"project_id": gcpConfig.ProjectID,
-					"zone":       gcpConfig.Zone,
-				},
-			},
-			Tags: map[string]string{
-				"environment": "development",
-			},
-		},
-	}
-
-	snapshot.Resources = resources
 	return snapshot, nil
 }
 
@@ -179,6 +208,128 @@ func (c *GCPCollector) extractGCPConfig(config collectors.CollectorConfig) GCPCo
 	}
 
 	return gcpConfig
+}
+
+// collectComputeResources collects GCP Compute Engine resources
+func (c *GCPCollector) collectComputeResources(ctx context.Context, clientPool *GCPServicePool, projectID string, regions []string) ([]types.Resource, error) {
+	var resources []types.Resource
+
+	for _, region := range regions {
+		// Get compute instances
+		instances, err := clientPool.GetComputeInstances(ctx, projectID, region)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get compute instances in region %s: %w", region, err)
+		}
+
+		for _, instance := range instances {
+			resource := c.normalizer.NormalizeComputeInstance(instance)
+			resource.Region = region
+			resources = append(resources, resource)
+		}
+
+		// Get persistent disks
+		disks, err := clientPool.GetPersistentDisks(ctx, projectID, region)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get persistent disks in region %s: %w", region, err)
+		}
+
+		for _, disk := range disks {
+			resource := c.normalizer.NormalizePersistentDisk(disk)
+			resource.Region = region
+			resources = append(resources, resource)
+		}
+	}
+
+	return resources, nil
+}
+
+// collectStorageResources collects GCP Storage resources
+func (c *GCPCollector) collectStorageResources(ctx context.Context, clientPool *GCPServicePool, projectID string, regions []string) ([]types.Resource, error) {
+	var resources []types.Resource
+
+	// Get storage buckets (global)
+	buckets, err := clientPool.GetStorageBuckets(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get storage buckets: %w", err)
+	}
+
+	for _, bucket := range buckets {
+		resource := c.normalizer.NormalizeStorageBucket(bucket)
+		resources = append(resources, resource)
+	}
+
+	return resources, nil
+}
+
+// collectNetworkResources collects GCP Network resources
+func (c *GCPCollector) collectNetworkResources(ctx context.Context, clientPool *GCPServicePool, projectID string, regions []string) ([]types.Resource, error) {
+	var resources []types.Resource
+
+	// Get VPC networks (global)
+	networks, err := clientPool.GetVPCNetworks(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get VPC networks: %w", err)
+	}
+
+	for _, network := range networks {
+		resource := c.normalizer.NormalizeVPCNetwork(network)
+		resources = append(resources, resource)
+	}
+
+	for _, region := range regions {
+		// Get subnets
+		subnets, err := clientPool.GetSubnets(ctx, projectID, region)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get subnets in region %s: %w", region, err)
+		}
+
+		for _, subnet := range subnets {
+			resource := c.normalizer.NormalizeSubnet(subnet)
+			resource.Region = region
+			resources = append(resources, resource)
+		}
+
+		// Get firewall rules
+		firewalls, err := clientPool.GetFirewallRules(ctx, projectID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get firewall rules: %w", err)
+		}
+
+		for _, firewall := range firewalls {
+			resource := c.normalizer.NormalizeFirewallRule(firewall)
+			resources = append(resources, resource)
+		}
+	}
+
+	return resources, nil
+}
+
+// isGCPAuthError checks if an error is related to GCP authentication
+func isGCPAuthError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := strings.ToLower(err.Error())
+	authErrorPatterns := []string{
+		"permission denied",
+		"unauthorized",
+		"invalid authentication",
+		"unauthenticated",
+		"credentials",
+		"oauth",
+		"token",
+		"service account",
+		"application default credentials",
+	}
+
+	for _, pattern := range authErrorPatterns {
+		if strings.Contains(errStr, pattern) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // validateCredentials validates GCP credentials

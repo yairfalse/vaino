@@ -23,6 +23,12 @@ type SnapshotMetadata struct {
 	Namespaces       []string               `json:"namespaces,omitempty"`
 	Tags             map[string]string      `json:"tags,omitempty"`
 	AdditionalData   map[string]interface{} `json:"additional_data,omitempty"`
+
+	// Baseline-related metadata (transparent to users)
+	IsBaseline     bool   `json:"is_baseline,omitempty"`
+	BaselineName   string `json:"baseline_name,omitempty"`
+	BaselineTag    string `json:"baseline_tag,omitempty"`
+	BaselineReason string `json:"baseline_reason,omitempty"`
 }
 
 // Validate checks if the snapshot has all required fields
@@ -77,6 +83,30 @@ func (s Snapshot) FindResource(id string) (Resource, bool) {
 		}
 	}
 	return Resource{}, false
+}
+
+// IsBaseline returns true if this snapshot is marked as a baseline
+func (s Snapshot) IsBaselineSnapshot() bool {
+	return s.Metadata.IsBaseline
+}
+
+// MarkAsBaseline marks this snapshot as a baseline with optional name and reason
+func (s *Snapshot) MarkAsBaseline(name, reason string) {
+	s.Metadata.IsBaseline = true
+	s.Metadata.BaselineName = name
+	s.Metadata.BaselineReason = reason
+	if s.Metadata.Tags == nil {
+		s.Metadata.Tags = make(map[string]string)
+	}
+	s.Metadata.Tags["baseline"] = "true"
+	if name != "" {
+		s.Metadata.Tags["baseline-name"] = name
+	}
+}
+
+// GetBaselineInfo returns baseline information if this is a baseline
+func (s Snapshot) GetBaselineInfo() (name, reason string, isBaseline bool) {
+	return s.Metadata.BaselineName, s.Metadata.BaselineReason, s.Metadata.IsBaseline
 }
 
 // Baseline represents a known good state for comparison

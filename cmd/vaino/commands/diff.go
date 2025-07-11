@@ -45,6 +45,12 @@ By default, compares current infrastructure state with the last scan automatical
 
   # Compare two specific snapshots
   vaino diff --from snapshot-1.json --to snapshot-2.json
+  
+  # Compare against latest baseline
+  vaino diff --baseline
+  
+  # Compare against specific baseline
+  vaino diff --baseline production
 
   # Use in CI/CD pipelines
   if ! vaino diff --quiet; then
@@ -55,9 +61,12 @@ By default, compares current infrastructure state with the last scan automatical
 	}
 
 	// Flags - Unix-style like git diff
-	// Removed baseline flag - use --from instead
 	cmd.Flags().String("from", "", "source snapshot file")
 	cmd.Flags().String("to", "", "target snapshot file")
+
+	// Baseline support (transparent alternative to --from)
+	cmd.Flags().String("baseline", "", "compare against baseline (name or 'auto' for latest)")
+	cmd.Flags().Bool("list-baselines", false, "list available baselines and exit")
 	cmd.Flags().String("format", "", "output format (unix, simple, name-only, stat, json, yaml)")
 	cmd.Flags().StringP("output", "o", "", "output file (use '-' for stdout)")
 
@@ -247,9 +256,10 @@ func formatTableReport(report *differ.DriftReport, summaryOnly bool, showUnchang
 
 func runDiff(cmd *cobra.Command, args []string) error {
 	// Parse flags
-	// baseline flag removed
 	from, _ := cmd.Flags().GetString("from")
 	to, _ := cmd.Flags().GetString("to")
+	baseline, _ := cmd.Flags().GetString("baseline")
+	listBaselines, _ := cmd.Flags().GetBool("list-baselines")
 	format, _ := cmd.Flags().GetString("format")
 	outputFile, _ := cmd.Flags().GetString("output")
 	provider, _ := cmd.Flags().GetString("provider")
@@ -259,6 +269,11 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	ignoreFields, _ := cmd.Flags().GetStringSlice("ignore-fields")
 	minSeverity, _ := cmd.Flags().GetString("min-severity")
 
+	// Handle --list-baselines flag
+	if listBaselines {
+		return listAvailableBaselines(provider)
+	}
+
 	// Check for no-color flag from global flags
 	noColor := cmd.Flag("no-color") != nil && cmd.Flag("no-color").Value.String() == "true"
 
@@ -267,6 +282,25 @@ func runDiff(cmd *cobra.Command, args []string) error {
 		format = "name-only"
 	} else if stat {
 		format = "stat"
+	}
+
+	// Handle baseline flag by resolving to appropriate --from value
+	if baseline != "" {
+		if from != "" {
+			return fmt.Errorf("cannot use both --baseline and --from flags")
+		}
+		baselineSnapshot, err := findBaseline(baseline, provider)
+		if err != nil {
+			return fmt.Errorf("baseline resolution failed: %w", err)
+		}
+		from = baselineSnapshot
+		if !quiet {
+			if baseline == "auto" || baseline == "" {
+				fmt.Printf("Using latest baseline as comparison source\n")
+			} else {
+				fmt.Printf("Using baseline '%s' as comparison source\n", baseline)
+			}
+		}
 	}
 
 	// Auto-detect last scan if no inputs provided
@@ -556,6 +590,177 @@ func runDiff(cmd *cobra.Command, args []string) error {
 	// Set exit code based on whether drift was detected
 	if len(report.ResourceChanges) > 0 {
 		os.Exit(1) // Drift detected - like git diff
+	}
+
+	return nil
+}
+
+// findBaseline locates a baseline snapshot by name or automatically finds the latest
+func findBaseline(baselineName, provider string) (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("could not get home directory: %w", err)
+	}
+
+	historyDir := filepath.Join(homeDir, ".vaino", "history")
+
+	// If no specific name, find latest baseline
+	if baselineName == "" || baselineName == "auto" {
+		return findLatestBaseline(historyDir, provider)
+	}
+
+	// Find baseline by name
+	return findNamedBaseline(historyDir, baselineName, provider)
+}
+
+// findLatestBaseline finds the most recent baseline snapshot
+func findLatestBaseline(historyDir, provider string) (string, error) {
+	files, err := filepath.Glob(filepath.Join(historyDir, "*.json"))
+	if err != nil {
+		return "", fmt.Errorf("could not list history files: %w", err)
+	}
+
+	var latestBaseline string
+	var latestTime time.Time
+
+	for _, file := range files {
+		// Skip if provider filter is specified and doesn't match
+		if provider != "" && !strings.Contains(file, provider) {
+			continue
+		}
+
+		snapshot, err := loadSnapshotFromFile(file)
+		if err != nil {
+			continue // Skip invalid files
+		}
+
+		if snapshot.IsBaselineSnapshot() && snapshot.Timestamp.After(latestTime) {
+			latestBaseline = file
+			latestTime = snapshot.Timestamp
+		}
+	}
+
+	if latestBaseline == "" {
+		return "", fmt.Errorf("no baseline snapshots found")
+	}
+
+	return latestBaseline, nil
+}
+
+// findNamedBaseline finds a baseline snapshot by name
+func findNamedBaseline(historyDir, baselineName, provider string) (string, error) {
+	files, err := filepath.Glob(filepath.Join(historyDir, "*.json"))
+	if err != nil {
+		return "", fmt.Errorf("could not list history files: %w", err)
+	}
+
+	for _, file := range files {
+		// Skip if provider filter is specified and doesn't match
+		if provider != "" && !strings.Contains(file, provider) {
+			continue
+		}
+
+		snapshot, err := loadSnapshotFromFile(file)
+		if err != nil {
+			continue // Skip invalid files
+		}
+
+		if snapshot.IsBaselineSnapshot() {
+			name, _, _ := snapshot.GetBaselineInfo()
+			if name == baselineName {
+				return file, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("baseline '%s' not found", baselineName)
+}
+
+// listAvailableBaselines lists all available baseline snapshots
+func listAvailableBaselines(provider string) error {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("could not get home directory: %w", err)
+	}
+
+	historyDir := filepath.Join(homeDir, ".vaino", "history")
+	files, err := filepath.Glob(filepath.Join(historyDir, "*.json"))
+	if err != nil {
+		return fmt.Errorf("could not list history files: %w", err)
+	}
+
+	type baselineInfo struct {
+		name      string
+		reason    string
+		provider  string
+		timestamp time.Time
+		file      string
+	}
+
+	var baselines []baselineInfo
+
+	for _, file := range files {
+		// Skip if provider filter is specified and doesn't match
+		if provider != "" && !strings.Contains(file, provider) {
+			continue
+		}
+
+		snapshot, err := loadSnapshotFromFile(file)
+		if err != nil {
+			continue // Skip invalid files
+		}
+
+		if snapshot.IsBaselineSnapshot() {
+			name, reason, _ := snapshot.GetBaselineInfo()
+			baselines = append(baselines, baselineInfo{
+				name:      name,
+				reason:    reason,
+				provider:  snapshot.Provider,
+				timestamp: snapshot.Timestamp,
+				file:      filepath.Base(file),
+			})
+		}
+	}
+
+	if len(baselines) == 0 {
+		if provider != "" {
+			fmt.Printf("No baselines found for provider '%s'\n", provider)
+		} else {
+			fmt.Println("No baselines found")
+		}
+		fmt.Println("\nCreate a baseline with:")
+		fmt.Println("  vaino scan --baseline --baseline-name my-baseline")
+		return nil
+	}
+
+	fmt.Println("Available Baselines:")
+	fmt.Println("===================")
+	fmt.Println()
+
+	for _, baseline := range baselines {
+		name := baseline.name
+		if name == "" {
+			name = "(unnamed)"
+		}
+
+		fmt.Printf("• %s\n", name)
+		fmt.Printf("  Provider: %s\n", baseline.provider)
+		fmt.Printf("  Created:  %s\n", baseline.timestamp.Format("2006-01-02 15:04:05"))
+		if baseline.reason != "" {
+			fmt.Printf("  Reason:   %s\n", baseline.reason)
+		}
+		fmt.Printf("  File:     %s\n", baseline.file)
+		fmt.Println()
+	}
+
+	fmt.Println("Usage:")
+	if provider != "" {
+		fmt.Printf("  vaino diff --baseline <name>      # Compare against named baseline\n")
+		fmt.Printf("  vaino diff --baseline auto        # Compare against latest baseline\n")
+	} else {
+		fmt.Printf("  vaino diff --baseline <name>      # Compare against named baseline\n")
+		fmt.Printf("  vaino diff --baseline auto        # Compare against latest baseline\n")
+		fmt.Printf("  vaino diff --baseline auto -p %s  # Limit to specific provider\n", baselines[0].provider)
 	}
 
 	return nil

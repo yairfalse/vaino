@@ -48,7 +48,13 @@ compared against other snapshots to identify changes.`,
   vaino scan --provider gcp --credentials ./service-account.json
 
   # Scan all providers and save with custom name
-  vaino scan --all --output-file my-snapshot.json`,
+  vaino scan --all --output-file my-snapshot.json
+  
+  # Create a baseline for production infrastructure
+  vaino scan --provider terraform --baseline --baseline-name production
+  
+  # Create baseline with reason
+  vaino scan --provider aws --baseline --baseline-name v2.1 --baseline-reason "Release 2.1 deployment"`,
 		RunE: runScan,
 	}
 
@@ -66,6 +72,11 @@ compared against other snapshots to identify changes.`,
 	cmd.Flags().String("snapshot-name", "", "custom name for the snapshot")
 	cmd.Flags().StringSlice("tags", []string{}, "tags to apply to snapshot (key=value)")
 	cmd.Flags().Bool("quiet", false, "suppress output (for automated use)")
+
+	// Baseline flags (transparent to users)
+	cmd.Flags().Bool("baseline", false, "mark this scan as a baseline for future comparisons")
+	cmd.Flags().String("baseline-name", "", "name for the baseline (e.g., 'production', 'v1.0')")
+	cmd.Flags().String("baseline-reason", "", "reason for creating this baseline")
 
 	// AWS specific flags
 	cmd.Flags().String("profile", "", "AWS profile to use")
@@ -98,6 +109,11 @@ func runScan(cmd *cobra.Command, args []string) error {
 	snapshotName, _ := cmd.Flags().GetString("snapshot-name")
 	statePaths, _ := cmd.Flags().GetStringSlice("state-file")
 	autoDiscover, _ := cmd.Flags().GetBool("auto-discover")
+
+	// Baseline flags
+	isBaseline, _ := cmd.Flags().GetBool("baseline")
+	baselineName, _ := cmd.Flags().GetString("baseline-name")
+	baselineReason, _ := cmd.Flags().GetString("baseline-reason")
 
 	// Create smart defaults manager
 	defaultsManager := config.NewDefaultsManager()
@@ -372,6 +388,18 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}
 
 	collectionTime := time.Since(startTime)
+
+	// Mark as baseline if requested
+	if isBaseline {
+		snapshot.MarkAsBaseline(baselineName, baselineReason)
+		if !quiet {
+			if baselineName != "" {
+				fmt.Printf("✓ Marked as baseline: %s\n", baselineName)
+			} else {
+				fmt.Printf("✓ Marked as baseline\n")
+			}
+		}
+	}
 
 	// Display results
 	if !quiet {
