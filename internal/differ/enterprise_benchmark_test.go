@@ -358,7 +358,7 @@ func TestEnterpriseDiffEngine_StreamingPerformance(t *testing.T) {
 	}()
 
 	start := time.Now()
-	report, err := engine.Compare(baseline, current)
+	_, err := engine.Compare(baseline, current)
 	duration := time.Since(start)
 
 	if err != nil {

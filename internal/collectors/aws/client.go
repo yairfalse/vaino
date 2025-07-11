@@ -9,6 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodbstreams"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ecs"
+	"github.com/aws/aws-sdk-go-v2/service/eks"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
@@ -33,6 +35,8 @@ type AWSClients struct {
 	IAM             *iam.Client
 	DynamoDB        *dynamodb.Client
 	DynamoDBStreams *dynamodbstreams.Client
+	ECS             *ecs.Client
+	EKS             *eks.Client
 	Config          aws.Config
 }
 
@@ -75,6 +79,8 @@ func NewAWSClients(ctx context.Context, clientConfig ClientConfig) (*AWSClients,
 		IAM:             iam.NewFromConfig(cfg),
 		DynamoDB:        dynamodb.NewFromConfig(cfg),
 		DynamoDBStreams: dynamodbstreams.NewFromConfig(cfg),
+		ECS:             ecs.NewFromConfig(cfg),
+		EKS:             eks.NewFromConfig(cfg),
 		Config:          cfg,
 	}
 

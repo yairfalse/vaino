@@ -118,7 +118,7 @@ func NewEnterpriseDifferEngine(options EnterpriseDiffOptions) *EnterpriseDifferE
 
 	// Use advanced classifier with ML support if specified
 	if options.RiskScoringModel != "" {
-		engine.classifier = NewAdvancedClassifier(options.RiskScoringModel)
+		engine.classifier = NewAdvancedClassifier()
 	} else {
 		engine.classifier = &DefaultClassifier{}
 	}
@@ -206,7 +206,6 @@ func (e *EnterpriseDifferEngine) CompareWithContext(ctx context.Context, baselin
 	// Phase 2: Change Detection
 	var resourceChanges []ResourceDiff
 	var allChanges []Change
-	var mu sync.Mutex
 
 	if e.options.ProgressCallback != nil {
 		e.options.ProgressCallback(0.3, fmt.Sprintf("Matched %d resources, detecting changes...", len(matches)))
