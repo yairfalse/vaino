@@ -200,7 +200,7 @@ cleanup() {
 
 # Main execution
 main() {
-    echo "🏗️  WGO RPM Package Builder"
+    echo "🏗️  VAINO RPM Package Builder"
     echo "=========================="
     echo ""
     echo "Building: ${PACKAGE_NAME} ${VERSION} for ${ARCH} (${DIST})"

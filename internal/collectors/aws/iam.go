@@ -107,7 +107,7 @@ func (c *AWSCollector) collectIAMUsers(ctx context.Context) ([]types.Resource, e
 	return resources, nil
 }
 
-// normalizeIAMRole converts an IAM role to WGO format
+// normalizeIAMRole converts an IAM role to VAINO format
 func (c *AWSCollector) normalizeIAMRole(role iamTypes.Role) types.Resource {
 	return types.Resource{
 		ID:       aws.ToString(role.Arn),
@@ -130,7 +130,7 @@ func (c *AWSCollector) normalizeIAMRole(role iamTypes.Role) types.Resource {
 	}
 }
 
-// normalizeIAMUser converts an IAM user to WGO format
+// normalizeIAMUser converts an IAM user to VAINO format
 func (c *AWSCollector) normalizeIAMUser(user iamTypes.User) types.Resource {
 	return types.Resource{
 		ID:       aws.ToString(user.Arn),

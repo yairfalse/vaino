@@ -1,9 +1,9 @@
 version: '3'
 
 vars:
-  APP_NAME: wgo
+  APP_NAME: vaino
   BUILD_DIR: dist
-  MAIN_PACKAGE: ./cmd/wgo
+  MAIN_PACKAGE: ./cmd/vaino
   VERSION:
     sh: git describe --tags --always --dirty 2>/dev/null || echo "dev"
   COMMIT:

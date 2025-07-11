@@ -182,7 +182,7 @@ func (dm *DefaultsManager) GenerateAutoName(prefix string) string {
 
 	// Clean up the name
 	if dirName == "." || dirName == "/" {
-		dirName = "wgo"
+		dirName = "vaino"
 	}
 
 	// Add timestamp

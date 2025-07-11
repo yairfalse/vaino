@@ -1,6 +1,6 @@
 #!/bin/bash
-# YUM/RPM Repository Setup Script for WGO
-# This script sets up a complete YUM repository for distributing WGO packages
+# YUM/RPM Repository Setup Script for VAINO
+# This script sets up a complete YUM repository for distributing VAINO packages
 
 set -e
 
@@ -10,7 +10,7 @@ REPO_OWNER="yairfalse"
 REPO_ROOT="/tmp/yum-repo"
 DISTRIBUTIONS=("el8" "el9" "fedora37" "fedora38" "fedora39")
 ARCHITECTURES=("x86_64" "aarch64" "armv7hl")
-GPG_KEY_ID="WGO Package Signing Key"
+GPG_KEY_ID="VAINO Package Signing Key"
 GPG_KEY_EMAIL="packages@vaino.sh"
 
 # Colors for output
@@ -72,7 +72,7 @@ create_gpg_key() {
     
     # Generate key configuration
     cat > /tmp/gpg-key-config << EOF
-%echo Generating GPG key for WGO package signing
+%echo Generating GPG key for VAINO package signing
 Key-Type: RSA
 Key-Length: 4096
 Subkey-Type: RSA
@@ -144,13 +144,13 @@ build_rpm() {
     rpmbuild --define="_topdir $build_dir" \
              --define="version $version" \
              --target="$arch" \
-             -ba "$build_dir/SPECS/wgo.spec"
+             -ba "$build_dir/SPECS/vaino.spec"
     
     # Sign the RPM
-    rpm-sign --addsign "$build_dir/RPMS/$arch/wgo-$version-1.*.rpm"
+    rpm-sign --addsign "$build_dir/RPMS/$arch/vaino-$version-1.*.rpm"
     
     log_success "RPM built successfully"
-    echo "$build_dir/RPMS/$arch/wgo-$version-1.*.rpm"
+    echo "$build_dir/RPMS/$arch/vaino-$version-1.*.rpm"
 }
 
 # Add package to repository
@@ -203,8 +203,8 @@ create_repo_config() {
     
     # Create main repository configuration
     cat > "${REPO_ROOT}/vaino.repo" << EOF
-[wgo]
-name=WGO Repository
+[vaino]
+name=VAINO Repository
 baseurl=https://yum.vaino.sh/rhel/\$releasever/\$basearch/
 enabled=1
 gpgcheck=1
@@ -213,9 +213,9 @@ EOF
     
     # Create distribution-specific configurations
     for dist in "${DISTRIBUTIONS[@]}"; do
-        cat > "${REPO_ROOT}/wgo-${dist}.repo" << EOF
-[wgo-${dist}]
-name=WGO Repository for ${dist}
+        cat > "${REPO_ROOT}/vaino-${dist}.repo" << EOF
+[vaino-${dist}]
+name=VAINO Repository for ${dist}
 baseurl=https://yum.vaino.sh/rhel/${dist}/\$basearch/
 enabled=1
 gpgcheck=1
@@ -226,7 +226,7 @@ EOF
     # Create installation script
     cat > "${REPO_ROOT}/install-repo.sh" << 'EOF'
 #!/bin/bash
-# WGO YUM Repository Installation Script
+# VAINO YUM Repository Installation Script
 
 set -e
 
@@ -252,12 +252,12 @@ else
 fi
 
 # Add GPG key
-echo "Adding WGO GPG key..."
-rpm --import https://yum.vaino.sh/rhel/wgo.gpg
+echo "Adding VAINO GPG key..."
+rpm --import https://yum.vaino.sh/rhel/vaino.gpg
 
 # Add repository
-echo "Adding WGO repository..."
-curl -fsSL https://yum.vaino.sh/rhel/wgo-${DIST}.repo -o /etc/yum.repos.d/vaino.repo
+echo "Adding VAINO repository..."
+curl -fsSL https://yum.vaino.sh/rhel/vaino-${DIST}.repo -o /etc/yum.repos.d/vaino.repo
 
 # Update metadata
 if command -v dnf >/dev/null 2>&1; then
@@ -266,12 +266,12 @@ else
     yum makecache
 fi
 
-echo "WGO YUM repository added successfully!"
-echo "You can now install WGO with:"
+echo "VAINO YUM repository added successfully!"
+echo "You can now install VAINO with:"
 if command -v dnf >/dev/null 2>&1; then
-    echo "  sudo dnf install wgo"
+    echo "  sudo dnf install vaino"
 else
-    echo "  sudo yum install wgo"
+    echo "  sudo yum install vaino"
 fi
 EOF
     chmod +x "${REPO_ROOT}/install-repo.sh"
@@ -284,10 +284,10 @@ test_repository() {
     log_info "Testing repository setup..."
     
     # Create temporary repository configuration
-    local temp_repo="/tmp/test-wgo.repo"
+    local temp_repo="/tmp/test-vaino.repo"
     cat > "$temp_repo" << EOF
-[wgo-test]
-name=WGO Test Repository
+[vaino-test]
+name=VAINO Test Repository
 baseurl=file://${REPO_ROOT}/rhel/el9/x86_64/
 enabled=1
 gpgcheck=0
@@ -295,14 +295,14 @@ EOF
     
     # Test repository access
     if command -v dnf >/dev/null 2>&1; then
-        if dnf --repo=wgo-test --disablerepo=* list available 2>/dev/null; then
+        if dnf --repo=vaino-test --disablerepo=* list available 2>/dev/null; then
             log_success "Repository structure is valid"
         else
             log_error "Repository test failed"
             return 1
         fi
     elif command -v yum >/dev/null 2>&1; then
-        if yum --disablerepo=* --enablerepo=wgo-test list available 2>/dev/null; then
+        if yum --disablerepo=* --enablerepo=vaino-test list available 2>/dev/null; then
             log_success "Repository structure is valid"
         else
             log_error "Repository test failed"
@@ -325,7 +325,7 @@ generate_github_pages() {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>WGO YUM Repository</title>
+    <title>VAINO YUM Repository</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; }
         .container { max-width: 800px; margin: 0 auto; }
@@ -337,26 +337,26 @@ generate_github_pages() {
 <body>
     <div class="container">
         <div class="header">
-            <h1>WGO YUM Repository</h1>
-            <p>Official YUM repository for WGO (What's Going On)</p>
+            <h1>VAINO YUM Repository</h1>
+            <p>Official YUM repository for VAINO (What's Going On)</p>
         </div>
         
         <h2>Quick Installation</h2>
         <div class="code">
             curl -fsSL https://yum.vaino.sh/rhel/install-repo.sh | sudo bash<br>
-            sudo dnf install wgo
+            sudo dnf install vaino
         </div>
         
         <h2>Manual Installation</h2>
         <ol>
             <li>Add the GPG key:
-                <div class="code">sudo rpm --import https://yum.vaino.sh/rhel/wgo.gpg</div>
+                <div class="code">sudo rpm --import https://yum.vaino.sh/rhel/vaino.gpg</div>
             </li>
             <li>Add the repository:
                 <div class="code">sudo curl -fsSL https://yum.vaino.sh/rhel/vaino.repo -o /etc/yum.repos.d/vaino.repo</div>
             </li>
-            <li>Install WGO:
-                <div class="code">sudo dnf install wgo</div>
+            <li>Install VAINO:
+                <div class="code">sudo dnf install vaino</div>
             </li>
         </ol>
         
@@ -368,7 +368,7 @@ EOF
         <div class="distro">
             <h3>${dist}</h3>
             <div class="code">
-                sudo curl -fsSL https://yum.vaino.sh/rhel/wgo-${dist}.repo -o /etc/yum.repos.d/vaino.repo
+                sudo curl -fsSL https://yum.vaino.sh/rhel/vaino-${dist}.repo -o /etc/yum.repos.d/vaino.repo
             </div>
         </div>
 EOF
@@ -394,7 +394,7 @@ EOF
 
 # Main execution
 main() {
-    echo "🚀 WGO YUM Repository Setup"
+    echo "🚀 VAINO YUM Repository Setup"
     echo "=========================="
     echo ""
     
@@ -424,7 +424,7 @@ main() {
     log_success "YUM repository setup completed!"
     echo ""
     echo "Repository location: $REPO_ROOT"
-    echo "GPG public key: ${REPO_ROOT}/wgo.gpg"
+    echo "GPG public key: ${REPO_ROOT}/vaino.gpg"
     echo "Installation script: ${REPO_ROOT}/install-repo.sh"
     echo ""
     echo "Next steps:"

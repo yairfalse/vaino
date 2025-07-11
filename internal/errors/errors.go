@@ -161,12 +161,12 @@ func IsUserError(err error) bool {
 
 // GetExitCode returns appropriate exit code for error type
 func GetExitCode(err error) int {
-	wgoErr, ok := err.(*VAINOError)
+	vainoErr, ok := err.(*VAINOError)
 	if !ok {
 		return 1 // Generic error
 	}
 
-	switch wgoErr.Type {
+	switch vainoErr.Type {
 	case ErrorTypeAuthentication:
 		return 77 // EX_NOPERM
 	case ErrorTypeConfiguration:

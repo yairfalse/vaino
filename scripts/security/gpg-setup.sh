@@ -1,14 +1,14 @@
 #!/bin/bash
-# GPG Key Management Script for WGO
+# GPG Key Management Script for VAINO
 # This script manages GPG keys for package signing and verification
 
 set -e
 
 # Configuration
-GPG_KEY_ID="WGO Package Signing Key"
-GPG_KEY_EMAIL="packages@wgo.sh"
-GPG_KEY_REAL_NAME="WGO Package Signing"
-GPG_KEY_COMMENT="Used for signing WGO packages"
+GPG_KEY_ID="VAINO Package Signing Key"
+GPG_KEY_EMAIL="packages@vaino.sh"
+GPG_KEY_REAL_NAME="VAINO Package Signing"
+GPG_KEY_COMMENT="Used for signing VAINO packages"
 KEY_LENGTH=4096
 EXPIRY_PERIOD="2y"
 
@@ -64,7 +64,7 @@ generate_key() {
     # Generate key configuration
     local key_config=$(mktemp)
     cat > "$key_config" << EOF
-%echo Generating GPG key for WGO package signing
+%echo Generating GPG key for VAINO package signing
 Key-Type: RSA
 Key-Length: $KEY_LENGTH
 Subkey-Type: RSA
@@ -93,12 +93,12 @@ export_public_key() {
     log_info "Exporting public key..."
     
     # Export ASCII armored public key
-    gpg --armor --export "$GPG_KEY_EMAIL" > wgo-signing-key.asc
+    gpg --armor --export "$GPG_KEY_EMAIL" > vaino-signing-key.asc
     
     # Export binary public key for APT
-    gpg --export "$GPG_KEY_EMAIL" > wgo-signing-key.gpg
+    gpg --export "$GPG_KEY_EMAIL" > vaino-signing-key.gpg
     
-    log_success "Public key exported to wgo-signing-key.asc and wgo-signing-key.gpg"
+    log_success "Public key exported to vaino-signing-key.asc and vaino-signing-key.gpg"
 }
 
 # Create GPG configuration for automated signing
@@ -194,7 +194,7 @@ create_secrets_template() {
     log_info "Creating GitHub Actions secrets template..."
     
     cat > "github-secrets.md" << EOF
-# GitHub Actions Secrets for WGO Release Pipeline
+# GitHub Actions Secrets for VAINO Release Pipeline
 
 To enable automated package signing in the release pipeline, add these secrets to your GitHub repository:
 
@@ -277,7 +277,7 @@ verify_setup() {
     fi
     
     # Check exported keys
-    if [[ -f "wgo-signing-key.asc" ]]; then
+    if [[ -f "vaino-signing-key.asc" ]]; then
         log_success "Public key exported successfully"
     else
         log_error "Public key export failed"
@@ -294,7 +294,7 @@ verify_setup() {
 # Display usage information
 display_usage() {
     cat << EOF
-WGO GPG Key Management Script
+VAINO GPG Key Management Script
 
 Usage: $0 [command]
 
@@ -315,8 +315,8 @@ Examples:
   $0 all          # Complete setup (default)
 
 Files created:
-  wgo-signing-key.asc     # ASCII armored public key
-  wgo-signing-key.gpg     # Binary public key
+  vaino-signing-key.asc     # ASCII armored public key
+  vaino-signing-key.gpg     # Binary public key
   sign-package.sh         # Package signing script
   github-secrets.md       # GitHub Actions secrets guide
 EOF
@@ -326,7 +326,7 @@ EOF
 main() {
     local command="${1:-all}"
     
-    echo "🔐 WGO GPG Key Management"
+    echo "🔐 VAINO GPG Key Management"
     echo "========================"
     echo ""
     

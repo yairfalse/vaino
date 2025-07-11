@@ -19,7 +19,7 @@ import (
 	"github.com/yairfalse/vaino/pkg/types"
 )
 
-// BenchmarkMegaFileProcessing tests WGO with 100MB+ files
+// BenchmarkMegaFileProcessing tests VAINO with 100MB+ files
 func BenchmarkMegaFileProcessing(b *testing.B) {
 	if testing.Short() {
 		b.Skip("Skipping mega file benchmark in short mode")

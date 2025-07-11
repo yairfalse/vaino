@@ -98,7 +98,7 @@ func (ah *AuthHelper) HandleGCPAuthError(projectID string, originalErr error) er
 		fmt.Println("\n🔑 ALTERNATIVE - Use a service account (more steps):")
 		fmt.Println("   1. Go to: https://console.cloud.google.com/iam-admin/serviceaccounts")
 		fmt.Println("   2. Click 'CREATE SERVICE ACCOUNT'")
-		fmt.Println("   3. Name it 'wgo-scanner' and click CREATE")
+		fmt.Println("   3. Name it 'vaino-scanner' and click CREATE")
 		fmt.Println("   4. Add role: 'Viewer' and click CONTINUE")
 		fmt.Println("   5. Click 'CREATE KEY' → JSON → CREATE")
 		fmt.Println("   6. Save the downloaded file somewhere safe")

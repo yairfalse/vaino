@@ -558,9 +558,9 @@ func (mc *MetricsCollector) cleanupLoop() {
 // collectSystemMetrics collects system metrics
 func (mc *MetricsCollector) collectSystemMetrics() {
 	// Record basic system metrics
-	mc.RecordValue("wgo.watchers.concurrent.active", float64(1), map[string]string{"type": "system"})
-	mc.RecordValue("wgo.watchers.memory.usage", float64(1024*1024), map[string]string{"type": "system"})
-	mc.RecordValue("wgo.watchers.events.processed", float64(100), map[string]string{"type": "system"})
+	mc.RecordValue("vaino.watchers.concurrent.active", float64(1), map[string]string{"type": "system"})
+	mc.RecordValue("vaino.watchers.memory.usage", float64(1024*1024), map[string]string{"type": "system"})
+	mc.RecordValue("vaino.watchers.events.processed", float64(100), map[string]string{"type": "system"})
 }
 
 // exportMetrics exports metrics to registered exporters
@@ -827,21 +827,21 @@ func (dm *DashboardManager) GetDashboard(id string) (*Dashboard, error) {
 // Helper methods to create default metrics
 func (mc *MetricsCollector) RegisterDefaultMetrics() {
 	// Watch system metrics
-	mc.RegisterMetric("wgo.watchers.concurrent.active", MetricTypeGauge, "Number of active concurrent watchers", "count", map[string]string{"component": "watchers"})
-	mc.RegisterMetric("wgo.watchers.events.processed", MetricTypeCounter, "Total events processed", "count", map[string]string{"component": "watchers"})
-	mc.RegisterMetric("wgo.watchers.events.rate", MetricTypeGauge, "Events processed per second", "rate", map[string]string{"component": "watchers"})
-	mc.RegisterMetric("wgo.watchers.memory.usage", MetricTypeGauge, "Memory usage", "bytes", map[string]string{"component": "watchers"})
-	mc.RegisterMetric("wgo.watchers.correlation.rate", MetricTypeGauge, "Event correlation rate", "rate", map[string]string{"component": "correlator"})
-	mc.RegisterMetric("wgo.watchers.scan.duration", MetricTypeTimer, "Scan duration", "seconds", map[string]string{"component": "scanner"})
-	mc.RegisterMetric("wgo.watchers.pipeline.latency", MetricTypeTimer, "Pipeline processing latency", "seconds", map[string]string{"component": "pipeline"})
-	mc.RegisterMetric("wgo.watchers.cache.hit_rate", MetricTypeGauge, "Cache hit rate", "percentage", map[string]string{"component": "cache"})
-	mc.RegisterMetric("wgo.watchers.errors.count", MetricTypeCounter, "Total errors", "count", map[string]string{"component": "watchers"})
-	mc.RegisterMetric("wgo.watchers.gc.duration", MetricTypeTimer, "Garbage collection duration", "seconds", map[string]string{"component": "gc"})
+	mc.RegisterMetric("vaino.watchers.concurrent.active", MetricTypeGauge, "Number of active concurrent watchers", "count", map[string]string{"component": "watchers"})
+	mc.RegisterMetric("vaino.watchers.events.processed", MetricTypeCounter, "Total events processed", "count", map[string]string{"component": "watchers"})
+	mc.RegisterMetric("vaino.watchers.events.rate", MetricTypeGauge, "Events processed per second", "rate", map[string]string{"component": "watchers"})
+	mc.RegisterMetric("vaino.watchers.memory.usage", MetricTypeGauge, "Memory usage", "bytes", map[string]string{"component": "watchers"})
+	mc.RegisterMetric("vaino.watchers.correlation.rate", MetricTypeGauge, "Event correlation rate", "rate", map[string]string{"component": "correlator"})
+	mc.RegisterMetric("vaino.watchers.scan.duration", MetricTypeTimer, "Scan duration", "seconds", map[string]string{"component": "scanner"})
+	mc.RegisterMetric("vaino.watchers.pipeline.latency", MetricTypeTimer, "Pipeline processing latency", "seconds", map[string]string{"component": "pipeline"})
+	mc.RegisterMetric("vaino.watchers.cache.hit_rate", MetricTypeGauge, "Cache hit rate", "percentage", map[string]string{"component": "cache"})
+	mc.RegisterMetric("vaino.watchers.errors.count", MetricTypeCounter, "Total errors", "count", map[string]string{"component": "watchers"})
+	mc.RegisterMetric("vaino.watchers.gc.duration", MetricTypeTimer, "Garbage collection duration", "seconds", map[string]string{"component": "gc"})
 
 	// Create default aggregators
-	mc.CreateAggregator("wgo.watchers.events.rate", 1*time.Minute, AggregationAverage)
-	mc.CreateAggregator("wgo.watchers.scan.duration", 5*time.Minute, AggregationP95)
-	mc.CreateAggregator("wgo.watchers.pipeline.latency", 1*time.Minute, AggregationP99)
+	mc.CreateAggregator("vaino.watchers.events.rate", 1*time.Minute, AggregationAverage)
+	mc.CreateAggregator("vaino.watchers.scan.duration", 5*time.Minute, AggregationP95)
+	mc.CreateAggregator("vaino.watchers.pipeline.latency", 1*time.Minute, AggregationP99)
 }
 
 // IsEnabled returns whether the metrics collector is enabled

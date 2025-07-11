@@ -11,7 +11,7 @@ import (
 	"github.com/yairfalse/vaino/pkg/types"
 )
 
-// Normalizer converts AWS resources to WGO format
+// Normalizer converts AWS resources to VAINO format
 type Normalizer struct {
 	region string
 }
@@ -21,7 +21,7 @@ func NewNormalizer(region string) *Normalizer {
 	return &Normalizer{region: region}
 }
 
-// NormalizeEC2Instance converts an EC2 instance to WGO format
+// NormalizeEC2Instance converts an EC2 instance to VAINO format
 func (n *Normalizer) NormalizeEC2Instance(instance ec2Types.Instance) types.Resource {
 	return types.Resource{
 		ID:       aws.ToString(instance.InstanceId),
@@ -49,7 +49,7 @@ func (n *Normalizer) NormalizeEC2Instance(instance ec2Types.Instance) types.Reso
 	}
 }
 
-// NormalizeSecurityGroup converts a security group to WGO format
+// NormalizeSecurityGroup converts a security group to VAINO format
 func (n *Normalizer) NormalizeSecurityGroup(sg ec2Types.SecurityGroup) types.Resource {
 	return types.Resource{
 		ID:       aws.ToString(sg.GroupId),
@@ -71,7 +71,7 @@ func (n *Normalizer) NormalizeSecurityGroup(sg ec2Types.SecurityGroup) types.Res
 	}
 }
 
-// NormalizeS3Bucket converts an S3 bucket to WGO format
+// NormalizeS3Bucket converts an S3 bucket to VAINO format
 func (n *Normalizer) NormalizeS3Bucket(bucket s3Types.Bucket) types.Resource {
 	return types.Resource{
 		ID:       aws.ToString(bucket.Name),
@@ -89,7 +89,7 @@ func (n *Normalizer) NormalizeS3Bucket(bucket s3Types.Bucket) types.Resource {
 	}
 }
 
-// NormalizeVPC converts a VPC to WGO format
+// NormalizeVPC converts a VPC to VAINO format
 func (n *Normalizer) NormalizeVPC(vpc ec2Types.Vpc) types.Resource {
 	return types.Resource{
 		ID:       aws.ToString(vpc.VpcId),
@@ -113,7 +113,7 @@ func (n *Normalizer) NormalizeVPC(vpc ec2Types.Vpc) types.Resource {
 	}
 }
 
-// NormalizeSubnet converts a subnet to WGO format
+// NormalizeSubnet converts a subnet to VAINO format
 func (n *Normalizer) NormalizeSubnet(subnet ec2Types.Subnet) types.Resource {
 	return types.Resource{
 		ID:       aws.ToString(subnet.SubnetId),
@@ -137,7 +137,7 @@ func (n *Normalizer) NormalizeSubnet(subnet ec2Types.Subnet) types.Resource {
 	}
 }
 
-// NormalizeRDSInstance converts an RDS instance to WGO format
+// NormalizeRDSInstance converts an RDS instance to VAINO format
 func (n *Normalizer) NormalizeRDSInstance(instance rdsTypes.DBInstance) types.Resource {
 	return types.Resource{
 		ID:       aws.ToString(instance.DBInstanceIdentifier),
@@ -168,7 +168,7 @@ func (n *Normalizer) NormalizeRDSInstance(instance rdsTypes.DBInstance) types.Re
 	}
 }
 
-// NormalizeLambdaFunction converts a Lambda function to WGO format
+// NormalizeLambdaFunction converts a Lambda function to VAINO format
 func (n *Normalizer) NormalizeLambdaFunction(function lambdaTypes.FunctionConfiguration) types.Resource {
 	return types.Resource{
 		ID:       aws.ToString(function.FunctionArn),
