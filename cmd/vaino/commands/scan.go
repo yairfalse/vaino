@@ -325,16 +325,16 @@ func runScan(cmd *cobra.Command, args []string) error {
 		snapshot.MarkAsBaseline(baselineName, baselineReason)
 		if !quiet {
 			if baselineName != "" {
-				fmt.Printf("✓ Marked as baseline: %s\n", baselineName)
+				fmt.Printf("Marked as baseline: %s\n", baselineName)
 			} else {
-				fmt.Printf("✓ Marked as baseline\n")
+				fmt.Printf("Marked as baseline\n")
 			}
 		}
 	}
 
 	// Display results
 	if !quiet {
-		fmt.Printf("✓ Found %d resources in %v\n", len(snapshot.Resources), collectionTime)
+		fmt.Printf("Found %d resources in %v\n", len(snapshot.Resources), collectionTime)
 	}
 
 	// Save to history directory for time-based comparisons

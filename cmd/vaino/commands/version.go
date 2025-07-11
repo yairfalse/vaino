@@ -32,8 +32,7 @@ func SetVersionInfo(version, commit, buildTime, builtBy string) {
 func newVersionCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
-		Short: "Show version of the Finnish creator god",
-		Long:  `Display version information for VAINO including divine build details.`,
+		Short: "Show version information",
 		Run:   runVersion,
 	}
 
@@ -50,12 +49,8 @@ func runVersion(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	fmt.Printf("VAINO - The Finnish Creator God version %s\n", Version)
-	fmt.Printf("  forged: %s\n", Commit)
-	fmt.Printf("  blessed: %s\n", BuildTime)
-	fmt.Printf("  crafted by: %s\n", BuiltBy)
-	fmt.Println()
-	fmt.Println("🌲 Ancient Finnish wisdom for modern infrastructure")
-	fmt.Println("🔥 The creator god who actually BUILDS things!")
-	fmt.Println("https://github.com/yairfalse/vaino")
+	fmt.Printf("vaino version %s\n", Version)
+	fmt.Printf("  commit: %s\n", Commit)
+	fmt.Printf("  built: %s\n", BuildTime)
+	fmt.Printf("  by: %s\n", BuiltBy)
 }

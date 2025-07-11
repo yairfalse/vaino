@@ -15,19 +15,7 @@ import (
 
 var configureCmd = &cobra.Command{
 	Use:   "configure [provider]",
-	Short: "Interactive configuration wizard for VAINO",
-	Long: `Configure VAINO providers through an interactive wizard.
-
-This command helps you set up:
-- Provider authentication
-- Default regions and projects
-- Storage locations
-- API settings
-
-Examples:
-  vaino configure              # Interactive setup for all providers
-  vaino configure gcp          # Configure only GCP
-  vaino configure aws          # Configure only AWS`,
+	Short: "Configure VAINO settings",
 	RunE: runConfigure,
 }
 

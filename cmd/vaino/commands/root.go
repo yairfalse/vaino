@@ -18,29 +18,17 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "vaino",
 	Short: "Infrastructure drift detection and monitoring",
-	Long: `VAINO - Infrastructure drift detection and monitoring tool.
+	Long:  `vaino - infrastructure drift detection and monitoring
 
-Named after Väinö from Finnish mythology.
+Usage: vaino [command] [flags]
 
-VAINO helps you detect and monitor infrastructure changes across multiple 
-cloud providers and Infrastructure as Code tools. Think of it as "git diff" 
-for your infrastructure.
+Common commands:
+  scan        Scan infrastructure state
+  diff        Show changes since last scan
+  watch       Monitor infrastructure in real-time
+  status      Check system status
 
-CORE FEATURES:
-- Multi-provider support (AWS, GCP, Kubernetes, Terraform)
-- Real-time drift detection
-- Unix-style output for automation
-- Multiple output formats (JSON, YAML, table, markdown)
-- Continuous monitoring capabilities
-
-QUICK START:
-  vaino scan              # Scan your infrastructure
-  vaino diff              # Show changes since last scan
-  vaino diff --stat       # Show change statistics
-  vaino diff --quiet      # Silent mode for scripting
-
-SUPPORTED PROVIDERS:
-  Terraform, AWS, Kubernetes, GCP`,
+Use "vaino [command] --help" for more information.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Handle --version flag
 		if showVersion, _ := cmd.Flags().GetBool("version"); showVersion {
