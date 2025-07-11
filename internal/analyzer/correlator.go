@@ -183,6 +183,7 @@ func (c *Correlator) findConfigUpdateGroups(changes []differ.SimpleChange, used 
 				Description: fmt.Sprintf("%s configuration changed", change.ResourceType),
 				Changes:     []differ.SimpleChange{change},
 				Reason:      "Configuration update",
+				Confidence:  "medium",
 			}
 
 			// Look for deployments that actually restarted after this config change
@@ -193,9 +194,9 @@ func (c *Correlator) findConfigUpdateGroups(changes []differ.SimpleChange, used 
 
 				// Look for deployment restarts (generation changes)
 				if other.ResourceType == "deployment" && other.Type == "modified" {
-					// Check if this happened after config change
+					// Check if this happened after config change within time window
 					if other.Timestamp.After(change.Timestamp) &&
-						other.Timestamp.Sub(change.Timestamp) <= 2*time.Minute {
+						other.Timestamp.Sub(change.Timestamp) <= c.timeWindow {
 						// Check for generation change (indicates restart)
 						for _, detail := range other.Details {
 							if detail.Field == "generation" {
@@ -210,9 +211,9 @@ func (c *Correlator) findConfigUpdateGroups(changes []differ.SimpleChange, used 
 				// Look for pod changes in same namespace
 				if other.ResourceType == "pod" && other.Type == "modified" &&
 					other.Namespace == change.Namespace {
-					// Check if this pod restart happened after config change
+					// Check if this pod restart happened after config change within time window
 					if other.Timestamp.After(change.Timestamp) &&
-						other.Timestamp.Sub(change.Timestamp) <= 2*time.Minute {
+						other.Timestamp.Sub(change.Timestamp) <= c.timeWindow {
 						// Check if pod has restart in its details
 						for _, detail := range other.Details {
 							if strings.Contains(detail.Field, "restart") ||
@@ -226,6 +227,8 @@ func (c *Correlator) findConfigUpdateGroups(changes []differ.SimpleChange, used 
 			}
 
 			if len(group.Changes) > 1 {
+				// If we found related deployment restarts, confidence is high
+				group.Confidence = "high"
 				groups = append(groups, group)
 			}
 		}
@@ -251,6 +254,7 @@ func (c *Correlator) findServiceGroups(changes []differ.SimpleChange, used map[s
 				Description: "Service and related resources created",
 				Changes:     []differ.SimpleChange{change},
 				Reason:      "New service deployment",
+				Confidence:  "medium",
 			}
 
 			// Look for related resources with similar names
@@ -323,6 +327,7 @@ func (c *Correlator) findNetworkGroups(changes []differ.SimpleChange, used map[s
 				Description: fmt.Sprintf("Ingress %s modified", change.ResourceName),
 				Changes:     []differ.SimpleChange{change},
 				Reason:      "Routing update",
+				Confidence:  "medium",
 			}
 
 			// Look for related service changes
@@ -364,6 +369,7 @@ func (c *Correlator) findStorageGroups(changes []differ.SimpleChange, used map[s
 				Description: fmt.Sprintf("PVC %s created", change.ResourceName),
 				Changes:     []differ.SimpleChange{change},
 				Reason:      "New storage request",
+				Confidence:  "high",
 			}
 
 			// Look for matching PV
@@ -427,6 +433,7 @@ func (c *Correlator) findSecurityGroups(changes []differ.SimpleChange, used map[
 					Description: fmt.Sprintf("%d secrets updated", len(secrets)),
 					Changes:     secrets,
 					Reason:      "Coordinated secret rotation",
+					Confidence:  "high",
 				}
 				groups = append(groups, group)
 			}
