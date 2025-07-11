@@ -114,7 +114,7 @@ func NewEnterpriseDifferEngine(options EnterpriseDiffOptions) *EnterpriseDifferE
 	}
 
 	// Use smart comparer for better performance
-	engine.comparer = NewSmartComparer(options.DiffOptions)
+	engine.comparer = &DefaultComparer{options: options.DiffOptions}
 
 	// Use advanced classifier with ML support if specified
 	if options.RiskScoringModel != "" {

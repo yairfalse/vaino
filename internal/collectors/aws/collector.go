@@ -126,6 +126,8 @@ func (c *AWSCollector) Collect(ctx context.Context, config collectors.CollectorC
 		{"Lambda", c.CollectLambdaResources},
 		{"IAM", c.CollectIAMResources},
 		{"DynamoDB", c.CollectDynamoDBResources},
+		{"ECS", c.CollectECSResources},
+		{"EKS", c.CollectEKSResources},
 	}
 
 	for _, service := range services {
@@ -179,7 +181,7 @@ func (c *AWSCollector) Name() string {
 
 // GetDescription returns the collector description
 func (c *AWSCollector) GetDescription() string {
-	return "AWS resource collector for EC2, S3, VPC, RDS, Lambda, IAM, and DynamoDB"
+	return "AWS resource collector for EC2, S3, VPC, RDS, Lambda, IAM, DynamoDB, ECS, and EKS"
 }
 
 // GetVersion returns the collector version

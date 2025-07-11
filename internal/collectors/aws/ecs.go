@@ -63,7 +63,7 @@ func (c *AWSCollector) collectECSClusters(ctx context.Context) ([]types.Resource
 			// Get detailed information about clusters
 			describeInput := &ecs.DescribeClustersInput{
 				Clusters: result.ClusterArns,
-				Include:  []string{"ATTACHMENTS", "CONFIGURATIONS", "STATISTICS", "TAGS"},
+				Include:  []ecsTypes.ClusterField{ecsTypes.ClusterFieldAttachments, ecsTypes.ClusterFieldConfigurations, ecsTypes.ClusterFieldStatistics, ecsTypes.ClusterFieldTags},
 			}
 
 			describeResult, err := c.clients.ECS.DescribeClusters(ctx, describeInput)
@@ -111,7 +111,7 @@ func (c *AWSCollector) collectECSServices(ctx context.Context, clusterArn string
 			describeInput := &ecs.DescribeServicesInput{
 				Cluster:  &clusterArn,
 				Services: result.ServiceArns,
-				Include:  []string{"TAGS"},
+				Include:  []ecsTypes.ServiceField{ecsTypes.ServiceFieldTags},
 			}
 
 			describeResult, err := c.clients.ECS.DescribeServices(ctx, describeInput)
@@ -159,7 +159,7 @@ func (c *AWSCollector) collectECSTasks(ctx context.Context, clusterArn string) (
 			describeInput := &ecs.DescribeTasksInput{
 				Cluster: &clusterArn,
 				Tasks:   result.TaskArns,
-				Include: []string{"TAGS"},
+				Include: []ecsTypes.TaskField{ecsTypes.TaskFieldTags},
 			}
 
 			describeResult, err := c.clients.ECS.DescribeTasks(ctx, describeInput)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodbstreams"
 	"github.com/yairfalse/vaino/pkg/types"
 )
 
@@ -82,7 +83,7 @@ func (c *AWSCollector) collectDynamoDBTables(ctx context.Context) ([]types.Resou
 func (c *AWSCollector) collectDynamoDBStreams(ctx context.Context) ([]types.Resource, error) {
 	var resources []types.Resource
 
-	input := &dynamodb.ListStreamsInput{}
+	input := &dynamodbstreams.ListStreamsInput{}
 	result, err := c.clients.DynamoDBStreams.ListStreams(ctx, input)
 	if err != nil {
 		// Streams API might not be available in all regions, skip gracefully
@@ -92,7 +93,7 @@ func (c *AWSCollector) collectDynamoDBStreams(ctx context.Context) ([]types.Reso
 	// Process each stream
 	for _, stream := range result.Streams {
 		// Get detailed stream information
-		describeInput := &dynamodb.DescribeStreamInput{
+		describeInput := &dynamodbstreams.DescribeStreamInput{
 			StreamArn: stream.StreamArn,
 		}
 
