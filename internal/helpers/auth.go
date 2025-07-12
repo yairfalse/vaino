@@ -17,7 +17,7 @@ func NewAuthHelper() *AuthHelper {
 
 // HandleGCPAuthError provides helpful error messages and fixes for GCP auth issues
 func (ah *AuthHelper) HandleGCPAuthError(projectID string, originalErr error) error {
-	fmt.Println("\n❌ GCP Authentication Failed")
+	fmt.Println("\nFAILED: GCP Authentication Failed")
 	fmt.Println("=====================================")
 
 	// Check what's available
@@ -30,28 +30,28 @@ func (ah *AuthHelper) HandleGCPAuthError(projectID string, originalErr error) er
 		output, err := cmd.Output()
 		if err == nil && len(output) > 0 {
 			account := strings.TrimSpace(string(output))
-			fmt.Println("\n✅ Good news: You have gcloud installed and are logged in!")
+			fmt.Println("\nSUCCESS: Good news: You have gcloud installed and are logged in!")
 			fmt.Printf("   Account: %s\n", account)
 
-			fmt.Println("\n🎯 DO THIS RIGHT NOW (copy and paste):")
+			fmt.Println("\nACTION: DO THIS RIGHT NOW (copy and paste):")
 			fmt.Println("\n   gcloud auth application-default login")
 			fmt.Println("\n   (This will open your browser. Just click 'Allow')")
 
-			fmt.Println("\n📋 Then run this command:")
+			fmt.Println("\nINFO: Then run this command:")
 			if projectID != "" {
 				fmt.Printf("   vaino scan --provider gcp --project %s\n", projectID)
 			} else {
 				fmt.Println("   vaino scan --provider gcp --project YOUR-PROJECT-ID")
 			}
 
-			fmt.Println("\n🚀 EVEN EASIER - Let WGO do it for you:")
+			fmt.Println("\nQUICK: EVEN EASIER - Let WGO do it for you:")
 			fmt.Println("   vaino auth gcp")
 			fmt.Println("   (This will handle everything automatically)")
 		} else {
-			fmt.Println("\n✅ Good news: You have gcloud installed!")
-			fmt.Println("❌ Bad news: You're not logged in")
+			fmt.Println("\nSUCCESS: Good news: You have gcloud installed!")
+			fmt.Println("FAILED: Bad news: You're not logged in")
 
-			fmt.Println("\n🎯 DO THESE 3 STEPS (copy and paste each line):")
+			fmt.Println("\nACTION: DO THESE 3 STEPS (copy and paste each line):")
 			fmt.Println("\n   STEP 1:")
 			fmt.Println("   gcloud auth login")
 			fmt.Println("   (This opens your browser - just click your Google account)")
@@ -67,13 +67,13 @@ func (ah *AuthHelper) HandleGCPAuthError(projectID string, originalErr error) er
 				fmt.Println("   vaino scan --provider gcp --project YOUR-PROJECT-ID")
 			}
 
-			fmt.Println("\n🚀 OR JUST RUN THIS (easiest):")
+			fmt.Println("\nQUICK: OR JUST RUN THIS (easiest):")
 			fmt.Println("   vaino auth gcp")
 		}
 	} else {
-		fmt.Println("\n❌ You need gcloud CLI installed first")
+		fmt.Println("\nFAILED: You need gcloud CLI installed first")
 
-		fmt.Println("\n🎯 INSTALL IT NOW:")
+		fmt.Println("\nACTION: INSTALL IT NOW:")
 
 		// Detect OS and give exact command
 		if ah.isCommandAvailable("brew") {
@@ -112,11 +112,11 @@ func (ah *AuthHelper) HandleGCPAuthError(projectID string, originalErr error) er
 	}
 
 	if hasADC {
-		fmt.Printf("\n⚠️  GOOGLE_APPLICATION_CREDENTIALS is set to: %s\n", os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
+		fmt.Printf("\nWARNING:  GOOGLE_APPLICATION_CREDENTIALS is set to: %s\n", os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))
 		fmt.Println("   But it might be invalid or have insufficient permissions.")
 	}
 
-	fmt.Println("\n📚 More Info:")
+	fmt.Println("\nDOCS: More Info:")
 	fmt.Println("  • GCP Auth Guide: https://cloud.google.com/docs/authentication/getting-started")
 	fmt.Println("  • Required Permissions: roles/viewer or equivalent")
 
@@ -125,7 +125,7 @@ func (ah *AuthHelper) HandleGCPAuthError(projectID string, originalErr error) er
 
 // HandleAWSAuthError provides helpful error messages for AWS auth issues
 func (ah *AuthHelper) HandleAWSAuthError(originalErr error) error {
-	fmt.Println("\n❌ AWS Authentication Failed")
+	fmt.Println("\nFAILED: AWS Authentication Failed")
 	fmt.Println("=====================================")
 
 	// Check what's available
@@ -141,10 +141,10 @@ func (ah *AuthHelper) HandleAWSAuthError(originalErr error) error {
 			profiles := strings.TrimSpace(string(output))
 			profileList := strings.Split(profiles, "\n")
 
-			fmt.Println("\n✅ Good news: You have AWS CLI installed with profiles!")
+			fmt.Println("\nSUCCESS: Good news: You have AWS CLI installed with profiles!")
 			fmt.Printf("   Available profiles: %s\n", strings.Join(profileList, ", "))
 
-			fmt.Println("\n🎯 DO THIS RIGHT NOW (copy and paste):")
+			fmt.Println("\nACTION: DO THIS RIGHT NOW (copy and paste):")
 			if len(profileList) > 0 && profileList[0] != "" {
 				fmt.Printf("\n   export AWS_PROFILE=%s\n", profileList[0])
 				fmt.Println("   vaino scan --provider aws")
@@ -153,18 +153,18 @@ func (ah *AuthHelper) HandleAWSAuthError(originalErr error) error {
 				fmt.Println("   vaino scan --provider aws")
 			}
 
-			fmt.Println("\n📋 Using a different profile? Run:")
+			fmt.Println("\nINFO: Using a different profile? Run:")
 			fmt.Println("   export AWS_PROFILE=your-profile-name")
 			fmt.Println("   vaino scan --provider aws")
 		} else {
-			fmt.Println("\n✅ Good news: You have AWS CLI installed!")
-			fmt.Println("❌ Bad news: No AWS credentials configured")
+			fmt.Println("\nSUCCESS: Good news: You have AWS CLI installed!")
+			fmt.Println("FAILED: Bad news: No AWS credentials configured")
 
-			fmt.Println("\n🎯 DO THIS RIGHT NOW:")
+			fmt.Println("\nACTION: DO THIS RIGHT NOW:")
 			fmt.Println("\n   vaino auth aws")
 			fmt.Println("   (This will walk you through setup)")
 
-			fmt.Println("\n📋 Or configure manually:")
+			fmt.Println("\nINFO: Or configure manually:")
 			fmt.Println("\n   aws configure")
 			fmt.Println("\n   You'll need:")
 			fmt.Println("   • AWS Access Key ID (starts with AKIA...)")
@@ -176,9 +176,9 @@ func (ah *AuthHelper) HandleAWSAuthError(originalErr error) error {
 			fmt.Println("   vaino scan --provider aws")
 		}
 	} else {
-		fmt.Println("\n❌ You need AWS CLI installed first")
+		fmt.Println("\nFAILED: You need AWS CLI installed first")
 
-		fmt.Println("\n🎯 INSTALL IT NOW:")
+		fmt.Println("\nACTION: INSTALL IT NOW:")
 
 		// Detect OS and give exact command
 		if ah.isCommandAvailable("brew") {
@@ -215,12 +215,12 @@ func (ah *AuthHelper) HandleAWSAuthError(originalErr error) error {
 	}
 
 	if hasCredentials {
-		fmt.Println("\n⚠️  AWS_ACCESS_KEY_ID is set but authentication still failed")
+		fmt.Println("\nWARNING:  AWS_ACCESS_KEY_ID is set but authentication still failed")
 		fmt.Println("   Check that AWS_SECRET_ACCESS_KEY is also set and valid")
 	}
 
 	if hasProfile {
-		fmt.Printf("\n⚠️  AWS_PROFILE is set to: %s\n", os.Getenv("AWS_PROFILE"))
+		fmt.Printf("\nWARNING:  AWS_PROFILE is set to: %s\n", os.Getenv("AWS_PROFILE"))
 		fmt.Println("   But it might be invalid or not configured properly")
 	}
 
@@ -239,7 +239,7 @@ func (ah *AuthHelper) SetupGCPAuth(projectID string) error {
 		return fmt.Errorf("gcloud CLI is required but not installed")
 	}
 
-	fmt.Println("🔧 Setting up GCP authentication...")
+	fmt.Println("FIX: Setting up GCP authentication...")
 
 	// Run gcloud auth application-default login
 	cmd := exec.Command("gcloud", "auth", "application-default", "login")
@@ -253,14 +253,14 @@ func (ah *AuthHelper) SetupGCPAuth(projectID string) error {
 
 	// Set the default project if provided
 	if projectID != "" {
-		fmt.Printf("\n📝 Setting default project to: %s\n", projectID)
+		fmt.Printf("\nNOTE: Setting default project to: %s\n", projectID)
 		cmd = exec.Command("gcloud", "config", "set", "project", projectID)
 		if err := cmd.Run(); err != nil {
-			fmt.Printf("⚠️  Warning: Could not set default project: %v\n", err)
+			fmt.Printf("WARNING:  Warning: Could not set default project: %v\n", err)
 		}
 	}
 
-	fmt.Println("\n✅ GCP authentication configured successfully!")
+	fmt.Println("\nSUCCESS: GCP authentication configured successfully!")
 	fmt.Println("You can now run:")
 	fmt.Printf("  vaino scan --provider gcp --project %s\n", projectID)
 
@@ -273,7 +273,7 @@ func (ah *AuthHelper) SetupAWSAuth() error {
 		return fmt.Errorf("aws CLI is required but not installed")
 	}
 
-	fmt.Println("🔧 Setting up AWS authentication...")
+	fmt.Println("FIX: Setting up AWS authentication...")
 	fmt.Println("\nThis will run 'aws configure' to set up your credentials.")
 	fmt.Println("You'll need:")
 	fmt.Println("  • AWS Access Key ID")
@@ -291,7 +291,7 @@ func (ah *AuthHelper) SetupAWSAuth() error {
 		return fmt.Errorf("failed to configure AWS: %w", err)
 	}
 
-	fmt.Println("\n✅ AWS authentication configured successfully!")
+	fmt.Println("\nSUCCESS: AWS authentication configured successfully!")
 	fmt.Println("You can now run:")
 	fmt.Println("  vaino scan --provider aws")
 
@@ -301,8 +301,8 @@ func (ah *AuthHelper) SetupAWSAuth() error {
 // CheckTerraformAuth checks if Terraform is properly configured
 func (ah *AuthHelper) CheckTerraformAuth() error {
 	if !ah.isCommandAvailable("terraform") {
-		fmt.Println("\n⚠️  Terraform CLI not found")
-		fmt.Println("\n🔧 Quick Fix:")
+		fmt.Println("\nWARNING:  Terraform CLI not found")
+		fmt.Println("\nFIX: Quick Fix:")
 		fmt.Println("Install Terraform:")
 		fmt.Println("  • macOS: brew install terraform")
 		fmt.Println("  • Linux/Windows: https://www.terraform.io/downloads")
@@ -312,8 +312,8 @@ func (ah *AuthHelper) CheckTerraformAuth() error {
 	// Check if we're in a Terraform directory
 	if _, err := os.Stat("terraform.tfstate"); err != nil && os.IsNotExist(err) {
 		if _, err := os.Stat(".terraform"); err != nil && os.IsNotExist(err) {
-			fmt.Println("\n⚠️  No Terraform state found in current directory")
-			fmt.Println("\n🔧 Quick Fix:")
+			fmt.Println("\nWARNING:  No Terraform state found in current directory")
+			fmt.Println("\nFIX: Quick Fix:")
 			fmt.Println("Navigate to your Terraform project directory, or specify the path:")
 			fmt.Println("  vaino scan --provider terraform --path /path/to/terraform/project")
 			return fmt.Errorf("no terraform state found")

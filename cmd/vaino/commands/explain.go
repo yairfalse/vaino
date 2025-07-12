@@ -62,25 +62,25 @@ func runExplain(cmd *cobra.Command, args []string) error {
 	}
 
 	if driftReport == "" && resource == "" {
-		fmt.Println("📊 Analyzing latest drift report")
+		fmt.Println("Analyzing latest drift report")
 	} else if driftReport != "" {
-		fmt.Printf("📊 Drift report: %s\n", driftReport)
+		fmt.Printf("Drift report: %s\n", driftReport)
 	} else {
 		fmt.Printf("🔧 Resource: %s (%s)\n", resource, provider)
 	}
 
 	if focus != "" {
-		fmt.Printf("🎯 Analysis focus: %s\n", focus)
+		fmt.Printf("Analysis focus: %s\n", focus)
 	}
 
 	if outputFile != "" {
-		fmt.Printf("💾 Output file: %s (%s)\n", outputFile, format)
+		fmt.Printf("Output file: %s (%s)\n", outputFile, format)
 	}
 
-	fmt.Printf("📋 Include remediation: %v\n", includeRemediation)
-	fmt.Printf("📋 Include risk assessment: %v\n", includeRisk)
+	fmt.Printf("Include remediation: %v\n", includeRemediation)
+	fmt.Printf("Include risk assessment: %v\n", includeRisk)
 
-	fmt.Println("\n⚠️  AI explanation not yet implemented")
+	fmt.Println("\nAI explanation not yet implemented")
 	fmt.Println("This command will:")
 	fmt.Println("  • Analyze drift data with Claude AI")
 	fmt.Println("  • Explain changes in plain language")
@@ -91,7 +91,7 @@ func runExplain(cmd *cobra.Command, args []string) error {
 	// Check if Claude API key is configured
 	config := GetConfig()
 	if config != nil && config.Claude.APIKey == "" {
-		fmt.Println("\n💡 To enable AI features:")
+		fmt.Println("\nTo enable AI features:")
 		fmt.Println("   Set CLAUDE_API_KEY or ANTHROPIC_API_KEY environment variable")
 		fmt.Println("   Or configure it in ~/.vaino/config.yaml")
 	}

@@ -35,7 +35,7 @@ func (m *MarkdownFormatter) FormatDriftReport(report *types.DriftReport) ([]byte
 
 	if len(report.Changes) == 0 {
 		md.WriteString("## Results\n\n")
-		md.WriteString("✅ **No drift detected** - Infrastructure matches baseline perfectly.\n\n")
+		md.WriteString("**No drift detected** - Infrastructure matches baseline perfectly.\n\n")
 	} else {
 		md.WriteString("## Changes Detected\n\n")
 		md.WriteString(fmt.Sprintf("### All Changes (%d)\n\n", len(report.Changes)))

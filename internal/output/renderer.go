@@ -127,36 +127,36 @@ func (r *Renderer) DisplayProgress(message string) {
 // DisplayError shows an error message
 func (r *Renderer) DisplayError(err error) {
 	if r.config.EnableColors {
-		fmt.Printf("\033[31m❌ Error: %v\033[0m\n", err)
+		fmt.Printf("\033[31mError: %v\033[0m\n", err)
 	} else {
-		fmt.Printf("❌ Error: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
 	}
 }
 
 // DisplaySuccess shows a success message
 func (r *Renderer) DisplaySuccess(message string) {
 	if r.config.EnableColors {
-		fmt.Printf("\033[32m✅ %s\033[0m\n", message)
+		fmt.Printf("\033[32mSuccess: %s\033[0m\n", message)
 	} else {
-		fmt.Printf("✅ %s\n", message)
+		fmt.Printf("Success: %s\n", message)
 	}
 }
 
 // DisplayWarning shows a warning message
 func (r *Renderer) DisplayWarning(message string) {
 	if r.config.EnableColors {
-		fmt.Printf("\033[33m⚠️  %s\033[0m\n", message)
+		fmt.Printf("\033[33mWarning: %s\033[0m\n", message)
 	} else {
-		fmt.Printf("⚠️  %s\n", message)
+		fmt.Printf("Warning: %s\n", message)
 	}
 }
 
 // DisplayInfo shows an info message
 func (r *Renderer) DisplayInfo(message string) {
 	if r.config.EnableColors {
-		fmt.Printf("\033[34mℹ️  %s\033[0m\n", message)
+		fmt.Printf("\033[34mInfo: %s\033[0m\n", message)
 	} else {
-		fmt.Printf("ℹ️  %s\n", message)
+		fmt.Printf("Info: %s\n", message)
 	}
 }
 

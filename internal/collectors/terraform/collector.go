@@ -181,7 +181,7 @@ func (c *TerraformCollector) collectFromLocalState(statePath string) ([]types.Re
 	if stat, err := os.Stat(statePath); err == nil {
 		fileSize := stat.Size()
 		if fileSize > 50*1024*1024 { // 50MB threshold
-			fmt.Printf("📄 Large state file detected (%d MB), using streaming parser...\n", fileSize/(1024*1024))
+			fmt.Printf("Large state file detected (%d MB), using streaming parser...\n", fileSize/(1024*1024))
 			tfState, err := c.streamParser.ParseStateFile(statePath)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse large state file %s: %w", statePath, err)
@@ -276,7 +276,7 @@ func (c *TerraformCollector) collectFromMultipleLocalStates(ctx context.Context,
 		resources, err := c.normalizer.NormalizeResources(tempState)
 		if err != nil {
 			// Log warning but continue with other resources
-			fmt.Printf("⚠️  Warning: Failed to normalize resource %s.%s: %v\n",
+			fmt.Printf("Warning: Failed to normalize resource %s.%s: %v\n",
 				extracted.OriginalResource.Type, extracted.OriginalResource.Name, err)
 			continue
 		}

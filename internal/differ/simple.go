@@ -200,8 +200,8 @@ func FormatChangeReport(report *SimpleChangeReport) string {
 	var output strings.Builder
 
 	// Header
-	output.WriteString(fmt.Sprintf("📊 Infrastructure Changes\n"))
-	output.WriteString(fmt.Sprintf("========================\n"))
+	output.WriteString(fmt.Sprintf("Infrastructure Changes\n"))
+	output.WriteString(fmt.Sprintf("=====================\n"))
 	output.WriteString(fmt.Sprintf("Time range: %s → %s\n\n",
 		report.FromTime.Format("2006-01-02 15:04:05"),
 		report.ToTime.Format("2006-01-02 15:04:05")))
@@ -214,7 +214,7 @@ func FormatChangeReport(report *SimpleChangeReport) string {
 	output.WriteString(fmt.Sprintf("  Total:    %d changes\n\n", report.Summary.Total))
 
 	if len(report.Changes) == 0 {
-		output.WriteString("✅ No changes detected\n")
+		output.WriteString("No changes detected\n")
 		return output.String()
 	}
 

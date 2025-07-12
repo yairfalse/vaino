@@ -39,7 +39,7 @@ func (r *EnhancedTableRenderer) RenderDriftReport(report *differ.DriftReport) st
 	output.WriteString("\n")
 
 	if len(report.ResourceChanges) == 0 {
-		output.WriteString(r.colorize("✅ No drift detected - infrastructure matches baseline\n", color.FgGreen))
+		output.WriteString(r.colorize("No drift detected - infrastructure matches baseline\n", color.FgGreen))
 		return output.String()
 	}
 
@@ -63,7 +63,7 @@ func (r *EnhancedTableRenderer) RenderDriftReport(report *differ.DriftReport) st
 func (r *EnhancedTableRenderer) renderSummaryHeader(report *differ.DriftReport) string {
 	var header strings.Builder
 
-	header.WriteString(r.colorize("📊 Infrastructure Drift Report\n", color.FgCyan, color.Bold))
+	header.WriteString(r.colorize("Infrastructure Drift Report\n", color.FgCyan, color.Bold))
 	header.WriteString(r.colorize("═══════════════════════════════\n", color.FgCyan))
 
 	// Overall risk indicator
