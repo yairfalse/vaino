@@ -23,6 +23,7 @@ func newDiffCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "diff",
 		Short: "Show infrastructure changes (like 'git diff' for infrastructure)",
+		SilenceUsage: true,
 		Long: `Show changes in your infrastructure state - just like 'git diff' but for infrastructure.
 
 Works great with Unix tools and scripts. Exit codes: 0 = no changes, 1 = changes detected.
@@ -341,7 +342,9 @@ func runDiff(cmd *cobra.Command, args []string) error {
 				base := filepath.Base(mostRecent)
 				providerName := strings.TrimPrefix(strings.TrimSuffix(base, ".json"), "last-scan-")
 
-				fmt.Printf("Comparing %s infrastructure...\n", providerName)
+				if !quiet {
+					fmt.Println("Checking for changes...")
+				}
 
 				// Create temp file for new scan
 				tempFile, err := os.CreateTemp("", "vaino-scan-*.json")
@@ -375,6 +378,19 @@ func runDiff(cmd *cobra.Command, args []string) error {
 				select {
 				case err := <-done:
 					if err != nil {
+						// Handle specific auto-discovery failures gracefully
+						if strings.Contains(err.Error(), "auto-discovery failed") || 
+						   strings.Contains(err.Error(), "No terraform state files found") {
+							return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.Provider(providerName),
+								"No infrastructure found to compare").
+								WithCause("No current infrastructure state available").
+								WithSolutions(
+									"Run 'vaino scan' to create a current snapshot first",
+									"Make sure you're in a directory with infrastructure files",
+								).
+								WithHelp("vaino scan --help")
+						}
+						
 						// Check if it's a known error type
 						if vainoErr, ok := err.(*vainoerrors.VAINOError); ok {
 							return vainoErr
