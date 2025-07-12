@@ -404,7 +404,7 @@ func (r *EnhancedTableRenderer) padString(s string, width int) string {
 	return s + strings.Repeat(" ", width-len(s))
 }
 
-// RenderResourceList renders a simple list of resources
+// RenderResourceList renders a simple list of resources with geo info only
 func (r *EnhancedTableRenderer) RenderResourceList(resources []types.Resource) string {
 	if len(resources) == 0 {
 		return r.colorize("No resources found.\n", color.FgYellow)
@@ -412,8 +412,7 @@ func (r *EnhancedTableRenderer) RenderResourceList(resources []types.Resource) s
 
 	var output strings.Builder
 
-	output.WriteString(r.colorize(fmt.Sprintf("📦 Found %d resources:\n", len(resources)), color.FgCyan, color.Bold))
-	output.WriteString(r.colorize("────────────────────────\n", color.FgCyan))
+	output.WriteString(r.colorize(fmt.Sprintf("Found %d resources:\n", len(resources)), color.FgCyan, color.Bold))
 
 	// Group by provider
 	byProvider := make(map[string][]types.Resource)
@@ -432,9 +431,24 @@ func (r *EnhancedTableRenderer) RenderResourceList(resources []types.Resource) s
 		}
 
 		for resourceType, count := range byType {
-			output.WriteString(fmt.Sprintf("  • %s: %s\n",
+			output.WriteString(fmt.Sprintf("  %s: %s\n",
 				resourceType,
 				r.colorize(strconv.Itoa(count), color.FgWhite, color.Bold)))
+		}
+	}
+
+	// Show geographic distribution if regions are available
+	regionCounts := make(map[string]int)
+	for _, resource := range resources {
+		if resource.Region != "" {
+			regionCounts[resource.Region]++
+		}
+	}
+
+	if len(regionCounts) > 0 {
+		output.WriteString(r.colorize("\nGeographic distribution:\n", color.FgCyan, color.Bold))
+		for region, count := range regionCounts {
+			output.WriteString(fmt.Sprintf("  %s: %d resources\n", region, count))
 		}
 	}
 
