@@ -381,14 +381,11 @@ func runDiff(cmd *cobra.Command, args []string) error {
 						// Handle specific auto-discovery failures gracefully
 						if strings.Contains(err.Error(), "auto-discovery failed") || 
 						   strings.Contains(err.Error(), "No terraform state files found") {
-							return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.Provider(providerName),
-								"No infrastructure found to compare").
-								WithCause("No current infrastructure state available").
-								WithSolutions(
-									"Run 'vaino scan' to create a current snapshot first",
-									"Make sure you're in a directory with infrastructure files",
-								).
-								WithHelp("vaino scan --help")
+							if !quiet {
+								fmt.Println("No current infrastructure found - nothing to compare")
+								fmt.Println("Run 'vaino scan' to create a current snapshot")
+							}
+							return nil
 						}
 						
 						// Check if it's a known error type
