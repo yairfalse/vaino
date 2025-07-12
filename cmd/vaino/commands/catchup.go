@@ -22,30 +22,19 @@ var (
 // catchUpCmd represents the catch-up command
 var catchUpCmd = &cobra.Command{
 	Use:   "catch-up",
-	Short: "Get a comforting summary of infrastructure changes while you were away",
-	Long: `The catch-up command provides an empathetic summary of all infrastructure
-changes that occurred during your absence. It helps you quickly understand what
-happened, distinguish between planned and unplanned changes, and feel confident
-about the current state of your infrastructure.
+	Short: "Show infrastructure changes over time",
+	Long: `Show a summary of infrastructure changes that occurred during a specified period.
 
 Examples:
-  # Auto-detect absence period and show changes
-  vaino catch-up
-
-  # Show changes from the last 2 weeks
-  vaino catch-up --since "2 weeks ago"
-
-  # Use comfort mode for reassuring tone
-  vaino catch-up --comfort-mode
-
-  # Update baselines after reviewing changes
-  vaino catch-up --sync-state`,
+  vaino catch-up                      # Auto-detect period
+  vaino catch-up --since "2 weeks ago"  # Changes from 2 weeks ago
+  vaino catch-up --sync-state         # Update baselines after review`,
 	RunE: runCatchUp,
 }
 
 func init() {
 	catchUpCmd.Flags().StringVar(&catchUpSince, "since", "", "Time period to catch up from (e.g., '2 weeks ago', '2024-01-01')")
-	catchUpCmd.Flags().BoolVar(&catchUpComfortMode, "comfort-mode", true, "Use reassuring tone and emotional intelligence")
+	catchUpCmd.Flags().BoolVar(&catchUpComfortMode, "comfort-mode", true, "Use friendly output format")
 	catchUpCmd.Flags().BoolVar(&catchUpSyncState, "sync-state", false, "Update baselines after reviewing changes")
 	catchUpCmd.Flags().StringSliceVar(&catchUpProviders, "providers", []string{}, "Specific providers to check (default: all)")
 }

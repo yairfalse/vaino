@@ -24,6 +24,7 @@ func newDiffCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "diff",
 		Short: "Show infrastructure changes (like 'git diff' for infrastructure)",
+		SilenceUsage: true,
 		Long: `Show changes in your infrastructure state - just like 'git diff' but for infrastructure.
 
 Works great with Unix tools and scripts. Exit codes: 0 = no changes, 1 = changes detected.
@@ -424,6 +425,16 @@ func runDiff(cmd *cobra.Command, args []string) error {
 					}
 
 					if scanErr != nil {
+						// Handle specific auto-discovery failures gracefully
+						if strings.Contains(scanErr.Error(), "auto-discovery failed") || 
+						   strings.Contains(scanErr.Error(), "No terraform state files found") {
+							if !quiet {
+								fmt.Println("No current infrastructure found - nothing to compare")
+								fmt.Println("Run 'vaino scan' to create a current snapshot")
+							}
+							return nil
+						}
+						
 						// Check if it's a known error type
 						if vainoErr, ok := scanErr.(*vainoerrors.VAINOError); ok {
 							return vainoErr
@@ -437,6 +448,26 @@ func runDiff(cmd *cobra.Command, args []string) error {
 								"Check provider configuration: 'vaino check-config'",
 							).
 							WithHelp("vaino scan --help")
+					}
+
+					// Check if the new scan found any resources
+					tempData, err := os.ReadFile(tempPath)
+					if err != nil {
+						return fmt.Errorf("failed to read scan results: %w", err)
+					}
+					
+					var tempSnapshot types.Snapshot
+					if err := json.Unmarshal(tempData, &tempSnapshot); err != nil {
+						return fmt.Errorf("failed to parse scan results: %w", err)
+					}
+					
+					// If no resources found in current scan, show appropriate message
+					if len(tempSnapshot.Resources) == 0 {
+						if !quiet {
+							fmt.Println("No current infrastructure found - nothing to compare")
+							fmt.Println("Run 'vaino scan' to create a current snapshot")
+						}
+						return nil
 					}
 
 					// Set from and to for comparison

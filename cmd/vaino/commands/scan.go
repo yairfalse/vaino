@@ -16,6 +16,7 @@ import (
 	"github.com/yairfalse/vaino/internal/collectors/terraform"
 	"github.com/yairfalse/vaino/internal/discovery"
 	vainoerrors "github.com/yairfalse/vaino/internal/errors"
+	"github.com/yairfalse/vaino/internal/output"
 	"github.com/yairfalse/vaino/pkg/config"
 	"github.com/yairfalse/vaino/pkg/types"
 )
@@ -24,6 +25,7 @@ func newScanCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "scan",
 		Short: "Scan infrastructure for current state",
+		SilenceUsage: true,
 		Long: `Scan discovers and collects the current state of your infrastructure
 from various providers (Terraform, AWS, Kubernetes) and creates a snapshot.
 
@@ -96,10 +98,6 @@ func runScan(cmd *cobra.Command, args []string) error {
 		if !quiet {
 			fmt.Printf(format, args...)
 		}
-	}
-
-	if !quiet {
-		fmt.Println("Scanning infrastructure...")
 	}
 
 	provider, _ := cmd.Flags().GetString("provider")
@@ -284,8 +282,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 	}
 
 	// Perform collection
-	log("Collecting...\n")
-	startTime := time.Now()
+	if !quiet {
+		fmt.Println("Scanning infrastructure...")
+	}
 
 	snapshot, err := collector.Collect(ctx, config)
 	if err != nil {
@@ -319,24 +318,21 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	collectionTime := time.Since(startTime)
-
 	// Mark as baseline if requested
 	if isBaseline {
 		snapshot.MarkAsBaseline(baselineName, baselineReason)
 		if !quiet {
 			if baselineName != "" {
-				fmt.Printf("✓ Marked as baseline: %s\n", baselineName)
+				fmt.Printf("Marked as baseline: %s\n", baselineName)
 			} else {
-				fmt.Printf("✓ Marked as baseline\n")
+				fmt.Printf("Marked as baseline\n")
 			}
 		}
 	}
 
-	// Display results
-	if !quiet {
-		fmt.Printf("✓ Found %d resources in %v\n", len(snapshot.Resources), collectionTime)
-	}
+	// Display results using enhanced formatter
+	formatter := output.NewScanFormatter(snapshot, quiet)
+	fmt.Print(formatter.FormatOutput())
 
 	// Save to history directory for time-based comparisons
 	homeDir, _ := os.UserHomeDir()
@@ -362,11 +358,10 @@ func runScan(cmd *cobra.Command, args []string) error {
 		if err := saveSnapshotToFile(snapshot, outputFile); err != nil {
 			log("Warning: Failed to save to output file: %v\n", err)
 		} else {
-			log("\nOutput saved to: %s\n", outputFile)
+			log("\nSnapshot saved to: %s\n", outputFile)
 		}
 	}
 
-	log("Use 'vaino diff' to detect changes\n")
 	return nil
 }
 

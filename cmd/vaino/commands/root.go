@@ -19,29 +19,11 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "vaino",
 	Short: "Infrastructure drift detection and monitoring",
-	Long: `VAINO - Infrastructure drift detection and monitoring tool.
-
-Named after Väinö from Finnish mythology.
-
-VAINO helps you detect and monitor infrastructure changes across multiple 
-cloud providers and Infrastructure as Code tools. Think of it as "git diff" 
-for your infrastructure.
-
-CORE FEATURES:
-- Multi-provider support (AWS, GCP, Kubernetes, Terraform)
-- Real-time drift detection
-- Unix-style output for automation
-- Multiple output formats (JSON, YAML, table, markdown)
-- Continuous monitoring capabilities
-
-QUICK START:
-  vaino scan              # Scan your infrastructure
-  vaino diff              # Show changes since last scan
-  vaino diff --stat       # Show change statistics
-  vaino diff --quiet      # Silent mode for scripting
-
-SUPPORTED PROVIDERS:
-  Terraform, AWS, Kubernetes, GCP`,
+	Long:  `vaino - infrastructure drift detection and monitoring`,
+	DisableAutoGenTag: true,
+	CompletionOptions: cobra.CompletionOptions{
+		DisableDefaultCmd: true,
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Handle --version flag
 		if showVersion, _ := cmd.Flags().GetBool("version"); showVersion {
@@ -88,22 +70,13 @@ func init() {
 	viper.BindPFlag("output.format", rootCmd.PersistentFlags().Lookup("output"))
 	viper.BindPFlag("output.no_color", rootCmd.PersistentFlags().Lookup("no-color"))
 
-	// Add subcommands
+	// Essential commands only
 	rootCmd.AddCommand(newScanCommand())
-	rootCmd.AddCommand(newCheckCommand())
-	rootCmd.AddCommand(newExplainCommand())
 	rootCmd.AddCommand(newDiffCommand())
-	rootCmd.AddCommand(newSimpleDiffCommand()) // New simple changes command
-	rootCmd.AddCommand(newWatchCommand())      // Real-time watch mode
-	rootCmd.AddCommand(catchUpCmd)             // Empathetic catch-up summary
-	rootCmd.AddCommand(newTimelineCommand())   // Timeline view of snapshots
-	rootCmd.AddCommand(newHistoryCommand())    // History browsing
-	rootCmd.AddCommand(newAuthCommand())
+	rootCmd.AddCommand(newWatchCommand())
+	rootCmd.AddCommand(newStatusCommand())
 	rootCmd.AddCommand(newVersionCommand())
-	rootCmd.AddCommand(newConfigureCommand())   // Configuration wizard
-	rootCmd.AddCommand(newStatusCommand())      // System status
-	rootCmd.AddCommand(newCheckConfigCommand()) // Configuration validation
-	rootCmd.AddCommand(newHelpCommand())        // Help topics
+	rootCmd.AddCommand(newConfigureCommand())
 }
 
 // initConfig reads in config file and ENV variables if set.

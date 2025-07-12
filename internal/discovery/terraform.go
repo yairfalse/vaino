@@ -63,8 +63,8 @@ func (td *TerraformDiscovery) DiscoverStateFiles(rootPath string) ([]StateFile, 
 			return nil
 		}
 
-		// Skip directories and non-terraform files
-		if info.IsDir() || (!td.isTerraformStateFile(path) && !td.isTerraformConfigFile(path)) {
+		// Skip directories and non-state files (only process .tfstate files)
+		if info.IsDir() || !td.isTerraformStateFile(path) {
 			return nil
 		}
 
@@ -78,11 +78,8 @@ func (td *TerraformDiscovery) DiscoverStateFiles(rootPath string) ([]StateFile, 
 			return nil
 		}
 
-		// Determine file type
-		fileType := "config"
-		if td.isTerraformStateFile(path) {
-			fileType = "state"
-		}
+		// Since we only process state files now, all files are state files
+		fileType := "state"
 
 		stateFile := StateFile{
 			Path:         path,
@@ -91,16 +88,9 @@ func (td *TerraformDiscovery) DiscoverStateFiles(rootPath string) ([]StateFile, 
 			Type:         fileType,
 		}
 
-		// Try to get resource count
-		if fileType == "state" {
-			if count, err := td.getResourceCount(path); err == nil {
-				stateFile.ResourceCount = count
-			}
-		} else {
-			// For config files, we can estimate resources by counting resource blocks
-			if count, err := td.getConfigResourceCount(path); err == nil {
-				stateFile.ResourceCount = count
-			}
+		// Try to get resource count for state files
+		if count, err := td.getResourceCount(path); err == nil {
+			stateFile.ResourceCount = count
 		}
 
 		stateFiles = append(stateFiles, stateFile)
@@ -264,31 +254,14 @@ func (td *TerraformDiscovery) getFileScore(file StateFile) int {
 
 	score := 0
 
-	// Prefer config files when no state files exist (common with remote backends like S3)
-	if file.Type == "config" {
-		score += 1000 // Config files are primary indicators of Terraform projects
-	} else {
-		score += 2000 // State files still preferred when they exist
-	}
-
 	// Prefer terraform.tfstate
 	if filename == "terraform.tfstate" {
 		score += 1000
 	}
 
-	// Prefer main.tf for config files
-	if filename == "main.tf" && file.Type == "config" {
-		score += 800
-	}
-
 	// Prefer root directory
 	if dir == "." {
 		score += 500
-	}
-
-	// Prefer main terraform directories
-	if strings.Contains(dir, "terraform") {
-		score += 100
 	}
 
 	// Prefer files with more resources
