@@ -52,6 +52,7 @@ func newAuthGCPCommand() *cobra.Command {
 	}
 
 	cmd.Flags().String("project", "", "GCP project ID to use as default")
+	cmd.Flags().BoolP("quiet", "q", false, "suppress decorative output")
 
 	return cmd
 }
@@ -68,6 +69,8 @@ func newAuthAWSCommand() *cobra.Command {
   vaino auth aws`,
 		RunE: runAuthAWS,
 	}
+
+	cmd.Flags().BoolP("quiet", "q", false, "suppress decorative output")
 
 	return cmd
 }
@@ -86,6 +89,7 @@ func newAuthTestCommand() *cobra.Command {
 	}
 
 	cmd.Flags().String("provider", "", "specific provider to test")
+	cmd.Flags().BoolP("quiet", "q", false, "suppress decorative output")
 
 	return cmd
 }
@@ -97,6 +101,8 @@ func newAuthStatusCommand() *cobra.Command {
 		Long:  `Shows the current authentication status for all providers.`,
 		RunE:  runAuthStatus,
 	}
+
+	cmd.Flags().BoolP("quiet", "q", false, "suppress decorative output and tips")
 
 	return cmd
 }
@@ -121,25 +127,28 @@ func runAuthAWS(cmd *cobra.Command, args []string) error {
 
 func runAuthTest(cmd *cobra.Command, args []string) error {
 	provider, _ := cmd.Flags().GetString("provider")
+	quiet, _ := cmd.Flags().GetBool("quiet")
 
-	fmt.Println("🔍 Testing Authentication")
-	fmt.Println("========================")
+	if !quiet {
+		fmt.Println("Testing Authentication")
+		fmt.Println("========================")
+	}
 
 	// TODO: Implement actual authentication testing
 	// For now, provide helpful information
 
 	if provider == "" || provider == "gcp" {
-		fmt.Println("\n📋 GCP Authentication:")
+		fmt.Println("\nGCP Authentication:")
 		testGCPAuth()
 	}
 
 	if provider == "" || provider == "aws" {
-		fmt.Println("\n📋 AWS Authentication:")
+		fmt.Println("\nAWS Authentication:")
 		testAWSAuth()
 	}
 
 	if provider == "" || provider == "terraform" {
-		fmt.Println("\n📋 Terraform:")
+		fmt.Println("\nTerraform:")
 		testTerraformAuth()
 	}
 
@@ -147,24 +156,30 @@ func runAuthTest(cmd *cobra.Command, args []string) error {
 }
 
 func runAuthStatus(cmd *cobra.Command, args []string) error {
-	fmt.Println("🔐 Authentication Status")
-	fmt.Println("=======================")
+	quiet, _ := cmd.Flags().GetBool("quiet")
+
+	if !quiet {
+		fmt.Println("🔐 Authentication Status")
+		fmt.Println("=======================")
+	}
 
 	// Check GCP
-	fmt.Println("\n📋 Google Cloud Platform:")
+	fmt.Println("\nGoogle Cloud Platform:")
 	showGCPAuthStatus()
 
 	// Check AWS
-	fmt.Println("\n📋 AWS:")
+	fmt.Println("\nAWS:")
 	showAWSAuthStatus()
 
 	// Check Terraform
 	fmt.Println("\n📋 Terraform:")
 	showTerraformStatus()
 
-	fmt.Println("\n💡 Tips:")
-	fmt.Println("  • Run 'vaino auth <provider>' to set up authentication")
-	fmt.Println("  • Run 'vaino auth test' to verify your credentials work")
+	if !quiet {
+		fmt.Println("\nTips:")
+		fmt.Println("  • Run 'vaino auth <provider>' to set up authentication")
+		fmt.Println("  • Run 'vaino auth test' to verify your credentials work")
+	}
 
 	return nil
 }
@@ -174,9 +189,9 @@ func runAuthStatus(cmd *cobra.Command, args []string) error {
 func testGCPAuth() {
 	// Simple checks for now
 	if gcloudAccount := getGcloudAccount(); gcloudAccount != "" {
-		fmt.Printf("  ✅ Logged in as: %s\n", gcloudAccount)
+		fmt.Printf("  Logged in as: %s\n", gcloudAccount)
 	} else {
-		fmt.Println("  ❌ Not authenticated")
+		fmt.Println("  Not authenticated")
 		fmt.Println("     Run: vaino auth gcp")
 	}
 }
@@ -184,9 +199,9 @@ func testGCPAuth() {
 func testAWSAuth() {
 	// Check for AWS credentials
 	if awsProfile := getAWSProfile(); awsProfile != "" {
-		fmt.Printf("  ✅ Using profile: %s\n", awsProfile)
+		fmt.Printf("  Using profile: %s\n", awsProfile)
 	} else {
-		fmt.Println("  ❌ No AWS credentials found")
+		fmt.Println("  No AWS credentials found")
 		fmt.Println("     Run: vaino auth aws")
 	}
 }
@@ -195,9 +210,9 @@ func testTerraformAuth() {
 	// Just check if terraform is installed
 	authHelper := helpers.NewAuthHelper()
 	if err := authHelper.CheckTerraformAuth(); err != nil {
-		fmt.Println("  ❌ Terraform not properly configured")
+		fmt.Println("  Terraform not properly configured")
 	} else {
-		fmt.Println("  ✅ Terraform is available")
+		fmt.Println("  Terraform is available")
 	}
 }
 

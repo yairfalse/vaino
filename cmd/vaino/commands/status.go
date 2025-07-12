@@ -12,43 +12,59 @@ import (
 )
 
 func newStatusCommand() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "status",
 		Short: "Show VAINO system and provider status",
 		Long: `Display comprehensive status information about VAINO configuration,
 providers, authentication, and recent activity.`,
 		RunE: runStatus,
 	}
+
+	cmd.Flags().BoolP("quiet", "q", false, "show only essential status information")
+	cmd.Flags().Bool("short", false, "show brief status summary")
+
+	return cmd
 }
 
 func runStatus(cmd *cobra.Command, args []string) error {
-	fmt.Println("VAINO Status Report")
-	fmt.Println("===================")
-	fmt.Println()
+	quiet, _ := cmd.Flags().GetBool("quiet")
+	short, _ := cmd.Flags().GetBool("short")
+	homeDir, _ := os.UserHomeDir()
+
+	if !quiet && !short {
+		fmt.Println("VAINO Status Report")
+		fmt.Println("===================")
+		fmt.Println()
+	}
 
 	// System Status
-	fmt.Println("System Status:")
-	fmt.Printf("  VAINO Version: %s\n", getVersion())
+	if !short {
+		fmt.Println("System Status:")
+		fmt.Printf("  VAINO Version: %s\n", getVersion())
+	} else {
+		fmt.Printf("Version: %s\n", getVersion())
+	}
 
 	configFile := viper.ConfigFileUsed()
 	if configFile == "" {
-		homeDir, _ := os.UserHomeDir()
 		configFile = filepath.Join(homeDir, ".vaino", "config.yaml")
 		if _, err := os.Stat(configFile); os.IsNotExist(err) {
 			configFile = "not found"
 		}
 	}
-	fmt.Printf("  Config File: %s\n", configFile)
-
-	// Storage info
-	homeDir, _ := os.UserHomeDir()
-	storagePath := filepath.Join(homeDir, ".vaino")
-	storageSize := getDirectorySize(storagePath)
-	fmt.Printf("  Storage: %s (%s used)\n", storagePath, formatBytes(storageSize))
-	fmt.Println()
-
-	// Provider Status
-	fmt.Println("Provider Status:")
+	if !quiet {
+		if !short {
+			fmt.Printf("  Config File: %s\n", configFile)
+			// Storage info
+			storagePath := filepath.Join(homeDir, ".vaino")
+			storageSize := getDirectorySize(storagePath)
+			fmt.Printf("  Storage: %s (%s used)\n", storagePath, formatBytes(storageSize))
+			fmt.Println()
+			fmt.Println("Provider Status:")
+		} else {
+			fmt.Println("Providers:")
+		}
+	}
 
 	detector := config.NewProviderDetector()
 	authChecker := config.NewAuthChecker()

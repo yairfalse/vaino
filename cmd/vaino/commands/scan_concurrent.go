@@ -127,9 +127,9 @@ func runConcurrentScan(cmd *cobra.Command, args []string) error {
 		fmt.Println("\nProvider Results:")
 		for providerName, providerResult := range result.ProviderResults {
 			if providerResult.Error != nil {
-				fmt.Printf("  ❌ %s: %v (took %v)\n", providerName, providerResult.Error, providerResult.Duration)
+				fmt.Printf("  FAILED %s: %v (took %v)\n", providerName, providerResult.Error, providerResult.Duration)
 			} else {
-				fmt.Printf("  ✅ %s: %d resources (took %v)\n",
+				fmt.Printf("  SUCCESS %s: %d resources (took %v)\n",
 					providerName, len(providerResult.Snapshot.Resources), providerResult.Duration)
 			}
 		}
@@ -167,7 +167,7 @@ func runConcurrentScan(cmd *cobra.Command, args []string) error {
 
 	// Performance summary
 	if !quiet {
-		fmt.Printf("\n📊 Performance Summary:\n")
+		fmt.Printf("\nPerformance Summary:\n")
 		fmt.Printf("  Total scan time: %v\n", scanDuration)
 		fmt.Printf("  Average provider time: %v\n", scanDuration/time.Duration(len(availableProviders)))
 		fmt.Printf("  Concurrent efficiency: %.1fx faster than sequential\n",

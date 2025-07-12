@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/yairfalse/vaino/internal/errors"
 	"github.com/yairfalse/vaino/pkg/config"
 )
 
@@ -39,9 +40,18 @@ var rootCmd = &cobra.Command{
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
+	// Set custom error handler for Cobra
+	rootCmd.SilenceErrors = true
+	rootCmd.SilenceUsage = true
+
 	err := rootCmd.Execute()
 	if err != nil {
-		os.Exit(1)
+		// Use enhanced error display
+		errors.DisplayError(err)
+
+		// Use appropriate exit code based on error type
+		exitCode := errors.GetExitCode(err)
+		os.Exit(exitCode)
 	}
 }
 

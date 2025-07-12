@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -83,6 +84,7 @@ By default, compares current infrastructure state with the last scan automatical
 	cmd.Flags().StringSlice("resource-type", []string{}, "limit to specific resource types")
 	cmd.Flags().StringSlice("ignore-fields", []string{}, "ignore changes in specified fields")
 	cmd.Flags().String("min-severity", "low", "minimum severity level to show (low, medium, high, critical)")
+	cmd.Flags().BoolP("verbose", "v", false, "show detailed progress information")
 
 	return cmd
 }
@@ -295,149 +297,183 @@ func runDiff(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("baseline resolution failed: %w", err)
 		}
 		from = baselineSnapshot
-		if !quiet {
+		// Remove verbose baseline messages - only show in verbose mode
+		if verbose, _ := cmd.Flags().GetBool("verbose"); verbose {
 			if baseline == "auto" || baseline == "" {
-				fmt.Printf("Using latest baseline as comparison source\n")
+				fmt.Fprintf(os.Stderr, "Using latest baseline as comparison source\n")
 			} else {
-				fmt.Printf("Using baseline '%s' as comparison source\n", baseline)
+				fmt.Fprintf(os.Stderr, "Using baseline '%s' as comparison source\n", baseline)
 			}
 		}
 	}
 
-	// Auto-detect last scan if no inputs provided
+	// Auto-detect snapshots if no inputs provided
 	if from == "" && to == "" {
-		// Try to find the most recent scan in ~/.vaino
+		// Try to find existing snapshots first
 		homeDir, _ := os.UserHomeDir()
 		vainoDir := filepath.Join(homeDir, ".vaino")
+		historyDir := filepath.Join(vainoDir, "history")
 
-		// Find all last-scan files
-		matches, _ := filepath.Glob(filepath.Join(vainoDir, "last-scan-*.json"))
-		if len(matches) == 0 {
-			// No scans found - provide helpful guidance
-			return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
-				"No previous scans found").
-				WithCause("No snapshot files in ~/.vaino").
+		// Look for snapshots in history directory first
+		historyFiles, _ := filepath.Glob(filepath.Join(historyDir, "*.json"))
+		if len(historyFiles) >= 2 {
+			// Sort by modification time
+			sort.Slice(historyFiles, func(i, j int) bool {
+				stat1, _ := os.Stat(historyFiles[i])
+				stat2, _ := os.Stat(historyFiles[j])
+				return stat1.ModTime().After(stat2.ModTime())
+			})
+			// Use two most recent snapshots
+			from = historyFiles[1] // Second most recent as baseline
+			to = historyFiles[0]   // Most recent as current
+			if verbose, _ := cmd.Flags().GetBool("verbose"); verbose && !quiet {
+				fmt.Fprintf(os.Stderr, "Comparing %s with %s\n", filepath.Base(from), filepath.Base(to))
+			}
+		} else if len(historyFiles) == 1 {
+			// Only one snapshot exists - nothing to compare against
+			return vainoerrors.New(vainoerrors.ErrorTypeValidation, vainoerrors.ProviderUnknown,
+				"Only one snapshot found - nothing to compare").
+				WithCause("Diff requires at least two snapshots for comparison").
 				WithSolutions(
-					"Run 'vaino scan' to create your first snapshot",
-					"Specify snapshots manually with --from and --to",
+					"Run 'vaino scan' again to create a new snapshot for comparison",
+					"Wait for infrastructure changes, then scan again",
+					"Use 'vaino status' to check current state without comparison",
 				).
 				WithHelp("vaino scan --help")
-		}
+		} else {
+			// Fallback to last-scan files with auto-scanning
+			matches, _ := filepath.Glob(filepath.Join(vainoDir, "last-scan-*.json"))
+			if len(matches) == 0 {
+				// No scans found - provide helpful guidance
+				return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
+					"No previous scans found").
+					WithCause("No snapshot files in ~/.vaino").
+					WithSolutions(
+						"Run 'vaino scan' to create your first snapshot",
+						"Specify snapshots manually with --from and --to",
+					).
+					WithHelp("vaino scan --help")
+			} else {
+				// Auto-scan mode: compare last scan with new scan
+				// Use the most recently modified one
+				var mostRecent string
+				var mostRecentTime time.Time
 
-		if len(matches) > 0 {
-			// Use the most recently modified one
-			var mostRecent string
-			var mostRecentTime time.Time
-
-			for _, match := range matches {
-				info, err := os.Stat(match)
-				if err == nil && info.ModTime().After(mostRecentTime) {
-					mostRecent = match
-					mostRecentTime = info.ModTime()
-				}
-			}
-
-			if mostRecent != "" {
-				// Extract provider from filename
-				base := filepath.Base(mostRecent)
-				providerName := strings.TrimPrefix(strings.TrimSuffix(base, ".json"), "last-scan-")
-
-				// Create temp file for new scan
-				tempFile, err := os.CreateTemp("", "vaino-scan-*.json")
-				if err != nil {
-					return fmt.Errorf("failed to create temp file: %w", err)
-				}
-				tempPath := tempFile.Name()
-				tempFile.Close()
-				defer os.Remove(tempPath)
-
-				// Run new scan silently
-				scanCmd := newScanCommand()
-				scanArgs := []string{"--provider", providerName, "--output-file", tempPath, "--quiet"}
-
-				// Add auto-discover for terraform
-				if providerName == "terraform" {
-					scanArgs = append(scanArgs, "--auto-discover")
-				}
-				scanCmd.SetArgs(scanArgs)
-				scanCmd.SetOutput(io.Discard) // Suppress output
-
-				// Show scanning progress if not quiet
-				if !quiet {
-					fmt.Fprintf(os.Stderr, "Scanning %s infrastructure for comparison...\n", providerName)
+				for _, match := range matches {
+					info, err := os.Stat(match)
+					if err == nil && info.ModTime().After(mostRecentTime) {
+						mostRecent = match
+						mostRecentTime = info.ModTime()
+					}
 				}
 
-				// Add timeout for scan execution with proper context
-				ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
-				defer cancel()
+				if mostRecent != "" {
+					// Extract provider from filename
+					base := filepath.Base(mostRecent)
+					providerName := strings.TrimPrefix(strings.TrimSuffix(base, ".json"), "last-scan-")
 
-				// Set context on scan command
-				scanCmd.SetContext(ctx)
+					// Only show progress in verbose mode
+					if verbose, _ := cmd.Flags().GetBool("verbose"); verbose && !quiet {
+						fmt.Fprintf(os.Stderr, "Comparing %s infrastructure...\n", providerName)
+					}
 
-				// Execute scan synchronously with timeout
-				scanErr := scanCmd.Execute()
+					// Create temp file for new scan
+					tempFile, err := os.CreateTemp("", "vaino-scan-*.json")
+					if err != nil {
+						return fmt.Errorf("failed to create temp file: %w", err)
+					}
+					tempPath := tempFile.Name()
+					tempFile.Close()
+					defer os.Remove(tempPath)
 
-				// Check if context was cancelled
-				if ctx.Err() == context.DeadlineExceeded {
-					return vainoerrors.New(vainoerrors.ErrorTypeNetwork, vainoerrors.Provider(providerName),
-						"Scan operation timed out after 30 seconds").
-						WithSolutions(
-							fmt.Sprintf("Run 'vaino scan --provider %s' manually to check for issues", providerName),
-							"Try limiting the scan scope if available",
-							fmt.Sprintf("Check %s connectivity and authentication", providerName),
-						).
-						WithHelp("vaino check-config")
-				}
+					// Run new scan silently
+					scanCmd := newScanCommand()
+					scanArgs := []string{"--provider", providerName, "--output-file", tempPath, "--quiet"}
 
-				if scanErr != nil {
-					// Handle specific auto-discovery failures gracefully
-					if strings.Contains(scanErr.Error(), "auto-discovery failed") || 
-					   strings.Contains(scanErr.Error(), "No terraform state files found") {
+					// Add auto-discover for terraform
+					if providerName == "terraform" {
+						scanArgs = append(scanArgs, "--auto-discover")
+					}
+					scanCmd.SetArgs(scanArgs)
+					scanCmd.SetOutput(io.Discard) // Suppress output
+
+					// Show scanning progress if not quiet
+					if !quiet {
+						fmt.Fprintf(os.Stderr, "Scanning %s infrastructure for comparison...\n", providerName)
+					}
+
+					// Add timeout for scan execution with proper context
+					ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
+					defer cancel()
+
+					// Set context on scan command
+					scanCmd.SetContext(ctx)
+
+					// Execute scan synchronously with timeout
+					scanErr := scanCmd.Execute()
+
+					// Check if context was cancelled
+					if ctx.Err() == context.DeadlineExceeded {
+						return vainoerrors.New(vainoerrors.ErrorTypeNetwork, vainoerrors.Provider(providerName),
+							"Scan operation timed out after 30 seconds").
+							WithSolutions(
+								fmt.Sprintf("Run 'vaino scan --provider %s' manually to check for issues", providerName),
+								"Try limiting the scan scope if available",
+								fmt.Sprintf("Check %s connectivity and authentication", providerName),
+							).
+							WithHelp("vaino check-config")
+					}
+
+					if scanErr != nil {
+						// Handle specific auto-discovery failures gracefully
+						if strings.Contains(scanErr.Error(), "auto-discovery failed") || 
+						   strings.Contains(scanErr.Error(), "No terraform state files found") {
+							if !quiet {
+								fmt.Println("No current infrastructure found - nothing to compare")
+								fmt.Println("Run 'vaino scan' to create a current snapshot")
+							}
+							return nil
+						}
+						
+						// Check if it's a known error type
+						if vainoErr, ok := scanErr.(*vainoerrors.VAINOError); ok {
+							return vainoErr
+						}
+						return vainoerrors.New(vainoerrors.ErrorTypeProvider, vainoerrors.Provider(providerName),
+							"Auto-scan failed, cannot compare with current state").
+							WithCause(scanErr.Error()).
+							WithSolutions(
+								fmt.Sprintf("Run 'vaino scan --provider %s' manually first", providerName),
+								"Use existing snapshots: 'vaino diff --from snap1.json --to snap2.json'",
+								"Check provider configuration: 'vaino check-config'",
+							).
+							WithHelp("vaino scan --help")
+					}
+
+					// Check if the new scan found any resources
+					tempData, err := os.ReadFile(tempPath)
+					if err != nil {
+						return fmt.Errorf("failed to read scan results: %w", err)
+					}
+					
+					var tempSnapshot types.Snapshot
+					if err := json.Unmarshal(tempData, &tempSnapshot); err != nil {
+						return fmt.Errorf("failed to parse scan results: %w", err)
+					}
+					
+					// If no resources found in current scan, show appropriate message
+					if len(tempSnapshot.Resources) == 0 {
 						if !quiet {
 							fmt.Println("No current infrastructure found - nothing to compare")
 							fmt.Println("Run 'vaino scan' to create a current snapshot")
 						}
 						return nil
 					}
-					
-					// Check if it's a known error type
-					if vainoErr, ok := scanErr.(*vainoerrors.VAINOError); ok {
-						return vainoErr
-					}
-					return vainoerrors.New(vainoerrors.ErrorTypeProvider, vainoerrors.Provider(providerName),
-						"Auto-scan failed, cannot compare with current state").
-						WithCause(scanErr.Error()).
-						WithSolutions(
-							fmt.Sprintf("Run 'vaino scan --provider %s' manually first", providerName),
-							"Use existing snapshots: 'vaino diff --from snap1.json --to snap2.json'",
-							"Check provider configuration: 'vaino check-config'",
-						).
-						WithHelp("vaino scan --help")
-				}
 
-				// Check if the new scan found any resources
-				tempData, err := os.ReadFile(tempPath)
-				if err != nil {
-					return fmt.Errorf("failed to read scan results: %w", err)
+					// Set from and to for comparison
+					from = mostRecent
+					to = tempPath
 				}
-				
-				var tempSnapshot types.Snapshot
-				if err := json.Unmarshal(tempData, &tempSnapshot); err != nil {
-					return fmt.Errorf("failed to parse scan results: %w", err)
-				}
-				
-				// If no resources found in current scan, show appropriate message
-				if len(tempSnapshot.Resources) == 0 {
-					if !quiet {
-						fmt.Println("No current infrastructure found - nothing to compare")
-						fmt.Println("Run 'vaino scan' to create a current snapshot")
-					}
-					return nil
-				}
-
-				// Set from and to for comparison
-				from = mostRecent
-				to = tempPath
 			}
 		}
 	}

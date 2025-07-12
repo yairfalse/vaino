@@ -78,7 +78,7 @@ func runDrift(cmd *cobra.Command, args []string) error {
 	rescan, _ := cmd.Flags().GetBool("rescan")
 
 	if !quiet {
-		fmt.Println("🔍 Drift Detection")
+		fmt.Println("Drift Detection")
 		fmt.Println("==================")
 	}
 
@@ -115,8 +115,8 @@ func runDrift(cmd *cobra.Command, args []string) error {
 
 			if len(states) < 2 {
 				if !quiet {
-					fmt.Println("ℹ️  No previous state found for comparison")
-					fmt.Println("\n💡 TIP: Save a reference state first:")
+					fmt.Println("No previous state found for comparison")
+					fmt.Println("\nSave a reference state first:")
 					fmt.Println("    vaino scan --save")
 				}
 				return nil
@@ -303,13 +303,13 @@ func formatTimestamp(t time.Time) string {
 
 func displayDriftSummary(report *differ.DriftReport) {
 	if report.Summary.ChangedResources == 0 {
-		fmt.Println("\n✅ No drift detected")
+		fmt.Println("\nNo drift detected")
 		fmt.Println("Your infrastructure matches the reference state")
 		return
 	}
 
 	// Summary header
-	fmt.Printf("\n⚠️  Drift detected in %d resources\n", report.Summary.ChangedResources)
+	fmt.Printf("\nDrift detected in %d resources\n", report.Summary.ChangedResources)
 	fmt.Println()
 
 	// Quick stats
@@ -324,13 +324,13 @@ func displayDriftSummary(report *differ.DriftReport) {
 	}
 
 	// Risk assessment
-	fmt.Printf("\n📊 Risk Level: %s (%.1f/10)\n",
+	fmt.Printf("\nRisk Level: %s (%.1f/10)\n",
 		strings.Title(string(report.Summary.OverallRisk)),
 		report.Summary.RiskScore*10)
 
 	// Top changes
 	if len(report.ResourceChanges) > 0 {
-		fmt.Println("\n🔍 Key Changes:")
+		fmt.Println("\nKey Changes:")
 		shown := 0
 		for _, change := range report.ResourceChanges {
 			if shown >= 5 {
@@ -358,7 +358,7 @@ func displayDriftSummary(report *differ.DriftReport) {
 	}
 
 	// Next steps
-	fmt.Println("\n💡 Next Steps:")
+	fmt.Println("\nNext Steps:")
 	fmt.Println("  • Review changes: vaino drift --format markdown")
 	fmt.Println("  • Get AI analysis: vaino explain")
 	fmt.Println("  • Save new reference: vaino scan --save")

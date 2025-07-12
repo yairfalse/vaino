@@ -1,0 +1,32 @@
+{
+  "primary": [
+    "https://releases.tapio.io",
+    "https://dl.tapio.io"
+  ],
+  "fallback": [
+    "https://github.com/tapio/tapio/releases/download",
+    "https://gitlab.com/tapio/tapio/-/releases"
+  ],
+  "regional": {
+    "us": [
+      "https://us.releases.tapio.io",
+      "https://us-east-1.dl.tapio.io",
+      "https://us-west-2.dl.tapio.io"
+    ],
+    "eu": [
+      "https://eu.releases.tapio.io",
+      "https://eu-central-1.dl.tapio.io",
+      "https://eu-west-1.dl.tapio.io"
+    ],
+    "asia": [
+      "https://asia.releases.tapio.io",
+      "https://ap-southeast-1.dl.tapio.io",
+      "https://ap-northeast-1.dl.tapio.io"
+    ],
+    "cn": [
+      "https://cn.releases.tapio.io",
+      "https://mirrors.aliyun.com/tapio",
+      "https://mirrors.tencent.com/tapio"
+    ]
+  }
+}
