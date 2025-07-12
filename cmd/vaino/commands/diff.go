@@ -82,6 +82,7 @@ By default, compares current infrastructure state with the last scan automatical
 	cmd.Flags().StringSlice("resource-type", []string{}, "limit to specific resource types")
 	cmd.Flags().StringSlice("ignore-fields", []string{}, "ignore changes in specified fields")
 	cmd.Flags().String("min-severity", "low", "minimum severity level to show (low, medium, high, critical)")
+	cmd.Flags().BoolP("verbose", "v", false, "show detailed progress information")
 
 	return cmd
 }
@@ -294,11 +295,12 @@ func runDiff(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("baseline resolution failed: %w", err)
 		}
 		from = baselineSnapshot
-		if !quiet {
+		// Remove verbose baseline messages - only show in verbose mode
+		if verbose, _ := cmd.Flags().GetBool("verbose"); verbose {
 			if baseline == "auto" || baseline == "" {
-				fmt.Printf("Using latest baseline as comparison source\n")
+				fmt.Fprintf(os.Stderr, "Using latest baseline as comparison source\n")
 			} else {
-				fmt.Printf("Using baseline '%s' as comparison source\n", baseline)
+				fmt.Fprintf(os.Stderr, "Using baseline '%s' as comparison source\n", baseline)
 			}
 		}
 	}
@@ -341,7 +343,10 @@ func runDiff(cmd *cobra.Command, args []string) error {
 				base := filepath.Base(mostRecent)
 				providerName := strings.TrimPrefix(strings.TrimSuffix(base, ".json"), "last-scan-")
 
-				fmt.Printf("Comparing %s infrastructure...\n", providerName)
+				// Only show progress in verbose mode
+				if verbose, _ := cmd.Flags().GetBool("verbose"); verbose && !quiet {
+					fmt.Fprintf(os.Stderr, "Comparing %s infrastructure...\n", providerName)
+				}
 
 				// Create temp file for new scan
 				tempFile, err := os.CreateTemp("", "vaino-scan-*.json")
