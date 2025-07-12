@@ -284,7 +284,6 @@ func runScan(cmd *cobra.Command, args []string) error {
 	if !quiet {
 		fmt.Println("Scanning infrastructure...")
 	}
-	startTime := time.Now()
 
 	snapshot, err := collector.Collect(ctx, config)
 	if err != nil {
@@ -318,8 +317,6 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	collectionTime := time.Since(startTime)
-
 	// Mark as baseline if requested
 	if isBaseline {
 		snapshot.MarkAsBaseline(baselineName, baselineReason)
@@ -334,7 +331,31 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	// Display results
 	if !quiet {
-		fmt.Printf("Found %d resources in %v\n", len(snapshot.Resources), collectionTime)
+		// Group resources by type for meaningful display
+		byType := make(map[string]int)
+		for _, resource := range snapshot.Resources {
+			byType[resource.Type]++
+		}
+
+		// Show what we found
+		if len(byType) == 0 {
+			fmt.Println("No resources found")
+		} else if len(byType) == 1 {
+			// Single type
+			for resourceType, count := range byType {
+				if count == 1 {
+					fmt.Printf("Found 1 %s\n", resourceType)
+				} else {
+					fmt.Printf("Found %d %s resources\n", count, resourceType)
+				}
+			}
+		} else {
+			// Multiple types - show summary
+			fmt.Printf("Found %d resources:\n", len(snapshot.Resources))
+			for resourceType, count := range byType {
+				fmt.Printf("  %s: %d\n", resourceType, count)
+			}
+		}
 	}
 
 	// Save to history directory for time-based comparisons
