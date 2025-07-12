@@ -52,6 +52,7 @@ func newAuthGCPCommand() *cobra.Command {
 	}
 
 	cmd.Flags().String("project", "", "GCP project ID to use as default")
+	cmd.Flags().BoolP("quiet", "q", false, "suppress decorative output")
 
 	return cmd
 }
@@ -68,6 +69,8 @@ func newAuthAWSCommand() *cobra.Command {
   vaino auth aws`,
 		RunE: runAuthAWS,
 	}
+
+	cmd.Flags().BoolP("quiet", "q", false, "suppress decorative output")
 
 	return cmd
 }
@@ -86,6 +89,7 @@ func newAuthTestCommand() *cobra.Command {
 	}
 
 	cmd.Flags().String("provider", "", "specific provider to test")
+	cmd.Flags().BoolP("quiet", "q", false, "suppress decorative output")
 
 	return cmd
 }
@@ -97,6 +101,8 @@ func newAuthStatusCommand() *cobra.Command {
 		Long:  `Shows the current authentication status for all providers.`,
 		RunE:  runAuthStatus,
 	}
+
+	cmd.Flags().BoolP("quiet", "q", false, "suppress decorative output and tips")
 
 	return cmd
 }
@@ -121,9 +127,12 @@ func runAuthAWS(cmd *cobra.Command, args []string) error {
 
 func runAuthTest(cmd *cobra.Command, args []string) error {
 	provider, _ := cmd.Flags().GetString("provider")
+	quiet, _ := cmd.Flags().GetBool("quiet")
 
-	fmt.Println("🔍 Testing Authentication")
-	fmt.Println("========================")
+	if !quiet {
+		fmt.Println("🔍 Testing Authentication")
+		fmt.Println("========================")
+	}
 
 	// TODO: Implement actual authentication testing
 	// For now, provide helpful information
@@ -147,8 +156,12 @@ func runAuthTest(cmd *cobra.Command, args []string) error {
 }
 
 func runAuthStatus(cmd *cobra.Command, args []string) error {
-	fmt.Println("🔐 Authentication Status")
-	fmt.Println("=======================")
+	quiet, _ := cmd.Flags().GetBool("quiet")
+
+	if !quiet {
+		fmt.Println("🔐 Authentication Status")
+		fmt.Println("=======================")
+	}
 
 	// Check GCP
 	fmt.Println("\n📋 Google Cloud Platform:")
@@ -162,9 +175,11 @@ func runAuthStatus(cmd *cobra.Command, args []string) error {
 	fmt.Println("\n📋 Terraform:")
 	showTerraformStatus()
 
-	fmt.Println("\n💡 Tips:")
-	fmt.Println("  • Run 'vaino auth <provider>' to set up authentication")
-	fmt.Println("  • Run 'vaino auth test' to verify your credentials work")
+	if !quiet {
+		fmt.Println("\n💡 Tips:")
+		fmt.Println("  • Run 'vaino auth <provider>' to set up authentication")
+		fmt.Println("  • Run 'vaino auth test' to verify your credentials work")
+	}
 
 	return nil
 }

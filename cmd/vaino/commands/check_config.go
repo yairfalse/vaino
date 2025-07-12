@@ -54,8 +54,8 @@ func runCheckConfig(cmd *cobra.Command, args []string) error {
 	_ = color.YellowString("[WARN]") // warnSymbol - reserved for future use
 
 	if !checkQuiet {
-		fmt.Println("Checking VAINO configuration...")
-		fmt.Println()
+		fmt.Fprintf(os.Stderr, "Checking VAINO configuration...\n")
+		fmt.Fprintf(os.Stderr, "\n")
 	}
 
 	// Check config file
@@ -63,17 +63,20 @@ func runCheckConfig(cmd *cobra.Command, args []string) error {
 	configPath := filepath.Join(os.Getenv("HOME"), ".vaino", "config.yaml")
 
 	if !checkQuiet {
-		fmt.Printf("Config file: %s ", configPath)
+		fmt.Fprintf(os.Stderr, "Config file: %s ", configPath)
 	}
 
 	if _, err := os.Stat(configPath); err != nil {
-		fmt.Printf("%s\n", failSymbol)
+		fmt.Fprintf(os.Stderr, "%s\n", failSymbol)
 		if checkVerbose {
-			fmt.Printf("  Error: %v\n", err)
-			fmt.Printf("  Fix: vaino configure\n")
+			fmt.Fprintf(os.Stderr, "  Error: %v\n", err)
+			fmt.Fprintf(os.Stderr, "  Fix: vaino configure\n")
 		}
+		return fmt.Errorf("config file not found: %s", configPath)
 	} else {
-		fmt.Printf("%s\n", okSymbol)
+		if !checkQuiet {
+			fmt.Fprintf(os.Stderr, "%s\n", okSymbol)
+		}
 	}
 
 	// Check storage directory

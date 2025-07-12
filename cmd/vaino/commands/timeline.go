@@ -335,8 +335,10 @@ func displaySnapshotTimeline(snapshots []storage.SnapshotInfo, outputFormat stri
 		displaySnapshotStats(snapshots)
 	}
 
-	fmt.Println("💡 For advanced change timeline with correlation analysis, use:")
-	fmt.Println("   vaino changes --timeline")
+	if !quiet {
+		fmt.Println("💡 For advanced change timeline with correlation analysis, use:")
+		fmt.Println("   vaino changes --timeline")
+	}
 
 	return nil
 }
