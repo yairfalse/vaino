@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -32,12 +34,21 @@ func (c *GCPCollector) Name() string {
 func (c *GCPCollector) Status() string {
 	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
 	if projectID == "" {
-		return "error: GOOGLE_CLOUD_PROJECT environment variable not set"
+		// Try to get from gcloud config
+		if gcloudProject := c.getGcloudProject(); gcloudProject != "" {
+			projectID = gcloudProject
+		} else {
+			return "warning: no project configured, specify --project or set GOOGLE_CLOUD_PROJECT"
+		}
 	}
 
 	credentialsFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 	if credentialsFile == "" {
-		return "warning: GOOGLE_APPLICATION_CREDENTIALS not set, using default credentials"
+		if c.hasDefaultCredentials() {
+			return "ready"
+		} else {
+			return "warning: no credentials configured, run 'gcloud auth application-default login'"
+		}
 	}
 
 	if _, err := os.Stat(credentialsFile); os.IsNotExist(err) {
@@ -142,6 +153,8 @@ func (c *GCPCollector) AutoDiscover() (collectors.CollectorConfig, error) {
 	// Try to get project ID from environment
 	if projectID := os.Getenv("GOOGLE_CLOUD_PROJECT"); projectID != "" {
 		config.Config["project_id"] = projectID
+	} else if gcloudProject := c.getGcloudProject(); gcloudProject != "" {
+		config.Config["project_id"] = gcloudProject
 	}
 
 	// Try to get credentials file from environment
@@ -203,6 +216,12 @@ func (c *GCPCollector) extractGCPConfig(config collectors.CollectorConfig) GCPCo
 	if gcpConfig.ProjectID == "" {
 		gcpConfig.ProjectID = os.Getenv("GOOGLE_CLOUD_PROJECT")
 	}
+
+	// Try gcloud config if still no project ID
+	if gcpConfig.ProjectID == "" {
+		gcpConfig.ProjectID = c.getGcloudProject()
+	}
+
 	if gcpConfig.CredentialsFile == "" {
 		gcpConfig.CredentialsFile = os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 	}
@@ -338,13 +357,13 @@ func (c *GCPCollector) validateCredentials(config GCPConfig) error {
 	if config.ProjectID == "" {
 		return vainoerrors.New(vainoerrors.ErrorTypeConfiguration, vainoerrors.ProviderGCP,
 			"GCP project ID not specified").
-			WithCause("No project_id found in configuration or environment").
+			WithCause("No project_id found in configuration, environment, or gcloud config").
 			WithSolutions(
 				"Set GOOGLE_CLOUD_PROJECT environment variable",
-				"Specify project_id in the configuration",
-				"Check that your service account key contains project_id",
+				"Specify project_id with --project flag",
+				"Run 'gcloud config set project YOUR-PROJECT-ID'",
 			).
-			WithVerify("echo $GOOGLE_CLOUD_PROJECT").
+			WithVerify("gcloud config get-value project").
 			WithHelp("vaino validate gcp")
 	}
 
@@ -466,18 +485,59 @@ func (c *GCPCollector) validateCredentials(config GCPConfig) error {
 			}
 		}
 	} else {
-		// No credentials file specified, check if we have any way to authenticate
-		return vainoerrors.New(vainoerrors.ErrorTypeConfiguration, vainoerrors.ProviderGCP,
-			"No GCP credentials configured").
-			WithCause("GOOGLE_APPLICATION_CREDENTIALS not set and no credentials file specified").
-			WithSolutions(
-				"Set GOOGLE_APPLICATION_CREDENTIALS environment variable",
-				"Download a service account key from GCP Console",
-				"Use 'gcloud auth application-default login' for local development",
-			).
-			WithVerify("echo $GOOGLE_APPLICATION_CREDENTIALS").
-			WithHelp("vaino validate gcp")
+		// No explicit credentials file specified, try to use default authentication
+		// Check if default application credentials exist
+		if !c.hasDefaultCredentials() {
+			return vainoerrors.New(vainoerrors.ErrorTypeConfiguration, vainoerrors.ProviderGCP,
+				"No GCP credentials configured").
+				WithCause("GOOGLE_APPLICATION_CREDENTIALS not set and no default credentials found").
+				WithSolutions(
+					"Run 'gcloud auth application-default login' to set up default credentials",
+					"Set GOOGLE_APPLICATION_CREDENTIALS environment variable",
+					"Download a service account key from GCP Console",
+				).
+				WithVerify("gcloud auth application-default print-access-token").
+				WithHelp("vaino validate gcp")
+		}
+		// If we have default credentials, proceed without explicit file
 	}
 
 	return nil
+}
+
+// getGcloudProject tries to get the project ID from gcloud config
+func (c *GCPCollector) getGcloudProject() string {
+	cmd := exec.Command("gcloud", "config", "get-value", "project")
+	output, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+	projectID := strings.TrimSpace(string(output))
+	if projectID == "(unset)" {
+		return ""
+	}
+	return projectID
+}
+
+// hasDefaultCredentials checks if default application credentials are available
+func (c *GCPCollector) hasDefaultCredentials() bool {
+	// Check if gcloud auth application-default print-access-token works
+	cmd := exec.Command("gcloud", "auth", "application-default", "print-access-token")
+	err := cmd.Run()
+	if err == nil {
+		return true
+	}
+
+	// Check if default credentials file exists in standard location
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return false
+	}
+
+	defaultCredPath := filepath.Join(homeDir, ".config", "gcloud", "application_default_credentials.json")
+	if _, err := os.Stat(defaultCredPath); err == nil {
+		return true
+	}
+
+	return false
 }
