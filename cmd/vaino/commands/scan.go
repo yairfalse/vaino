@@ -331,10 +331,19 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	// Display results
 	if !quiet {
-		// Group resources by type for meaningful display
+		// Group resources by type and collect regions/locations
 		byType := make(map[string]int)
+		regions := make(map[string]bool)
+		stateFiles := make(map[string]bool)
+		
 		for _, resource := range snapshot.Resources {
 			byType[resource.Type]++
+			if resource.Region != "" {
+				regions[resource.Region] = true
+			}
+			if resource.Metadata.StateFile != "" {
+				stateFiles[resource.Metadata.StateFile] = true
+			}
 		}
 
 		// Show what we found
@@ -344,9 +353,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 			// Single type
 			for resourceType, count := range byType {
 				if count == 1 {
-					fmt.Printf("Found 1 %s\n", resourceType)
+					fmt.Printf("Found 1 %s", resourceType)
 				} else {
-					fmt.Printf("Found %d %s resources\n", count, resourceType)
+					fmt.Printf("Found %d %s resources", count, resourceType)
 				}
 			}
 		} else {
@@ -355,6 +364,26 @@ func runScan(cmd *cobra.Command, args []string) error {
 			for resourceType, count := range byType {
 				fmt.Printf("  %s: %d\n", resourceType, count)
 			}
+		}
+		
+		// Show locations if available
+		if len(regions) > 0 {
+			var regionList []string
+			for region := range regions {
+				regionList = append(regionList, region)
+			}
+			if len(regionList) == 1 {
+				fmt.Printf(" in %s\n", regionList[0])
+			} else {
+				fmt.Printf(" across %d regions\n", len(regionList))
+			}
+		} else {
+			fmt.Printf("\n")
+		}
+		
+		// Show state files processed
+		if len(stateFiles) > 1 {
+			fmt.Printf("Processed %d state files\n", len(stateFiles))
 		}
 	}
 
