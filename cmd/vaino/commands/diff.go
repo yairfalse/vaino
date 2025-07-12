@@ -342,10 +342,6 @@ func runDiff(cmd *cobra.Command, args []string) error {
 				base := filepath.Base(mostRecent)
 				providerName := strings.TrimPrefix(strings.TrimSuffix(base, ".json"), "last-scan-")
 
-				if !quiet {
-					fmt.Println("Checking for changes...")
-				}
-
 				// Create temp file for new scan
 				tempFile, err := os.CreateTemp("", "vaino-scan-*.json")
 				if err != nil {
@@ -366,50 +362,57 @@ func runDiff(cmd *cobra.Command, args []string) error {
 				scanCmd.SetArgs(scanArgs)
 				scanCmd.SetOutput(io.Discard) // Suppress output
 
-				// Add timeout for scan execution
-				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+				// Show scanning progress if not quiet
+				if !quiet {
+					fmt.Fprintf(os.Stderr, "Scanning %s infrastructure for comparison...\n", providerName)
+				}
+
+				// Add timeout for scan execution with proper context
+				ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
 				defer cancel()
 
-				done := make(chan error, 1)
-				go func() {
-					done <- scanCmd.Execute()
-				}()
+				// Set context on scan command
+				scanCmd.SetContext(ctx)
 
-				select {
-				case err := <-done:
-					if err != nil {
-						// Handle specific auto-discovery failures gracefully
-						if strings.Contains(err.Error(), "auto-discovery failed") || 
-						   strings.Contains(err.Error(), "No terraform state files found") {
-							if !quiet {
-								fmt.Println("No current infrastructure found - nothing to compare")
-								fmt.Println("Run 'vaino scan' to create a current snapshot")
-							}
-							return nil
-						}
-						
-						// Check if it's a known error type
-						if vainoErr, ok := err.(*vainoerrors.VAINOError); ok {
-							return vainoErr
-						}
-						return vainoerrors.New(vainoerrors.ErrorTypeProvider, vainoerrors.Provider(providerName),
-							"Failed to scan current infrastructure").
-							WithCause(err.Error()).
-							WithSolutions(
-								fmt.Sprintf("Run 'vaino scan --provider %s' manually to debug", providerName),
-								"Check provider authentication with 'vaino check-config'",
-							).
-							WithHelp("vaino check-config")
-					}
-				case <-ctx.Done():
+				// Execute scan synchronously with timeout
+				scanErr := scanCmd.Execute()
+
+				// Check if context was cancelled
+				if ctx.Err() == context.DeadlineExceeded {
 					return vainoerrors.New(vainoerrors.ErrorTypeNetwork, vainoerrors.Provider(providerName),
 						"Scan operation timed out after 30 seconds").
 						WithSolutions(
-							"Try limiting the scan scope with specific namespaces",
-							"Run 'vaino scan --provider kubernetes --namespace test-workloads' for targeted scanning",
-							"Check cluster connectivity with 'kubectl get nodes'",
+							fmt.Sprintf("Run 'vaino scan --provider %s' manually to check for issues", providerName),
+							"Try limiting the scan scope if available",
+							fmt.Sprintf("Check %s connectivity and authentication", providerName),
 						).
 						WithHelp("vaino check-config")
+				}
+
+				if scanErr != nil {
+					// Handle specific auto-discovery failures gracefully
+					if strings.Contains(scanErr.Error(), "auto-discovery failed") || 
+					   strings.Contains(scanErr.Error(), "No terraform state files found") {
+						if !quiet {
+							fmt.Println("No current infrastructure found - nothing to compare")
+							fmt.Println("Run 'vaino scan' to create a current snapshot")
+						}
+						return nil
+					}
+					
+					// Check if it's a known error type
+					if vainoErr, ok := scanErr.(*vainoerrors.VAINOError); ok {
+						return vainoErr
+					}
+					return vainoerrors.New(vainoerrors.ErrorTypeProvider, vainoerrors.Provider(providerName),
+						"Auto-scan failed, cannot compare with current state").
+						WithCause(scanErr.Error()).
+						WithSolutions(
+							fmt.Sprintf("Run 'vaino scan --provider %s' manually first", providerName),
+							"Use existing snapshots: 'vaino diff --from snap1.json --to snap2.json'",
+							"Check provider configuration: 'vaino check-config'",
+						).
+						WithHelp("vaino scan --help")
 				}
 
 				// Check if the new scan found any resources
