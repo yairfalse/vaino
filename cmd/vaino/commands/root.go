@@ -18,17 +18,8 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "vaino",
 	Short: "Infrastructure drift detection and monitoring",
-	Long:  `vaino - infrastructure drift detection and monitoring
-
-Usage: vaino [command] [flags]
-
-Common commands:
-  scan        Scan infrastructure state
-  diff        Show changes since last scan
-  watch       Monitor infrastructure in real-time
-  status      Check system status
-
-Use "vaino [command] --help" for more information.`,
+	Long:  `vaino - infrastructure drift detection and monitoring`,
+	DisableAutoGenTag: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Handle --version flag
 		if showVersion, _ := cmd.Flags().GetBool("version"); showVersion {
