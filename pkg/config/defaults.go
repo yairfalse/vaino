@@ -177,18 +177,13 @@ func (dm *DefaultsManager) getDefaultAWSRegions() []string {
 
 // GenerateAutoName creates a meaningful name based on context
 func (dm *DefaultsManager) GenerateAutoName(prefix string) string {
-	// Get directory name
-	dirName := filepath.Base(dm.workingDir)
-
-	// Clean up the name
-	if dirName == "." || dirName == "/" {
-		dirName = "vaino"
-	}
+	// Use "vaino" as the product name for snapshot names
+	productName := "vaino"
 
 	// Add timestamp
 	timestamp := time.Now().Format("2006-01-02-15-04")
 
-	return fmt.Sprintf("%s-%s-%s", prefix, dirName, timestamp)
+	return fmt.Sprintf("%s-%s-%s", prefix, productName, timestamp)
 }
 
 // GetRecommendedStoragePath suggests storage path based on project context
