@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -159,21 +160,46 @@ func (d *ProviderDetector) DetectKubernetes() DetectionResult {
 	result := DetectionResult{}
 
 	// Check if kubectl is installed
-	cmd := exec.Command("kubectl", "version", "--client", "--short")
+	// Note: --short flag was removed in newer kubectl versions, so we use --output=json for compatibility
+	cmd := exec.Command("kubectl", "version", "--client", "--output=json")
 	output, err := cmd.Output()
 
 	if err != nil {
-		result.Available = false
-		result.Status = "kubectl not found"
+		// Fallback: try simple kubectl command to check if it exists
+		checkCmd := exec.Command("kubectl", "help")
+		if checkErr := checkCmd.Run(); checkErr != nil {
+			result.Available = false
+			result.Status = "kubectl not found"
+			return result
+		}
+		// kubectl exists but version command failed
+		result.Available = true
+		result.Status = "kubectl found"
+		result.Version = "unknown"
 		return result
 	}
 
 	result.Available = true
 
-	// Extract version
-	outputStr := strings.TrimSpace(string(output))
-	if strings.HasPrefix(outputStr, "Client Version:") {
-		result.Version = strings.TrimSpace(strings.TrimPrefix(outputStr, "Client Version:"))
+	// Try to parse JSON output
+	var versionInfo struct {
+		ClientVersion struct {
+			GitVersion string `json:"gitVersion"`
+		} `json:"clientVersion"`
+	}
+
+	if err := json.Unmarshal(output, &versionInfo); err == nil && versionInfo.ClientVersion.GitVersion != "" {
+		result.Version = versionInfo.ClientVersion.GitVersion
+	} else {
+		// Fallback: try to extract version from plain text output
+		outputStr := strings.TrimSpace(string(output))
+		if strings.Contains(outputStr, "Client Version:") {
+			// Handle old format
+			parts := strings.Split(outputStr, "Client Version:")
+			if len(parts) > 1 {
+				result.Version = strings.TrimSpace(parts[1])
+			}
+		}
 	}
 
 	result.Status = "kubectl found"

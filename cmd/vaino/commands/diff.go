@@ -328,6 +328,17 @@ func runDiff(cmd *cobra.Command, args []string) error {
 			if verbose, _ := cmd.Flags().GetBool("verbose"); verbose && !quiet {
 				fmt.Fprintf(os.Stderr, "Comparing %s with %s\n", filepath.Base(from), filepath.Base(to))
 			}
+		} else if len(historyFiles) == 1 {
+			// Only one snapshot exists - nothing to compare against
+			return vainoerrors.New(vainoerrors.ErrorTypeValidation, vainoerrors.ProviderUnknown,
+				"Only one snapshot found - nothing to compare").
+				WithCause("Diff requires at least two snapshots for comparison").
+				WithSolutions(
+					"Run 'vaino scan' again to create a new snapshot for comparison",
+					"Wait for infrastructure changes, then scan again",
+					"Use 'vaino status' to check current state without comparison",
+				).
+				WithHelp("vaino scan --help")
 		} else {
 			// Fallback to last-scan files with auto-scanning
 			matches, _ := filepath.Glob(filepath.Join(vainoDir, "last-scan-*.json"))
@@ -385,41 +396,47 @@ func runDiff(cmd *cobra.Command, args []string) error {
 					scanCmd.SetArgs(scanArgs)
 					scanCmd.SetOutput(io.Discard) // Suppress output
 
-					// Add timeout for scan execution
-					ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+					// Show scanning progress if not quiet
+					if !quiet {
+						fmt.Fprintf(os.Stderr, "Scanning %s infrastructure for comparison...\n", providerName)
+					}
+
+					// Add timeout for scan execution with proper context
+					ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
 					defer cancel()
 
-					done := make(chan error, 1)
-					go func() {
-						done <- scanCmd.Execute()
-					}()
+					// Set context on scan command
+					scanCmd.SetContext(ctx)
 
-					select {
-					case err := <-done:
-						if err != nil {
-							// Check if it's a known error type
-							if vainoErr, ok := err.(*vainoerrors.VAINOError); ok {
-								return vainoErr
-							}
-							return vainoerrors.New(vainoerrors.ErrorTypeProvider, vainoerrors.Provider(providerName),
-								"Auto-scan failed, cannot compare with current state").
-								WithCause(err.Error()).
-								WithSolutions(
-									fmt.Sprintf("Run 'vaino scan --provider %s' manually first", providerName),
-									"Use existing snapshots: 'vaino diff --from snap1.json --to snap2.json'",
-									"Check provider configuration: 'vaino check-config'",
-								).
-								WithHelp("vaino scan --help")
-						}
-					case <-ctx.Done():
+					// Execute scan synchronously with timeout
+					scanErr := scanCmd.Execute()
+
+					// Check if context was cancelled
+					if ctx.Err() == context.DeadlineExceeded {
 						return vainoerrors.New(vainoerrors.ErrorTypeNetwork, vainoerrors.Provider(providerName),
 							"Scan operation timed out after 30 seconds").
 							WithSolutions(
-								"Try limiting the scan scope with specific namespaces",
-								"Run 'vaino scan --provider kubernetes --namespace test-workloads' for targeted scanning",
-								"Check cluster connectivity with 'kubectl get nodes'",
+								fmt.Sprintf("Run 'vaino scan --provider %s' manually to check for issues", providerName),
+								"Try limiting the scan scope if available",
+								fmt.Sprintf("Check %s connectivity and authentication", providerName),
 							).
 							WithHelp("vaino check-config")
+					}
+
+					if scanErr != nil {
+						// Check if it's a known error type
+						if vainoErr, ok := scanErr.(*vainoerrors.VAINOError); ok {
+							return vainoErr
+						}
+						return vainoerrors.New(vainoerrors.ErrorTypeProvider, vainoerrors.Provider(providerName),
+							"Auto-scan failed, cannot compare with current state").
+							WithCause(scanErr.Error()).
+							WithSolutions(
+								fmt.Sprintf("Run 'vaino scan --provider %s' manually first", providerName),
+								"Use existing snapshots: 'vaino diff --from snap1.json --to snap2.json'",
+								"Check provider configuration: 'vaino check-config'",
+							).
+							WithHelp("vaino scan --help")
 					}
 
 					// Set from and to for comparison
