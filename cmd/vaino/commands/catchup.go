@@ -115,7 +115,7 @@ func runCatchUp(cmd *cobra.Command, args []string) error {
 		if err := engine.SyncState(cmd.Context(), options); err != nil {
 			return fmt.Errorf("failed to sync state: %w", err)
 		}
-		fmt.Println("\n✅ Baselines updated successfully!")
+		fmt.Println("\nBaselines updated successfully!")
 	}
 
 	return nil

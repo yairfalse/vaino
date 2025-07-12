@@ -87,8 +87,8 @@ func createPlaceholderSnapshot(provider string) *types.Snapshot {
 }
 
 func displayDriftReport(report *differ.DriftReport, summaryOnly bool) {
-	fmt.Println("📊 Drift Summary")
-	fmt.Println("=================")
+	fmt.Println("Drift Summary")
+	fmt.Println("=============")
 	fmt.Printf("Total Resources: %d\n", report.Summary.TotalResources)
 	fmt.Printf("Changed Resources: %d\n", report.Summary.ChangedResources)
 	fmt.Printf("Added Resources: %d\n", report.Summary.AddedResources)
@@ -97,7 +97,7 @@ func displayDriftReport(report *differ.DriftReport, summaryOnly bool) {
 	fmt.Printf("Overall Risk: %s (%.2f)\n", report.Summary.OverallRisk, report.Summary.RiskScore)
 
 	if len(report.Summary.ChangesBySeverity) > 0 {
-		fmt.Println("\n📈 Changes by Severity:")
+		fmt.Println("\nChanges by Severity:")
 		for severity, count := range report.Summary.ChangesBySeverity {
 			if count > 0 {
 				fmt.Printf("  %s: %d\n", severity, count)
@@ -106,7 +106,7 @@ func displayDriftReport(report *differ.DriftReport, summaryOnly bool) {
 	}
 
 	if len(report.Summary.ChangesByCategory) > 0 {
-		fmt.Println("\n📋 Changes by Category:")
+		fmt.Println("\nChanges by Category:")
 		for category, count := range report.Summary.ChangesByCategory {
 			if count > 0 {
 				fmt.Printf("  %s: %d\n", category, count)
@@ -115,11 +115,11 @@ func displayDriftReport(report *differ.DriftReport, summaryOnly bool) {
 	}
 
 	if !summaryOnly && len(report.ResourceChanges) > 0 {
-		fmt.Println("\n🔍 Detailed Changes")
-		fmt.Println("====================")
+		fmt.Println("\nDetailed Changes")
+		fmt.Println("================")
 
 		for _, resourceChange := range report.ResourceChanges {
-			fmt.Printf("\n📦 Resource: %s (%s)\n", resourceChange.ResourceID, resourceChange.ResourceType)
+			fmt.Printf("\nResource: %s (%s)\n", resourceChange.ResourceID, resourceChange.ResourceType)
 			fmt.Printf("   Provider: %s\n", resourceChange.Provider)
 			fmt.Printf("   Change Type: %s\n", resourceChange.DriftType)
 			fmt.Printf("   Severity: %s\n", resourceChange.Severity)
@@ -137,9 +137,9 @@ func displayDriftReport(report *differ.DriftReport, summaryOnly bool) {
 	}
 
 	if report.Summary.ChangedResources == 0 {
-		fmt.Println("\n✅ No drift detected - infrastructure matches baseline")
+		fmt.Println("\nNo drift detected - infrastructure matches baseline")
 	} else {
-		fmt.Printf("\n⚠️  Drift detected in %d resources\n", report.Summary.ChangedResources)
+		fmt.Printf("\nDrift detected in %d resources\n", report.Summary.ChangedResources)
 	}
 }
 
@@ -153,8 +153,8 @@ func saveDriftReport(report *differ.DriftReport, filename string) error {
 }
 
 func runCheck(cmd *cobra.Command, args []string) error {
-	fmt.Println("🔍 Infrastructure Drift Check")
-	fmt.Println("=============================")
+	fmt.Println("Infrastructure Drift Check")
+	fmt.Println("==========================")
 
 	// Parse flags
 	baseline, _ := cmd.Flags().GetString("baseline")
@@ -177,18 +177,18 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	// Load baseline snapshot
 	var baselineSnapshot *types.Snapshot
 	if baseline == "" {
-		fmt.Println("📋 Finding latest baseline...")
+		fmt.Println("Finding latest baseline...")
 		baselines, err := localStorage.ListBaselines()
 		if err != nil {
 			return fmt.Errorf("failed to list baselines: %w", err)
 		}
 		if len(baselines) == 0 {
-			fmt.Println("❌ No Baselines Found")
+			fmt.Println("No Baselines Found")
 			fmt.Println("====================")
 			fmt.Println()
 			fmt.Println("You need to create a baseline first!")
 			fmt.Println()
-			fmt.Println("🎯 DO THIS NOW:")
+			fmt.Println("Create a baseline first:")
 			fmt.Println()
 			fmt.Println("  1. Scan your infrastructure (if not done already):")
 			fmt.Println("     vaino scan --provider terraform")
@@ -201,17 +201,17 @@ func runCheck(cmd *cobra.Command, args []string) error {
 			fmt.Println("  3. Then check for drift:")
 			fmt.Println("     vaino check")
 			fmt.Println()
-			fmt.Println("💡 TIP: The baseline is your 'known good' state")
+			fmt.Println("Help: vaino baseline create --name prod-baseline")
 			return nil
 		}
 		// Use the most recent baseline
-		fmt.Printf("📋 Using baseline: %s\n", baselines[0].Name)
+		fmt.Printf("Using baseline: %s\n", baselines[0].Name)
 		baselineSnapshot, err = localStorage.LoadSnapshot(baselines[0].SnapshotID)
 		if err != nil {
 			return fmt.Errorf("failed to load baseline snapshot: %w", err)
 		}
 	} else {
-		fmt.Printf("📋 Loading baseline: %s\n", baseline)
+		fmt.Printf("Loading baseline: %s\n", baseline)
 		baselineData, err := localStorage.LoadBaseline(baseline)
 		if err != nil {
 			return fmt.Errorf("failed to load baseline '%s': %w", baseline, err)
@@ -225,30 +225,30 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	// Get current snapshot
 	var currentSnapshot *types.Snapshot
 	if scan {
-		fmt.Println("🔍 Performing current state scan...")
+		fmt.Println("Performing current state scan...")
 		// TODO: Implement actual scanning
 		// For now, create a placeholder snapshot
 		currentSnapshot = createPlaceholderSnapshot(provider)
 	} else {
-		fmt.Println("📊 Loading latest snapshot...")
+		fmt.Println("Loading latest snapshot...")
 		snapshots, err := localStorage.ListSnapshots()
 		if err != nil {
 			return fmt.Errorf("failed to list snapshots: %w", err)
 		}
 		if len(snapshots) == 0 {
-			fmt.Println("❌ No Infrastructure Snapshots Found")
+			fmt.Println("No Infrastructure Snapshots Found")
 			fmt.Println("=====================================")
 			fmt.Println()
 			fmt.Println("You need to scan your infrastructure first!")
 			fmt.Println()
-			fmt.Println("🎯 DO THIS NOW (choose one):")
+			fmt.Println("Run 'vaino scan' to create your first snapshot:")
 			fmt.Println()
 			fmt.Println("  vaino scan --provider terraform")
 			fmt.Println("  vaino scan --provider aws --region us-east-1")
 			fmt.Println("  vaino scan --provider gcp --project YOUR-PROJECT")
 			fmt.Println("  vaino scan --provider kubernetes")
 			fmt.Println()
-			fmt.Println("💡 TIP: Having auth issues? Run 'vaino auth status'")
+			fmt.Println("Help: vaino auth status")
 			return nil
 		}
 		// Load the most recent snapshot
@@ -272,7 +272,7 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	// Create differ engine
 	differ := differ.NewDifferEngine(options)
 
-	fmt.Println("\n🔍 Comparing snapshots...")
+	fmt.Println("\nComparing snapshots...")
 	startTime := time.Now()
 
 	// Perform comparison
@@ -282,7 +282,7 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	}
 
 	comparisonTime := time.Since(startTime)
-	fmt.Printf("✅ Comparison completed in %v\n\n", comparisonTime)
+	fmt.Printf("Comparison completed in %v\n\n", comparisonTime)
 
 	// Display results
 	displayDriftReport(report, summaryOnly)
@@ -290,9 +290,9 @@ func runCheck(cmd *cobra.Command, args []string) error {
 	// Save report if requested
 	if outputFile != "" {
 		if err := saveDriftReport(report, outputFile); err != nil {
-			fmt.Printf("⚠️  Failed to save report: %v\n", err)
+			fmt.Printf("Failed to save report: %v\n", err)
 		} else {
-			fmt.Printf("💾 Report saved to: %s\n", outputFile)
+			fmt.Printf("Report saved to: %s\n", outputFile)
 		}
 	}
 

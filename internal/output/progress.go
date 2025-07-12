@@ -157,7 +157,7 @@ func (p *ProgressBar) render() {
 	// Add completion indicator
 	if p.isComplete {
 		bar.WriteString(" ")
-		bar.WriteString(p.colorize("✅", color.FgGreen))
+		bar.WriteString(p.colorize("DONE", color.FgGreen))
 	}
 
 	// Clear line and print
@@ -399,10 +399,10 @@ func (s *StepProgress) render() {
 		var icon, stepColor string
 
 		if i < s.current {
-			icon = "✅"
+			icon = "DONE"
 			stepColor = s.colorize(step, color.FgGreen)
 		} else if i == s.current {
-			icon = "🔄"
+			icon = "ACTIVE"
 			stepColor = s.colorize(step, color.FgYellow, color.Bold)
 		} else {
 			icon = "⏳"

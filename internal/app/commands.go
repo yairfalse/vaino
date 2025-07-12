@@ -97,7 +97,7 @@ func (a *App) runScanCommand(cmd *cobra.Command, args []string) {
 	var config collectors.CollectorConfig
 
 	if autoDiscover {
-		fmt.Println("🔍 Auto-discovering configuration...")
+		fmt.Println("Auto-discovering configuration...")
 		discoveredConfig, err := collector.AutoDiscover()
 		if err != nil {
 			fmt.Printf("Auto-discovery failed: %v\n", err)
@@ -137,15 +137,15 @@ func (a *App) runScanCommand(cmd *cobra.Command, args []string) {
 	spinner.Stop()
 
 	if err != nil {
-		fmt.Printf("❌ Collection failed: %v\n", err)
+		fmt.Printf("Collection failed: %v\n", err)
 		return
 	}
 
 	collectionTime := time.Since(startTime)
 
 	// Display results using enhanced renderer
-	fmt.Printf("\n✅ Collection completed in %v\n", collectionTime)
-	fmt.Printf("📋 Snapshot ID: %s\n", snapshot.ID)
+	fmt.Printf("Scanned %d resources in %v\n", len(snapshot.Resources), collectionTime)
+	fmt.Printf("Snapshot: %s\n", snapshot.ID)
 
 	// Use enhanced table renderer for resource display
 	renderer := output.NewEnhancedTableRenderer(noColor, 120)
@@ -156,7 +156,7 @@ func (a *App) runScanCommand(cmd *cobra.Command, args []string) {
 	if err := a.storage.SaveSnapshot(snapshot); err != nil {
 		fmt.Printf("Warning: Failed to save snapshot: %v\n", err)
 	} else {
-		fmt.Printf("\n💾 Snapshot saved successfully\n")
+		fmt.Printf("Next: vaino diff\n")
 	}
 
 	// Save to output file if specified
@@ -164,7 +164,7 @@ func (a *App) runScanCommand(cmd *cobra.Command, args []string) {
 		if err := a.saveSnapshotToFile(snapshot, outputFile); err != nil {
 			fmt.Printf("Warning: Failed to save to output file: %v\n", err)
 		} else {
-			fmt.Printf("📄 Output saved to: %s\n", outputFile)
+			fmt.Printf("Output saved to: %s\n", outputFile)
 		}
 	}
 }

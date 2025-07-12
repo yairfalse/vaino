@@ -130,7 +130,7 @@ func runAuthTest(cmd *cobra.Command, args []string) error {
 	quiet, _ := cmd.Flags().GetBool("quiet")
 
 	if !quiet {
-		fmt.Println("🔍 Testing Authentication")
+		fmt.Println("Testing Authentication")
 		fmt.Println("========================")
 	}
 
@@ -138,17 +138,17 @@ func runAuthTest(cmd *cobra.Command, args []string) error {
 	// For now, provide helpful information
 
 	if provider == "" || provider == "gcp" {
-		fmt.Println("\n📋 GCP Authentication:")
+		fmt.Println("\nGCP Authentication:")
 		testGCPAuth()
 	}
 
 	if provider == "" || provider == "aws" {
-		fmt.Println("\n📋 AWS Authentication:")
+		fmt.Println("\nAWS Authentication:")
 		testAWSAuth()
 	}
 
 	if provider == "" || provider == "terraform" {
-		fmt.Println("\n📋 Terraform:")
+		fmt.Println("\nTerraform:")
 		testTerraformAuth()
 	}
 
@@ -164,11 +164,11 @@ func runAuthStatus(cmd *cobra.Command, args []string) error {
 	}
 
 	// Check GCP
-	fmt.Println("\n📋 Google Cloud Platform:")
+	fmt.Println("\nGoogle Cloud Platform:")
 	showGCPAuthStatus()
 
 	// Check AWS
-	fmt.Println("\n📋 AWS:")
+	fmt.Println("\nAWS:")
 	showAWSAuthStatus()
 
 	// Check Terraform
@@ -176,7 +176,7 @@ func runAuthStatus(cmd *cobra.Command, args []string) error {
 	showTerraformStatus()
 
 	if !quiet {
-		fmt.Println("\n💡 Tips:")
+		fmt.Println("\nTips:")
 		fmt.Println("  • Run 'vaino auth <provider>' to set up authentication")
 		fmt.Println("  • Run 'vaino auth test' to verify your credentials work")
 	}
@@ -189,9 +189,9 @@ func runAuthStatus(cmd *cobra.Command, args []string) error {
 func testGCPAuth() {
 	// Simple checks for now
 	if gcloudAccount := getGcloudAccount(); gcloudAccount != "" {
-		fmt.Printf("  ✅ Logged in as: %s\n", gcloudAccount)
+		fmt.Printf("  Logged in as: %s\n", gcloudAccount)
 	} else {
-		fmt.Println("  ❌ Not authenticated")
+		fmt.Println("  Not authenticated")
 		fmt.Println("     Run: vaino auth gcp")
 	}
 }
@@ -199,9 +199,9 @@ func testGCPAuth() {
 func testAWSAuth() {
 	// Check for AWS credentials
 	if awsProfile := getAWSProfile(); awsProfile != "" {
-		fmt.Printf("  ✅ Using profile: %s\n", awsProfile)
+		fmt.Printf("  Using profile: %s\n", awsProfile)
 	} else {
-		fmt.Println("  ❌ No AWS credentials found")
+		fmt.Println("  No AWS credentials found")
 		fmt.Println("     Run: vaino auth aws")
 	}
 }
@@ -210,9 +210,9 @@ func testTerraformAuth() {
 	// Just check if terraform is installed
 	authHelper := helpers.NewAuthHelper()
 	if err := authHelper.CheckTerraformAuth(); err != nil {
-		fmt.Println("  ❌ Terraform not properly configured")
+		fmt.Println("  Terraform not properly configured")
 	} else {
-		fmt.Println("  ✅ Terraform is available")
+		fmt.Println("  Terraform is available")
 	}
 }
 
