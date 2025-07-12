@@ -16,6 +16,7 @@ import (
 	"github.com/yairfalse/vaino/internal/collectors/terraform"
 	"github.com/yairfalse/vaino/internal/discovery"
 	vainoerrors "github.com/yairfalse/vaino/internal/errors"
+	"github.com/yairfalse/vaino/internal/output"
 	"github.com/yairfalse/vaino/pkg/config"
 	"github.com/yairfalse/vaino/pkg/types"
 )
@@ -329,63 +330,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Display results
-	if !quiet {
-		// Group resources by type and collect regions/locations
-		byType := make(map[string]int)
-		regions := make(map[string]bool)
-		stateFiles := make(map[string]bool)
-		
-		for _, resource := range snapshot.Resources {
-			byType[resource.Type]++
-			if resource.Region != "" {
-				regions[resource.Region] = true
-			}
-			if resource.Metadata.StateFile != "" {
-				stateFiles[resource.Metadata.StateFile] = true
-			}
-		}
-
-		// Show what we found
-		if len(byType) == 0 {
-			fmt.Println("No resources found")
-		} else if len(byType) == 1 {
-			// Single type
-			for resourceType, count := range byType {
-				if count == 1 {
-					fmt.Printf("Found 1 %s", resourceType)
-				} else {
-					fmt.Printf("Found %d %s resources", count, resourceType)
-				}
-			}
-		} else {
-			// Multiple types - show summary
-			fmt.Printf("Found %d resources:\n", len(snapshot.Resources))
-			for resourceType, count := range byType {
-				fmt.Printf("  %s: %d\n", resourceType, count)
-			}
-		}
-		
-		// Show locations if available
-		if len(regions) > 0 {
-			var regionList []string
-			for region := range regions {
-				regionList = append(regionList, region)
-			}
-			if len(regionList) == 1 {
-				fmt.Printf(" in %s\n", regionList[0])
-			} else {
-				fmt.Printf(" across %d regions\n", len(regionList))
-			}
-		} else {
-			fmt.Printf("\n")
-		}
-		
-		// Show state files processed
-		if len(stateFiles) > 1 {
-			fmt.Printf("Processed %d state files\n", len(stateFiles))
-		}
-	}
+	// Display results using enhanced formatter
+	formatter := output.NewScanFormatter(snapshot, quiet)
+	fmt.Print(formatter.FormatOutput())
 
 	// Save to history directory for time-based comparisons
 	homeDir, _ := os.UserHomeDir()
@@ -411,11 +358,10 @@ func runScan(cmd *cobra.Command, args []string) error {
 		if err := saveSnapshotToFile(snapshot, outputFile); err != nil {
 			log("Warning: Failed to save to output file: %v\n", err)
 		} else {
-			log("\nOutput saved to: %s\n", outputFile)
+			log("\nSnapshot saved to: %s\n", outputFile)
 		}
 	}
 
-	log("Use 'vaino diff' to detect changes\n")
 	return nil
 }
 
