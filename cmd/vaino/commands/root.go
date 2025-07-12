@@ -20,6 +20,9 @@ var rootCmd = &cobra.Command{
 	Short: "Infrastructure drift detection and monitoring",
 	Long:  `vaino - infrastructure drift detection and monitoring`,
 	DisableAutoGenTag: true,
+	CompletionOptions: cobra.CompletionOptions{
+		DisableDefaultCmd: true,
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Handle --version flag
 		if showVersion, _ := cmd.Flags().GetBool("version"); showVersion {
@@ -57,22 +60,13 @@ func init() {
 	viper.BindPFlag("output.format", rootCmd.PersistentFlags().Lookup("output"))
 	viper.BindPFlag("output.no_color", rootCmd.PersistentFlags().Lookup("no-color"))
 
-	// Add subcommands
+	// Essential commands only
 	rootCmd.AddCommand(newScanCommand())
-	rootCmd.AddCommand(newCheckCommand())
-	rootCmd.AddCommand(newExplainCommand())
 	rootCmd.AddCommand(newDiffCommand())
-	rootCmd.AddCommand(newSimpleDiffCommand()) // New simple changes command
-	rootCmd.AddCommand(newWatchCommand())      // Real-time watch mode
-	rootCmd.AddCommand(catchUpCmd)             // Empathetic catch-up summary
-	rootCmd.AddCommand(newTimelineCommand())   // Timeline view of snapshots
-	rootCmd.AddCommand(newHistoryCommand())    // History browsing
-	rootCmd.AddCommand(newAuthCommand())
+	rootCmd.AddCommand(newWatchCommand())
+	rootCmd.AddCommand(newStatusCommand())
 	rootCmd.AddCommand(newVersionCommand())
-	rootCmd.AddCommand(newConfigureCommand())   // Configuration wizard
-	rootCmd.AddCommand(newStatusCommand())      // System status
-	rootCmd.AddCommand(newCheckConfigCommand()) // Configuration validation
-	rootCmd.AddCommand(newHelpCommand())        // Help topics
+	rootCmd.AddCommand(newConfigureCommand())
 }
 
 // initConfig reads in config file and ENV variables if set.
