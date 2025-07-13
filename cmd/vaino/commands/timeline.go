@@ -316,7 +316,232 @@ func displaySnapshotTimeline(snapshots []storage.SnapshotInfo, outputFormat stri
 		for _, snapshot := range snapshots {
 			fmt.Printf("📅 %s\n", snapshot.Timestamp.Format("2006-01-02 15:04:05"))
 			fmt.Printf("   Provider: %s\n", snapshot.Provider)
-			fmt.Printf("   Resources: %d\n", snapshot.ResourceCount)
+
+			// Load the actual snapshot to get resource breakdown
+			if snapshot.FilePath != "" {
+				// Try to read the snapshot file directly
+				var actualSnapshot struct {
+					Resources []struct {
+						ID        string            `json:"id"`
+						Name      string            `json:"name"`
+						Type      string            `json:"type"`
+						Namespace string            `json:"namespace"`
+						Provider  string            `json:"provider"`
+						Labels    map[string]string `json:"labels"`
+					} `json:"resources"`
+				}
+
+				file, err := os.Open(snapshot.FilePath)
+				if err == nil {
+					decoder := json.NewDecoder(file)
+					if decoder.Decode(&actualSnapshot) == nil {
+						fmt.Printf("   Resources: %d total\n", len(actualSnapshot.Resources))
+
+						// Group resources by namespace and application
+						type resourceInfo struct {
+							name   string
+							rtype  string
+							labels map[string]string
+						}
+
+						namespaceGroups := make(map[string][]resourceInfo)
+
+						for _, resource := range actualSnapshot.Resources {
+							ns := resource.Namespace
+							if ns == "" {
+								ns = "cluster-wide"
+							}
+
+							namespaceGroups[ns] = append(namespaceGroups[ns], resourceInfo{
+								name:   resource.Name,
+								rtype:  resource.Type,
+								labels: resource.Labels,
+							})
+						}
+
+						// Separate system namespaces from user namespaces
+						systemNamespaces := []string{"kube-system", "kube-public", "kube-node-lease"}
+						userNamespaces := []string{}
+
+						for ns := range namespaceGroups {
+							isSystem := false
+							for _, sysNs := range systemNamespaces {
+								if ns == sysNs {
+									isSystem = true
+									break
+								}
+							}
+							if !isSystem && ns != "cluster-wide" {
+								userNamespaces = append(userNamespaces, ns)
+							}
+						}
+
+						// Sort user namespaces
+						sort.Strings(userNamespaces)
+
+						// Display user workloads first
+						if len(userNamespaces) > 0 {
+							fmt.Printf("   Your Workloads:\n")
+							for _, ns := range userNamespaces {
+								resources := namespaceGroups[ns]
+								fmt.Printf("     • %s namespace: %d resources\n", ns, len(resources))
+
+								// Group resources by application using labels
+								type appGroup struct {
+									appType   string
+									resources []resourceInfo
+								}
+
+								appGroups := make(map[string]*appGroup)
+								var ungrouped []resourceInfo
+
+								// Try to group by common app labels
+								for _, res := range resources {
+									appName := ""
+
+									// Try common label patterns
+									if res.labels != nil {
+										if name := res.labels["app"]; name != "" {
+											appName = name
+										} else if name := res.labels["app.kubernetes.io/name"]; name != "" {
+											appName = name
+										} else if name := res.labels["k8s-app"]; name != "" {
+											appName = name
+										}
+									}
+
+									// If no app label, try to extract from name
+									if appName == "" {
+										// Common pattern: deployment/service names often match
+										if res.rtype == "deployment" || res.rtype == "service" || res.rtype == "statefulset" {
+											appName = res.name
+										}
+									}
+
+									if appName != "" {
+										if appGroups[appName] == nil {
+											appGroups[appName] = &appGroup{
+												appType: detectAppType(appName),
+											}
+										}
+										appGroups[appName].resources = append(appGroups[appName].resources, res)
+									} else {
+										ungrouped = append(ungrouped, res)
+									}
+								}
+
+								// Display grouped applications
+								if len(appGroups) > 0 {
+									for appName, group := range appGroups {
+										// Count resource types in this app
+										appResources := make(map[string][]string)
+										for _, res := range group.resources {
+											appResources[res.rtype] = append(appResources[res.rtype], res.name)
+										}
+
+										// Display app with type hint
+										typeHint := ""
+										if group.appType != "service" {
+											typeHint = fmt.Sprintf(" (%s)", group.appType)
+										}
+										fmt.Printf("       \"%s\"%s:\n", appName, typeHint)
+
+										// Show main workload types
+										if deps := appResources["deployment"]; len(deps) > 0 {
+											fmt.Printf("         - Deployment: %s\n", deps[0])
+										}
+										if sts := appResources["statefulset"]; len(sts) > 0 {
+											fmt.Printf("         - StatefulSet: %s\n", sts[0])
+										}
+										if svcs := appResources["service"]; len(svcs) > 0 {
+											fmt.Printf("         - Service: %s", svcs[0])
+											if len(svcs) > 1 {
+												fmt.Printf(" +%d more", len(svcs)-1)
+											}
+											fmt.Println()
+										}
+
+										// Summarize other resources
+										var others []string
+										for rtype, items := range appResources {
+											if rtype != "deployment" && rtype != "statefulset" && rtype != "service" && rtype != "pod" {
+												others = append(others, fmt.Sprintf("%d %s", len(items), rtype))
+											}
+										}
+										if len(others) > 0 {
+											fmt.Printf("         - Resources: %s\n", strings.Join(others, ", "))
+										}
+									}
+								}
+
+								// Display ungrouped resources as fallback
+								if len(ungrouped) > 0 {
+									// Group ungrouped by type
+									ungroupedByType := make(map[string][]string)
+									for _, res := range ungrouped {
+										ungroupedByType[res.rtype] = append(ungroupedByType[res.rtype], res.name)
+									}
+
+									if len(ungroupedByType) > 0 {
+										fmt.Println("       Standalone resources:")
+
+										// Show important types first
+										if pods := ungroupedByType["pod"]; len(pods) > 0 {
+											fmt.Printf("         - Pods: %s", pods[0])
+											for i := 1; i < len(pods) && i < 3; i++ {
+												fmt.Printf(", %s", pods[i])
+											}
+											if len(pods) > 3 {
+												fmt.Printf(" +%d more", len(pods)-3)
+											}
+											fmt.Println()
+										}
+
+										// Other types
+										var otherSummary []string
+										for rtype, names := range ungroupedByType {
+											if rtype != "pod" {
+												otherSummary = append(otherSummary, fmt.Sprintf("%d %s", len(names), rtype))
+											}
+										}
+										if len(otherSummary) > 0 {
+											fmt.Printf("         - Other: %s\n", strings.Join(otherSummary, ", "))
+										}
+									}
+								}
+							}
+						} else {
+							fmt.Printf("   Your Workloads: None detected\n")
+						}
+
+						// Show system summary
+						systemTotal := 0
+						for _, ns := range systemNamespaces {
+							if resources, exists := namespaceGroups[ns]; exists {
+								systemTotal += len(resources)
+							}
+						}
+
+						if clusterWide, exists := namespaceGroups["cluster-wide"]; exists {
+							systemTotal += len(clusterWide)
+						}
+
+						if systemTotal > 0 {
+							fmt.Printf("   System Resources: %d Kubernetes internals\n", systemTotal)
+						}
+
+					} else {
+						fmt.Printf("   Resources: %d\n", snapshot.ResourceCount)
+					}
+					file.Close()
+				} else {
+					fmt.Printf("   Resources: %d\n", snapshot.ResourceCount)
+				}
+			} else {
+				fmt.Printf("   Resources: %d\n", snapshot.ResourceCount)
+			}
+
+			fmt.Printf("   Created: %s\n", snapshot.Timestamp.Format("2006-01-02 15:04:05"))
 			fmt.Printf("   ID: %s\n", snapshot.ID)
 
 			if len(snapshot.Tags) > 0 {
@@ -327,6 +552,7 @@ func displaySnapshotTimeline(snapshots []storage.SnapshotInfo, outputFormat stri
 				}
 				fmt.Println(strings.Join(tags, ", "))
 			}
+
 			fmt.Println()
 		}
 	}
@@ -421,4 +647,160 @@ func matchesSnapshotTag(snapshot storage.SnapshotInfo, value string) bool {
 		}
 	}
 	return false
+}
+
+// detectAppType tries to identify the type of application based on its name
+func detectAppType(name string) string {
+	lowerName := strings.ToLower(name)
+
+	// Database patterns
+	if strings.Contains(lowerName, "postgres") ||
+		strings.Contains(lowerName, "mysql") ||
+		strings.Contains(lowerName, "mongo") ||
+		strings.Contains(lowerName, "mariadb") ||
+		strings.Contains(lowerName, "cassandra") {
+		return "database"
+	}
+
+	// Cache/Queue patterns
+	if strings.Contains(lowerName, "redis") ||
+		strings.Contains(lowerName, "memcache") ||
+		strings.Contains(lowerName, "rabbitmq") ||
+		strings.Contains(lowerName, "kafka") ||
+		strings.Contains(lowerName, "queue") {
+		return "cache/queue"
+	}
+
+	// Frontend patterns
+	if strings.Contains(lowerName, "frontend") ||
+		strings.Contains(lowerName, "ui") ||
+		strings.Contains(lowerName, "web") ||
+		strings.Contains(lowerName, "nginx") ||
+		strings.Contains(lowerName, "apache") {
+		return "frontend"
+	}
+
+	// API/Backend patterns
+	if strings.Contains(lowerName, "api") ||
+		strings.Contains(lowerName, "backend") ||
+		strings.Contains(lowerName, "server") {
+		return "backend"
+	}
+
+	// Monitoring/Logging
+	if strings.Contains(lowerName, "prometheus") ||
+		strings.Contains(lowerName, "grafana") ||
+		strings.Contains(lowerName, "elastic") ||
+		strings.Contains(lowerName, "logstash") ||
+		strings.Contains(lowerName, "fluentd") {
+		return "monitoring"
+	}
+
+	return "service" // default
+}
+
+// getHumanReadableResourceName converts technical resource types to contextual descriptions
+func getHumanReadableResourceName(resourceType string) string {
+	// Map of technical names to contextual descriptions
+	contextualNames := map[string]string{
+		// Kubernetes workloads
+		"pod":         "application pods running containers",
+		"deployment":  "managed application deployments",
+		"replicaset":  "pod replica controllers",
+		"daemonset":   "system services on each node",
+		"statefulset": "stateful applications with persistent identity",
+		"job":         "batch jobs",
+		"cronjob":     "scheduled recurring jobs",
+
+		// Kubernetes networking
+		"service":       "network services for pod communication",
+		"ingress":       "external traffic routing rules",
+		"networkpolicy": "network security policies",
+		"endpointslice": "network endpoint mappings",
+		"endpoints":     "service endpoint configurations",
+
+		// Kubernetes security & identity
+		"serviceaccount":     "identity accounts for pods & services",
+		"role":               "permission sets for namespace access",
+		"rolebinding":        "assignments linking users to roles",
+		"clusterrole":        "cluster-wide permission templates",
+		"clusterrolebinding": "cluster-wide role assignments",
+		"secret":             "encrypted credential & certificate storage",
+
+		// Kubernetes configuration & storage
+		"configmap":               "application configuration data",
+		"persistentvolume":        "cluster storage volumes",
+		"persistentvolumeclaim":   "storage requests from applications",
+		"namespace":               "isolated resource groups",
+		"node":                    "worker machines in the cluster",
+		"horizontalpodautoscaler": "automatic scaling rules for workloads",
+
+		// AWS compute & networking
+		"aws_instance":          "virtual machines in EC2",
+		"aws_vpc":               "private network environments",
+		"aws_subnet":            "network segments within VPCs",
+		"aws_security_group":    "firewall rules for instances",
+		"aws_load_balancer":     "traffic distribution services",
+		"aws_autoscaling_group": "automatically scaling server groups",
+
+		// AWS storage & databases
+		"aws_s3_bucket":       "object storage containers",
+		"aws_rds_instance":    "managed database instances",
+		"aws_ebs_volume":      "block storage for EC2 instances",
+		"aws_efs_file_system": "shared network file systems",
+
+		// AWS identity & access
+		"aws_iam_role":   "service permission sets",
+		"aws_iam_user":   "human user accounts",
+		"aws_iam_policy": "detailed permission documents",
+		"aws_iam_group":  "user collections for permission management",
+
+		// GCP compute & networking
+		"gcp_compute_instance": "virtual machines in Compute Engine",
+		"gcp_vpc_network":      "private cloud networks",
+		"gcp_compute_firewall": "network access control rules",
+		"gcp_compute_address":  "static IP address reservations",
+
+		// GCP storage & databases
+		"gcp_storage_bucket": "object storage containers",
+		"gcp_sql_instance":   "managed database instances",
+		"gcp_compute_disk":   "persistent storage disks",
+
+		// GCP identity & access
+		"gcp_iam_binding":     "permission assignments to resources",
+		"gcp_service_account": "service identity accounts",
+		"gcp_project":         "resource organization containers",
+
+		// Terraform management
+		"terraform_state": "infrastructure state tracking",
+		"null_resource":   "execution triggers & dependencies",
+		"local_file":      "generated configuration files",
+		"random_id":       "unique identifiers for resources",
+		"data":            "read-only information sources",
+	}
+
+	// Return contextual description if available
+	if contextualName, exists := contextualNames[strings.ToLower(resourceType)]; exists {
+		return contextualName
+	}
+
+	// Default: convert snake_case to Title Case with context
+	words := strings.Split(strings.ReplaceAll(resourceType, "_", " "), " ")
+	for i, word := range words {
+		words[i] = strings.Title(strings.ToLower(word))
+	}
+	result := strings.Join(words, " ")
+
+	// Add generic context based on common patterns
+	if strings.Contains(strings.ToLower(resourceType), "policy") {
+		return result + " (security policies)"
+	} else if strings.Contains(strings.ToLower(resourceType), "network") {
+		return result + " (networking components)"
+	} else if strings.Contains(strings.ToLower(resourceType), "storage") || strings.Contains(strings.ToLower(resourceType), "volume") {
+		return result + " (storage resources)"
+	} else if strings.Contains(strings.ToLower(resourceType), "instance") || strings.Contains(strings.ToLower(resourceType), "vm") {
+		return result + " (compute instances)"
+	}
+
+	return result + " (infrastructure components)"
 }

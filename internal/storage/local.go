@@ -212,46 +212,103 @@ func (s *LocalStorage) LoadSnapshot(id string) (*types.Snapshot, error) {
 
 // ListSnapshots returns metadata for all stored snapshots
 func (s *LocalStorage) ListSnapshots() ([]SnapshotInfo, error) {
-	files, err := os.ReadDir(s.snapshots)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read snapshots directory: %w", err)
+	var infos []SnapshotInfo
+
+	// Check both directories: snapshots (new format) and history (scan command format)
+	directories := []string{
+		s.snapshots,
+		filepath.Join(s.baseDir, "history"), // Where scan command saves files
 	}
 
-	var infos []SnapshotInfo
-	for _, file := range files {
-		if !strings.HasSuffix(file.Name(), ".json") {
-			continue
-		}
-
-		path := filepath.Join(s.snapshots, file.Name())
-		stat, err := file.Info()
+	for _, dir := range directories {
+		files, err := os.ReadDir(dir)
 		if err != nil {
+			// Skip directory if it doesn't exist
 			continue
 		}
 
-		var snapshot types.Snapshot
-		if err := s.loadJSON(path, &snapshot); err != nil {
-			continue
-		}
+		for _, file := range files {
+			if !strings.HasSuffix(file.Name(), ".json") {
+				continue
+			}
 
-		info := SnapshotInfo{
-			ID:            snapshot.ID,
-			Timestamp:     snapshot.Timestamp,
-			Provider:      snapshot.Provider,
-			ResourceCount: len(snapshot.Resources),
-			Tags:          snapshot.Metadata.Tags,
-			FilePath:      path,
-			FileSize:      stat.Size(),
+			path := filepath.Join(dir, file.Name())
+			stat, err := file.Info()
+			if err != nil {
+				continue
+			}
+
+			var snapshot types.Snapshot
+			if err := s.loadJSON(path, &snapshot); err != nil {
+				continue
+			}
+
+			// Extract provider from filename if not in snapshot metadata
+			provider := snapshot.Provider
+			if provider == "" && strings.Contains(file.Name(), "-") {
+				// Try to extract provider from filename like "2025-07-13-00-49-41-kubernetes-k8s-snapshot-1752360580.json"
+				parts := strings.Split(file.Name(), "-")
+				if len(parts) >= 7 {
+					for i, part := range parts[6:] { // Skip timestamp parts
+						if part == "kubernetes" || part == "gcp" || part == "aws" || part == "terraform" {
+							provider = part
+							break
+						}
+						if i == 0 && (part == "k8s" || part == "snapshot" || part == "scan") {
+							// Look for provider in earlier parts
+							for j := 5; j >= 0; j-- {
+								if j < len(parts) && (parts[j] == "kubernetes" || parts[j] == "gcp" || parts[j] == "aws" || parts[j] == "terraform") {
+									provider = parts[j]
+									break
+								}
+							}
+							break
+						}
+					}
+				}
+			}
+
+			// Set provider if we found it from filename
+			if provider == "" {
+				provider = "unknown"
+			}
+
+			var tags map[string]string
+			if snapshot.Metadata.Tags != nil {
+				tags = snapshot.Metadata.Tags
+			} else {
+				tags = make(map[string]string)
+			}
+
+			info := SnapshotInfo{
+				ID:            snapshot.ID,
+				Timestamp:     snapshot.Timestamp,
+				Provider:      provider,
+				ResourceCount: len(snapshot.Resources),
+				Tags:          tags,
+				FilePath:      path,
+				FileSize:      stat.Size(),
+			}
+			infos = append(infos, info)
 		}
-		infos = append(infos, info)
+	}
+
+	// Remove duplicates based on ID
+	seen := make(map[string]bool)
+	var uniqueInfos []SnapshotInfo
+	for _, info := range infos {
+		if !seen[info.ID] {
+			seen[info.ID] = true
+			uniqueInfos = append(uniqueInfos, info)
+		}
 	}
 
 	// Sort by timestamp (newest first)
-	sort.Slice(infos, func(i, j int) bool {
-		return infos[i].Timestamp.After(infos[j].Timestamp)
+	sort.Slice(uniqueInfos, func(i, j int) bool {
+		return uniqueInfos[i].Timestamp.After(uniqueInfos[j].Timestamp)
 	})
 
-	return infos, nil
+	return uniqueInfos, nil
 }
 
 // DeleteSnapshot removes a snapshot from disk

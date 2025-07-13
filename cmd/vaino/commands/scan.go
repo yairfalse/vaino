@@ -135,15 +135,40 @@ func runScan(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to generate smart defaults: %w", err)
 		}
 
+		// Detect all available providers
+		var detectedProviders []string
+		var detectedDetails []string
+
+		// Check Terraform
 		discovery := discovery.NewTerraformDiscovery()
 		stateFiles, err := discovery.DiscoverStateFiles("")
-
 		if err == nil && len(stateFiles) > 0 {
-			// Found Terraform state files, use terraform provider
-			provider = "terraform"
-			autoDiscover = true
-			log("Found %d Terraform state file(s)\n", len(stateFiles))
-		} else {
+			detectedProviders = append(detectedProviders, "terraform")
+			detectedDetails = append(detectedDetails, fmt.Sprintf("terraform (%d state files)", len(stateFiles)))
+		}
+
+		// Check Kubernetes
+		kubernetesCollector := kubernetes.NewKubernetesCollector()
+		if kubernetesCollector.Status() == "ready" {
+			detectedProviders = append(detectedProviders, "kubernetes")
+			detectedDetails = append(detectedDetails, "kubernetes (kubectl available)")
+		}
+
+		// Check AWS
+		awsCollector := aws.NewAWSCollector()
+		if awsCollector.Status() == "ready" {
+			detectedProviders = append(detectedProviders, "aws")
+			detectedDetails = append(detectedDetails, "aws (credentials found)")
+		}
+
+		// Check GCP
+		gcpCollector := gcp.NewGCPCollector()
+		if gcpCollector.Status() == "ready" {
+			detectedProviders = append(detectedProviders, "gcp")
+			detectedDetails = append(detectedDetails, "gcp (credentials found)")
+		}
+
+		if len(detectedProviders) == 0 {
 			// No auto-discovery possible, show helpful guidance
 			fmt.Println("\nNo infrastructure auto-detected.")
 			fmt.Println("\nChoose your provider:")
@@ -152,6 +177,22 @@ func runScan(cmd *cobra.Command, args []string) error {
 			fmt.Println("  vaino scan --provider gcp --project YOUR-PROJECT-ID")
 			fmt.Println("  vaino scan --provider kubernetes")
 			fmt.Println("\nTip: Run 'vaino configure' for setup")
+			return nil
+		} else if len(detectedProviders) == 1 {
+			// Only one provider detected, use it
+			provider = detectedProviders[0]
+			autoDiscover = true
+			log("Detected %s\n", detectedDetails[0])
+		} else {
+			// Multiple providers detected, let user choose
+			fmt.Println("\nMultiple infrastructure providers detected:")
+			for i, detail := range detectedDetails {
+				fmt.Printf("  %d. %s\n", i+1, detail)
+			}
+			fmt.Println("\nPlease specify which provider to scan:")
+			for _, p := range detectedProviders {
+				fmt.Printf("  vaino scan --provider %s\n", p)
+			}
 			return nil
 		}
 	}
