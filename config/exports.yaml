@@ -1,0 +1,426 @@
+# Export Configuration for VAINO Server
+# This file configures the export plugin system for server-side data export
+
+# Global export manager configuration
+manager:
+  # Worker pool configuration
+  max_workers: 10
+  worker_timeout: "5m"
+  queue_size: 1000
+  
+  # Health monitoring
+  health_check_interval: "30s"
+  health_timeout: "10s"
+  
+  # Metrics collection
+  metrics_interval: "60s"
+  metrics_retention: "24h"
+  
+  # Plugin management
+  plugin_load_timeout: "30s"
+  plugin_start_timeout: "10s"
+  hot_reload_enabled: true
+  config_watch_path: "config/exports.yaml"
+  reload_interval: "30s"
+  
+  # Performance tuning
+  batch_size: 100
+  flush_interval: "10s"
+  max_memory_usage_bytes: 52428800  # 50MB
+  
+  # Security
+  require_auth: false
+  encryption_enabled: false
+
+# Router configuration
+router:
+  default_plugin: "cli"
+  failover_enabled: true
+  load_balancing: false
+  load_balance_strategy: "round_robin"  # round_robin, least_connections, weighted
+  health_check_enabled: true
+  routing_timeout: "5s"
+  
+  # Circuit breaker configuration
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 5
+    recovery_timeout: "30s"
+    half_open_requests: 3
+
+# Plugin configurations
+plugins:
+  # CLI Export Plugin
+  cli:
+    enabled: true
+    name: "cli"
+    version: "1.0.0"
+    priority: 10
+    settings:
+      output_dir: "./exports"
+      enable_colors: true
+      max_width: 120
+      table_borders: true
+      timestamp_format: "2006-01-02T15:04:05Z07:00"
+      compression_enabled: false
+      pretty_json: true
+    
+    # Rate limiting for CLI plugin
+    rate_limit:
+      enabled: false
+      requests_per_sec: 100
+      burst_limit: 200
+      queue_size: 500
+      timeout: "30s"
+    
+    # Security settings
+    security:
+      tls_enabled: false
+      authentication:
+        type: "none"
+    
+    # Monitoring settings
+    monitoring:
+      enabled: true
+      metrics_enabled: true
+      tracing_enabled: false
+      log_level: "info"
+      sample_rate: 1.0
+      labels:
+        plugin: "cli"
+        version: "1.0.0"
+
+  # OpenTelemetry Export Plugin
+  otel:
+    enabled: true
+    name: "otel"
+    version: "1.0.0"
+    priority: 20
+    settings:
+      endpoint: "http://localhost:4317"
+      insecure: true
+      timeout: "30s"
+      batch_size: 100
+      batch_timeout: "10s"
+      enable_traces: true
+      enable_metrics: true
+      enable_logs: true
+      compression: "gzip"
+      retry_enabled: true
+      max_retries: 3
+      retry_delay: "1s"
+      
+    # Endpoints for different telemetry types
+    endpoints:
+      traces: "/v1/traces"
+      metrics: "/v1/metrics"
+      logs: "/v1/logs"
+      headers:
+        "User-Agent": "vaino-otel-exporter/1.0.0"
+        "X-Source": "vaino"
+    
+    # Rate limiting for OTEL plugin
+    rate_limit:
+      enabled: true
+      requests_per_sec: 1000
+      burst_limit: 2000
+      queue_size: 5000
+      timeout: "60s"
+    
+    # Security settings
+    security:
+      tls_enabled: false
+      authentication:
+        type: "none"
+        # For production, use:
+        # type: "bearer"
+        # credentials:
+        #   token: "${OTEL_AUTH_TOKEN}"
+    
+    # Monitoring settings
+    monitoring:
+      enabled: true
+      metrics_enabled: true
+      tracing_enabled: true
+      log_level: "info"
+      health_check_path: "/health"
+      sample_rate: 0.1
+      labels:
+        plugin: "otel"
+        version: "1.0.0"
+        environment: "production"
+
+  # Prometheus Export Plugin
+  prometheus:
+    enabled: true
+    name: "prometheus"
+    version: "1.0.0"
+    priority: 15
+    settings:
+      push_gateway: "http://localhost:9091"
+      job_name: "vaino"
+      instance: "vaino-server:8080"
+      namespace: "vaino"
+      timeout: "30s"
+      enable_push: true
+      metric_prefix: "vaino_"
+      
+    # Rate limiting
+    rate_limit:
+      enabled: true
+      requests_per_sec: 500
+      burst_limit: 1000
+    
+    # Security settings
+    security:
+      tls_enabled: false
+      authentication:
+        type: "basic"
+        credentials:
+          username: "${PROMETHEUS_USER}"
+          password: "${PROMETHEUS_PASS}"
+    
+    # Monitoring settings
+    monitoring:
+      enabled: true
+      metrics_enabled: true
+      log_level: "info"
+
+  # Webhook Export Plugin (example configuration)
+  webhook:
+    enabled: false
+    name: "webhook"
+    version: "1.0.0"
+    priority: 5
+    settings:
+      url: "https://webhook.example.com/vaino"
+      method: "POST"
+      timeout: "30s"
+      retry_enabled: true
+      max_retries: 3
+      retry_delay: "5s"
+      content_type: "application/json"
+      
+    # Custom headers
+    endpoints:
+      headers:
+        "Authorization": "Bearer ${WEBHOOK_TOKEN}"
+        "X-Source": "vaino"
+        "X-Version": "1.0.0"
+    
+    # Rate limiting
+    rate_limit:
+      enabled: true
+      requests_per_sec: 50
+      burst_limit: 100
+    
+    # Security settings
+    security:
+      tls_enabled: true
+      authentication:
+        type: "bearer"
+        credentials:
+          token: "${WEBHOOK_TOKEN}"
+    
+    # Monitoring settings
+    monitoring:
+      enabled: true
+      metrics_enabled: true
+      tracing_enabled: true
+      log_level: "info"
+
+# Routing rules - define which plugins handle which types of data
+routes:
+  # Route critical drift reports to multiple destinations
+  - id: "critical_drift"
+    priority: 100
+    enabled: true
+    pattern:
+      data_type: "drift_report"
+      conditions:
+        - field: "metadata.risk_level"
+          operator: "eq"
+          value: "critical"
+    destinations:
+      - plugin: "otel"
+        async: false
+      - plugin: "webhook"
+        async: true
+        
+  # Route all snapshots to CLI for file export
+  - id: "snapshot_export"
+    priority: 50
+    enabled: true
+    pattern:
+      data_type: "snapshot"
+    destinations:
+      - plugin: "cli"
+        format: "json"
+        
+  # Route metrics to OTEL and Prometheus
+  - id: "metrics_export"
+    priority: 75
+    enabled: true
+    pattern:
+      data_type: "metrics"
+    destinations:
+      - plugin: "otel"
+        async: true
+      - plugin: "prometheus"
+        async: false
+        
+  # Route correlation data to OTEL for analysis
+  - id: "correlation_export"
+    priority: 80
+    enabled: true
+    pattern:
+      data_type: "correlation"
+    destinations:
+      - plugin: "otel"
+        async: false
+        
+  # Default route for any unmatched data
+  - id: "default_route"
+    priority: 1
+    enabled: true
+    pattern:
+      data_type: "*"
+    destinations:
+      - plugin: "cli"
+        format: "json"
+
+# Export filters - filter data before export
+filters:
+  # Filter out low-priority items for external systems
+  external_systems:
+    enabled: true
+    rules:
+      - field: "severity"
+        operator: "gte"
+        value: "medium"
+      - field: "confidence"
+        operator: "gt"
+        value: 0.7
+        
+  # Filter for compliance exports
+  compliance:
+    enabled: false
+    rules:
+      - field: "tags.compliance"
+        operator: "eq"
+        value: "required"
+      - field: "category"
+        operator: "in"
+        value: ["security", "governance", "audit"]
+
+# Data transformation settings
+transformations:
+  # Anonymize sensitive data for external export
+  anonymization:
+    enabled: false
+    fields:
+      - "metadata.owner"
+      - "configuration.credentials"
+      - "tags.email"
+      
+  # Enrich data with additional context
+  enrichment:
+    enabled: true
+    add_fields:
+      export_timestamp: "{{ .Now }}"
+      export_version: "1.0.0"
+      source_system: "vaino"
+      
+  # Data format conversions
+  format_conversions:
+    timestamps:
+      input_format: "2006-01-02T15:04:05Z07:00"
+      output_format: "2006-01-02 15:04:05"
+    numbers:
+      precision: 2
+      scientific_notation: false
+
+# Retention and cleanup settings
+retention:
+  # Export history retention
+  export_history_days: 30
+  
+  # Temporary file cleanup
+  temp_files_cleanup_interval: "1h"
+  temp_files_max_age: "24h"
+  
+  # Plugin metrics retention
+  plugin_metrics_retention: "7d"
+  
+  # Export queue cleanup
+  completed_exports_retention: "24h"
+  failed_exports_retention: "7d"
+
+# Alerting configuration
+alerting:
+  enabled: true
+  
+  # Export failure alerts
+  export_failures:
+    threshold: 5  # failures in time_window
+    time_window: "5m"
+    severity: "warning"
+    
+  # Plugin health alerts
+  plugin_health:
+    unhealthy_threshold: "2m"
+    degraded_threshold: "30s"
+    severity: "critical"
+    
+  # Queue size alerts
+  queue_size:
+    threshold_percent: 80
+    severity: "warning"
+    
+  # Memory usage alerts
+  memory_usage:
+    threshold_percent: 90
+    severity: "critical"
+
+# Performance monitoring
+performance:
+  # Metrics collection
+  collect_detailed_metrics: true
+  metrics_export_interval: "30s"
+  
+  # Performance thresholds
+  thresholds:
+    export_latency_p99: "10s"
+    export_latency_p95: "5s"
+    export_latency_avg: "1s"
+    error_rate_threshold: 5.0  # percent
+    
+  # Auto-scaling settings
+  auto_scaling:
+    enabled: false
+    min_workers: 5
+    max_workers: 50
+    scale_up_threshold: 0.8    # queue utilization
+    scale_down_threshold: 0.3
+    scale_interval: "60s"
+
+# Development and debugging
+development:
+  # Enable debug mode
+  debug_mode: false
+  
+  # Detailed logging
+  verbose_logging: false
+  log_level: "info"  # debug, info, warn, error
+  
+  # Export simulation
+  simulation_mode: false
+  simulate_failures: false
+  failure_rate: 0.1  # 10% failure rate in simulation
+  
+  # Performance testing
+  load_testing:
+    enabled: false
+    concurrent_requests: 100
+    requests_per_second: 50
+    duration: "5m"
