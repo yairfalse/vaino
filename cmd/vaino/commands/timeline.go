@@ -10,10 +10,21 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/yairfalse/vaino/internal/analyzer"
 	"github.com/yairfalse/vaino/internal/storage"
 	"github.com/yairfalse/vaino/internal/visualization"
 	"golang.org/x/term"
 )
+
+// TimelineOptions holds filtering and display options for timeline analysis
+type TimelineOptions struct {
+	EventTypes         []string
+	Severities         []string
+	MinConfidence      float64
+	IncidentsOnly      bool
+	Compact            bool
+	IncludePredictions bool
+}
 
 func newTimelineCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -57,6 +68,20 @@ For change comparison between snapshots, use: vaino diff`,
 	cmd.Flags().BoolP("stats", "", false, "show snapshot statistics")
 	cmd.Flags().BoolP("quiet", "q", false, "quiet mode - show timestamps only")
 	cmd.Flags().IntP("limit", "l", 50, "limit number of snapshots shown")
+
+	// Analysis options
+	cmd.Flags().BoolP("analyze", "a", false, "perform advanced timeline analysis with correlations and trends")
+	cmd.Flags().Bool("events", false, "show detected events in timeline")
+	cmd.Flags().Bool("trends", false, "show trend analysis")
+	cmd.Flags().Bool("correlations", false, "show correlation analysis between providers")
+
+	// Enhanced filtering options
+	cmd.Flags().StringSlice("event-types", nil, "filter events by type (resource_addition, resource_removal, deployment, etc.)")
+	cmd.Flags().StringSlice("severities", nil, "filter events by severity (critical, warning, info)")
+	cmd.Flags().String("min-confidence", "", "minimum confidence for trends/correlations (0.0-1.0)")
+	cmd.Flags().Bool("incidents-only", false, "show only critical incidents and large-scale changes")
+	cmd.Flags().Bool("compact", false, "compact timeline view with less detail")
+	cmd.Flags().Bool("include-predictions", false, "include future predictions in trend analysis")
 
 	return cmd
 }
@@ -103,6 +128,28 @@ func runTimeline(cmd *cobra.Command, args []string) error {
 	quiet, _ := cmd.Flags().GetBool("quiet")
 	limit, _ := cmd.Flags().GetInt("limit")
 
+	// Analysis options
+	performAnalysis, _ := cmd.Flags().GetBool("analyze")
+	showEvents, _ := cmd.Flags().GetBool("events")
+	showTrends, _ := cmd.Flags().GetBool("trends")
+	showCorrelations, _ := cmd.Flags().GetBool("correlations")
+
+	// Enhanced filtering options
+	eventTypes, _ := cmd.Flags().GetStringSlice("event-types")
+	severities, _ := cmd.Flags().GetStringSlice("severities")
+	minConfidenceStr, _ := cmd.Flags().GetString("min-confidence")
+	incidentsOnly, _ := cmd.Flags().GetBool("incidents-only")
+	compact, _ := cmd.Flags().GetBool("compact")
+	includePredictions, _ := cmd.Flags().GetBool("include-predictions")
+
+	// Parse minimum confidence
+	var minConfidence float64
+	if minConfidenceStr != "" {
+		if conf, err := strconv.ParseFloat(minConfidenceStr, 64); err == nil {
+			minConfidence = conf
+		}
+	}
+
 	// Filter snapshots
 	filteredSnapshots := filterSnapshots(snapshots, sinceTime, untilTime, "", "", providers)
 
@@ -139,11 +186,31 @@ func runTimeline(cmd *cobra.Command, args []string) error {
 		filteredSnapshots = filteredSnapshots[:limit]
 	}
 
+	// Perform advanced analysis if requested
+	var timelineAnalyzer *analyzer.TimelineAnalyzer
+	if performAnalysis || showEvents || showTrends || showCorrelations {
+		timelineAnalyzer = analyzer.NewTimelineAnalyzer(filteredSnapshots)
+		if err := timelineAnalyzer.AnalyzeTimeline(); err != nil {
+			fmt.Printf("Warning: Analysis failed: %v\n", err)
+		}
+	}
+
 	// Get output format
 	outputFormat, _ := cmd.Flags().GetString("output")
 
-	// Display timeline
-	return displaySnapshotTimeline(filteredSnapshots, outputFormat, showStats, quiet)
+	// Create timeline options
+	timelineOptions := TimelineOptions{
+		EventTypes:         eventTypes,
+		Severities:         severities,
+		MinConfidence:      minConfidence,
+		IncidentsOnly:      incidentsOnly,
+		Compact:            compact,
+		IncludePredictions: includePredictions,
+	}
+
+	// Display timeline with analysis
+	return displaySnapshotTimelineWithAnalysis(filteredSnapshots, outputFormat, showStats, quiet,
+		timelineAnalyzer, showEvents, showTrends, showCorrelations, timelineOptions)
 }
 
 func handleTimelineBetween(localStorage storage.Storage, allSnapshots []storage.SnapshotInfo, snap1, snap2 string, cmd *cobra.Command) error {
@@ -187,7 +254,8 @@ func handleTimelineBetween(localStorage storage.Storage, allSnapshots []storage.
 	quiet, _ := cmd.Flags().GetBool("quiet")
 
 	// Display timeline
-	return displaySnapshotTimeline(filteredSnapshots, outputFormat, showStats, quiet)
+	emptyOptions := TimelineOptions{}
+	return displaySnapshotTimelineWithAnalysis(filteredSnapshots, outputFormat, showStats, quiet, nil, false, false, false, emptyOptions)
 }
 
 func parseTimeFilter(cmd *cobra.Command, flagName string) (*time.Time, error) {
@@ -287,7 +355,35 @@ func filterSnapshots(snapshots []storage.SnapshotInfo, since, until *time.Time, 
 	return filtered
 }
 
-func displaySnapshotTimeline(snapshots []storage.SnapshotInfo, outputFormat string, showStats, quiet bool) error {
+func displaySnapshotTimelineWithAnalysis(snapshots []storage.SnapshotInfo, outputFormat string, showStats, quiet bool,
+	timelineAnalyzer *analyzer.TimelineAnalyzer, showEvents, showTrends, showCorrelations bool, options TimelineOptions) error {
+
+	// First show events if requested
+	if timelineAnalyzer != nil && showEvents {
+		events := filterEvents(timelineAnalyzer.GetEvents(), options)
+		displayTimelineEvents(events)
+		fmt.Println()
+	}
+
+	// Show trends if requested
+	if timelineAnalyzer != nil && showTrends {
+		trends := filterTrends(timelineAnalyzer.GetTrends(), options)
+		displayTimelineTrends(trends, options.IncludePredictions)
+		fmt.Println()
+	}
+
+	// Show correlations if requested
+	if timelineAnalyzer != nil && showCorrelations {
+		correlations := filterCorrelations(timelineAnalyzer.GetCorrelations(), options)
+		displayTimelineCorrelations(correlations)
+		fmt.Println()
+	}
+
+	// Then show the regular timeline
+	return displaySnapshotTimeline(snapshots, outputFormat, showStats, quiet, options.Compact)
+}
+
+func displaySnapshotTimeline(snapshots []storage.SnapshotInfo, outputFormat string, showStats, quiet bool, compact bool) error {
 	if outputFormat == "json" {
 		return timelineOutputJSON(snapshots)
 	}
@@ -803,4 +899,257 @@ func getHumanReadableResourceName(resourceType string) string {
 	}
 
 	return result + " (infrastructure components)"
+}
+
+// filterEvents filters events based on the provided options
+func filterEvents(events []analyzer.TimelineEvent, options TimelineOptions) []analyzer.TimelineEvent {
+	if len(options.EventTypes) == 0 && len(options.Severities) == 0 && !options.IncidentsOnly {
+		return events // No filtering needed
+	}
+
+	var filtered []analyzer.TimelineEvent
+
+	// Create filter maps for quick lookup
+	eventTypeFilter := make(map[string]bool)
+	for _, eventType := range options.EventTypes {
+		eventTypeFilter[eventType] = true
+	}
+
+	severityFilter := make(map[string]bool)
+	for _, severity := range options.Severities {
+		severityFilter[severity] = true
+	}
+
+	for _, event := range events {
+		// Skip if event type doesn't match filter
+		if len(eventTypeFilter) > 0 && !eventTypeFilter[event.Type] {
+			continue
+		}
+
+		// Skip if severity doesn't match filter
+		if len(severityFilter) > 0 && !severityFilter[event.Severity] {
+			continue
+		}
+
+		// If incidents-only is set, only show critical events or large-scale changes
+		if options.IncidentsOnly {
+			if event.Severity != "critical" && event.Type != "infrastructure_change" && event.Type != "sustained_decline" {
+				continue
+			}
+		}
+
+		filtered = append(filtered, event)
+	}
+
+	return filtered
+}
+
+// filterTrends filters trends based on the provided options
+func filterTrends(trends []analyzer.TimelineTrend, options TimelineOptions) []analyzer.TimelineTrend {
+	if options.MinConfidence == 0 {
+		return trends // No confidence filtering needed
+	}
+
+	var filtered []analyzer.TimelineTrend
+
+	for _, trend := range trends {
+		if trend.Confidence >= options.MinConfidence {
+			filtered = append(filtered, trend)
+		}
+	}
+
+	return filtered
+}
+
+// filterCorrelations filters correlations based on the provided options
+func filterCorrelations(correlations []analyzer.CorrelationAnalysis, options TimelineOptions) []analyzer.CorrelationAnalysis {
+	if options.MinConfidence == 0 {
+		return correlations // No confidence filtering needed
+	}
+
+	var filtered []analyzer.CorrelationAnalysis
+
+	for _, correlation := range correlations {
+		if correlation.Confidence >= options.MinConfidence {
+			filtered = append(filtered, correlation)
+		}
+	}
+
+	return filtered
+}
+
+// displayTimelineEvents displays detected timeline events
+func displayTimelineEvents(events []analyzer.TimelineEvent) {
+	if len(events) == 0 {
+		fmt.Println("Timeline Events: None detected")
+		return
+	}
+
+	fmt.Printf("Timeline Events (%d detected):\n", len(events))
+	fmt.Println(strings.Repeat("-", 50))
+
+	// Group events by severity
+	severityGroups := map[string][]analyzer.TimelineEvent{
+		"critical": {},
+		"warning":  {},
+		"info":     {},
+	}
+
+	for _, event := range events {
+		severityGroups[event.Severity] = append(severityGroups[event.Severity], event)
+	}
+
+	// Display by severity (critical first)
+	for _, severity := range []string{"critical", "warning", "info"} {
+		if len(severityGroups[severity]) == 0 {
+			continue
+		}
+
+		var icon string
+		switch severity {
+		case "critical":
+			icon = "🔴"
+		case "warning":
+			icon = "🟡"
+		case "info":
+			icon = "🔵"
+		}
+
+		fmt.Printf("\n%s %s Events:\n", icon, strings.Title(severity))
+		for _, event := range severityGroups[severity] {
+			fmt.Printf("  %s - %s [%s]\n",
+				event.Timestamp.Format("2006-01-02 15:04:05"),
+				event.Description,
+				event.Provider)
+
+			if event.Context != nil {
+				if countChange, ok := event.Context["count_change"].(int); ok {
+					fmt.Printf("    Resource change: %+d\n", countChange)
+				}
+				if timeDiff, ok := event.Context["time_diff"].(time.Duration); ok {
+					fmt.Printf("    Time since last: %v\n", timeDiff)
+				}
+			}
+		}
+	}
+}
+
+// displayTimelineTrends displays trend analysis results
+func displayTimelineTrends(trends []analyzer.TimelineTrend, includePredictions bool) {
+	if len(trends) == 0 {
+		fmt.Println("Timeline Trends: None detected")
+		return
+	}
+
+	fmt.Printf("Timeline Trends (%d detected):\n", len(trends))
+	fmt.Println(strings.Repeat("-", 50))
+
+	for _, trend := range trends {
+		var icon string
+		switch trend.Trend {
+		case "increasing":
+			icon = "📈"
+		case "decreasing":
+			icon = "📉"
+		case "stable":
+			icon = "➖"
+		case "volatile":
+			icon = "📊"
+		default:
+			icon = "📋"
+		}
+
+		fmt.Printf("\n%s %s - %s trend (%.1f%% confidence)\n",
+			icon, trend.Provider, trend.Trend, trend.Confidence*100)
+
+		fmt.Printf("  Time period: %s to %s\n",
+			trend.StartTime.Format("2006-01-02"),
+			trend.EndTime.Format("2006-01-02"))
+
+		if len(trend.DataPoints) > 0 {
+			first := trend.DataPoints[0]
+			last := trend.DataPoints[len(trend.DataPoints)-1]
+			change := last.Value - first.Value
+			fmt.Printf("  Resource change: %d → %d (%+d)\n", first.Value, last.Value, change)
+		}
+
+		// Show predictions if available and requested
+		if includePredictions && len(trend.Predictions) > 0 {
+			fmt.Printf("  Predictions:\n")
+			for i, pred := range trend.Predictions {
+				if i >= 2 { // Show max 2 predictions
+					break
+				}
+				fmt.Printf("    %s: %d resources (%.1f%% confidence)\n",
+					pred.FutureTime.Format("2006-01-02"),
+					pred.PredictedValue,
+					pred.Confidence*100)
+			}
+		}
+	}
+}
+
+// displayTimelineCorrelations displays correlation analysis results
+func displayTimelineCorrelations(correlations []analyzer.CorrelationAnalysis) {
+	if len(correlations) == 0 {
+		fmt.Println("Timeline Correlations: None detected")
+		return
+	}
+
+	fmt.Printf("Timeline Correlations (%d detected):\n", len(correlations))
+	fmt.Println(strings.Repeat("-", 50))
+
+	for _, corr := range correlations {
+		var icon string
+		var strength string
+		absCorr := corr.Correlation
+		if absCorr < 0 {
+			absCorr = -absCorr
+		}
+
+		if absCorr > 0.7 {
+			strength = "Strong"
+			icon = "🔗"
+		} else if absCorr > 0.5 {
+			strength = "Moderate"
+			icon = "🔗"
+		} else {
+			strength = "Weak"
+			icon = "🔗"
+		}
+
+		var direction string
+		if corr.Correlation > 0 {
+			direction = "positive"
+		} else {
+			direction = "negative"
+		}
+
+		fmt.Printf("\n%s %s %s correlation between %s and %s\n",
+			icon, strength, direction, corr.Provider1, corr.Provider2)
+
+		fmt.Printf("  Correlation coefficient: %.3f (%.1f%% confidence)\n",
+			corr.Correlation, corr.Confidence*100)
+
+		// Explain what this means
+		if corr.Correlation > 0.3 {
+			fmt.Printf("  → When %s resources increase, %s resources tend to increase\n",
+				corr.Provider1, corr.Provider2)
+		} else if corr.Correlation < -0.3 {
+			fmt.Printf("  → When %s resources increase, %s resources tend to decrease\n",
+				corr.Provider1, corr.Provider2)
+		}
+
+		if len(corr.Examples) > 0 {
+			fmt.Printf("  Recent examples:\n")
+			for i, example := range corr.Examples {
+				if i >= 2 { // Show max 2 examples
+					break
+				}
+				fmt.Printf("    %s: %s\n",
+					example.Timestamp.Format("2006-01-02"),
+					example.Description)
+			}
+		}
+	}
 }

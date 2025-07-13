@@ -325,3 +325,272 @@ func extractMachineTypeFromURL(machineTypeURL string) string {
 	}
 	return machineTypeURL
 }
+
+// Cloud SQL Normalizers
+
+// NormalizeCloudSQLInstance converts a GCP Cloud SQL instance to VAINO format
+func (n *ResourceNormalizer) NormalizeCloudSQLInstance(instance GCPCloudSQLInstance) types.Resource {
+	var createdAt time.Time
+	if instance.CreateTime != "" {
+		if t, err := time.Parse(time.RFC3339, instance.CreateTime); err == nil {
+			createdAt = t
+		}
+	}
+
+	return types.Resource{
+		ID:       fmt.Sprintf("projects/%s/instances/%s", instance.ProjectID, instance.Name),
+		Type:     "cloud_sql_instance",
+		Name:     instance.Name,
+		Provider: "gcp",
+		Region:   instance.Region,
+		Configuration: map[string]interface{}{
+			"database_version":      instance.DatabaseVersion,
+			"state":                 instance.State,
+			"backend_type":          instance.BackendType,
+			"instance_type":         instance.InstanceType,
+			"connection_name":       instance.ConnectionName,
+			"ip_addresses":          instance.IPAddresses,
+			"settings":              instance.Settings,
+			"current_disk_size":     instance.CurrentDiskSize,
+			"max_disk_size":         instance.MaxDiskSize,
+			"service_account_email": instance.ServiceAccountEmail,
+		},
+		Tags: instance.Settings.UserLabels,
+		Metadata: types.ResourceMetadata{
+			CreatedAt: createdAt,
+		},
+	}
+}
+
+// NormalizeCloudSQLDatabase converts a GCP Cloud SQL database to VAINO format
+func (n *ResourceNormalizer) NormalizeCloudSQLDatabase(database GCPCloudSQLDatabase, instanceName string) types.Resource {
+	return types.Resource{
+		ID:       fmt.Sprintf("projects/%s/instances/%s/databases/%s", database.Project, instanceName, database.Name),
+		Type:     "cloud_sql_database",
+		Name:     database.Name,
+		Provider: "gcp",
+		Configuration: map[string]interface{}{
+			"instance":  instanceName,
+			"charset":   database.Charset,
+			"collation": database.Collation,
+		},
+	}
+}
+
+// NormalizeCloudSQLUser converts a GCP Cloud SQL user to VAINO format
+func (n *ResourceNormalizer) NormalizeCloudSQLUser(user GCPCloudSQLUser, instanceName string) types.Resource {
+	return types.Resource{
+		ID:       fmt.Sprintf("projects/%s/instances/%s/users/%s", user.Project, instanceName, user.Name),
+		Type:     "cloud_sql_user",
+		Name:     user.Name,
+		Provider: "gcp",
+		Configuration: map[string]interface{}{
+			"instance": instanceName,
+			"host":     user.Host,
+			"type":     user.Type,
+		},
+	}
+}
+
+// IAM Normalizers
+
+// NormalizeProjectIAMPolicy converts a GCP project IAM policy to VAINO format
+func (n *ResourceNormalizer) NormalizeProjectIAMPolicy(policy GCPIAMPolicy, projectID string) types.Resource {
+	return types.Resource{
+		ID:       fmt.Sprintf("projects/%s/iam-policy", projectID),
+		Type:     "iam_policy",
+		Name:     fmt.Sprintf("%s-iam-policy", projectID),
+		Provider: "gcp",
+		Configuration: map[string]interface{}{
+			"version":  policy.Version,
+			"bindings": policy.Bindings,
+			"etag":     policy.Etag,
+		},
+	}
+}
+
+// NormalizeServiceAccount converts a GCP service account to VAINO format
+func (n *ResourceNormalizer) NormalizeServiceAccount(sa GCPServiceAccount) types.Resource {
+	return types.Resource{
+		ID:       fmt.Sprintf("projects/%s/serviceAccounts/%s", sa.ProjectID, sa.Email),
+		Type:     "service_account",
+		Name:     sa.DisplayName,
+		Provider: "gcp",
+		Configuration: map[string]interface{}{
+			"email":            sa.Email,
+			"unique_id":        sa.UniqueID,
+			"display_name":     sa.DisplayName,
+			"description":      sa.Description,
+			"oauth2_client_id": sa.OAuth2ClientID,
+			"disabled":         sa.Disabled,
+			"etag":             sa.Etag,
+		},
+	}
+}
+
+// NormalizeServiceAccountKey converts a GCP service account key to VAINO format
+func (n *ResourceNormalizer) NormalizeServiceAccountKey(key GCPServiceAccountKey) types.Resource {
+	var validAfter, validBefore time.Time
+	if key.ValidAfterTime != "" {
+		if t, err := time.Parse(time.RFC3339, key.ValidAfterTime); err == nil {
+			validAfter = t
+		}
+	}
+	if key.ValidBeforeTime != "" {
+		if t, err := time.Parse(time.RFC3339, key.ValidBeforeTime); err == nil {
+			validBefore = t
+		}
+	}
+
+	return types.Resource{
+		ID:       key.Name,
+		Type:     "service_account_key",
+		Name:     extractKeyNameFromPath(key.Name),
+		Provider: "gcp",
+		Configuration: map[string]interface{}{
+			"private_key_type":      key.PrivateKeyType,
+			"key_algorithm":         key.KeyAlgorithm,
+			"key_origin":            key.KeyOrigin,
+			"key_type":              key.KeyType,
+			"service_account_email": key.ServiceAccountEmail,
+			"valid_after_time":      key.ValidAfterTime,
+			"valid_before_time":     key.ValidBeforeTime,
+		},
+		Metadata: types.ResourceMetadata{
+			CreatedAt: validAfter,
+			UpdatedAt: validBefore,
+		},
+	}
+}
+
+// NormalizeServiceAccountIAMPolicy converts a GCP service account IAM policy to VAINO format
+func (n *ResourceNormalizer) NormalizeServiceAccountIAMPolicy(policy GCPIAMPolicy, serviceAccountEmail string) types.Resource {
+	return types.Resource{
+		ID:       fmt.Sprintf("serviceAccounts/%s/iam-policy", serviceAccountEmail),
+		Type:     "service_account_iam_policy",
+		Name:     fmt.Sprintf("%s-iam-policy", serviceAccountEmail),
+		Provider: "gcp",
+		Configuration: map[string]interface{}{
+			"service_account": serviceAccountEmail,
+			"version":         policy.Version,
+			"bindings":        policy.Bindings,
+			"etag":            policy.Etag,
+		},
+	}
+}
+
+// NormalizeCustomRole converts a GCP custom role to VAINO format
+func (n *ResourceNormalizer) NormalizeCustomRole(role GCPCustomRole) types.Resource {
+	return types.Resource{
+		ID:       role.Name,
+		Type:     "custom_role",
+		Name:     role.Title,
+		Provider: "gcp",
+		Configuration: map[string]interface{}{
+			"description":          role.Description,
+			"included_permissions": role.IncludedPermissions,
+			"stage":                role.Stage,
+			"etag":                 role.Etag,
+			"deleted":              role.Deleted,
+		},
+	}
+}
+
+// Container Engine (GKE) Normalizers
+
+// NormalizeGKECluster converts a GCP GKE cluster to VAINO format
+func (n *ResourceNormalizer) NormalizeGKECluster(cluster GCPGKECluster) types.Resource {
+	var createdAt time.Time
+	if cluster.CreateTime != "" {
+		if t, err := time.Parse(time.RFC3339, cluster.CreateTime); err == nil {
+			createdAt = t
+		}
+	}
+
+	return types.Resource{
+		ID:       cluster.SelfLink,
+		Type:     "gke_cluster",
+		Name:     cluster.Name,
+		Provider: "gcp",
+		Configuration: map[string]interface{}{
+			"description":                       cluster.Description,
+			"initial_node_count":                cluster.InitialNodeCount,
+			"node_config":                       cluster.NodeConfig,
+			"master_auth":                       cluster.MasterAuth,
+			"logging_service":                   cluster.LoggingService,
+			"monitoring_service":                cluster.MonitoringService,
+			"network":                           cluster.Network,
+			"subnetwork":                        cluster.Subnetwork,
+			"cluster_ipv4_cidr":                 cluster.ClusterIpv4Cidr,
+			"addons_config":                     cluster.AddonsConfig,
+			"locations":                         cluster.Locations,
+			"enable_kubernetes_alpha":           cluster.EnableKubernetesAlpha,
+			"status":                            cluster.Status,
+			"status_message":                    cluster.StatusMessage,
+			"node_ipv4_cidr_size":               cluster.NodeIpv4CidrSize,
+			"services_ipv4_cidr":                cluster.ServicesIpv4Cidr,
+			"current_master_version":            cluster.CurrentMasterVersion,
+			"current_node_version":              cluster.CurrentNodeVersion,
+			"endpoint":                          cluster.Endpoint,
+			"initial_cluster_version":           cluster.InitialClusterVersion,
+			"location":                          cluster.Location,
+			"zone":                              cluster.Zone,
+			"enable_tpu":                        cluster.EnableTpu,
+			"tpu_ipv4_cidr_block":               cluster.TpuIpv4CidrBlock,
+			"master_authorized_networks_config": cluster.MasterAuthorizedNetworksConfig,
+			"maintenance_policy":                cluster.MaintenancePolicy,
+			"binary_authorization":              cluster.BinaryAuthorization,
+			"database_encryption":               cluster.DatabaseEncryption,
+			"shielded_nodes":                    cluster.ShieldedNodes,
+			"release_channel":                   cluster.ReleaseChannel,
+			"workload_identity_config":          cluster.WorkloadIdentityConfig,
+			"network_config":                    cluster.NetworkConfig,
+			"private_cluster_config":            cluster.PrivateClusterConfig,
+			"ip_allocation_policy":              cluster.IpAllocationPolicy,
+			"default_max_pods_constraint":       cluster.DefaultMaxPodsConstraint,
+		},
+		Tags: cluster.ResourceLabels,
+		Metadata: types.ResourceMetadata{
+			CreatedAt: createdAt,
+			Version:   cluster.CurrentMasterVersion,
+		},
+	}
+}
+
+// NormalizeGKENodePool converts a GCP GKE node pool to VAINO format
+func (n *ResourceNormalizer) NormalizeGKENodePool(nodePool GCPNodePool, clusterName string) types.Resource {
+	return types.Resource{
+		ID:       nodePool.SelfLink,
+		Type:     "gke_node_pool",
+		Name:     nodePool.Name,
+		Provider: "gcp",
+		Configuration: map[string]interface{}{
+			"cluster":             clusterName,
+			"config":              nodePool.Config,
+			"initial_node_count":  nodePool.InitialNodeCount,
+			"locations":           nodePool.Locations,
+			"version":             nodePool.Version,
+			"instance_group_urls": nodePool.InstanceGroupUrls,
+			"status":              nodePool.Status,
+			"status_message":      nodePool.StatusMessage,
+			"autoscaling":         nodePool.Autoscaling,
+			"management":          nodePool.Management,
+			"max_pods_constraint": nodePool.MaxPodsConstraint,
+			"pod_ipv4_cidr_size":  nodePool.PodIpv4CidrSize,
+			"upgrade_settings":    nodePool.UpgradeSettings,
+		},
+		Metadata: types.ResourceMetadata{
+			Version: nodePool.Version,
+		},
+	}
+}
+
+// Helper functions
+
+func extractKeyNameFromPath(path string) string {
+	parts := strings.Split(path, "/")
+	if len(parts) > 0 {
+		return parts[len(parts)-1]
+	}
+	return path
+}

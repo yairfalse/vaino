@@ -32,30 +32,39 @@ func (c *GCPCollector) Name() string {
 }
 
 func (c *GCPCollector) Status() string {
-	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
+	// Check project ID availability
+	projectID := c.getProjectID()
 	if projectID == "" {
-		// Try to get from gcloud config
-		if gcloudProject := c.getGcloudProject(); gcloudProject != "" {
-			projectID = gcloudProject
-		} else {
-			return "warning: no project configured, specify --project or set GOOGLE_CLOUD_PROJECT"
-		}
+		return "error: no GCP project configured"
 	}
 
+	// Check credentials
 	credentialsFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
-	if credentialsFile == "" {
-		if c.hasDefaultCredentials() {
-			return "ready"
-		} else {
-			return "warning: no credentials configured, run 'gcloud auth application-default login'"
+	if credentialsFile != "" {
+		// Validate credentials file
+		if _, err := os.Stat(credentialsFile); os.IsNotExist(err) {
+			return fmt.Sprintf("error: credentials file not found: %s", credentialsFile)
 		}
+
+		// Try to validate credentials file format
+		if err := c.validateCredentialsFile(credentialsFile); err != nil {
+			return fmt.Sprintf("error: invalid credentials file: %v", err)
+		}
+
+		return fmt.Sprintf("ready (project: %s, service account)", projectID)
 	}
 
-	if _, err := os.Stat(credentialsFile); os.IsNotExist(err) {
-		return fmt.Sprintf("error: credentials file not found: %s", credentialsFile)
+	// Check for application default credentials
+	if c.hasDefaultCredentials() {
+		return fmt.Sprintf("ready (project: %s, application default)", projectID)
 	}
 
-	return "ready"
+	// Check for gcloud user credentials
+	if c.hasGcloudCredentials() {
+		return fmt.Sprintf("ready (project: %s, gcloud user)", projectID)
+	}
+
+	return "error: no GCP credentials configured"
 }
 
 func (c *GCPCollector) Collect(ctx context.Context, config collectors.CollectorConfig) (*types.Snapshot, error) {
@@ -89,6 +98,9 @@ func (c *GCPCollector) Collect(ctx context.Context, config collectors.CollectorC
 		{"Compute Engine", c.collectComputeResources},
 		{"Storage", c.collectStorageResources},
 		{"Network", c.collectNetworkResources},
+		{"Cloud SQL", c.collectCloudSQLResources},
+		{"IAM", c.collectIAMResources},
+		{"Container Engine", c.collectContainerResources},
 	}
 
 	for _, service := range services {
@@ -540,4 +552,140 @@ func (c *GCPCollector) hasDefaultCredentials() bool {
 	}
 
 	return false
+}
+
+// hasGcloudCredentials checks if gcloud user credentials are available
+func (c *GCPCollector) hasGcloudCredentials() bool {
+	cmd := exec.Command("gcloud", "auth", "print-access-token")
+	err := cmd.Run()
+	return err == nil
+}
+
+// getProjectID gets the project ID from multiple sources in priority order
+func (c *GCPCollector) getProjectID() string {
+	// 1. Environment variable
+	if projectID := os.Getenv("GOOGLE_CLOUD_PROJECT"); projectID != "" {
+		return projectID
+	}
+
+	// 2. GCP_PROJECT environment variable (alternative)
+	if projectID := os.Getenv("GCP_PROJECT"); projectID != "" {
+		return projectID
+	}
+
+	// 3. Gcloud config
+	if projectID := c.getGcloudProject(); projectID != "" {
+		return projectID
+	}
+
+	// 4. Try to extract from credentials file
+	if credFile := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"); credFile != "" {
+		if projectID := c.getProjectFromCredentialsFile(credFile); projectID != "" {
+			return projectID
+		}
+	}
+
+	// 5. Try default application credentials file
+	homeDir, _ := os.UserHomeDir()
+	if homeDir != "" {
+		defaultCredPath := filepath.Join(homeDir, ".config", "gcloud", "application_default_credentials.json")
+		if projectID := c.getProjectFromCredentialsFile(defaultCredPath); projectID != "" {
+			return projectID
+		}
+	}
+
+	return ""
+}
+
+// getProjectFromCredentialsFile extracts project ID from a credentials file
+func (c *GCPCollector) getProjectFromCredentialsFile(filePath string) string {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return ""
+	}
+
+	var creds map[string]interface{}
+	if err := json.Unmarshal(content, &creds); err != nil {
+		return ""
+	}
+
+	// For service account credentials
+	if projectID, ok := creds["project_id"].(string); ok {
+		return projectID
+	}
+
+	// For application default credentials, project might be in quota_project_id
+	if projectID, ok := creds["quota_project_id"].(string); ok {
+		return projectID
+	}
+
+	return ""
+}
+
+// validateCredentialsFile validates the format and content of a GCP credentials file
+func (c *GCPCollector) validateCredentialsFile(filePath string) error {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("cannot read credentials file: %w", err)
+	}
+
+	var creds map[string]interface{}
+	if err := json.Unmarshal(content, &creds); err != nil {
+		return fmt.Errorf("invalid JSON format: %w", err)
+	}
+
+	// Check credential type
+	credType, hasType := creds["type"].(string)
+	if !hasType {
+		return fmt.Errorf("missing 'type' field in credentials")
+	}
+
+	switch credType {
+	case "service_account":
+		return c.validateServiceAccountCredentials(creds)
+	case "authorized_user":
+		return c.validateAuthorizedUserCredentials(creds)
+	default:
+		return fmt.Errorf("unsupported credential type: %s", credType)
+	}
+}
+
+// validateServiceAccountCredentials validates service account credentials
+func (c *GCPCollector) validateServiceAccountCredentials(creds map[string]interface{}) error {
+	requiredFields := []string{"type", "project_id", "private_key_id", "private_key", "client_email", "client_id", "auth_uri", "token_uri"}
+
+	for _, field := range requiredFields {
+		if _, exists := creds[field]; !exists {
+			return fmt.Errorf("missing required field: %s", field)
+		}
+	}
+
+	// Validate private key format
+	if privateKey, ok := creds["private_key"].(string); ok {
+		if !strings.Contains(privateKey, "BEGIN PRIVATE KEY") {
+			return fmt.Errorf("private key does not appear to be in PEM format")
+		}
+	}
+
+	// Validate email format
+	if email, ok := creds["client_email"].(string); ok {
+		if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
+			return fmt.Errorf("client_email appears to be invalid: %s", email)
+		}
+	}
+
+	return nil
+}
+
+// validateAuthorizedUserCredentials validates authorized user credentials
+func (c *GCPCollector) validateAuthorizedUserCredentials(creds map[string]interface{}) error {
+	requiredFields := []string{"type", "client_id", "client_secret", "refresh_token"}
+
+	for _, field := range requiredFields {
+		if _, exists := creds[field]; !exists {
+			return fmt.Errorf("missing required field: %s", field)
+		}
+	}
+
+	return nil
 }
