@@ -1,0 +1,382 @@
+# Critical Event Pattern Library for journald Collector
+# This file defines patterns for detecting critical events in system logs
+
+patterns:
+  # Out of Memory (OOM) Patterns - 99% accuracy target
+  oom:
+    - id: "oom-001"
+      name: "Standard OOM Kill"
+      description: "Process killed by OOM killer with memory details"
+      regex: 'killed process (\d+) \(([^)]+)\).*score (\d+).*total-vm:(\d+)kB.*anon-rss:(\d+)kB.*file-rss:(\d+)kB.*shmem-rss:(\d+)kB'
+      severity: "critical"
+      confidence: 0.99
+      category: "memory"
+      tags: ["oom", "memory", "process_killed"]
+      enabled: true
+      
+    - id: "oom-002"
+      name: "Basic OOM Kill"
+      description: "Simple OOM kill pattern"
+      regex: 'Out of memory.*Kill process (\d+) \(([^)]+)\) score (\d+) or sacrifice child'
+      severity: "critical"
+      confidence: 0.95
+      category: "memory"
+      tags: ["oom", "memory", "process_killed"]
+      enabled: true
+      
+    - id: "oom-003"
+      name: "Cgroup OOM"
+      description: "Memory cgroup out of memory"
+      regex: 'Memory cgroup out of memory.*Kill process (\d+) \(([^)]+)\) score (\d+)'
+      severity: "critical"
+      confidence: 0.97
+      category: "memory"
+      tags: ["oom", "memory", "cgroup", "process_killed"]
+      enabled: true
+      
+    - id: "oom-004"
+      name: "OOM Task Selection"
+      description: "OOM killer task selection"
+      regex: 'select.*process.*to kill.*total-vm.*anon-rss.*file-rss'
+      severity: "critical"
+      confidence: 0.92
+      category: "memory"
+      tags: ["oom", "memory", "task_selection"]
+      enabled: true
+
+  # Memory Pressure Patterns
+  memory:
+    - id: "mem-001"
+      name: "Memory Pressure Warning"
+      description: "System memory pressure detected"
+      regex: '(memory pressure|low memory|memory.*critical|available memory.*low)'
+      severity: "high"
+      confidence: 0.88
+      category: "memory"
+      tags: ["memory", "pressure", "performance"]
+      enabled: true
+      
+    - id: "mem-002"
+      name: "Swap Exhaustion"
+      description: "Swap space exhausted"
+      regex: '(swap.*full|swap.*exhausted|no swap space)'
+      severity: "high"
+      confidence: 0.90
+      category: "memory"
+      tags: ["memory", "swap", "exhaustion"]
+      enabled: true
+
+  # Segmentation Fault Patterns
+  segfault:
+    - id: "seg-001"
+      name: "Segmentation Fault"
+      description: "Process crashed with segmentation fault"
+      regex: 'segfault at ([0-9a-f]+) ip ([0-9a-f]+) sp ([0-9a-f]+) error (\d+) in ([^\[]+)'
+      severity: "high"
+      confidence: 0.98
+      category: "crash"
+      tags: ["segfault", "crash", "memory_violation"]
+      enabled: true
+      
+    - id: "seg-002"
+      name: "General Protection Fault"
+      description: "General protection fault in kernel"
+      regex: 'general protection fault.*ip.*sp.*error'
+      severity: "critical"
+      confidence: 0.95
+      category: "crash"
+      tags: ["gpf", "crash", "kernel"]
+      enabled: true
+
+  # Kernel Panic Patterns
+  kernel:
+    - id: "ker-001"
+      name: "Kernel Panic"
+      description: "Kernel panic detected"
+      regex: '(kernel panic|Kernel panic|KERNEL PANIC)'
+      severity: "critical"
+      confidence: 0.99
+      category: "kernel"
+      tags: ["kernel", "panic", "system_crash"]
+      enabled: true
+      
+    - id: "ker-002"
+      name: "Kernel Oops"
+      description: "Kernel oops detected"
+      regex: '(Oops|BUG:|kernel BUG at|Unable to handle kernel)'
+      severity: "critical"
+      confidence: 0.96
+      category: "kernel"
+      tags: ["kernel", "oops", "bug"]
+      enabled: true
+      
+    - id: "ker-003"
+      name: "Call Trace"
+      description: "Kernel call trace"
+      regex: 'Call Trace:|call trace:'
+      severity: "high"
+      confidence: 0.85
+      category: "kernel"
+      tags: ["kernel", "trace", "debug"]
+      enabled: true
+
+  # Disk/Storage Errors
+  disk:
+    - id: "disk-001"
+      name: "I/O Error"
+      description: "Disk I/O error detected"
+      regex: '(I/O error|disk.*error|read error|write error)'
+      severity: "high"
+      confidence: 0.90
+      category: "storage"
+      tags: ["disk", "io_error", "storage"]
+      enabled: true
+      
+    - id: "disk-002"
+      name: "Bad Block"
+      description: "Bad block detected on disk"
+      regex: '(bad block|badblock|relocat.*block)'
+      severity: "high"
+      confidence: 0.92
+      category: "storage"
+      tags: ["disk", "bad_block", "storage"]
+      enabled: true
+      
+    - id: "disk-003"
+      name: "Filesystem Error"
+      description: "Filesystem errors"
+      regex: '(EXT4-fs error|XFS.*error|filesystem.*error|mount.*error)'
+      severity: "high"
+      confidence: 0.88
+      category: "storage"
+      tags: ["disk", "filesystem", "storage"]
+      enabled: true
+      
+    - id: "disk-004"
+      name: "Disk Full"
+      description: "Disk space exhausted"
+      regex: '(no space left|disk.*full|filesystem.*full|\d+%.*full)'
+      severity: "high"
+      confidence: 0.92
+      category: "storage"
+      tags: ["disk", "full", "storage"]
+      enabled: true
+
+  # Network Errors
+  network:
+    - id: "net-001"
+      name: "Network Unreachable"
+      description: "Network connectivity issues"
+      regex: '(network.*unreachable|Network.*unreachable|destination.*unreachable)'
+      severity: "medium"
+      confidence: 0.85
+      category: "network"
+      tags: ["network", "unreachable", "connectivity"]
+      enabled: true
+      
+    - id: "net-002"
+      name: "Connection Refused"
+      description: "Connection refused errors"
+      regex: '(connection.*refused|Connection.*refused)'
+      severity: "medium"
+      confidence: 0.87
+      category: "network"
+      tags: ["network", "refused", "connectivity"]
+      enabled: true
+      
+    - id: "net-003"
+      name: "Timeout"
+      description: "Network timeout errors"
+      regex: '(timeout.*connect|connection.*timeout|network.*timeout)'
+      severity: "medium"
+      confidence: 0.80
+      category: "network"
+      tags: ["network", "timeout", "connectivity"]
+      enabled: true
+
+  # Authentication/Security
+  auth:
+    - id: "auth-001"
+      name: "Authentication Failure"
+      description: "Authentication failures"
+      regex: '(authentication failure|Authentication failure|auth.*fail)'
+      severity: "medium"
+      confidence: 0.90
+      category: "security"
+      tags: ["auth", "security", "failure"]
+      enabled: true
+      
+    - id: "auth-002"
+      name: "Permission Denied"
+      description: "Permission denied errors"
+      regex: '(permission denied|Permission denied|access denied|Access denied)'
+      severity: "medium"
+      confidence: 0.85
+      category: "security"
+      tags: ["auth", "security", "permission"]
+      enabled: true
+      
+    - id: "auth-003"
+      name: "Failed Login"
+      description: "Failed login attempts"
+      regex: '(login.*failed|Failed.*login|invalid.*password)'
+      severity: "medium"
+      confidence: 0.88
+      category: "security"
+      tags: ["auth", "security", "login"]
+      enabled: true
+
+  # Service Lifecycle
+  service:
+    - id: "svc-001"
+      name: "Service Failed"
+      description: "Service failure detected"
+      regex: '(service.*failed|failed.*service|systemd.*failed)'
+      severity: "high"
+      confidence: 0.85
+      category: "service"
+      tags: ["service", "failed", "systemd"]
+      enabled: true
+      
+    - id: "svc-002"
+      name: "Service Crash"
+      description: "Service crash detected"
+      regex: '(service.*crash|crash.*service|main process exited)'
+      severity: "high"
+      confidence: 0.82
+      category: "service"
+      tags: ["service", "crash", "systemd"]
+      enabled: true
+
+  # CPU/Performance
+  cpu:
+    - id: "cpu-001"
+      name: "CPU Throttling"
+      description: "CPU throttling detected"
+      regex: '(CPU.*throttl|thermal.*throttl|frequency.*reduc)'
+      severity: "medium"
+      confidence: 0.85
+      category: "performance"
+      tags: ["cpu", "throttling", "performance"]
+      enabled: true
+      
+    - id: "cpu-002"
+      name: "High Load"
+      description: "High system load"
+      regex: '(load average.*high|high.*load|system.*overload)'
+      severity: "medium"
+      confidence: 0.75
+      category: "performance"
+      tags: ["cpu", "load", "performance"]
+      enabled: true
+
+# Filter Configuration
+filters:
+  # Priority-based filtering (0=Emergency, 7=Debug)
+  min_priority: 3  # Error and above
+  
+  # Rate limiting
+  rate_limits:
+    global: 10000     # Max entries per second globally
+    per_unit: 1000    # Max entries per second per unit
+    per_minute: 100000
+    per_hour: 1000000
+  
+  # Noise reduction patterns
+  exclude_patterns:
+    - "systemd-logind.*New session.*of user"
+    - "systemd.*Started.*session.*of user"
+    - "kernel.*audit.*"
+    - "NetworkManager.*dhcp.*renew"
+    - "chronyd.*Selected source"
+    - "dbus.*method call.*"
+    - "pulseaudio.*connection.*"
+    
+  # Include only critical patterns when under load
+  critical_only_mode:
+    enabled: false
+    trigger_threshold: 50000  # entries per second
+    patterns:
+      - "oom"
+      - "kernel"
+      - "segfault"
+      - "disk"
+
+# Correlation Rules
+correlations:
+  # OOM followed by service restart
+  - name: "OOM Recovery Pattern"
+    sequence: ["oom_kill", "service_start"]
+    time_window: "5m"
+    confidence_threshold: 0.7
+    
+  # Disk errors followed by filesystem issues
+  - name: "Disk Failure Cascade"
+    sequence: ["disk_error", "filesystem_error"]
+    time_window: "10m"
+    confidence_threshold: 0.8
+    
+  # Memory pressure leading to OOM
+  - name: "Memory Pressure to OOM"
+    sequence: ["memory_pressure", "oom_kill"]
+    time_window: "30m"
+    confidence_threshold: 0.9
+
+# Anomaly Detection
+anomaly_detection:
+  enabled: true
+  baseline_window: "24h"
+  sensitivity: 2.0  # Standard deviations
+  algorithms:
+    - "zscore"
+    - "iqr"
+  
+  # Event frequency baselines
+  baselines:
+    oom_kill:
+      normal_frequency: 0.0  # Per hour
+      warning_threshold: 1.0
+      critical_threshold: 5.0
+      
+    disk_error:
+      normal_frequency: 0.1
+      warning_threshold: 1.0
+      critical_threshold: 10.0
+      
+    service_failed:
+      normal_frequency: 0.5
+      warning_threshold: 5.0
+      critical_threshold: 20.0
+
+# Performance Tuning
+performance:
+  # Memory limits
+  max_memory_mb: 30
+  buffer_size: 10000
+  max_entry_size_kb: 64
+  
+  # Processing limits
+  max_events_per_sec: 10000
+  batch_size: 100
+  processing_timeout: "100ms"
+  
+  # History retention
+  max_history_entries: 10000
+  history_retention: "24h"
+  
+  # Duplicate detection
+  bloom_filter_size: 1000000
+  duplicate_cache_size: 10000
+  duplicate_ttl: "5m"
+
+# Output Configuration
+output:
+  # Include raw log entries in output
+  include_raw_entries: false
+  
+  # Structured output format
+  structured_output: true
+  
+  # Compression for large outputs
+  compress_large_outputs: true
+  compression_threshold_kb: 100
