@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/yairfalse/wgo/cmd/install/installer"
+	"github.com/yairfalse/vaino/cmd/install/installer"
 )
 
 // Tracker tracks installation progress

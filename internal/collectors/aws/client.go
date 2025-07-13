@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodbstreams"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -20,7 +21,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/lambda"
-	"github.com/aws/aws-sdk-go-v2/service/logs"
 	"github.com/aws/aws-sdk-go-v2/service/rds"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
@@ -47,7 +47,7 @@ type AWSClients struct {
 	ECS             *ecs.Client
 	EKS             *eks.Client
 	CloudWatch      *cloudwatch.Client
-	CloudWatchLogs  *logs.Client
+	CloudWatchLogs  *cloudwatchlogs.Client
 	CloudFormation  *cloudformation.Client
 	ELB             *elasticloadbalancing.Client
 	ELBv2           *elasticloadbalancingv2.Client
@@ -112,7 +112,7 @@ func NewAWSClients(ctx context.Context, clientConfig ClientConfig) (*AWSClients,
 		ECS:             ecs.NewFromConfig(cfg),
 		EKS:             eks.NewFromConfig(cfg),
 		CloudWatch:      cloudwatch.NewFromConfig(cfg),
-		CloudWatchLogs:  logs.NewFromConfig(cfg),
+		CloudWatchLogs:  cloudwatchlogs.NewFromConfig(cfg),
 		CloudFormation:  cloudformation.NewFromConfig(cfg),
 		ELB:             elasticloadbalancing.NewFromConfig(cfg),
 		ELBv2:           elasticloadbalancingv2.NewFromConfig(cfg),

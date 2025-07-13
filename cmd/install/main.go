@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/yairfalse/wgo/cmd/install/installer"
-	"github.com/yairfalse/wgo/cmd/install/platform"
-	"github.com/yairfalse/wgo/cmd/install/progress"
+	"github.com/yairfalse/vaino/cmd/install/installer"
+	"github.com/yairfalse/vaino/cmd/install/platform"
+	"github.com/yairfalse/vaino/cmd/install/progress"
 )
 
 var (
