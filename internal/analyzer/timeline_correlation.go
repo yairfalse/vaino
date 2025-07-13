@@ -128,10 +128,10 @@ func (ta *TimelineAnalyzer) detectEvents() error {
 
 		prevSnapshot := ta.snapshots[i-1]
 
-		// Detect significant changes
+		// Resource count change
+		countDiff := 0
 		if snapshot.Provider == prevSnapshot.Provider {
-			// Resource count change
-			countDiff := snapshot.ResourceCount - prevSnapshot.ResourceCount
+			countDiff = snapshot.ResourceCount - prevSnapshot.ResourceCount
 
 			var eventType, severity string
 			if countDiff > 0 {
@@ -375,7 +375,7 @@ type TrendResult struct {
 	Variance   float64
 }
 
-type CorrelationResult struct {
+type CorrelationValue struct {
 	Value      float64
 	Confidence float64
 }
@@ -438,9 +438,9 @@ func (ta *TimelineAnalyzer) calculateTrend(dataPoints []TrendDataPoint) TrendRes
 	}
 }
 
-func (ta *TimelineAnalyzer) calculateCorrelation(data1, data2 []int) CorrelationResult {
+func (ta *TimelineAnalyzer) calculateCorrelation(data1, data2 []int) CorrelationValue {
 	if len(data1) != len(data2) || len(data1) < 2 {
-		return CorrelationResult{Value: 0.0, Confidence: 0.0}
+		return CorrelationValue{Value: 0.0, Confidence: 0.0}
 	}
 
 	n := float64(len(data1))
@@ -460,13 +460,13 @@ func (ta *TimelineAnalyzer) calculateCorrelation(data1, data2 []int) Correlation
 	denominator2 := n*sum2_2 - sum2*sum2
 
 	if denominator1 <= 0 || denominator2 <= 0 {
-		return CorrelationResult{Value: 0.0, Confidence: 0.0}
+		return CorrelationValue{Value: 0.0, Confidence: 0.0}
 	}
 
 	correlation := numerator / (sqrt(denominator1) * sqrt(denominator2))
 	confidence := min(n/10.0, 1.0) // Confidence increases with sample size
 
-	return CorrelationResult{
+	return CorrelationValue{
 		Value:      correlation,
 		Confidence: confidence,
 	}

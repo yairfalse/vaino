@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/yairfalse/wgo/cmd/install/platform"
+	"github.com/yairfalse/vaino/cmd/install/platform"
 )
 
 // factory implements the Factory interface

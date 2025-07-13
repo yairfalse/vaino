@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/yairfalse/wgo/cmd/install/installer"
+	"github.com/yairfalse/vaino/cmd/install/installer"
 )
 
 // Checker performs post-installation validation

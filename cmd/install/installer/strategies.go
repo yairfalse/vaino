@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/yairfalse/wgo/cmd/install/platform"
+	"github.com/yairfalse/vaino/cmd/install/platform"
 )
 
 // BinaryStrategy implements the binary installation strategy

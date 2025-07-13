@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
-	"github.com/aws/aws-sdk-go-v2/service/logs"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/yairfalse/vaino/pkg/types"
 )
 
@@ -93,7 +93,7 @@ func (c *AWSCollector) collectCloudWatchLogGroups(ctx context.Context) ([]types.
 	var nextToken *string
 
 	for {
-		input := &logs.DescribeLogGroupsInput{}
+		input := &cloudwatchlogs.DescribeLogGroupsInput{}
 		if nextToken != nil {
 			input.NextToken = nextToken
 		}
@@ -199,7 +199,7 @@ func (c *AWSCollector) getCloudWatchAlarmTags(ctx context.Context, alarmArn stri
 
 // getCloudWatchLogGroupTags fetches tags for a CloudWatch log group
 func (c *AWSCollector) getCloudWatchLogGroupTags(ctx context.Context, logGroupName string) (map[string]string, error) {
-	result, err := c.clients.CloudWatchLogs.ListTagsLogGroup(ctx, &logs.ListTagsLogGroupInput{
+	result, err := c.clients.CloudWatchLogs.ListTagsLogGroup(ctx, &cloudwatchlogs.ListTagsLogGroupInput{
 		LogGroupName: &logGroupName,
 	})
 	if err != nil {
@@ -214,7 +214,7 @@ func (c *AWSCollector) getCloudWatchLogGroupDetails(ctx context.Context, logGrou
 	details := make(map[string]interface{})
 
 	// Get metric filters
-	filterResult, err := c.clients.CloudWatchLogs.DescribeMetricFilters(ctx, &logs.DescribeMetricFiltersInput{
+	filterResult, err := c.clients.CloudWatchLogs.DescribeMetricFilters(ctx, &cloudwatchlogs.DescribeMetricFiltersInput{
 		LogGroupName: &logGroupName,
 	})
 	if err == nil && len(filterResult.MetricFilters) > 0 {
@@ -234,7 +234,7 @@ func (c *AWSCollector) getCloudWatchLogGroupDetails(ctx context.Context, logGrou
 	}
 
 	// Get subscription filters
-	subscriptionResult, err := c.clients.CloudWatchLogs.DescribeSubscriptionFilters(ctx, &logs.DescribeSubscriptionFiltersInput{
+	subscriptionResult, err := c.clients.CloudWatchLogs.DescribeSubscriptionFilters(ctx, &cloudwatchlogs.DescribeSubscriptionFiltersInput{
 		LogGroupName: &logGroupName,
 	})
 	if err == nil && len(subscriptionResult.SubscriptionFilters) > 0 {

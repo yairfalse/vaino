@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/yairfalse/wgo/cmd/install/installer"
+	"github.com/yairfalse/vaino/cmd/install/installer"
 )
 
 // HealthChecker performs system health validation

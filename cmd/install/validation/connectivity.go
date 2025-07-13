@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/yairfalse/wgo/cmd/install/installer"
+	"github.com/yairfalse/vaino/cmd/install/installer"
 )
 
 // ConnectivityChecker validates network connectivity
