@@ -143,7 +143,6 @@ func (c *TerraformCollector) Collect(ctx context.Context, config collectors.Coll
 		Metadata:  metadata,
 	}
 
-
 	return snapshot, nil
 }
 

@@ -149,16 +149,16 @@ func (f *ScanFormatter) FormatOutput() string {
 
 	// Group resources by type
 	resourcesByType := f.groupResourcesByType()
-	
+
 	// Group by region
 	resourcesByRegion := f.groupResourcesByRegion()
-	
+
 	// Group by state file (for Terraform)
 	stateFiles := f.getStateFiles()
 
 	// Build summary
-	output.WriteString(fmt.Sprintf("Scanned %s infrastructure at %s\n", 
-		f.snapshot.Provider, 
+	output.WriteString(fmt.Sprintf("Scanned %s infrastructure at %s\n",
+		f.snapshot.Provider,
 		f.snapshot.Timestamp.Format("2006-01-02 15:04:05")))
 	output.WriteString("\n")
 
@@ -173,7 +173,7 @@ func (f *ScanFormatter) FormatOutput() string {
 
 	// Resource summary with context
 	output.WriteString(fmt.Sprintf("📊 Found %d resources:\n\n", len(f.snapshot.Resources)))
-	
+
 	// Sort resource types by count (descending)
 	types := make([]string, 0, len(resourcesByType))
 	for t := range resourcesByType {
@@ -187,26 +187,26 @@ func (f *ScanFormatter) FormatOutput() string {
 	for _, resourceType := range types {
 		resources := resourcesByType[resourceType]
 		count := len(resources)
-		
+
 		// Get resource context
 		context, hasContext := ResourceDescriptions[resourceType]
-		
+
 		// Resource type header
 		output.WriteString(fmt.Sprintf("  %s (%d)\n", resourceType, count))
-		
+
 		if hasContext {
 			output.WriteString(fmt.Sprintf("  └─ %s\n", context.Description))
 			if context.CostImpact != "" && context.CostImpact != "None" {
 				output.WriteString(fmt.Sprintf("     💰 Cost impact: %s\n", context.CostImpact))
 			}
 		}
-		
+
 		// Show a few example resources (up to 3)
 		examples := resources
 		if len(examples) > 3 {
 			examples = examples[:3]
 		}
-		
+
 		for _, r := range examples {
 			name := r.Name
 			if name == "" {
@@ -215,21 +215,21 @@ func (f *ScanFormatter) FormatOutput() string {
 			if len(name) > 40 {
 				name = name[:37] + "..."
 			}
-			
+
 			location := ""
 			if r.Region != "" {
 				location = fmt.Sprintf(" [%s]", r.Region)
 			} else if r.Namespace != "" {
 				location = fmt.Sprintf(" [ns: %s]", r.Namespace)
 			}
-			
+
 			output.WriteString(fmt.Sprintf("     • %s%s\n", name, location))
 		}
-		
+
 		if len(resources) > 3 {
 			output.WriteString(fmt.Sprintf("     ... and %d more\n", len(resources)-3))
 		}
-		
+
 		output.WriteString("\n")
 	}
 
@@ -243,7 +243,7 @@ func (f *ScanFormatter) FormatOutput() string {
 			}
 		}
 		sort.Strings(regions)
-		
+
 		for _, region := range regions {
 			count := len(resourcesByRegion[region])
 			output.WriteString(fmt.Sprintf("  • %s: %d resources\n", region, count))
@@ -303,7 +303,7 @@ func (f *ScanFormatter) getStateFiles() []string {
 			files[r.Metadata.StateFile] = true
 		}
 	}
-	
+
 	result := make([]string, 0, len(files))
 	for f := range files {
 		result = append(result, f)
@@ -314,7 +314,7 @@ func (f *ScanFormatter) getStateFiles() []string {
 
 func (f *ScanFormatter) generateCostInsights(resourcesByType map[string][]types.Resource) string {
 	var insights []string
-	
+
 	// Check for high-cost resources
 	highCostTypes := []string{"aws_instance", "aws_rds_instance", "google_compute_instance", "aws_eks_cluster"}
 	highCostCount := 0
@@ -323,16 +323,16 @@ func (f *ScanFormatter) generateCostInsights(resourcesByType map[string][]types.
 			highCostCount += len(resources)
 		}
 	}
-	
+
 	if highCostCount > 0 {
 		insights = append(insights, fmt.Sprintf("  • Found %d high-cost compute/database resources", highCostCount))
 	}
-	
+
 	// Check for potential waste
 	if lambdas, ok := resourcesByType["aws_lambda_function"]; ok && len(lambdas) > 10 {
 		insights = append(insights, fmt.Sprintf("  • %d Lambda functions - consider consolidating if underutilized", len(lambdas)))
 	}
-	
+
 	// Storage insights
 	storageTypes := []string{"aws_s3_bucket", "google_storage_bucket", "aws_dynamodb_table"}
 	storageCount := 0
@@ -344,27 +344,27 @@ func (f *ScanFormatter) generateCostInsights(resourcesByType map[string][]types.
 	if storageCount > 0 {
 		insights = append(insights, fmt.Sprintf("  • %d storage resources - monitor for unused data", storageCount))
 	}
-	
+
 	return strings.Join(insights, "\n")
 }
 
 func (f *ScanFormatter) generateSecurityInsights(resourcesByType map[string][]types.Resource) string {
 	var insights []string
-	
+
 	// Security groups
 	if sgs, ok := resourcesByType["aws_security_group"]; ok {
 		insights = append(insights, fmt.Sprintf("  • %d security groups - audit for overly permissive rules", len(sgs)))
 	}
-	
+
 	// Secrets management
 	if secrets, ok := resourcesByType["Secret"]; ok && len(secrets) > 0 {
 		insights = append(insights, fmt.Sprintf("  • %d Kubernetes secrets - ensure proper RBAC", len(secrets)))
 	}
-	
+
 	// Public resources warning
 	if buckets, ok := resourcesByType["aws_s3_bucket"]; ok && len(buckets) > 0 {
 		insights = append(insights, "  • S3 buckets found - verify public access settings")
 	}
-	
+
 	return strings.Join(insights, "\n")
 }

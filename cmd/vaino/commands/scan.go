@@ -23,8 +23,8 @@ import (
 
 func newScanCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "scan",
-		Short: "Scan infrastructure for current state",
+		Use:          "scan",
+		Short:        "Scan infrastructure for current state",
 		SilenceUsage: true,
 		Long: `Scan discovers and collects the current state of your infrastructure
 from various providers (Terraform, AWS, Kubernetes) and creates a snapshot.

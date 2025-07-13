@@ -16,7 +16,7 @@ import (
 var configureCmd = &cobra.Command{
 	Use:   "configure [provider]",
 	Short: "Configure VAINO settings",
-	RunE: runConfigure,
+	RunE:  runConfigure,
 }
 
 func newConfigureCommand() *cobra.Command {

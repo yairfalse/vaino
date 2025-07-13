@@ -17,9 +17,9 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "vaino",
-	Short: "Infrastructure drift detection and monitoring",
-	Long:  `vaino - infrastructure drift detection and monitoring`,
+	Use:               "vaino",
+	Short:             "Infrastructure drift detection and monitoring",
+	Long:              `vaino - infrastructure drift detection and monitoring`,
 	DisableAutoGenTag: true,
 	CompletionOptions: cobra.CompletionOptions{
 		DisableDefaultCmd: true,
