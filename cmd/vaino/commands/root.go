@@ -77,6 +77,7 @@ func init() {
 	rootCmd.AddCommand(newStatusCommand())
 	rootCmd.AddCommand(newVersionCommand())
 	rootCmd.AddCommand(newConfigureCommand())
+	rootCmd.AddCommand(newTimelineCommand())
 }
 
 // initConfig reads in config file and ENV variables if set.
