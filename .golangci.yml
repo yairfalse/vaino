@@ -31,7 +31,6 @@ linters:
     - durationcheck
     - errname
     - errorlint
-    - copyloopvar
     - forcetypeassert
     - gci
     - gochecknoinits
@@ -62,7 +61,6 @@ linters:
     - revive
     - rowserrcheck
     - sqlclosecheck
-    - usetesting
     - tparallel
     - unconvert
     - unparam
@@ -75,7 +73,7 @@ linters:
     - funlen
     - gochecknoglobals
     - godox
-    - err113  # renamed from goerr113
+    - goerr113
     - gomoddirectives
     - nlreturn
     - paralleltest

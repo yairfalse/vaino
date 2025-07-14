@@ -23,6 +23,51 @@ type GCPServicePool struct {
 	options        []option.ClientOption
 }
 
+// GetGKEClusters returns empty slice - placeholder for GKE clusters
+func (p *GCPServicePool) GetGKEClusters(ctx context.Context, projectID string) ([]interface{}, error) {
+	return []interface{}{}, nil
+}
+
+// GetCloudSQLInstances returns empty slice - placeholder for Cloud SQL instances
+func (p *GCPServicePool) GetCloudSQLInstances(ctx context.Context, projectID string) ([]interface{}, error) {
+	return []interface{}{}, nil
+}
+
+// GetCloudSQLDatabases returns empty slice - placeholder for Cloud SQL databases
+func (p *GCPServicePool) GetCloudSQLDatabases(ctx context.Context, projectID string) ([]interface{}, error) {
+	return []interface{}{}, nil
+}
+
+// GetCloudSQLUsers returns empty slice - placeholder for Cloud SQL users
+func (p *GCPServicePool) GetCloudSQLUsers(ctx context.Context, projectID string) ([]interface{}, error) {
+	return []interface{}{}, nil
+}
+
+// GetProjectIAMPolicy returns empty map - placeholder for project IAM policy
+func (p *GCPServicePool) GetProjectIAMPolicy(ctx context.Context, projectID string) (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
+
+// GetServiceAccounts returns empty slice - placeholder for service accounts
+func (p *GCPServicePool) GetServiceAccounts(ctx context.Context, projectID string) ([]interface{}, error) {
+	return []interface{}{}, nil
+}
+
+// GetServiceAccountKeys returns empty slice - placeholder for service account keys
+func (p *GCPServicePool) GetServiceAccountKeys(ctx context.Context, projectID string) ([]interface{}, error) {
+	return []interface{}{}, nil
+}
+
+// GetServiceAccountIAMPolicy returns empty map - placeholder for service account IAM policy
+func (p *GCPServicePool) GetServiceAccountIAMPolicy(ctx context.Context, projectID string) (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}
+
+// GetCustomRoles returns empty slice - placeholder for custom roles
+func (p *GCPServicePool) GetCustomRoles(ctx context.Context, projectID string) ([]interface{}, error) {
+	return []interface{}{}, nil
+}
+
 // NewGCPClientPool creates a new GCP client pool
 func NewGCPClientPool(ctx context.Context, config GCPClientConfig) (*GCPServicePool, error) {
 	var options []option.ClientOption
