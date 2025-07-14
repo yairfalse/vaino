@@ -206,13 +206,13 @@ func (c *AWSCollector) getClassicLoadBalancerAttributes(ctx context.Context, lbN
 	attributes := make(map[string]interface{})
 	if result.LoadBalancerAttributes != nil {
 		if result.LoadBalancerAttributes.AccessLog != nil {
-			attributes["access_log_enabled"] = *result.LoadBalancerAttributes.AccessLog.Enabled
+			attributes["access_log_enabled"] = result.LoadBalancerAttributes.AccessLog.Enabled
 			if result.LoadBalancerAttributes.AccessLog.S3BucketName != nil {
 				attributes["access_log_s3_bucket"] = *result.LoadBalancerAttributes.AccessLog.S3BucketName
 			}
 		}
 		if result.LoadBalancerAttributes.ConnectionDraining != nil {
-			attributes["connection_draining_enabled"] = *result.LoadBalancerAttributes.ConnectionDraining.Enabled
+			attributes["connection_draining_enabled"] = result.LoadBalancerAttributes.ConnectionDraining.Enabled
 			if result.LoadBalancerAttributes.ConnectionDraining.Timeout != nil {
 				attributes["connection_draining_timeout"] = *result.LoadBalancerAttributes.ConnectionDraining.Timeout
 			}
@@ -221,7 +221,7 @@ func (c *AWSCollector) getClassicLoadBalancerAttributes(ctx context.Context, lbN
 			attributes["idle_timeout"] = *result.LoadBalancerAttributes.ConnectionSettings.IdleTimeout
 		}
 		if result.LoadBalancerAttributes.CrossZoneLoadBalancing != nil {
-			attributes["cross_zone_load_balancing"] = *result.LoadBalancerAttributes.CrossZoneLoadBalancing.Enabled
+			attributes["cross_zone_load_balancing"] = result.LoadBalancerAttributes.CrossZoneLoadBalancing.Enabled
 		}
 	}
 
@@ -332,9 +332,7 @@ func (c *AWSCollector) getLoadBalancerTargetGroups(ctx context.Context, lbArn st
 		if tg.HealthCheckPath != nil {
 			tgInfo["health_check_path"] = *tg.HealthCheckPath
 		}
-		if tg.HealthCheckProtocol != nil {
-			tgInfo["health_check_protocol"] = string(*tg.HealthCheckProtocol)
-		}
+		tgInfo["health_check_protocol"] = string(tg.HealthCheckProtocol)
 		if tg.HealthCheckIntervalSeconds != nil {
 			tgInfo["health_check_interval"] = *tg.HealthCheckIntervalSeconds
 		}
@@ -368,9 +366,7 @@ func (c *AWSCollector) getTargetGroupTargets(ctx context.Context, tgArn string) 
 
 		if target.TargetHealth != nil {
 			targetInfo["health_state"] = string(target.TargetHealth.State)
-			if target.TargetHealth.Reason != nil {
-				targetInfo["health_reason"] = string(*target.TargetHealth.Reason)
-			}
+			targetInfo["health_reason"] = string(target.TargetHealth.Reason)
 			if target.TargetHealth.Description != nil {
 				targetInfo["health_description"] = *target.TargetHealth.Description
 			}

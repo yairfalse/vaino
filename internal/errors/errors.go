@@ -17,6 +17,7 @@ const (
 	ErrorTypeNetwork        ErrorType = "Network"
 	ErrorTypePermission     ErrorType = "Permission"
 	ErrorTypeValidation     ErrorType = "Validation"
+	ErrorTypeRateLimit      ErrorType = "RateLimit"
 )
 
 // Provider represents infrastructure provider

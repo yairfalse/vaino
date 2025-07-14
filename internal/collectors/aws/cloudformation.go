@@ -177,7 +177,7 @@ func (c *AWSCollector) getCloudFormationStackDetails(ctx context.Context, stackN
 	}
 
 	// Get stack outputs
-	if len(stackResources) > 0 {
+	if err == nil {
 		// Re-describe the stack to get outputs
 		describeResult, err := c.clients.CloudFormation.DescribeStacks(ctx, &cloudformation.DescribeStacksInput{
 			StackName: &stackName,
@@ -245,9 +245,7 @@ func (c *AWSCollector) getCloudFormationStackDrift(ctx context.Context, stackNam
 	statusResult, err := c.clients.CloudFormation.DescribeStackDriftDetectionStatus(ctx, statusInput)
 	if err == nil {
 		driftInfo["detection_status"] = string(statusResult.DetectionStatus)
-		if statusResult.StackDriftStatus != nil {
-			driftInfo["stack_drift_status"] = string(*statusResult.StackDriftStatus)
-		}
+		driftInfo["stack_drift_status"] = string(statusResult.StackDriftStatus)
 		if statusResult.DriftedStackResourceCount != nil {
 			driftInfo["drifted_resource_count"] = *statusResult.DriftedStackResourceCount
 		}

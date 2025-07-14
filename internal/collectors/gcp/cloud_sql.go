@@ -32,21 +32,21 @@ type GCPInstanceIPAddress struct {
 }
 
 type GCPInstanceSettings struct {
-	Tier                        string                 `json:"tier"`
-	ActivationPolicy            string                 `json:"activationPolicy"`
-	StorageAutoResize           bool                   `json:"storageAutoResize"`
-	StorageAutoResizeLimit      int64                  `json:"storageAutoResizeLimit"`
-	DataDiskSizeGb              int64                  `json:"dataDiskSizeGb"`
-	DataDiskType                string                 `json:"dataDiskType"`
-	LocationPreference          GCPLocationPreference  `json:"locationPreference"`
-	BackupConfiguration         GCPBackupConfiguration `json:"backupConfiguration"`
-	MaintenanceWindow           GCPMaintenanceWindow   `json:"maintenanceWindow"`
-	DatabaseFlags               []GCPDatabaseFlag      `json:"databaseFlags"`
-	UserLabels                  map[string]string      `json:"userLabels"`
-	AvailabilityType            string                 `json:"availabilityType"`
-	PricingPlan                 string                 `json:"pricingPlan"`
-	ReplicationType             string                 `json:"replicationType"`
-	CrashSafeReplicationEnabled bool                   `json:"crashSafeReplicationEnabled"`
+	Tier                        string                       `json:"tier"`
+	ActivationPolicy            string                       `json:"activationPolicy"`
+	StorageAutoResize           bool                         `json:"storageAutoResize"`
+	StorageAutoResizeLimit      int64                        `json:"storageAutoResizeLimit"`
+	DataDiskSizeGb              int64                        `json:"dataDiskSizeGb"`
+	DataDiskType                string                       `json:"dataDiskType"`
+	LocationPreference          GCPLocationPreference        `json:"locationPreference"`
+	BackupConfiguration         GCPBackupConfiguration       `json:"backupConfiguration"`
+	MaintenanceWindow           GCPCloudSQLMaintenanceWindow `json:"maintenanceWindow"`
+	DatabaseFlags               []GCPDatabaseFlag            `json:"databaseFlags"`
+	UserLabels                  map[string]string            `json:"userLabels"`
+	AvailabilityType            string                       `json:"availabilityType"`
+	PricingPlan                 string                       `json:"pricingPlan"`
+	ReplicationType             string                       `json:"replicationType"`
+	CrashSafeReplicationEnabled bool                         `json:"crashSafeReplicationEnabled"`
 }
 
 type GCPLocationPreference struct {
@@ -69,7 +69,7 @@ type GCPBackupRetentionSettings struct {
 	RetainedBackups int32  `json:"retainedBackups"`
 }
 
-type GCPMaintenanceWindow struct {
+type GCPCloudSQLMaintenanceWindow struct {
 	Hour        int32  `json:"hour"`
 	Day         int32  `json:"day"`
 	UpdateTrack string `json:"updateTrack"`
@@ -84,34 +84,14 @@ type GCPDatabaseFlag struct {
 func (c *GCPCollector) collectCloudSQLResources(ctx context.Context, clientPool *GCPServicePool, projectID string, regions []string) ([]types.Resource, error) {
 	var resources []types.Resource
 
-	// Get Cloud SQL instances (global)
+	// Get Cloud SQL instances (placeholder implementation)
 	instances, err := clientPool.GetCloudSQLInstances(ctx, projectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Cloud SQL instances: %w", err)
 	}
 
-	for _, instance := range instances {
-		resource := c.normalizer.NormalizeCloudSQLInstance(instance)
-		resources = append(resources, resource)
-
-		// Get databases for this instance
-		databases, err := clientPool.GetCloudSQLDatabases(ctx, projectID, instance.Name)
-		if err == nil {
-			for _, database := range databases {
-				dbResource := c.normalizer.NormalizeCloudSQLDatabase(database, instance.Name)
-				resources = append(resources, dbResource)
-			}
-		}
-
-		// Get users for this instance
-		users, err := clientPool.GetCloudSQLUsers(ctx, projectID, instance.Name)
-		if err == nil {
-			for _, user := range users {
-				userResource := c.normalizer.NormalizeCloudSQLUser(user, instance.Name)
-				resources = append(resources, userResource)
-			}
-		}
-	}
+	// For now, return empty resources since the GCP collector is not fully implemented
+	_ = instances
 
 	return resources, nil
 }

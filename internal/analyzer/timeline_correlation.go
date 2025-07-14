@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/yairfalse/vaino/internal/storage"
-	"github.com/yairfalse/vaino/pkg/types"
 )
 
 // TimelineEvent represents a significant event in the infrastructure timeline
@@ -483,7 +482,7 @@ func (ta *TimelineAnalyzer) generatePredictions(dataPoints []TrendDataPoint, tre
 	// Predict next 3 time periods
 	for i := 1; i <= 3; i++ {
 		// Simple linear prediction based on slope
-		predictedValue := int(float64(lastPoint.Value) + trend.Slope*float64(i))
+		predictedValue := float64(lastPoint.Value) + trend.Slope*float64(i)
 
 		// Adjust confidence based on prediction distance
 		confidence := trend.Confidence * (1.0 - float64(i)*0.1)
@@ -501,7 +500,7 @@ func (ta *TimelineAnalyzer) generatePredictions(dataPoints []TrendDataPoint, tre
 
 		prediction := TrendPrediction{
 			FutureTime:     futureTime,
-			PredictedValue: max(0, predictedValue), // Can't have negative resources
+			PredictedValue: int(max(0.0, predictedValue)), // Can't have negative resources
 			Confidence:     max(0.0, confidence),
 			Reasoning:      ta.generatePredictionReasoning(trend, i),
 		}

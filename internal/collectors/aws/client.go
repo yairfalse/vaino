@@ -171,7 +171,7 @@ func validateAWSCredentials(ctx context.Context, cfg aws.Config) error {
 
 // enhanceCredentialError provides more helpful error messages for credential issues
 func enhanceCredentialError(err error) error {
-	errStr := err.Error()
+	_ = err.Error()
 
 	// Check for common credential issues
 	if fmt.Sprintf("%v", err) == "no EC2 IMDS role found" {

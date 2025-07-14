@@ -2,14 +2,13 @@ package aws
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
 	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
-	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"github.com/yairfalse/vaino/internal/collectors"
 	vainoerrors "github.com/yairfalse/vaino/internal/errors"
 	"github.com/yairfalse/vaino/pkg/types"
@@ -505,7 +504,7 @@ func isRateLimitError(err error) bool {
 
 	// Check for HTTP 429 status
 	var re *awshttp.ResponseError
-	if aws.ErrorAs(err, &re) {
+	if errors.As(err, &re) {
 		if re.ResponseError.HTTPStatusCode() == 429 {
 			return true
 		}
@@ -542,7 +541,7 @@ func isNetworkError(err error) bool {
 
 	// Check for HTTP connection errors
 	var re *awshttp.ResponseError
-	if aws.ErrorAs(err, &re) {
+	if errors.As(err, &re) {
 		// Network-related HTTP status codes
 		status := re.ResponseError.HTTPStatusCode()
 		if status == 502 || status == 503 || status == 504 {

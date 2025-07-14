@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cloudformation"
+	cloudformationTypes "github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
 	cloudwatchTypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
 	logsTypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
@@ -501,7 +501,7 @@ func (n *Normalizer) NormalizeCloudWatchDashboard(dashboardName string, dashboar
 // CloudFormation Normalizers
 
 // NormalizeCloudFormationStack converts a CloudFormation stack to VAINO format
-func (n *Normalizer) NormalizeCloudFormationStack(stack cloudformation.Stack) types.Resource {
+func (n *Normalizer) NormalizeCloudFormationStack(stack cloudformationTypes.Stack) types.Resource {
 	return types.Resource{
 		ID:       aws.ToString(stack.StackId),
 		Type:     "aws_cloudformation_stack",
@@ -529,7 +529,7 @@ func (n *Normalizer) NormalizeCloudFormationStack(stack cloudformation.Stack) ty
 }
 
 // NormalizeCloudFormationStackSet converts a CloudFormation stack set to VAINO format
-func (n *Normalizer) NormalizeCloudFormationStackSet(stackSet cloudformation.StackSet) types.Resource {
+func (n *Normalizer) NormalizeCloudFormationStackSet(stackSet cloudformationTypes.StackSet) types.Resource {
 	return types.Resource{
 		ID:       aws.ToString(stackSet.StackSetId),
 		Type:     "aws_cloudformation_stack_set",
@@ -546,7 +546,7 @@ func (n *Normalizer) NormalizeCloudFormationStackSet(stackSet cloudformation.Sta
 			"organizational_unit_ids": stackSet.OrganizationalUnitIds,
 		},
 		Metadata: types.ResourceMetadata{
-			CreatedAt: aws.ToTime(stackSet.CreationTimestamp),
+			CreatedAt: time.Time{}, // StackSet doesn't have CreationTime field
 		},
 	}
 }
@@ -621,7 +621,7 @@ func normalizeELBListeners(listeners []elbTypes.ListenerDescription) []map[strin
 		if listener.Listener != nil {
 			result = append(result, map[string]interface{}{
 				"protocol":           aws.ToString(listener.Listener.Protocol),
-				"load_balancer_port": aws.ToInt32(listener.Listener.LoadBalancerPort),
+				"load_balancer_port": listener.Listener.LoadBalancerPort,
 				"instance_port":      aws.ToInt32(listener.Listener.InstancePort),
 				"instance_protocol":  aws.ToString(listener.Listener.InstanceProtocol),
 				"ssl_certificate_id": aws.ToString(listener.Listener.SSLCertificateId),
