@@ -32,7 +32,7 @@ RESET := \033[0m
 		test-collectors test-terraform test-gcp test-aws test-kubernetes test-commands test-config \
 		test-changed test-parallel perf-test perf-bench perf-stress perf-memory perf-concurrent \
 		perf-large-dataset perf-quick perf-profile perf-report check-deps \
-		agent-start agent-status agent-check pr-ready
+		agent-start agent-status agent-check pr-ready install release
 
 # Default target
 all: clean lint test build
@@ -389,3 +389,15 @@ pr-ready: fmt build
 		echo "$(YELLOW)⚠️  Agent system not initialized (run 'make agent-start' first)$(RESET)"; \
 	fi
 	@echo "$(GREEN)✅ All quality checks passed - ready for PR!$(RESET)"
+
+# Simple installation for local development
+install: build
+	@echo "$(CYAN)Installing VAINO locally...$(RESET)"
+	@cp $(BUILD_DIR)/$(BINARY_NAME) /usr/local/bin/
+	@echo "$(GREEN)✅ VAINO installed to /usr/local/bin/$(RESET)"
+
+# Create release binaries without CI
+release:
+	@echo "$(CYAN)Creating release binaries...$(RESET)"
+	@./scripts/manual-release.sh $(VERSION)
+	@echo "$(GREEN)✅ Release binaries created in dist/$(RESET)"

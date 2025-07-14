@@ -6,6 +6,7 @@ import (
 
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
+	sqladmin "google.golang.org/api/sqladmin/v1beta4"
 	"google.golang.org/api/storage/v1"
 )
 
@@ -20,6 +21,7 @@ type GCPClientConfig struct {
 type GCPServicePool struct {
 	computeService *compute.Service
 	storageService *storage.Service
+	sqlService     *sqladmin.Service
 	options        []option.ClientOption
 }
 
@@ -28,9 +30,23 @@ func (p *GCPServicePool) GetGKEClusters(ctx context.Context, projectID string) (
 	return []interface{}{}, nil
 }
 
-// GetCloudSQLInstances returns empty slice - placeholder for Cloud SQL instances
+// GetCloudSQLInstances returns Cloud SQL instances for the project
 func (p *GCPServicePool) GetCloudSQLInstances(ctx context.Context, projectID string) ([]interface{}, error) {
-	return []interface{}{}, nil
+	if p.sqlService == nil {
+		return []interface{}{}, fmt.Errorf("SQL service not initialized")
+	}
+
+	instancesList, err := p.sqlService.Instances.List(projectID).Context(ctx).Do()
+	if err != nil {
+		return []interface{}{}, fmt.Errorf("failed to list Cloud SQL instances: %w", err)
+	}
+
+	var instances []interface{}
+	for _, instance := range instancesList.Items {
+		instances = append(instances, instance)
+	}
+
+	return instances, nil
 }
 
 // GetCloudSQLDatabases returns empty slice - placeholder for Cloud SQL databases
@@ -87,9 +103,16 @@ func NewGCPClientPool(ctx context.Context, config GCPClientConfig) (*GCPServiceP
 		return nil, fmt.Errorf("failed to create storage service: %w", err)
 	}
 
+	// Initialize SQL admin service
+	sqlService, err := sqladmin.NewService(ctx, options...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create SQL admin service: %w", err)
+	}
+
 	return &GCPServicePool{
 		computeService: computeService,
 		storageService: storageService,
+		sqlService:     sqlService,
 		options:        options,
 	}, nil
 }
