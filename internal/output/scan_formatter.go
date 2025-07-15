@@ -251,22 +251,6 @@ func (f *ScanFormatter) FormatOutput() string {
 		output.WriteString("\n")
 	}
 
-	// Cost insights
-	costInsights := f.generateCostInsights(resourcesByType)
-	if costInsights != "" {
-		output.WriteString("💡 Cost insights:\n")
-		output.WriteString(costInsights)
-		output.WriteString("\n")
-	}
-
-	// Security insights
-	securityInsights := f.generateSecurityInsights(resourcesByType)
-	if securityInsights != "" {
-		output.WriteString("🔒 Security considerations:\n")
-		output.WriteString(securityInsights)
-		output.WriteString("\n")
-	}
-
 	// Next steps
 	output.WriteString("📌 Next steps:\n")
 	output.WriteString("  • Run 'vaino diff' to detect any drift\n")

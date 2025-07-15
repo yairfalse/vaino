@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"github.com/yairfalse/vaino/internal/discovery"
 	vainoerrors "github.com/yairfalse/vaino/internal/errors"
 	"github.com/yairfalse/vaino/internal/output"
+	"github.com/yairfalse/vaino/internal/storage"
 	"github.com/yairfalse/vaino/pkg/collectors/systemd"
 	"github.com/yairfalse/vaino/pkg/config"
 	"github.com/yairfalse/vaino/pkg/types"
@@ -63,7 +65,10 @@ compared against other snapshots to identify changes.`,
   vaino scan --provider terraform --baseline --baseline-name production
   
   # Create baseline with reason
-  vaino scan --provider aws --baseline --baseline-name v2.1 --baseline-reason "Release 2.1 deployment"`,
+  vaino scan --provider aws --baseline --baseline-name v2.1 --baseline-reason "Release 2.1 deployment"
+  
+  # Scan Terraform with separate snapshots per codebase
+  vaino scan --provider terraform --separate-codebases`,
 		RunE: runScan,
 	}
 
@@ -81,6 +86,7 @@ compared against other snapshots to identify changes.`,
 	cmd.Flags().String("snapshot-name", "", "custom name for the snapshot")
 	cmd.Flags().StringSlice("tags", []string{}, "tags to apply to snapshot (key=value)")
 	cmd.Flags().Bool("quiet", false, "suppress output (for automated use)")
+	cmd.Flags().Bool("separate-codebases", false, "create separate snapshots for each Terraform codebase instead of unified view")
 
 	// Baseline flags (transparent to users)
 	cmd.Flags().Bool("baseline", false, "mark this scan as a baseline for future comparisons")
@@ -118,6 +124,9 @@ func runScan(cmd *cobra.Command, args []string) error {
 	isBaseline, _ := cmd.Flags().GetBool("baseline")
 	baselineName, _ := cmd.Flags().GetString("baseline-name")
 	baselineReason, _ := cmd.Flags().GetString("baseline-reason")
+
+	// Separate codebases flag
+	separateCodebases, _ := cmd.Flags().GetBool("separate-codebases")
 
 	// Create smart defaults manager
 	defaultsManager := config.NewDefaultsManager()
@@ -350,6 +359,13 @@ func runScan(cmd *cobra.Command, args []string) error {
 		fmt.Println("Scanning infrastructure...")
 	}
 
+	// Handle separate codebases for Terraform
+	if provider == "terraform" && separateCodebases {
+		if multiCollector, ok := collector.(collectors.MultiSnapshotCollector); ok {
+			return handleSeparateCodebases(ctx, multiCollector, config, isBaseline, baselineName, baselineReason, outputFile, quiet)
+		}
+	}
+
 	snapshot, err := collector.Collect(ctx, config)
 	if err != nil {
 		// Check for common error patterns
@@ -437,4 +453,86 @@ func saveSnapshotToFile(snapshot *types.Snapshot, filename string) error {
 	}
 
 	return os.WriteFile(filename, data, 0644)
+}
+
+// handleSeparateCodebases handles scanning with separate snapshots per Terraform codebase
+func handleSeparateCodebases(ctx context.Context, collector collectors.MultiSnapshotCollector, config collectors.CollectorConfig, isBaseline bool, baselineName, baselineReason, outputFile string, quiet bool) error {
+	// Collect separate snapshots
+	snapshots, err := collector.CollectSeparate(ctx, config)
+	if err != nil {
+		return fmt.Errorf("failed to collect separate codebases: %w", err)
+	}
+
+	if len(snapshots) == 0 {
+		return fmt.Errorf("no codebases found")
+	}
+
+	// Initialize storage for saving snapshots
+	cfg := GetConfig()
+	localStorage := storage.NewLocal(cfg.Storage.BasePath)
+
+	if !quiet {
+		fmt.Printf("Found %d separate codebases\n\n", len(snapshots))
+	}
+
+	// Process each snapshot
+	for i, snapshot := range snapshots {
+		codebaseName := "unknown"
+		if snapshot.Metadata.AdditionalData != nil {
+			if name, ok := snapshot.Metadata.AdditionalData["codebase"].(string); ok {
+				codebaseName = name
+			}
+		}
+
+		// Mark as baseline if requested
+		if isBaseline {
+			snapshot.MarkAsBaseline(baselineName, baselineReason)
+			if !quiet {
+				if baselineName != "" {
+					fmt.Printf("Marked codebase '%s' as baseline: %s\n", codebaseName, baselineName)
+				} else {
+					fmt.Printf("Marked codebase '%s' as baseline\n", codebaseName)
+				}
+			}
+		}
+
+		// Display results for this codebase
+		if !quiet {
+			fmt.Printf("=== Codebase: %s ===\n", codebaseName)
+		}
+
+		formatter := output.NewScanFormatter(snapshot, quiet)
+		fmt.Print(formatter.FormatOutput())
+
+		// Save snapshot to storage
+		if err := localStorage.SaveSnapshot(snapshot); err != nil {
+			fmt.Printf("Warning: Failed to save snapshot for codebase %s: %v\n", codebaseName, err)
+		}
+
+		// Save to custom output file if specified (append codebase name)
+		if outputFile != "" {
+			// Create a filename with codebase suffix
+			ext := filepath.Ext(outputFile)
+			base := strings.TrimSuffix(outputFile, ext)
+			codebaseFile := fmt.Sprintf("%s-%s%s", base, codebaseName, ext)
+
+			if err := saveSnapshotToFile(snapshot, codebaseFile); err != nil {
+				fmt.Printf("Warning: Failed to save snapshot to %s: %v\n", codebaseFile, err)
+			} else if !quiet {
+				fmt.Printf("Snapshot saved to: %s\n", codebaseFile)
+			}
+		}
+
+		// Add separator between codebases (except for the last one)
+		if i < len(snapshots)-1 && !quiet {
+			fmt.Printf("\n" + strings.Repeat("-", 80) + "\n\n")
+		}
+	}
+
+	if !quiet {
+		fmt.Printf("\nScanned %d codebases separately. Each has its own snapshot and timeline.\n", len(snapshots))
+		fmt.Printf("Use 'vaino diff --codebase <name>' to compare changes within a specific codebase.\n")
+	}
+
+	return nil
 }

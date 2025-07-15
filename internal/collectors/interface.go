@@ -39,6 +39,15 @@ type EnhancedCollector interface {
 	SupportedRegions() []string
 }
 
+// MultiSnapshotCollector defines the interface for collectors that can create separate snapshots
+// Currently only implemented by Terraform collector for separate codebase handling
+type MultiSnapshotCollector interface {
+	EnhancedCollector
+
+	// CollectSeparate creates separate snapshots per logical unit (e.g., per Terraform codebase)
+	CollectSeparate(ctx context.Context, config CollectorConfig) ([]*types.Snapshot, error)
+}
+
 // CollectorInfo provides metadata about a collector
 type CollectorInfo struct {
 	Name        string   `json:"name"`

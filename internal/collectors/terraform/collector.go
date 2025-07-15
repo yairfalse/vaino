@@ -146,6 +146,181 @@ func (c *TerraformCollector) Collect(ctx context.Context, config collectors.Coll
 	return snapshot, nil
 }
 
+// CollectSeparate creates separate snapshots for each Terraform codebase/state file
+func (c *TerraformCollector) CollectSeparate(ctx context.Context, config collectors.CollectorConfig) ([]*types.Snapshot, error) {
+
+	// Validate configuration
+	if err := c.Validate(config); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
+	}
+
+	// Group state files by logical codebases
+	codebases, err := c.groupStateFilesByCodebase(config.StatePaths)
+	if err != nil {
+		return nil, fmt.Errorf("failed to group state files by codebase: %w", err)
+	}
+
+	var snapshots []*types.Snapshot
+
+	// Create a snapshot for each codebase
+	for codebaseName, statePaths := range codebases {
+		codebaseConfig := collectors.CollectorConfig{
+			StatePaths: statePaths,
+			Config:     config.Config,
+			Tags:       config.Tags,
+		}
+
+		// Add codebase information to tags
+		if codebaseConfig.Tags == nil {
+			codebaseConfig.Tags = make(map[string]string)
+		}
+		codebaseConfig.Tags["codebase"] = codebaseName
+
+		snapshot, err := c.collectSingleCodebase(ctx, codebaseConfig, codebaseName)
+		if err != nil {
+			// Log error but continue with other codebases
+			fmt.Printf("Warning: Failed to collect codebase %s: %v\n", codebaseName, err)
+			continue
+		}
+
+		snapshots = append(snapshots, snapshot)
+	}
+
+	if len(snapshots) == 0 {
+		return nil, fmt.Errorf("no snapshots could be created from any codebase")
+	}
+
+	return snapshots, nil
+}
+
+// groupStateFilesByCodebase groups state files into logical codebases
+func (c *TerraformCollector) groupStateFilesByCodebase(statePaths []string) (map[string][]string, error) {
+	codebases := make(map[string][]string)
+
+	for _, statePath := range statePaths {
+		codebaseName, err := c.determineCodebaseName(statePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to determine codebase for %s: %w", statePath, err)
+		}
+
+		codebases[codebaseName] = append(codebases[codebaseName], statePath)
+	}
+
+	return codebases, nil
+}
+
+// determineCodebaseName determines the logical codebase name from a state file path
+func (c *TerraformCollector) determineCodebaseName(statePath string) (string, error) {
+	// For remote state, use the path as the codebase name
+	if strings.HasPrefix(statePath, "s3://") || strings.HasPrefix(statePath, "azurerm://") || strings.HasPrefix(statePath, "gcs://") {
+		return filepath.Base(statePath), nil
+	}
+
+	// For local files, use the directory structure to determine codebase
+	absPath, err := filepath.Abs(statePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to get absolute path: %w", err)
+	}
+
+	// If it's a directory, use the directory name
+	if info, err := os.Stat(statePath); err == nil && info.IsDir() {
+		return filepath.Base(absPath), nil
+	}
+
+	// For state files, use the parent directory name
+	dir := filepath.Dir(absPath)
+
+	// Skip common Terraform directories to get meaningful name
+	if filepath.Base(dir) == ".terraform" {
+		dir = filepath.Dir(dir)
+	}
+	if filepath.Base(dir) == "terraform.tfstate.d" {
+		dir = filepath.Dir(dir)
+	}
+
+	codebaseName := filepath.Base(dir)
+
+	// If we're in the root directory, use the state file name
+	if codebaseName == "." || codebaseName == "/" {
+		fileName := filepath.Base(statePath)
+		// Remove .tfstate extension for cleaner name
+		if strings.HasSuffix(fileName, ".tfstate") {
+			fileName = strings.TrimSuffix(fileName, ".tfstate")
+		}
+		return fileName, nil
+	}
+
+	return codebaseName, nil
+}
+
+// collectSingleCodebase collects resources from a single codebase
+func (c *TerraformCollector) collectSingleCodebase(ctx context.Context, config collectors.CollectorConfig, codebaseName string) (*types.Snapshot, error) {
+	// Separate local and remote state paths
+	localPaths, remotePaths := c.separateStatePaths(config.StatePaths)
+
+	var allResources []types.Resource
+	var parseStats map[string]interface{}
+
+	// Process local state files
+	if len(localPaths) > 1 {
+		resources, stats, err := c.collectFromMultipleLocalStates(ctx, localPaths)
+		if err != nil {
+			return nil, fmt.Errorf("failed to collect from local state files: %w", err)
+		}
+		allResources = append(allResources, resources...)
+		parseStats = stats
+	} else {
+		for _, statePath := range localPaths {
+			resources, err := c.collectFromStatePath(ctx, statePath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to collect from %s: %w", statePath, err)
+			}
+			allResources = append(allResources, resources...)
+		}
+	}
+
+	// Process remote state files
+	for _, remotePath := range remotePaths {
+		resources, err := c.collectFromStatePath(ctx, remotePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to collect from remote %s: %w", remotePath, err)
+		}
+		allResources = append(allResources, resources...)
+	}
+
+	// Create enhanced metadata
+	metadata := types.SnapshotMetadata{
+		CollectorVersion: c.version,
+		CollectionTime:   time.Since(time.Now().Add(-time.Since(time.Now()))),
+		ResourceCount:    len(allResources),
+		Tags:             config.Tags,
+	}
+
+	// Add codebase-specific metadata
+	if metadata.AdditionalData == nil {
+		metadata.AdditionalData = make(map[string]interface{})
+	}
+	metadata.AdditionalData["codebase"] = codebaseName
+	metadata.AdditionalData["state_files"] = config.StatePaths
+	metadata.AdditionalData["is_separate_codebase"] = true
+
+	// Add parsing statistics if available
+	if parseStats != nil {
+		metadata.AdditionalData["parsing_stats"] = parseStats
+	}
+
+	// Create snapshot with codebase-specific ID
+	snapshot := &types.Snapshot{
+		ID:        fmt.Sprintf("terraform-%s-%d", codebaseName, time.Now().Unix()),
+		Timestamp: time.Now(),
+		Provider:  "terraform",
+		Resources: allResources,
+		Metadata:  metadata,
+	}
+
+	return snapshot, nil
+}
+
 // collectFromStatePath processes a single state file path
 func (c *TerraformCollector) collectFromStatePath(ctx context.Context, statePath string) ([]types.Resource, error) {
 	// Check if it's a remote state reference
