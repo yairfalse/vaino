@@ -277,7 +277,13 @@ func runScan(cmd *cobra.Command, args []string) error {
 		// Provider-specific configuration
 		switch provider {
 		case "terraform":
-			config.StatePaths = []string{"./terraform.tfstate", "./"}
+			// Check if --path flag was provided
+			path, _ := cmd.Flags().GetString("path")
+			if path != "" && path != "." {
+				config.StatePaths = []string{path}
+			} else {
+				config.StatePaths = []string{"./terraform.tfstate", "./"}
+			}
 		case "kubernetes":
 			// Get Kubernetes-specific flags
 			contexts, _ := cmd.Flags().GetStringSlice("context")
