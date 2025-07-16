@@ -345,14 +345,17 @@ func runDiff(cmd *cobra.Command, args []string) error {
 			matches, _ := filepath.Glob(filepath.Join(vainoDir, "last-scan-*.json"))
 			if len(matches) == 0 {
 				// No scans found - provide helpful guidance
-				return vainoerrors.New(vainoerrors.ErrorTypeFileSystem, vainoerrors.ProviderUnknown,
-					"No previous scans found").
-					WithCause("No snapshot files in ~/.vaino").
-					WithSolutions(
-						"Run 'vaino scan' to create your first snapshot",
-						"Specify snapshots manually with --from and --to",
-					).
-					WithHelp("vaino scan --help")
+				if !quiet {
+					fmt.Println("No previous scans found.")
+					fmt.Println()
+					fmt.Println("To get started:")
+					fmt.Println("  vaino scan                    # Create your first snapshot")
+					fmt.Println("  vaino scan && vaino diff      # Create second snapshot and compare")
+					fmt.Println()
+					fmt.Println("Or compare specific snapshots:")
+					fmt.Println("  vaino diff --from snap1.json --to snap2.json")
+				}
+				return nil
 			} else {
 				// Auto-scan mode: compare last scan with new scan
 				// Use the most recently modified one
@@ -652,7 +655,12 @@ func runDiff(cmd *cobra.Command, args []string) error {
 
 	// Output the result
 	if outputFile == "" || outputFile == "-" {
-		fmt.Print(string(result))
+		if len(report.ResourceChanges) == 0 && len(result) == 0 {
+			// No changes detected and no output generated
+			fmt.Println("No infrastructure changes detected.")
+		} else {
+			fmt.Print(string(result))
+		}
 	} else {
 		if err := os.WriteFile(outputFile, result, 0644); err != nil {
 			return fmt.Errorf("failed to write output file: %w", err)
