@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"sync"
 	"testing"
 	"time"
 
@@ -75,10 +74,10 @@ func BenchmarkDiffWorkerScaling(b *testing.B) {
 
 	workerCounts := []int{1, 2, 4, 8, 16, 32}
 
-	for _, workers := range workerCounts {
-		b.Run(fmt.Sprintf("%d-workers", workers), func(b *testing.B) {
+	for _, workerCount := range workerCounts {
+		b.Run(fmt.Sprintf("%d-workers", workerCount), func(b *testing.B) {
 			diffWorker := workers.NewDiffWorker(
-				workers.WithDiffWorkerCount(workers),
+				workers.WithDiffWorkerCount(workerCount),
 				workers.WithDiffBufferSize(100),
 				workers.WithComparisonCache(5*time.Minute),
 			)
@@ -349,7 +348,8 @@ func generateSnapshot(id string, resourceCount int) *types.Snapshot {
 		Provider:  "test",
 		Resources: resources,
 		Metadata: types.SnapshotMetadata{
-			Version: "1.0.0",
+			CollectorVersion: "1.0.0",
+			ResourceCount:    count,
 			Tags: map[string]string{
 				"snapshot": id,
 			},

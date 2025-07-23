@@ -146,17 +146,218 @@ VAINO uses a custom error system (`internal/errors`) that provides:
    - Kubernetes: Check kubeconfig and contexts
    - Terraform: Ensure state files are accessible
 
-## Common Issues
+# VAINO Development Guidelines
 
-1. **"Provider not found"**: Provider not registered in scan.go
-2. **Authentication errors**: Check provider credentials
-3. **Permission errors**: Ensure proper IAM/RBAC permissions
-4. **No resources found**: Check provider configuration and regions
+## 🎯 Mission
+Build enterprise-grade infrastructure drift detection tool with multi-provider support and intelligent analysis.
 
-## Future Enhancements
+## 🏗️ Architecture Rules (CRITICAL)
 
-- Policy engine for drift rules
-- Web UI for visualization
-- Metrics and alerting integrations
-- More providers (Azure, DigitalOcean, etc.)
-- State comparison with "expected" configurations
+### Component Hierarchy (MANDATORY)
+```
+Core Layer:     pkg/types/           # Core data structures
+Collectors:     internal/collectors/ # Provider implementations  
+Commands:       cmd/vaino/commands/  # CLI command layer
+Storage:        internal/storage/    # Persistence layer
+Analysis:       internal/analysis/   # Drift detection & correlation
+Errors:         internal/errors/     # Error handling system
+```
+**RULE:** Components can only import from same level or lower. NO circular dependencies.
+
+### Module Structure (MANDATORY)
+- Single go.mod at root
+- Must build standalone: `go build ./...`
+- Must test standalone: `go test ./...`
+- Each provider must implement `EnhancedCollector` interface
+
+## 🌿 Git Workflow & Branching Strategy
+
+### Branch Strategy
+- **main**: Production-ready code only
+- **develop**: Integration branch for features
+- **feature/**: New features (`feature/aws-ec2-collector`, `feature/claude-analysis`)
+- **fix/**: Bug fixes (`fix/terraform-state-parsing`, `fix/gcp-auth-timeout`)
+- **provider/**: New provider implementations (`provider/azure-support`)
+
+### Commit Strategy
+- **Small, atomic commits**: Each commit should represent one logical change
+- **Descriptive messages**: Use conventional commit format
+  ```
+  type(scope): description
+  
+  Examples:
+  feat(collectors): add AWS Lambda function scanning
+  fix(storage): resolve snapshot corruption on concurrent writes
+  docs(README): update provider authentication examples
+  test(terraform): add unit tests for state file parsing
+  provider(gcp): implement GKE cluster resource collection
+  ```
+
+### Workflow Rules
+1. **Always work on dedicated branches** - Never commit directly to main/develop
+2. **Pull Request only** - All code must go through PR review
+3. **Branch from develop** for features, from main for hotfixes
+4. **Keep branches short-lived** - Merge within 1-2 days when possible
+5. **Rebase before merge** to maintain clean history
+
+## ⚡ Agent Instructions (BRUTAL)
+
+### Build Requirements
+1. **MUST FORMAT:** `go fmt ./...` before any commit
+2. **MUST COMPILE:** `go build ./...` must pass
+3. **MUST TEST:** `go test ./...` must pass
+4. **MUST LINT:** `golangci-lint run` must pass
+5. **NO STUBS:** No "TODO", "not implemented", empty functions
+6. **SHOW PROOF:** Paste build/test output or FAIL
+7. **WORK ON BRANCHES:** Always create and work on dedicated feature/fix branches
+
+### Quality Standards
+- **80% test coverage minimum**
+- **Implement complete EnhancedCollector interface** for new providers
+- **Proper error handling** using internal/errors package
+- **NO interface{} or map[string]interface{}** in public APIs
+- **Context cancellation support** in all long-running operations
+- **YOU work on a dedicated branch**
+
+### Provider Implementation Requirements
+All new providers MUST implement:
+```go
+type EnhancedCollector interface {
+    Name() string
+    Collect(ctx context.Context, config CollectorConfig) (*types.Snapshot, error)
+    Status() string
+    Validate(config CollectorConfig) error
+    AutoDiscover() (CollectorConfig, error)
+    SupportedRegions() []string
+}
+```
+
+### Verification (MANDATORY)
+```bash
+# You MUST show this output:
+go fmt ./...             # Format code first
+go build ./...           # Must compile cleanly
+go test ./...            # All tests must pass
+golangci-lint run        # Linting must pass
+go mod verify            # Dependencies verified
+go mod tidy              # Clean unused dependencies
+```
+
+## 🔧 Current Priorities
+- Multi-provider infrastructure drift detection
+- Claude AI integration for intelligent analysis
+- Real-time monitoring capabilities
+- Performance optimization for large-scale infrastructure
+
+### Success Metrics
+- All providers building independently ✅
+- Drift detection accuracy > 95% ✅
+- AI analysis providing actionable insights ✅
+- Sub-second response for diff operations ✅
+- Enterprise-ready authentication support ✅
+
+### Core Mission
+- **Drift Detection:** Identify infrastructure changes across all providers
+- **Intelligence:** AI-powered analysis of changes and recommendations
+- **Unix Philosophy:** Simple, composable tools that work together
+- **Zero Configuration:** Works out of the box with smart defaults
+
+## 🚫 Failure Conditions
+
+### Instant Task Reassignment If
+- Code not formatted (go fmt failures)
+- Build errors
+- Test failures
+- Linting errors
+- Incomplete provider interface implementation
+- Missing verification output
+- Stub functions or TODOs
+- **Work directly on main/develop without PR**
+- **Commits without proper branch strategy**
+- **Breaking existing provider compatibility**
+
+### No Excuses For
+- "Forgot to format" - Always run `go fmt ./...`
+- "Complex existing code" - Follow VAINO patterns
+- "Need to refactor first" - Implement incrementally
+- "Just one small TODO" - Zero tolerance
+- "Can't find interfaces" - Check pkg/types and internal/collectors
+- "Provider too complex" - Use existing providers as templates
+- **"Working directly on main" - Use branches**
+- **"Big commit with everything" - Use small commits**
+
+## 📋 Task Template
+Every task must include:
+
+```markdown
+## Branch Information
+- **Working Branch:** feature/task-name or fix/issue-name
+- **Base Branch:** develop (or main for hotfixes)
+- **Target Branch:** develop
+- **Provider Affected:** (if applicable: aws/gcp/kubernetes/terraform)
+
+## Verification Results
+
+### Code Formatting:
+```bash
+$ go fmt ./...
+[PASTE OUTPUT - should show no files changed]
+```
+
+### Build Test
+```bash
+$ go build ./...
+[PASTE OUTPUT - should show successful compilation]
+```
+
+### Unit Tests
+```bash
+$ go test ./...
+[PASTE OUTPUT - should show all tests passing]
+```
+
+### Linting
+```bash
+$ golangci-lint run
+[PASTE OUTPUT - should show no issues]
+```
+
+### Provider Interface Compliance (if new provider)
+```bash
+$ go test ./internal/collectors/[provider]/ -v
+[PASTE OUTPUT showing interface compliance tests pass]
+```
+
+### Commit History
+```bash
+$ git log --oneline -5
+[PASTE OUTPUT showing small, atomic commits]
+```
+
+### Files Created/Modified
+- file1.go (X lines) - [brief description]
+- file2_test.go (Y lines) - [test coverage description]
+Total: Z lines
+
+## Architecture Compliance
+✅ Code properly formatted
+✅ Follows component hierarchy
+✅ No circular dependencies
+✅ Proper error handling with internal/errors
+✅ Context cancellation support
+✅ Provider interface compliance (if applicable)
+✅ Working on dedicated branch
+✅ Small, atomic commits
+✅ Ready for PR review
+
+## Testing Coverage
+✅ Unit tests for new functionality
+✅ Integration tests for provider changes
+✅ Error path testing
+✅ Edge case coverage
+```
+
+## 🎯 Bottom Line
+**Format code. Build working code. Test thoroughly. Follow VAINO architecture. Use proper Git workflow. Small commits. Dedicated branches. Implement complete interfaces. No shortcuts.**
+
+Infrastructure teams depend on VAINO for critical drift detection. Deliver enterprise-quality code or get reassigned.
