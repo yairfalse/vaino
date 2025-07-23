@@ -57,29 +57,21 @@ func TestSupportedPlatform(t *testing.T) {
 }
 
 func TestBinaryName(t *testing.T) {
-	tests := []struct {
-		goos     string
-		base     string
-		expected string
-	}{
-		{"windows", "tapio", "tapio.exe"},
-		{"linux", "tapio", "tapio"},
-		{"darwin", "tapio", "tapio"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.goos, func(t *testing.T) {
-			// Save current GOOS
-			oldGOOS := runtime.GOOS
-			runtime.GOOS = tt.goos
-			defer func() { runtime.GOOS = oldGOOS }()
-
-			result := BinaryName(tt.base)
-			if result != tt.expected {
-				t.Errorf("BinaryName(%s) = %s, want %s",
-					tt.base, result, tt.expected)
-			}
-		})
+	// Since we can't modify runtime.GOOS, we'll test with the current platform
+	base := "tapio"
+	result := BinaryName(base)
+	
+	switch runtime.GOOS {
+	case "windows":
+		expected := "tapio.exe"
+		if result != expected {
+			t.Errorf("BinaryName(%s) = %s, want %s", base, result, expected)
+		}
+	default:
+		expected := "tapio"
+		if result != expected {
+			t.Errorf("BinaryName(%s) = %s, want %s", base, result, expected)
+		}
 	}
 }
 

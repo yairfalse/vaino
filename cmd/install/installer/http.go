@@ -3,7 +3,6 @@ package installer
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -214,8 +213,10 @@ func (c *RetryableHTTPClient) Do(ctx context.Context, req *Request) (*Response, 
 			}
 		}
 
+		var resp *Response
 		err := c.circuitBreaker.Execute(ctx, func() error {
-			resp, err := c.client.Do(ctx, req)
+			var err error
+			resp, err = c.client.Do(ctx, req)
 			if err != nil {
 				lastErr = err
 				return err
@@ -226,8 +227,8 @@ func (c *RetryableHTTPClient) Do(ctx context.Context, req *Request) (*Response, 
 			return nil
 		})
 
-		if err == nil && lastErr == nil {
-			return c.client.Do(ctx, req)
+		if err == nil && lastErr == nil && resp != nil {
+			return resp, nil
 		}
 	}
 

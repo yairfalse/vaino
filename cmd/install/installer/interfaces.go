@@ -254,14 +254,14 @@ const (
 )
 
 // Middleware represents installation middleware
-type Middleware func(Step[InstallationType]) Step[InstallationType]
+type Middleware[T InstallationType] func(Step[T]) Step[T]
 
 // Pipeline represents the installation pipeline
-type Pipeline interface {
+type Pipeline[T InstallationType] interface {
 	// AddStep adds a step to the pipeline
-	AddStep(step Step[InstallationType])
+	AddStep(step Step[T])
 	// Execute runs the pipeline
 	Execute(ctx context.Context) error
 	// AddMiddleware adds middleware to the pipeline
-	AddMiddleware(middleware Middleware)
+	AddMiddleware(middleware Middleware[T])
 }

@@ -22,7 +22,7 @@ type BinaryInstaller struct {
 	circuitBreaker CircuitBreaker
 	httpClient     HTTPClient
 	steps          []Step[Binary]
-	middleware     []Middleware
+	middleware     []Middleware[Binary]
 	mu             sync.RWMutex
 	state          State
 	downloadPool   *sync.Pool
@@ -34,7 +34,7 @@ func NewBinaryInstaller(config *Config, options ...Option) (*BinaryInstaller, er
 		config:       config,
 		progressChan: make(chan Progress, 100),
 		steps:        make([]Step[Binary], 0),
-		middleware:   make([]Middleware, 0),
+		middleware:   make([]Middleware[Binary], 0),
 		downloadPool: &sync.Pool{
 			New: func() interface{} {
 				return make([]byte, 32*1024) // 32KB buffer

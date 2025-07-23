@@ -21,6 +21,47 @@ var (
 	BuildTime = "unknown"
 )
 
+// progressTrackerAdapter adapts progress.Tracker to installer.ProgressTracker
+type progressTrackerAdapter struct {
+	tracker progress.Tracker
+}
+
+func (p *progressTrackerAdapter) Start(totalSteps int) {
+	p.tracker.Start(totalSteps)
+}
+
+func (p *progressTrackerAdapter) Update(step string, metadata map[string]interface{}) {
+	// Convert to installer.Progress for the underlying tracker
+	prog := installer.Progress{
+		CurrentStep: step,
+		Message:     step,
+	}
+	if metadata != nil {
+		if msg, ok := metadata["message"].(string); ok {
+			prog.Message = msg
+		}
+		if total, ok := metadata["total_steps"].(int); ok {
+			prog.TotalSteps = total
+		}
+		if completed, ok := metadata["completed_steps"].(int); ok {
+			prog.CompletedSteps = completed
+		}
+	}
+	p.tracker.Update(prog)
+}
+
+func (p *progressTrackerAdapter) Complete(step string) {
+	p.tracker.Complete(step)
+}
+
+func (p *progressTrackerAdapter) Fail(step string, err error) {
+	p.tracker.Fail(step, err)
+}
+
+func (p *progressTrackerAdapter) Finish() {
+	p.tracker.Finish()
+}
+
 var (
 	installMethod   string
 	installDir      string
@@ -172,9 +213,10 @@ func runInstall(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create installer with functional options
+	progressAdapter := &progressTrackerAdapter{tracker: progressTracker}
 	installerInstance, err := factory.Create(
 		installer.WithConfig(config),
-		installer.WithProgressTracker(progressTracker),
+		installer.WithProgressTracker(progressAdapter),
 		installer.WithStateManager(installer.NewFileStateManager()),
 	)
 	if err != nil {

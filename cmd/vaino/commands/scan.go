@@ -531,7 +531,7 @@ func handleSeparateCodebases(ctx context.Context, collector collectors.MultiSnap
 
 		// Add separator between codebases (except for the last one)
 		if i < len(snapshots)-1 && !quiet {
-			fmt.Printf("\n" + strings.Repeat("-", 80) + "\n\n")
+			fmt.Printf("\n%s\n\n", strings.Repeat("-", 80))
 		}
 	}
 
