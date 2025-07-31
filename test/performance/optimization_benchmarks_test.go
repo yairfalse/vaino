@@ -55,9 +55,16 @@ func BenchmarkEndToEndPerformance(b *testing.B) {
 
 				if tt.concurrency == "concurrent" {
 					// Use concurrent scanner
-					concurrentScanner := scanner.NewConcurrentScanner(cfg)
+					concurrentScanner := scanner.NewConcurrentScanner(runtime.NumCPU(), 5*time.Minute)
 					ctx := context.Background()
-					scanResult, err := concurrentScanner.ScanAll(ctx, providers)
+					// Register providers first
+					for name, provider := range providers {
+						concurrentScanner.RegisterProvider(name, provider)
+					}
+					scanConfig := scanner.ScanConfig{
+						IncludeMetadata: true,
+					}
+					scanResult, err := concurrentScanner.ScanAllProviders(ctx, scanConfig)
 					if err != nil {
 						b.Fatal(err)
 					}
@@ -215,25 +222,23 @@ func BenchmarkConcurrentCollectorScaling(b *testing.B) {
 				resources: generateResources(resourceCount),
 			}
 
-			cfg := &config.Config{
-				Providers: config.ProvidersConfig{
-					ConcurrentWorkers: workers,
-				},
-			}
-
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
 				ctx := context.Background()
-				scanner := scanner.NewConcurrentScanner(cfg)
-
-				snapshots, err := scanner.ScanProvider(ctx, provider, workers)
+				concurrentScanner := scanner.NewConcurrentScanner(workers, 5*time.Minute)
+				concurrentScanner.RegisterProvider(provider.Name(), provider)
+				
+				scanConfig := scanner.ScanConfig{
+					IncludeMetadata: true,
+				}
+				result, err := concurrentScanner.ScanAllProviders(ctx, scanConfig)
 				if err != nil {
 					b.Fatal(err)
 				}
 
-				if len(snapshots.Resources) != resourceCount {
-					b.Fatalf("expected %d resources, got %d", resourceCount, len(snapshots.Resources))
+				if result.ResourceCount != resourceCount {
+					b.Fatalf("expected %d resources, got %d", resourceCount, result.ResourceCount)
 				}
 			}
 
@@ -471,7 +476,8 @@ func generateLargeSnapshot(resourceCount int) *types.Snapshot {
 		Provider:  "test",
 		Resources: generateResources(resourceCount),
 		Metadata: types.SnapshotMetadata{
-			Version: "1.0.0",
+			CollectorVersion: "1.0.0",
+			ResourceCount:    resourceCount,
 			Tags: map[string]string{
 				"size": "large",
 			},
