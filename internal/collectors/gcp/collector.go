@@ -20,7 +20,7 @@ type GCPCollector struct {
 	normalizer *ResourceNormalizer
 }
 
-func NewGCPCollector() collectors.EnhancedCollector {
+func NewGCPCollector() collectors.Collector {
 	return &GCPCollector{
 		version:    "1.0.0",
 		normalizer: NewResourceNormalizer(),
@@ -688,4 +688,8 @@ func (c *GCPCollector) validateAuthorizedUserCredentials(creds map[string]interf
 	}
 
 	return nil
+}
+
+func (c *GCPCollector) CollectSeparate(ctx context.Context, config collectors.CollectorConfig) ([]*types.Snapshot, error) {
+	return nil, fmt.Errorf("separate collection not supported by %s collector", c.Name())
 }

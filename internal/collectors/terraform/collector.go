@@ -13,7 +13,7 @@ import (
 	"github.com/yairfalse/vaino/pkg/types"
 )
 
-// TerraformCollector implements the EnhancedCollector interface for Terraform
+// TerraformCollector implements the Collector interface for Terraform
 type TerraformCollector struct {
 	parser            *StateParser
 	parallelParser    *ParallelStateParser
@@ -25,7 +25,7 @@ type TerraformCollector struct {
 }
 
 // NewTerraformCollector creates a new Terraform collector
-func NewTerraformCollector() collectors.EnhancedCollector {
+func NewTerraformCollector() collectors.Collector {
 	return &TerraformCollector{
 		parser:            NewStateParser(),
 		parallelParser:    NewParallelStateParser(),

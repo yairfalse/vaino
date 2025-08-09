@@ -23,28 +23,22 @@ type CollectorConfig struct {
 	TimeoutSeconds int `json:"timeout_seconds,omitempty"`
 }
 
-// EnhancedCollector defines the interface for infrastructure collectors
-// This extends the basic Collector interface with collection capabilities
-type EnhancedCollector interface {
+// Collector defines the simple interface for all infrastructure collectors
+type Collector interface {
 	// Basic interface methods
 	Name() string
 	Status() string
 
-	// Enhanced collection methods
+	// Collection methods
 	Collect(ctx context.Context, config CollectorConfig) (*types.Snapshot, error)
 	Validate(config CollectorConfig) error
 
 	// Discovery methods
 	AutoDiscover() (CollectorConfig, error)
 	SupportedRegions() []string
-}
 
-// MultiSnapshotCollector defines the interface for collectors that can create separate snapshots
-// Currently only implemented by Terraform collector for separate codebase handling
-type MultiSnapshotCollector interface {
-	EnhancedCollector
-
-	// CollectSeparate creates separate snapshots per logical unit (e.g., per Terraform codebase)
+	// Optional: Separate collection (e.g., per Terraform codebase)
+	// Only implemented by collectors that support it (like Terraform)
 	CollectSeparate(ctx context.Context, config CollectorConfig) ([]*types.Snapshot, error)
 }
 

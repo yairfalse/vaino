@@ -205,6 +205,10 @@ lint:
 	@echo "Running linters..."
 	$(GOLINT) run --timeout=5m
 
+arch-check:
+	@echo "$(CYAN)Checking architectural level violations...$(RESET)"
+	@go run tools/archcheck/main.go
+
 fmt:
 	@echo "Formatting code..."
 	$(GOFMT) -s -w .
@@ -248,7 +252,7 @@ clean:
 	rm -f $(BINARY_NAME)
 
 # Continuous Integration targets
-ci-test: deps lint test-coverage
+ci-test: deps lint arch-check test-coverage
 
 ci-build: clean ci-test build-all
 

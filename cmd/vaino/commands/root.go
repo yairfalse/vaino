@@ -73,7 +73,6 @@ func init() {
 	// Essential commands only
 	rootCmd.AddCommand(newScanCommand())
 	rootCmd.AddCommand(newDiffCommand())
-	rootCmd.AddCommand(newWatchCommand())
 	rootCmd.AddCommand(newStatusCommand())
 	rootCmd.AddCommand(newVersionCommand())
 	rootCmd.AddCommand(newConfigureCommand())

@@ -132,19 +132,19 @@ func runScan(cmd *cobra.Command, args []string) error {
 	defaultsManager := config.NewDefaultsManager()
 
 	// Initialize the enhanced registry
-	enhancedRegistry := collectors.NewEnhancedRegistry()
+	enhancedRegistry := collectors.NewRegistry()
 	terraformCollector := terraform.NewTerraformCollector()
-	enhancedRegistry.RegisterEnhanced(terraformCollector)
+	enhancedRegistry.Register(terraformCollector)
 	kubernetesCollector := kubernetes.NewKubernetesCollector()
-	enhancedRegistry.RegisterEnhanced(kubernetesCollector)
+	enhancedRegistry.Register(kubernetesCollector)
 	awsCollector := aws.NewAWSCollector()
-	enhancedRegistry.RegisterEnhanced(awsCollector)
+	enhancedRegistry.Register(awsCollector)
 	gcpCollector := gcp.NewGCPCollector()
-	enhancedRegistry.RegisterEnhanced(gcpCollector)
+	enhancedRegistry.Register(gcpCollector)
 
 	// Register systemd collector (Linux only)
 	if systemdCollector, err := systemd.NewCollector(); err == nil {
-		enhancedRegistry.RegisterEnhanced(systemdCollector)
+		enhancedRegistry.Register(systemdCollector)
 	}
 
 	ctx := cmd.Context()
@@ -367,7 +367,7 @@ func runScan(cmd *cobra.Command, args []string) error {
 
 	// Handle separate codebases for Terraform
 	if provider == "terraform" && separateCodebases {
-		if multiCollector, ok := collector.(collectors.MultiSnapshotCollector); ok {
+		if multiCollector, ok := collector.(collectors.Collector); ok {
 			return handleSeparateCodebases(ctx, multiCollector, config, isBaseline, baselineName, baselineReason, outputFile, quiet)
 		}
 	}
@@ -462,7 +462,7 @@ func saveSnapshotToFile(snapshot *types.Snapshot, filename string) error {
 }
 
 // handleSeparateCodebases handles scanning with separate snapshots per Terraform codebase
-func handleSeparateCodebases(ctx context.Context, collector collectors.MultiSnapshotCollector, config collectors.CollectorConfig, isBaseline bool, baselineName, baselineReason, outputFile string, quiet bool) error {
+func handleSeparateCodebases(ctx context.Context, collector collectors.Collector, config collectors.CollectorConfig, isBaseline bool, baselineName, baselineReason, outputFile string, quiet bool) error {
 	// Collect separate snapshots
 	snapshots, err := collector.CollectSeparate(ctx, config)
 	if err != nil {

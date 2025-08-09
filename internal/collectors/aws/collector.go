@@ -551,3 +551,7 @@ func isNetworkError(err error) bool {
 
 	return false
 }
+
+func (c *AWSCollector) CollectSeparate(ctx context.Context, config collectors.CollectorConfig) ([]*types.Snapshot, error) {
+	return nil, fmt.Errorf("separate collection not supported by %s collector", c.Name())
+}

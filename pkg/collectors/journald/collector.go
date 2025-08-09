@@ -251,6 +251,10 @@ func (c *Collector) SupportedRegions() []string {
 	return []string{"local"}
 }
 
+func (c *Collector) CollectSeparate(ctx context.Context, config collectors.CollectorConfig) ([]*types.Snapshot, error) {
+	return nil, fmt.Errorf("separate collection not supported by journald collector")
+}
+
 // Close closes the collector and releases resources
 func (c *Collector) Close() error {
 	c.mu.Lock()

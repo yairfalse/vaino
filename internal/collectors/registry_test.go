@@ -9,23 +9,23 @@ import (
 
 // Use the MockCollector from registry.go
 
-// MockEnhancedCollector for testing
-type MockEnhancedCollector struct {
+// MockCollector for testing
+type MockCollector struct {
 	name         string
 	status       string
 	collectFunc  func(ctx context.Context, config CollectorConfig) (*types.Snapshot, error)
 	validateFunc func(config CollectorConfig) error
 }
 
-func (m *MockEnhancedCollector) Name() string {
+func (m *MockCollector) Name() string {
 	return m.name
 }
 
-func (m *MockEnhancedCollector) Status() string {
+func (m *MockCollector) Status() string {
 	return m.status
 }
 
-func (m *MockEnhancedCollector) Collect(ctx context.Context, config CollectorConfig) (*types.Snapshot, error) {
+func (m *MockCollector) Collect(ctx context.Context, config CollectorConfig) (*types.Snapshot, error) {
 	if m.collectFunc != nil {
 		return m.collectFunc(ctx, config)
 	}
@@ -35,18 +35,18 @@ func (m *MockEnhancedCollector) Collect(ctx context.Context, config CollectorCon
 	}, nil
 }
 
-func (m *MockEnhancedCollector) Validate(config CollectorConfig) error {
+func (m *MockCollector) Validate(config CollectorConfig) error {
 	if m.validateFunc != nil {
 		return m.validateFunc(config)
 	}
 	return nil
 }
 
-func (m *MockEnhancedCollector) AutoDiscover() (CollectorConfig, error) {
+func (m *MockCollector) AutoDiscover() (CollectorConfig, error) {
 	return CollectorConfig{}, nil
 }
 
-func (m *MockEnhancedCollector) SupportedRegions() []string {
+func (m *MockCollector) SupportedRegions() []string {
 	return []string{"us-east-1", "us-west-2"}
 }
 
@@ -139,7 +139,7 @@ func TestDefaultRegistry(t *testing.T) {
 func TestEnhancedRegistry_RegisterEnhanced(t *testing.T) {
 	registry := NewEnhancedRegistry()
 
-	collector := &MockEnhancedCollector{
+	collector := &MockCollector{
 		name:   "enhanced-test",
 		status: "ready",
 	}
@@ -167,7 +167,7 @@ func TestEnhancedRegistry_List(t *testing.T) {
 	registry := NewEnhancedRegistry()
 
 	// Add enhanced collector
-	enhanced := &MockEnhancedCollector{
+	enhanced := &MockCollector{
 		name:   "enhanced1",
 		status: "ready",
 	}
@@ -229,7 +229,7 @@ func TestEnhancedRegistry_GetSupportedProviders(t *testing.T) {
 	}
 
 	// Add collectors
-	registry.RegisterEnhanced(&MockEnhancedCollector{
+	registry.RegisterEnhanced(&MockCollector{
 		name:   "terraform",
 		status: "ready",
 	})
@@ -254,7 +254,7 @@ func TestEnhancedRegistry_GetEnhancedProviders(t *testing.T) {
 	registry := NewEnhancedRegistry()
 
 	// Add enhanced and legacy collectors
-	registry.RegisterEnhanced(&MockEnhancedCollector{
+	registry.RegisterEnhanced(&MockCollector{
 		name:   "terraform",
 		status: "ready",
 	})
@@ -270,7 +270,7 @@ func TestEnhancedRegistry_GetStatus(t *testing.T) {
 	registry := NewEnhancedRegistry()
 
 	// Add collectors with different statuses
-	registry.RegisterEnhanced(&MockEnhancedCollector{
+	registry.RegisterEnhanced(&MockCollector{
 		name:   "terraform",
 		status: "ready",
 	})
@@ -303,7 +303,7 @@ func TestDefaultEnhancedRegistry(t *testing.T) {
 	}
 
 	// Test that it works
-	collector := &MockEnhancedCollector{
+	collector := &MockCollector{
 		name:   "default-enhanced-test",
 		status: "ready",
 	}

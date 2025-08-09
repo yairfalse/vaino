@@ -1,13 +1,12 @@
 package collectors
 
 import (
+	"context"
+	"fmt"
 	"sync"
-)
 
-type Collector interface {
-	Name() string
-	Status() string
-}
+	"github.com/yairfalse/vaino/pkg/types"
+)
 
 type CollectorRegistry struct {
 	mu         sync.RWMutex
@@ -18,6 +17,10 @@ func NewRegistry() *CollectorRegistry {
 	return &CollectorRegistry{
 		collectors: make(map[string]Collector),
 	}
+}
+
+func NewCollectorRegistry() *CollectorRegistry {
+	return NewRegistry()
 }
 
 // defaultRegistry is the global registry instance
@@ -75,4 +78,46 @@ func (c *MockCollector) Name() string {
 
 func (c *MockCollector) Status() string {
 	return c.status
+}
+
+func (c *MockCollector) Collect(ctx context.Context, config CollectorConfig) (*types.Snapshot, error) {
+	return &types.Snapshot{}, nil
+}
+
+func (c *MockCollector) Validate(config CollectorConfig) error {
+	return nil
+}
+
+func (c *MockCollector) AutoDiscover() (CollectorConfig, error) {
+	return CollectorConfig{}, nil
+}
+
+func (c *MockCollector) SupportedRegions() []string {
+	return []string{}
+}
+
+func (c *MockCollector) CollectSeparate(ctx context.Context, config CollectorConfig) ([]*types.Snapshot, error) {
+	return nil, fmt.Errorf("separate collection not supported by mock collector")
+}
+
+// Enhanced registry compatibility methods
+func (r *CollectorRegistry) ListEnhanced() []string {
+	return r.List()
+}
+
+func (r *CollectorRegistry) ListLegacy() []string {
+	return []string{} // All collectors are enhanced now
+}
+
+func (r *CollectorRegistry) GetEnhanced(name string) (Collector, error) {
+	collector, exists := r.Get(name)
+	if !exists {
+		return nil, fmt.Errorf("collector %s not found", name)
+	}
+	return collector, nil
+}
+
+func (r *CollectorRegistry) IsEnhanced(name string) bool {
+	_, exists := r.Get(name)
+	return exists
 }

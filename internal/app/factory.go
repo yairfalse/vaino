@@ -32,19 +32,19 @@ func (f *AppFactory) Create(config Config) (*App, error) {
 	cacheManager := cache.NewManager()
 
 	// Create enhanced registry and initialize collectors
-	enhancedRegistry := collectors.NewEnhancedRegistry()
+	enhancedRegistry := collectors.NewCollectorRegistry()
 
 	// Register Terraform collector
 	terraformCollector := terraform.NewTerraformCollector()
-	enhancedRegistry.RegisterEnhanced(terraformCollector)
+	enhancedRegistry.Register(terraformCollector)
 
 	// Register Kubernetes collector
 	kubernetesCollector := kubernetes.NewKubernetesCollector()
-	enhancedRegistry.RegisterEnhanced(kubernetesCollector)
+	enhancedRegistry.Register(kubernetesCollector)
 
 	// Register AWS collector
 	awsCollector := aws.NewAWSCollector()
-	enhancedRegistry.RegisterEnhanced(awsCollector)
+	enhancedRegistry.Register(awsCollector)
 
 	// Create legacy registry for compatibility
 	registry := collectors.NewRegistry()
