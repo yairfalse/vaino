@@ -8,22 +8,19 @@ import (
 	"time"
 
 	"github.com/yairfalse/vaino/internal/differ"
-	"github.com/yairfalse/vaino/internal/storage"
 	"github.com/yairfalse/vaino/pkg/types"
 	"gopkg.in/yaml.v3"
 )
 
 // ExportManager handles exporting data to various formats
 type ExportManager struct {
-	atomicWriter  *storage.AtomicWriter
 	tableRenderer *EnhancedTableRenderer
 	noColor       bool
 }
 
 // NewExportManager creates a new export manager
-func NewExportManager(atomicWriter *storage.AtomicWriter, noColor bool) *ExportManager {
+func NewExportManager(noColor bool) *ExportManager {
 	return &ExportManager{
-		atomicWriter:  atomicWriter,
 		tableRenderer: NewEnhancedTableRenderer(noColor, 120),
 		noColor:       noColor,
 	}
@@ -423,7 +420,7 @@ func (e *ExportManager) writeOutput(data []byte, options ExportOptions) error {
 	}
 
 	// Write to file
-	return e.atomicWriter.WriteFile(options.OutputPath, data, 0644)
+	return os.WriteFile(options.OutputPath, data, 0644)
 }
 
 // Helper methods

@@ -25,5 +25,8 @@ jobs:
     - name: Build
       run: go build -v ./cmd/vaino
     
+    - name: Check Architecture Levels
+      run: go run tools/archcheck/main.go
+    
     - name: Test
       run: go test -v ./...

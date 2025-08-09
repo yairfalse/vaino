@@ -14,7 +14,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-// KubernetesCollector implements the EnhancedCollector interface for Kubernetes
+// KubernetesCollector implements the Collector interface for Kubernetes
 type KubernetesCollector struct {
 	clientset  kubernetes.Interface
 	config     *rest.Config
@@ -24,7 +24,7 @@ type KubernetesCollector struct {
 }
 
 // NewKubernetesCollector creates a new Kubernetes collector
-func NewKubernetesCollector() collectors.EnhancedCollector {
+func NewKubernetesCollector() collectors.Collector {
 	return &KubernetesCollector{
 		client:     NewKubernetesClient(),
 		normalizer: NewResourceNormalizer(),
@@ -467,4 +467,8 @@ func isKubernetesAuthError(err error) bool {
 	}
 
 	return false
+}
+
+func (c *KubernetesCollector) CollectSeparate(ctx context.Context, config collectors.CollectorConfig) ([]*types.Snapshot, error) {
+	return nil, fmt.Errorf("separate collection not supported by %s collector", c.Name())
 }

@@ -10,8 +10,8 @@ import (
 )
 
 func TestAWSCollectorInterface(t *testing.T) {
-	// Verify AWSCollector implements EnhancedCollector interface
-	var _ collectors.EnhancedCollector = (*AWSCollector)(nil)
+	// Verify AWSCollector implements Collector interface
+	var _ collectors.Collector = (*AWSCollector)(nil)
 
 	collector := NewAWSCollector()
 	assert.NotNil(t, collector)

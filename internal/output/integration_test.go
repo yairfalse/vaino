@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/yairfalse/vaino/internal/differ"
-	"github.com/yairfalse/vaino/internal/storage"
 	"github.com/yairfalse/vaino/pkg/types"
 )
 
@@ -175,8 +174,7 @@ func TestEnhancedTableRenderer_RenderResourceList(t *testing.T) {
 
 func TestExportManager_ExportDriftReport(t *testing.T) {
 	// Create atomic writer for testing
-	atomicWriter := storage.NewAtomicWriter("")
-	exportManager := NewExportManager(atomicWriter, true)
+	exportManager := NewExportManager(true)
 
 	// Create sample report
 	report := &differ.DriftReport{

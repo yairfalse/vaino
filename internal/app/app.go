@@ -22,7 +22,7 @@ type App struct {
 	cache            cache.Manager
 	logger           logger.Logger
 	registry         *collectors.CollectorRegistry
-	enhancedRegistry *collectors.EnhancedRegistry
+	enhancedRegistry *collectors.CollectorRegistry
 }
 
 func (a *App) GetCommands() []*cobra.Command {

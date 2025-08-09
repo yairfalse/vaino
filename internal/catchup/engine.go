@@ -527,9 +527,9 @@ func (e *Engine) SyncState(ctx context.Context, options Options) error {
 		}
 
 		// Collect current state
-		enhancedCollector, ok := collector.(collectors.EnhancedCollector)
+		enhancedCollector, ok := collector.(collectors.Collector)
 		if !ok {
-			e.logger.WithField("provider", provider).Error("Collector does not implement EnhancedCollector", fmt.Errorf("type assertion failed"))
+			e.logger.WithField("provider", provider).Error("Collector does not implement Collector", fmt.Errorf("type assertion failed"))
 			continue
 		}
 		snapshot, err := enhancedCollector.Collect(ctx, collectors.CollectorConfig{})
@@ -562,10 +562,10 @@ func (e *Engine) getCollector(provider string) (collectors.Collector, error) {
 	}
 
 	// Initialize collector based on provider type
-	registry := collectors.DefaultEnhancedRegistry()
-	collector, err := registry.GetEnhanced(provider)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get collector for %s: %w", provider, err)
+	registry := collectors.DefaultRegistry()
+	collector, exists := registry.Get(provider)
+	if !exists {
+		return nil, fmt.Errorf("collector %s not found", provider)
 	}
 
 	e.collectors[provider] = collector
