@@ -99,4 +99,4 @@ docker-compose.override.yml
 *.tar.gz
 *.zip
 .nyc_output
-.sass-cache/
+.sass-cache/vaino
