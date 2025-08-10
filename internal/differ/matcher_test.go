@@ -46,8 +46,14 @@ func TestDefaultResourceMatcher_Match(t *testing.T) {
 
 	matches, added, removed := matcher.Match(baseline, current)
 
+	// Convert matches to map for easier testing
+	matchMap := make(map[string]string)
+	for _, match := range matches {
+		matchMap[match.Baseline.ID] = match.Current.ID
+	}
+
 	// Should match resource-1 by ID
-	if matches["resource-1"] != "resource-1" {
+	if matchMap["resource-1"] != "resource-1" {
 		t.Errorf("expected resource-1 to match itself")
 	}
 
@@ -113,9 +119,15 @@ func TestSmartResourceMatcher_Match(t *testing.T) {
 
 	matches, added, removed := matcher.Match(baseline, current)
 
+	// Convert matches to map for easier testing
+	matchMap := make(map[string]string)
+	for _, match := range matches {
+		matchMap[match.Baseline.ID] = match.Current.ID
+	}
+
 	// Should match old-id-1 to new-id-1 by name and tags
-	if matches["old-id-1"] != "new-id-1" {
-		t.Errorf("expected old-id-1 to match new-id-1 by name/tags, got %s", matches["old-id-1"])
+	if matchMap["old-id-1"] != "new-id-1" {
+		t.Errorf("expected old-id-1 to match new-id-1 by name/tags, got %s", matchMap["old-id-1"])
 	}
 
 	// old-id-2 should be in removed (no match found)
@@ -165,8 +177,14 @@ func TestSmartResourceMatcher_TagMatching(t *testing.T) {
 
 	matches, _, _ := matcher.Match(baseline, current)
 
+	// Convert matches to map for easier testing
+	matchMap := make(map[string]string)
+	for _, match := range matches {
+		matchMap[match.Baseline.ID] = match.Current.ID
+	}
+
 	// Should match by name and most tags
-	if matches["id-1"] != "id-2" {
+	if matchMap["id-1"] != "id-2" {
 		t.Errorf("expected resources to match by name and tags")
 	}
 }
@@ -203,8 +221,14 @@ func TestSmartResourceMatcher_EdgeCases(t *testing.T) {
 
 	matches2, _, _ := matcher.Match(baseline, current)
 
+	// Convert matches to map for easier testing
+	matchMap2 := make(map[string]string)
+	for _, match := range matches2 {
+		matchMap2[match.Baseline.ID] = match.Current.ID
+	}
+
 	// Should still match by name even with nil/empty tags
-	if matches2["resource-1"] != "resource-2" {
+	if matchMap2["resource-1"] != "resource-2" {
 		t.Errorf("expected resources to match by name despite nil tags")
 	}
 }

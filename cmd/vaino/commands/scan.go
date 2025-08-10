@@ -19,7 +19,6 @@ import (
 	vainoerrors "github.com/yairfalse/vaino/internal/errors"
 	"github.com/yairfalse/vaino/internal/output"
 	"github.com/yairfalse/vaino/internal/storage"
-	"github.com/yairfalse/vaino/pkg/collectors/systemd"
 	"github.com/yairfalse/vaino/pkg/config"
 	"github.com/yairfalse/vaino/pkg/types"
 )
@@ -51,12 +50,6 @@ compared against other snapshots to identify changes.`,
 
   # Scan GCP with custom credentials
   vaino scan --provider gcp --credentials ./service-account.json
-
-  # Scan systemd services (Linux only)
-  vaino scan --provider systemd
-
-  # Scan systemd with filters
-  vaino scan --provider systemd --filter "state:failed"
 
   # Scan all providers and save with custom name
   vaino scan --all --output-file my-snapshot.json
@@ -142,11 +135,6 @@ func runScan(cmd *cobra.Command, args []string) error {
 	gcpCollector := gcp.NewGCPCollector()
 	enhancedRegistry.Register(gcpCollector)
 
-	// Register systemd collector (Linux only)
-	if systemdCollector, err := systemd.NewCollector(); err == nil {
-		enhancedRegistry.Register(systemdCollector)
-	}
-
 	ctx := cmd.Context()
 
 	if !scanAll && provider == "" {
@@ -189,16 +177,6 @@ func runScan(cmd *cobra.Command, args []string) error {
 			detectedDetails = append(detectedDetails, "gcp (credentials found)")
 		}
 
-		// Check systemd (Linux only)
-		if systemdCollector, err := systemd.NewCollector(); err == nil {
-			status := systemdCollector.Status()
-			if strings.Contains(status, "Connected") {
-				detectedProviders = append(detectedProviders, "systemd")
-				detectedDetails = append(detectedDetails, "systemd (Linux services)")
-			}
-			systemdCollector.Close()
-		}
-
 		if len(detectedProviders) == 0 {
 			// No auto-discovery possible, show helpful guidance
 			fmt.Println("\nNo infrastructure auto-detected.")
@@ -207,7 +185,6 @@ func runScan(cmd *cobra.Command, args []string) error {
 			fmt.Println("  vaino scan --provider aws --region us-east-1")
 			fmt.Println("  vaino scan --provider gcp --project YOUR-PROJECT-ID")
 			fmt.Println("  vaino scan --provider kubernetes")
-			fmt.Println("  vaino scan --provider systemd")
 			fmt.Println("\nTip: Run 'vaino configure' for setup")
 			return nil
 		} else if len(detectedProviders) == 1 {

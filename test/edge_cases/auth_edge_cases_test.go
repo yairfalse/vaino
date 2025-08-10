@@ -114,7 +114,7 @@ users:
 			cleanup := tt.setupAuth(t)
 			defer cleanup()
 
-			var collector collectors.EnhancedCollector
+			var collector collectors.Collector
 			var config collectors.CollectorConfig
 
 			switch tt.provider {
@@ -297,7 +297,7 @@ func TestMissingCredentials(t *testing.T) {
 				}
 			}()
 
-			var collector collectors.EnhancedCollector
+			var collector collectors.Collector
 			var config collectors.CollectorConfig
 
 			switch tt.provider {
