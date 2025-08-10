@@ -1,235 +1,222 @@
-# VAINO
+# Tapio - Observability Correlation Platform
 
-**Infrastructure drift detection and monitoring tool**
+Tapio is a correlation engine for observability data. It collects system events from multiple sources, identifies relationships between them, and stores correlations in Neo4j for graph-based analysis.
 
-*Named after Väinö from Finnish mythology*
+## What It Actually Does
 
-[![Build Status](https://github.com/yairfalse/vaino/workflows/CI/badge.svg)](https://github.com/yairfalse/vaino/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Go Report Card](https://goreportcard.com/badge/github.com/yairfalse/vaino)](https://goreportcard.com/report/github.com/yairfalse/vaino)
+**Core Mission: Kubernetes Observability Intelligence**
+- Provides complete visibility into Kubernetes cluster behavior and dependencies
+- Correlates events across all layers: kernel, container runtime, kubelet, API server
+- Identifies root causes of failures through cross-component event analysis
+- Maps service dependencies and resource relationships automatically
 
-VAINO helps you detect and monitor infrastructure drift across multiple cloud providers and Infrastructure as Code tools. Think of it as "git diff" for your infrastructure - track changes over time and quickly identify what's different between deployments.
+**Event Collection:**
+- Collects kernel events via eBPF (process, network, file operations)
+- Monitors Kubernetes API server events (pods, services, deployments)
+- Tracks container runtime operations (CRI-O, containerd)
+- Monitors kubelet and CNI plugin activities
+- Captures DNS queries, etcd operations, and systemd services
+- Correlates events to find patterns and dependencies
+- Stores correlation results in Neo4j graph database
+- Streams events through NATS
 
-## Features
+## Architecture Flow
 
-- **Multi-Provider Support**: AWS, GCP, Kubernetes, Terraform
-- **Drift Detection**: Compare infrastructure states over time
-- **Unix-Style Output**: Clean, scriptable output for automation
-- **Multiple Formats**: JSON, YAML, table, and markdown output
-- **Real-time Monitoring**: Watch for changes as they happen
-- **CI/CD Integration**: Perfect for automated infrastructure validation
-
-## Quick Start
-
-### Installation
-
-```bash
-# Universal installer
-curl -sSL https://install.vaino.sh | bash
-
-# Package managers
-brew install yairfalse/vaino/vaino  # macOS
-sudo apt install vaino              # Debian/Ubuntu
-sudo dnf install vaino              # Red Hat/Fedora
+```mermaid
+graph TD
+    subgraph "Kubernetes Cluster"
+        subgraph "Level 0: Domain"
+            D[domain.UnifiedEvent]
+        end
+        
+        subgraph "Level 1: K8s Collectors"
+            K["Kernel/eBPF"]
+            S["Systemd"]
+            DNS["DNS"]
+            KA["KubeAPI Server"]
+            KL["Kubelet"]
+            CRI["Container Runtime"]
+            CNI["CNI Plugins"]
+            E["etcd"]
+            K --> D
+            S --> D
+            DNS --> D
+            KA --> D
+            KL --> D
+            CRI --> D
+            CNI --> D
+            E --> D
+        end
+        
+        subgraph "Level 2: Intelligence"
+            CE["Correlation Engine"]
+            TC["Temporal Correlator"]
+            SC["Sequence Correlator"]
+            DC["Dependency Correlator"]
+            D --> CE
+            CE --> TC
+            CE --> SC
+            CE --> DC
+        end
+        
+        subgraph "Level 3: Integrations"
+            NATS["NATS Publisher"]
+            NEO["Neo4j Storage"]
+            CE --> NATS
+            CE --> NEO
+        end
+    end
+    
+    subgraph "External Systems"
+        Graph[(Neo4j Graph DB)]
+        Stream[(NATS Streaming)]
+        NEO --> Graph
+        NATS --> Stream
+    end
 ```
 
-### Basic Usage
+## Architecture Rules
 
-```bash
-# Scan your infrastructure
-vaino scan
-
-# Check for changes
-vaino diff
-
-# Get summary statistics
-vaino diff --stat
-
-# Monitor continuously
-vaino watch
+**5-Level Hierarchy (STRICTLY ENFORCED):**
+```
+Level 0: pkg/domain/          # Zero dependencies
+Level 1: pkg/collectors/      # Domain only  
+Level 2: pkg/intelligence/    # Domain + L1
+Level 3: pkg/integrations/    # Domain + L1 + L2
+Level 4: pkg/interfaces/      # All above
 ```
 
-## Core Commands
+Components can ONLY import from lower levels. No exceptions.
 
-### Scanning
+## Implemented Components
+
+### Collectors (All Available)
+- **kernel**: eBPF programs for syscall monitoring (process exec, network, file ops)
+- **systemd**: Journal reader for service events  
+- **dns**: eBPF-based DNS query/response capture
+- **kubeapi**: Kubernetes API server event monitoring (pods, services, deployments, network policies)
+- **kubelet**: Node-level container lifecycle and resource monitoring
+- **cri**: Container runtime interface monitoring (containerd, CRI-O operations)
+- **cni**: Container network interface plugin event tracking
+- **etcd**: Kubernetes datastore operation monitoring
+
+### Correlation Engine
+Processes events and finds relationships:
+- **Temporal**: Events occurring in time patterns
+- **Sequence**: Event chains (A→B→C patterns)
+- **Dependency**: Service/pod dependencies (requires Neo4j)
+
+### Storage
+- **Neo4j**: Stores correlations as graph relationships
+- **Memory**: In-memory correlation cache
+
+## Building
 
 ```bash
-vaino scan                        # Auto-discover and scan all providers
-vaino scan --provider aws         # Scan AWS resources
-vaino scan --provider kubernetes  # Scan Kubernetes cluster
-vaino scan --provider terraform   # Scan Terraform state
+# Prerequisites
+# - Go 1.21+
+# - Linux kernel 4.14+ (for eBPF)
+# - clang/llvm (for eBPF compilation)
+
+# Build everything
+make build
+
+# Format code (MANDATORY before commit)
+make fmt
+
+# Run tests
+make test
+
+# Generate eBPF programs
+make bpf-generate
 ```
-
-### Drift Detection
-
-```bash
-vaino diff                        # Show changes since last scan
-vaino diff --stat                 # Show change statistics
-vaino diff --baseline production  # Compare against named baseline
-vaino diff --quiet                # Silent mode (exit code only)
-```
-
-### Continuous Monitoring
-
-```bash
-vaino watch                       # Monitor for changes
-vaino watch --interval 30s        # Custom check interval
-vaino check                       # One-time drift check
-```
-
-## Supported Providers
-
-| Provider | Resources | Notes |
-|----------|-----------|-------|
-| **AWS** | EC2, S3, RDS, Lambda, IAM | Requires AWS CLI configuration |
-| **Kubernetes** | Pods, services, deployments | Uses current kubectl context |
-| **Terraform** | State files, plans | Supports local and remote state |
-| **GCP** | Compute, storage, networking | Requires gcloud authentication |
 
 ## Configuration
 
-### Config File: `~/.vaino/config.yaml`
-
 ```yaml
-providers:
-  aws:
-    regions: ["us-east-1", "us-west-2"]
-    profile: "production"
+# config/tapio.yaml
+collectors:
+  kernel:
+    enabled: true
+    buffer_size: 8192
+  systemd:
+    enabled: true
+    unit_filter: ["*.service"]
+  dns:
+    enabled: true
+
+correlation:
+  engine:
+    worker_count: 4
+    event_buffer_size: 1000
   
-  kubernetes:
-    contexts: ["production", "staging"]
-    
-  terraform:
-    state_paths: ["./infrastructure/"]
-
-output:
-  format: "table"
-  no_color: false
-
-storage:
-  base_path: "~/.vaino/snapshots"
-  retention_days: 30
+integrations:
+  neo4j:
+    uri: "bolt://localhost:7687"
+    username: "neo4j"
+    password: "password"
+  nats:
+    url: "nats://localhost:4222"
+    stream: "events"
 ```
 
-### Environment Variables
+## Running
 
 ```bash
-# Provider authentication
-export AWS_PROFILE=production
-export KUBECONFIG=~/.kube/config
+# Start with default config
+./bin/tapio
 
-# VAINO settings
-export VAINO_CONFIG=~/.vaino/config.yaml
-export VAINO_VERBOSE=true
+# With custom config
+./bin/tapio -config config/tapio.yaml
+
+# Collectors only mode
+./bin/tapio -mode collectors
+
+# Correlation only mode  
+./bin/tapio -mode correlation
 ```
 
-## Output Formats
+## Example Correlations It Can Find
 
-VAINO supports multiple output formats for different use cases:
+### 1. Service Restart Cascade
+When systemd restarts a service, the correlation engine can identify:
+- Related pod terminations
+- Dependent service impacts
+- Configuration changes that triggered it
 
-```bash
-vaino diff --output table      # Human-readable table (default)
-vaino diff --output json       # Machine-readable JSON
-vaino diff --output yaml       # YAML format
-vaino diff --output markdown   # Markdown for documentation
-```
+### 2. Memory Pressure Events
+Kernel OOM killer events are correlated with:
+- Process memory allocations
+- Container memory limits
+- Service degradation
 
-## Real-World Examples
+### 3. DNS Resolution Failures
+DNS failures are correlated with:
+- Service connection errors
+- Pod networking issues
+- Network policy changes
 
-### Daily Infrastructure Check
+## Development Standards
 
-```bash
-#!/bin/bash
-# Daily infrastructure monitoring script
+From `CLAUDE.md` - these are enforced:
+- **80% test coverage minimum**
+- **No stubs, no TODOs** - only working code
+- **Must compile**: `go build ./...` must pass
+- **Must format**: `make fmt` before any commit
+- **No `map[string]interface{}`** in public APIs
+- **Follow 5-level architecture** - no exceptions
 
-vaino scan
-if vaino diff --quiet; then
-    echo "✅ No infrastructure drift detected"
-else
-    echo "⚠️ Infrastructure changes detected:"
-    vaino diff --stat
-    vaino diff --output markdown > changes.md
-fi
-```
+## Current Limitations
 
-### CI/CD Integration
+- Graph correlations require Neo4j to be running
+- eBPF collectors require root/CAP_BPF privileges
+- Only works on Linux (eBPF dependency)
+- Kubernetes collectors require appropriate cluster RBAC permissions
 
-```yaml
-# .github/workflows/infrastructure-check.yml
-name: Infrastructure Drift Check
+## Project Status
 
-on:
-  schedule:
-    - cron: "0 8 * * *"  # Daily at 8 AM
-
-jobs:
-  check-drift:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install VAINO
-        run: curl -sSL https://install.vaino.sh | bash
-      
-      - name: Scan Infrastructure
-        run: vaino scan --output json > current-state.json
-        
-      - name: Check for Drift
-        run: |
-          if vaino diff --quiet; then
-            echo "✅ No infrastructure drift"
-          else
-            echo "⚠️ Drift detected!"
-            vaino diff --output markdown >> $GITHUB_STEP_SUMMARY
-          fi
-```
-
-### Terraform Workflow
-
-```bash
-# Before applying changes
-terraform plan -out=plan.tfplan
-vaino scan --provider terraform
-
-# Apply changes
-terraform apply plan.tfplan
-
-# Verify changes
-vaino scan --provider terraform
-vaino diff --provider terraform
-```
-
-## Security
-
-VAINO is designed with security in mind:
-
-- **Read-only access**: Never modifies your infrastructure
-- **Credential respect**: Uses existing provider authentication
-- **Secret filtering**: Automatically excludes sensitive data
-- **Local storage**: Snapshots stored locally by default
-
-## Documentation
-
-- [Installation Guide](./docs/INSTALLATION.md) - Detailed installation instructions
-- [Configuration Reference](./docs/configuration.md) - Complete configuration options
-- [Provider Setup](./docs/providers/) - Provider-specific setup guides
-- [Examples](./docs/examples/) - Real-world usage examples
-- [Troubleshooting](./docs/troubleshooting.md) - Common issues and solutions
-
-## Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
-
-## Support
-
-- **Issues**: [GitHub Issues](https://github.com/yairfalse/vaino/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yairfalse/vaino/discussions)
-- **Documentation**: [docs/](./docs/)
+This is an active correlation engine with working eBPF collectors and basic correlation capabilities. The architecture is solid and enforced. More collectors and correlators can be added following the established patterns.
 
 ## License
 
-VAINO is released under the [MIT License](./LICENSE).
-
----
-
-**VAINO** - Infrastructure drift detection made simple.
+Apache 2.0
