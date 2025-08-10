@@ -1,6 +1,8 @@
-# Binaries
+# Binaries and build artifacts
 *.test
 wgo
+vaino
+systemd.test
 !wgo/
 /build/
 /dist/
