@@ -61,14 +61,15 @@ func (sp *StreamingParser) parseStandardMode(file *os.File, filename string) (*T
 	return sp.validateAndNormalizeState(&state, filename)
 }
 
-// parseStreamingMode handles large files with streaming JSON parsing
+// parseStreamingMode handles large files with true streaming JSON parsing
 func (sp *StreamingParser) parseStreamingMode(file *os.File, filename string, fileSize int64) (*TerraformState, error) {
-	// Read file in chunks to find the structure
-	reader := bufio.NewReaderSize(file, 64*1024) // 64KB buffer
+	fmt.Printf("Using streaming parser for large state file (%d MB)\n", fileSize/(1024*1024))
 
-	// For very large files, we need to parse incrementally
-	// This is a simplified streaming approach - in practice, you'd use a more sophisticated JSON streaming library
-	state, err := sp.parseInChunks(reader, filename)
+	// Reset file to beginning
+	file.Seek(0, 0)
+
+	// Use incremental parsing to handle large files
+	state, err := sp.parseIncrementally(file, filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse large state file %s: %w", filename, err)
 	}
@@ -76,33 +77,149 @@ func (sp *StreamingParser) parseStreamingMode(file *os.File, filename string, fi
 	return sp.validateAndNormalizeState(state, filename)
 }
 
-// parseInChunks parses JSON in manageable chunks
-func (sp *StreamingParser) parseInChunks(reader *bufio.Reader, filename string) (*TerraformState, error) {
-	// For this implementation, we'll still load the entire JSON but with better error handling
-	// In a full production system, you'd use a proper streaming JSON parser like jstream
+// parseIncrementally uses json.Decoder for incremental parsing
+func (sp *StreamingParser) parseIncrementally(reader io.Reader, filename string) (*TerraformState, error) {
+	decoder := json.NewDecoder(reader)
+	decoder.UseNumber() // Preserve number precision
 
-	var jsonBuilder strings.Builder
-	buffer := make([]byte, 32*1024) // 32KB chunks
+	state := &TerraformState{}
 
-	for {
-		n, err := reader.Read(buffer)
-		if n > 0 {
-			jsonBuilder.Write(buffer[:n])
-		}
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, fmt.Errorf("error reading state file %s: %w", filename, err)
-		}
-	}
-
-	var state TerraformState
-	if err := json.Unmarshal([]byte(jsonBuilder.String()), &state); err != nil {
+	// Start decoding the JSON object
+	token, err := decoder.Token()
+	if err != nil {
 		return nil, sp.createJSONError(err, filename)
 	}
 
-	return &state, nil
+	if delim, ok := token.(json.Delim); !ok || delim != '{' {
+		return nil, fmt.Errorf("expected '{' at start of state file %s", filename)
+	}
+
+	// Parse the state file field by field
+	for decoder.More() {
+		// Get the field name
+		token, err := decoder.Token()
+		if err != nil {
+			return nil, sp.createJSONError(err, filename)
+		}
+
+		key, ok := token.(string)
+		if !ok {
+			continue
+		}
+
+		switch key {
+		case "version":
+			if err := decoder.Decode(&state.Version); err != nil {
+				return nil, fmt.Errorf("failed to parse version in %s: %w", filename, err)
+			}
+
+		case "terraform_version":
+			if err := decoder.Decode(&state.TerraformVersion); err != nil {
+				return nil, fmt.Errorf("failed to parse terraform_version in %s: %w", filename, err)
+			}
+
+		case "serial":
+			if err := decoder.Decode(&state.Serial); err != nil {
+				return nil, fmt.Errorf("failed to parse serial in %s: %w", filename, err)
+			}
+
+		case "lineage":
+			if err := decoder.Decode(&state.Lineage); err != nil {
+				return nil, fmt.Errorf("failed to parse lineage in %s: %w", filename, err)
+			}
+
+		case "outputs":
+			if err := decoder.Decode(&state.Outputs); err != nil {
+				return nil, fmt.Errorf("failed to parse outputs in %s: %w", filename, err)
+			}
+
+		case "resources":
+			// Stream parse resources array
+			resources, err := sp.streamParseResources(decoder)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse resources in %s: %w", filename, err)
+			}
+			state.Resources = resources
+
+		case "modules":
+			// For version 3 compatibility
+			if err := decoder.Decode(&state.Modules); err != nil {
+				return nil, fmt.Errorf("failed to parse modules in %s: %w", filename, err)
+			}
+
+		default:
+			// Skip unknown fields by decoding into raw message
+			var raw json.RawMessage
+			if err := decoder.Decode(&raw); err != nil {
+				return nil, fmt.Errorf("failed to skip field %s in %s: %w", key, filename, err)
+			}
+		}
+	}
+
+	// Consume closing brace
+	token, err = decoder.Token()
+	if err != nil {
+		return nil, sp.createJSONError(err, filename)
+	}
+
+	if delim, ok := token.(json.Delim); !ok || delim != '}' {
+		return nil, fmt.Errorf("expected '}' at end of state file %s", filename)
+	}
+
+	return state, nil
+}
+
+// streamParseResources parses the resources array incrementally
+func (sp *StreamingParser) streamParseResources(decoder *json.Decoder) ([]TerraformResource, error) {
+	var resources []TerraformResource
+
+	// Expect array start
+	token, err := decoder.Token()
+	if err != nil {
+		return nil, err
+	}
+
+	if delim, ok := token.(json.Delim); !ok || delim != '[' {
+		return nil, fmt.Errorf("expected '[' at start of resources array")
+	}
+
+	// Parse each resource
+	resourceCount := 0
+	for decoder.More() {
+		var resource TerraformResource
+		if err := decoder.Decode(&resource); err != nil {
+			return nil, fmt.Errorf("failed to parse resource %d: %w", resourceCount, err)
+		}
+		resources = append(resources, resource)
+		resourceCount++
+
+		// Progress feedback for large files
+		if resourceCount%100 == 0 {
+			fmt.Printf("  Terraform: Parsed %d resources...\n", resourceCount)
+		}
+	}
+
+	// Expect array end
+	token, err = decoder.Token()
+	if err != nil {
+		return nil, err
+	}
+
+	if delim, ok := token.(json.Delim); !ok || delim != ']' {
+		return nil, fmt.Errorf("expected ']' at end of resources array")
+	}
+
+	if resourceCount > 0 {
+		fmt.Printf("  Terraform: Successfully parsed %d resources\n", resourceCount)
+	}
+
+	return resources, nil
+}
+
+// parseInChunks is a legacy method kept for backward compatibility
+func (sp *StreamingParser) parseInChunks(reader *bufio.Reader, filename string) (*TerraformState, error) {
+	// Redirect to the new incremental parser
+	return sp.parseIncrementally(reader, filename)
 }
 
 // validateAndNormalizeState performs validation and basic normalization
@@ -172,25 +289,54 @@ func (sp *StreamingParser) CountResources(filename string) (*ResourceCounter, er
 		resourceTypes: make(map[string]int),
 	}
 
-	// Use a streaming approach to count resources
+	// Use streaming JSON decoder
 	decoder := json.NewDecoder(file)
+	decoder.UseNumber()
 
-	// Skip to the resources array
-	var state struct {
-		Resources []struct {
-			Type      string        `json:"type"`
-			Instances []interface{} `json:"instances"`
-		} `json:"resources"`
-	}
+	// Navigate to resources array
+	for {
+		token, err := decoder.Token()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse state file: %w", err)
+		}
 
-	if err := decoder.Decode(&state); err != nil {
-		return nil, fmt.Errorf("failed to decode state for counting: %w", err)
-	}
+		// Look for "resources" key
+		if key, ok := token.(string); ok && key == "resources" {
+			// Next token should be array start
+			token, err := decoder.Token()
+			if err != nil {
+				return nil, err
+			}
 
-	for _, resource := range state.Resources {
-		instanceCount := len(resource.Instances)
-		counter.totalResources += instanceCount
-		counter.resourceTypes[resource.Type] += instanceCount
+			if delim, ok := token.(json.Delim); ok && delim == '[' {
+				// Count resources in the array
+				for decoder.More() {
+					var resource struct {
+						Type      string          `json:"type"`
+						Instances json.RawMessage `json:"instances"`
+					}
+
+					if err := decoder.Decode(&resource); err != nil {
+						continue // Skip problematic resources
+					}
+
+					// Count instances
+					if len(resource.Instances) > 0 {
+						// Parse instances array to count them
+						var instances []json.RawMessage
+						if err := json.Unmarshal(resource.Instances, &instances); err == nil {
+							instanceCount := len(instances)
+							counter.totalResources += instanceCount
+							counter.resourceTypes[resource.Type] += instanceCount
+						}
+					}
+				}
+				break
+			}
+		}
 	}
 
 	return counter, nil

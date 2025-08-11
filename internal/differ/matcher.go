@@ -2,13 +2,21 @@ package differ
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/yairfalse/vaino/pkg/types"
 )
 
-// DefaultResourceMatcher implements ResourceMatcher using ID-based matching
+// DefaultResourceMatcher implements ResourceMatcher using optimized hash-based matching
 type DefaultResourceMatcher struct{}
+
+// resourceKey creates a composite key for efficient resource lookups
+type resourceKey struct {
+	provider string
+	resType  string
+	name     string
+}
 
 // Match matches resources between baseline and current snapshots
 // Returns matched resource pairs, plus slices of added and removed resources
@@ -88,28 +96,113 @@ func (m *DefaultResourceMatcher) Match(baseline, current []types.Resource) ([]Re
 	return resourceMatches, added, removed
 }
 
-// fuzzyMatch attempts to match resources based on name, type, and other attributes
+// fuzzyMatch attempts to match resources using efficient indexing strategies
 func (m *DefaultResourceMatcher) fuzzyMatch(baseline, current map[string]types.Resource, matches map[string]string) {
+	// Build indices for efficient lookup
+	currentByKey := make(map[resourceKey][]string)
+	currentByType := make(map[string][]string)
+	alreadyMatched := make(map[string]bool)
+
+	// Index current resources by composite key and type
+	for currentID, resource := range current {
+		// Skip if already matched
+		if _, matched := findByValue(matches, currentID); matched {
+			alreadyMatched[currentID] = true
+			continue
+		}
+
+		// Index by composite key
+		key := resourceKey{
+			provider: resource.Provider,
+			resType:  resource.Type,
+			name:     resource.Name,
+		}
+		currentByKey[key] = append(currentByKey[key], currentID)
+
+		// Index by type for similarity matching
+		typeKey := resource.Provider + ":" + resource.Type
+		currentByType[typeKey] = append(currentByType[typeKey], currentID)
+	}
+
+	// Match baseline resources using indices
+	type candidateMatch struct {
+		baselineID string
+		currentID  string
+		score      float64
+	}
+
+	var candidates []candidateMatch
+
 	for baselineID, baselineResource := range baseline {
-		bestMatch := ""
-		bestScore := 0.0
-
-		for currentID, currentResource := range current {
-			// Skip if already matched
-			if _, matched := findByValue(matches, currentID); matched {
-				continue
-			}
-
-			score := m.calculateSimilarity(baselineResource, currentResource)
-			if score > bestScore && score > 0.7 { // Threshold for considering a match
-				bestScore = score
-				bestMatch = currentID
-			}
+		// First try exact key match
+		key := resourceKey{
+			provider: baselineResource.Provider,
+			resType:  baselineResource.Type,
+			name:     baselineResource.Name,
 		}
 
-		if bestMatch != "" {
-			matches[baselineID] = bestMatch
+		if currentIDs, exists := currentByKey[key]; exists {
+			for _, currentID := range currentIDs {
+				if !alreadyMatched[currentID] {
+					// Exact match by key gets highest score
+					candidates = append(candidates, candidateMatch{
+						baselineID: baselineID,
+						currentID:  currentID,
+						score:      1.0,
+					})
+					break
+				}
+			}
+			continue
 		}
+
+		// Try similarity matching only within same type
+		typeKey := baselineResource.Provider + ":" + baselineResource.Type
+		if currentIDs, exists := currentByType[typeKey]; exists {
+			bestMatch := ""
+			bestScore := 0.0
+
+			// Only compare with resources of the same type (much smaller set)
+			for _, currentID := range currentIDs {
+				if alreadyMatched[currentID] {
+					continue
+				}
+
+				currentResource := current[currentID]
+				score := m.calculateSimilarity(baselineResource, currentResource)
+				if score > bestScore && score > 0.7 {
+					bestScore = score
+					bestMatch = currentID
+				}
+			}
+
+			if bestMatch != "" {
+				candidates = append(candidates, candidateMatch{
+					baselineID: baselineID,
+					currentID:  bestMatch,
+					score:      bestScore,
+				})
+			}
+		}
+	}
+
+	// Sort candidates by score (highest first) to resolve conflicts
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].score > candidates[j].score
+	})
+
+	// Apply matches, avoiding duplicates
+	usedCurrent := make(map[string]bool)
+	for _, candidate := range candidates {
+		if _, exists := matches[candidate.baselineID]; exists {
+			continue
+		}
+		if usedCurrent[candidate.currentID] {
+			continue
+		}
+
+		matches[candidate.baselineID] = candidate.currentID
+		usedCurrent[candidate.currentID] = true
 	}
 }
 
@@ -328,20 +421,36 @@ func (s *idMatchingStrategy) match(baseline, current []types.Resource) map[strin
 
 func (s *idMatchingStrategy) priority() int { return 1 }
 
-// nameAndTypeMatchingStrategy matches by name and type
+// nameAndTypeMatchingStrategy matches by name and type using hash-based lookup
 type nameAndTypeMatchingStrategy struct{}
 
 func (s *nameAndTypeMatchingStrategy) match(baseline, current []types.Resource) map[string]string {
 	matches := make(map[string]string)
 
+	// Build index of current resources by composite key
+	currentIndex := make(map[resourceKey]types.Resource)
+	for _, resource := range current {
+		if resource.Name != "" {
+			key := resourceKey{
+				provider: resource.Provider,
+				resType:  resource.Type,
+				name:     resource.Name,
+			}
+			currentIndex[key] = resource
+		}
+	}
+
+	// Match baseline resources using index lookup (O(1) per resource)
 	for _, baselineResource := range baseline {
-		for _, currentResource := range current {
-			if baselineResource.Name == currentResource.Name &&
-				baselineResource.Type == currentResource.Type &&
-				baselineResource.Provider == currentResource.Provider &&
-				baselineResource.Name != "" {
+		if baselineResource.Name != "" {
+			key := resourceKey{
+				provider: baselineResource.Provider,
+				resType:  baselineResource.Type,
+				name:     baselineResource.Name,
+			}
+
+			if currentResource, exists := currentIndex[key]; exists {
 				matches[baselineResource.ID] = currentResource.ID
-				break
 			}
 		}
 	}
@@ -351,25 +460,37 @@ func (s *nameAndTypeMatchingStrategy) match(baseline, current []types.Resource) 
 
 func (s *nameAndTypeMatchingStrategy) priority() int { return 2 }
 
-// configurationMatchingStrategy matches by configuration similarity
+// configurationMatchingStrategy matches by configuration similarity with optimized lookup
 type configurationMatchingStrategy struct{}
 
 func (s *configurationMatchingStrategy) match(baseline, current []types.Resource) map[string]string {
 	matches := make(map[string]string)
 
+	// Group current resources by type for efficient lookup
+	currentByType := make(map[string][]types.Resource)
+	for _, resource := range current {
+		typeKey := resource.Provider + ":" + resource.Type
+		currentByType[typeKey] = append(currentByType[typeKey], resource)
+	}
+
+	// Match baseline resources, only comparing with same type
 	for _, baselineResource := range baseline {
+		typeKey := baselineResource.Provider + ":" + baselineResource.Type
+		candidates := currentByType[typeKey]
+
+		if len(candidates) == 0 {
+			continue
+		}
+
 		bestMatch := ""
 		bestScore := 0.0
 
-		for _, currentResource := range current {
-			if baselineResource.Type == currentResource.Type &&
-				baselineResource.Provider == currentResource.Provider {
-
-				score := s.calculateConfigSimilarity(baselineResource.Configuration, currentResource.Configuration)
-				if score > bestScore && score > 0.8 {
-					bestScore = score
-					bestMatch = currentResource.ID
-				}
+		// Only compare with resources of the same type (much smaller set)
+		for _, currentResource := range candidates {
+			score := s.calculateConfigSimilarity(baselineResource.Configuration, currentResource.Configuration)
+			if score > bestScore && score > 0.8 {
+				bestScore = score
+				bestMatch = currentResource.ID
 			}
 		}
 

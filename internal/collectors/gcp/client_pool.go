@@ -3,6 +3,7 @@ package gcp
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
@@ -117,51 +118,151 @@ func NewGCPClientPool(ctx context.Context, config GCPClientConfig) (*GCPServiceP
 	}, nil
 }
 
-// GetComputeInstances retrieves compute instances from a specific region
+// GetComputeInstances retrieves compute instances from a specific region in parallel
 func (pool *GCPServicePool) GetComputeInstances(ctx context.Context, projectID, region string) ([]*compute.Instance, error) {
-	var allInstances []*compute.Instance
-
 	// Get zones for the region
 	zones, err := pool.getZonesForRegion(ctx, projectID, region)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get zones for region %s: %w", region, err)
 	}
 
-	// Collect instances from each zone
+	if len(zones) == 0 {
+		return []*compute.Instance{}, nil
+	}
+
+	// Result aggregation
+	type zoneResult struct {
+		zone      string
+		instances []*compute.Instance
+		err       error
+	}
+
+	resultsChan := make(chan zoneResult, len(zones))
+	var wg sync.WaitGroup
+
+	// Semaphore to limit concurrent API calls
+	semaphore := make(chan struct{}, 4) // Allow up to 4 concurrent zone queries
+
+	fmt.Printf("  GCP: Collecting instances from %d zones in parallel...\n", len(zones))
+
+	// Collect instances from each zone in parallel
 	for _, zone := range zones {
-		instancesCall := pool.computeService.Instances.List(projectID, zone)
-		instanceList, err := instancesCall.Context(ctx).Do()
-		if err != nil {
-			// Continue with other zones if one fails
+		wg.Add(1)
+		go func(z string) {
+			defer wg.Done()
+
+			// Acquire semaphore
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			instancesCall := pool.computeService.Instances.List(projectID, z)
+			instanceList, err := instancesCall.Context(ctx).Do()
+
+			result := zoneResult{zone: z}
+			if err != nil {
+				result.err = err
+			} else {
+				result.instances = instanceList.Items
+			}
+
+			resultsChan <- result
+		}(zone)
+	}
+
+	// Close results channel when all goroutines complete
+	go func() {
+		wg.Wait()
+		close(resultsChan)
+	}()
+
+	// Aggregate results
+	var allInstances []*compute.Instance
+	processedZones := 0
+
+	for result := range resultsChan {
+		processedZones++
+		if result.err != nil {
+			// Log error but continue with other zones
+			fmt.Printf("    Warning: Failed to get instances from zone %s: %v\n", result.zone, result.err)
 			continue
 		}
-
-		allInstances = append(allInstances, instanceList.Items...)
+		allInstances = append(allInstances, result.instances...)
+		fmt.Printf("    [%d/%d] Completed zone %s: %d instances\n", processedZones, len(zones), result.zone, len(result.instances))
 	}
 
 	return allInstances, nil
 }
 
-// GetPersistentDisks retrieves persistent disks from a specific region
+// GetPersistentDisks retrieves persistent disks from a specific region in parallel
 func (pool *GCPServicePool) GetPersistentDisks(ctx context.Context, projectID, region string) ([]*compute.Disk, error) {
-	var allDisks []*compute.Disk
-
 	// Get zones for the region
 	zones, err := pool.getZonesForRegion(ctx, projectID, region)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get zones for region %s: %w", region, err)
 	}
 
-	// Collect disks from each zone
+	if len(zones) == 0 {
+		return []*compute.Disk{}, nil
+	}
+
+	// Result aggregation
+	type zoneResult struct {
+		zone  string
+		disks []*compute.Disk
+		err   error
+	}
+
+	resultsChan := make(chan zoneResult, len(zones))
+	var wg sync.WaitGroup
+
+	// Semaphore to limit concurrent API calls
+	semaphore := make(chan struct{}, 4) // Allow up to 4 concurrent zone queries
+
+	fmt.Printf("  GCP: Collecting disks from %d zones in parallel...\n", len(zones))
+
+	// Collect disks from each zone in parallel
 	for _, zone := range zones {
-		disksCall := pool.computeService.Disks.List(projectID, zone)
-		diskList, err := disksCall.Context(ctx).Do()
-		if err != nil {
-			// Continue with other zones if one fails
+		wg.Add(1)
+		go func(z string) {
+			defer wg.Done()
+
+			// Acquire semaphore
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			disksCall := pool.computeService.Disks.List(projectID, z)
+			diskList, err := disksCall.Context(ctx).Do()
+
+			result := zoneResult{zone: z}
+			if err != nil {
+				result.err = err
+			} else {
+				result.disks = diskList.Items
+			}
+
+			resultsChan <- result
+		}(zone)
+	}
+
+	// Close results channel when all goroutines complete
+	go func() {
+		wg.Wait()
+		close(resultsChan)
+	}()
+
+	// Aggregate results
+	var allDisks []*compute.Disk
+	processedZones := 0
+
+	for result := range resultsChan {
+		processedZones++
+		if result.err != nil {
+			// Log error but continue with other zones
+			fmt.Printf("    Warning: Failed to get disks from zone %s: %v\n", result.zone, result.err)
 			continue
 		}
-
-		allDisks = append(allDisks, diskList.Items...)
+		allDisks = append(allDisks, result.disks...)
+		fmt.Printf("    [%d/%d] Completed zone %s: %d disks\n", processedZones, len(zones), result.zone, len(result.disks))
 	}
 
 	return allDisks, nil

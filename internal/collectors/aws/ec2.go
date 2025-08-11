@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/yairfalse/vaino/pkg/types"
 )
@@ -50,13 +51,16 @@ func (c *AWSCollector) CollectEC2Resources(ctx context.Context) ([]types.Resourc
 	return resources, nil
 }
 
-// collectEC2Instances fetches all EC2 instances in the region
+// collectEC2Instances fetches all EC2 instances in the region with pagination
 func (c *AWSCollector) collectEC2Instances(ctx context.Context) ([]types.Resource, error) {
 	var resources []types.Resource
 	var nextToken *string
+	processed := 0
 
 	for {
-		input := &ec2.DescribeInstancesInput{}
+		input := &ec2.DescribeInstancesInput{
+			MaxResults: aws.Int32(100), // Paginate with 100 instances per request
+		}
 		if nextToken != nil {
 			input.NextToken = nextToken
 		}
@@ -76,7 +80,13 @@ func (c *AWSCollector) collectEC2Instances(ctx context.Context) ([]types.Resourc
 
 				resource := c.normalizer.NormalizeEC2Instance(instance)
 				resources = append(resources, resource)
+				processed++
 			}
+		}
+
+		// Progress feedback
+		if processed > 0 && processed%100 == 0 {
+			fmt.Printf("  EC2: Processed %d instances...\n", processed)
 		}
 
 		// Check if there are more results
@@ -89,13 +99,16 @@ func (c *AWSCollector) collectEC2Instances(ctx context.Context) ([]types.Resourc
 	return resources, nil
 }
 
-// collectSecurityGroups fetches all security groups in the region
+// collectSecurityGroups fetches all security groups in the region with pagination
 func (c *AWSCollector) collectSecurityGroups(ctx context.Context) ([]types.Resource, error) {
 	var resources []types.Resource
 	var nextToken *string
+	processed := 0
 
 	for {
-		input := &ec2.DescribeSecurityGroupsInput{}
+		input := &ec2.DescribeSecurityGroupsInput{
+			MaxResults: aws.Int32(100), // Paginate with 100 security groups per request
+		}
 		if nextToken != nil {
 			input.NextToken = nextToken
 		}
@@ -109,6 +122,12 @@ func (c *AWSCollector) collectSecurityGroups(ctx context.Context) ([]types.Resou
 		for _, sg := range result.SecurityGroups {
 			resource := c.normalizer.NormalizeSecurityGroup(sg)
 			resources = append(resources, resource)
+			processed++
+		}
+
+		// Progress feedback
+		if processed > 0 && processed%100 == 0 {
+			fmt.Printf("  Security Groups: Processed %d groups...\n", processed)
 		}
 
 		// Check if there are more results
@@ -121,13 +140,16 @@ func (c *AWSCollector) collectSecurityGroups(ctx context.Context) ([]types.Resou
 	return resources, nil
 }
 
-// collectEBSVolumes fetches all EBS volumes in the region
+// collectEBSVolumes fetches all EBS volumes in the region with pagination
 func (c *AWSCollector) collectEBSVolumes(ctx context.Context) ([]types.Resource, error) {
 	var resources []types.Resource
 	var nextToken *string
+	processed := 0
 
 	for {
-		input := &ec2.DescribeVolumesInput{}
+		input := &ec2.DescribeVolumesInput{
+			MaxResults: aws.Int32(100), // Paginate with 100 volumes per request
+		}
 		if nextToken != nil {
 			input.NextToken = nextToken
 		}
@@ -141,6 +163,12 @@ func (c *AWSCollector) collectEBSVolumes(ctx context.Context) ([]types.Resource,
 		for _, volume := range result.Volumes {
 			resource := c.normalizer.NormalizeEBSVolume(volume)
 			resources = append(resources, resource)
+			processed++
+		}
+
+		// Progress feedback
+		if processed > 0 && processed%100 == 0 {
+			fmt.Printf("  EBS Volumes: Processed %d volumes...\n", processed)
 		}
 
 		// Check if there are more results
@@ -153,17 +181,19 @@ func (c *AWSCollector) collectEBSVolumes(ctx context.Context) ([]types.Resource,
 	return resources, nil
 }
 
-// collectEBSSnapshots fetches all EBS snapshots owned by the account
+// collectEBSSnapshots fetches all EBS snapshots owned by the account with pagination
 func (c *AWSCollector) collectEBSSnapshots(ctx context.Context) ([]types.Resource, error) {
 	var resources []types.Resource
 	var nextToken *string
+	processed := 0
 
 	// Only get snapshots owned by the current account
 	ownerAlias := "self"
 
 	for {
 		input := &ec2.DescribeSnapshotsInput{
-			OwnerAliases: []string{ownerAlias},
+			OwnerIds:   []string{ownerAlias},
+			MaxResults: aws.Int32(100), // Paginate with 100 snapshots per request
 		}
 		if nextToken != nil {
 			input.NextToken = nextToken
@@ -178,6 +208,12 @@ func (c *AWSCollector) collectEBSSnapshots(ctx context.Context) ([]types.Resourc
 		for _, snapshot := range result.Snapshots {
 			resource := c.normalizer.NormalizeEBSSnapshot(snapshot)
 			resources = append(resources, resource)
+			processed++
+		}
+
+		// Progress feedback
+		if processed > 0 && processed%100 == 0 {
+			fmt.Printf("  EBS Snapshots: Processed %d snapshots...\n", processed)
 		}
 
 		// Check if there are more results

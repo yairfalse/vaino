@@ -4,13 +4,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	cloudformationTypes "github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
-	cloudwatchTypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
-	logsTypes "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs/types"
 	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	elbTypes "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing/types"
-	elbv2Types "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types"
 	lambdaTypes "github.com/aws/aws-sdk-go-v2/service/lambda/types"
 	rdsTypes "github.com/aws/aws-sdk-go-v2/service/rds/types"
 	s3Types "github.com/aws/aws-sdk-go-v2/service/s3/types"

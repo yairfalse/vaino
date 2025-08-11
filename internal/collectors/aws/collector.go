@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
@@ -102,7 +104,14 @@ func (c *AWSCollector) Validate(config collectors.CollectorConfig) error {
 	return nil
 }
 
-// Collect collects AWS resources
+// serviceResult holds the result of collecting resources from a service
+type serviceResult struct {
+	serviceName string
+	resources   []types.Resource
+	err         error
+}
+
+// Collect collects AWS resources in parallel
 func (c *AWSCollector) Collect(ctx context.Context, config collectors.CollectorConfig) (*types.Snapshot, error) {
 	// Extract configuration
 	region := ""
@@ -136,9 +145,7 @@ func (c *AWSCollector) Collect(ctx context.Context, config collectors.CollectorC
 	// Generate snapshot ID
 	snapshotID := fmt.Sprintf("aws-%d", time.Now().Unix())
 
-	var allResources []types.Resource
-
-	// Collect resources from different services
+	// Collect resources from different services in parallel
 	services := []struct {
 		name      string
 		collector func(ctx context.Context) ([]types.Resource, error)
@@ -157,32 +164,98 @@ func (c *AWSCollector) Collect(ctx context.Context, config collectors.CollectorC
 		{"ELB", c.CollectELBResources},
 	}
 
+	// Progress tracking
+	var completedServices int32
+	totalServices := int32(len(services))
+
+	// Channel for collecting results
+	resultsChan := make(chan serviceResult, len(services))
+
+	// WaitGroup to track goroutines
+	var wg sync.WaitGroup
+
+	// Semaphore to limit concurrent API calls (prevent rate limiting)
+	semaphore := make(chan struct{}, 6) // Allow up to 6 concurrent service collections
+
+	fmt.Printf("Collecting AWS resources from %d services in parallel...\n", len(services))
+
+	// Launch goroutines for each service
 	for _, service := range services {
-		resources, err := service.collector(ctx)
-		if err != nil {
-			// Return authentication errors immediately, don't continue
-			if isAuthenticationError(err) {
-				return nil, c.wrapAWSError(err, fmt.Sprintf("Authentication failed for %s service", service.name))
+		wg.Add(1)
+		go func(svc struct {
+			name      string
+			collector func(ctx context.Context) ([]types.Resource, error)
+		}) {
+			defer wg.Done()
+
+			// Acquire semaphore
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			// Collect resources
+			resources, err := svc.collector(ctx)
+
+			// Update progress
+			completed := atomic.AddInt32(&completedServices, 1)
+			fmt.Printf("[%d/%d] Completed %s collection\n", completed, totalServices, svc.name)
+
+			// Send result
+			resultsChan <- serviceResult{
+				serviceName: svc.name,
+				resources:   resources,
+				err:         err,
+			}
+		}(service)
+	}
+
+	// Close results channel when all goroutines complete
+	go func() {
+		wg.Wait()
+		close(resultsChan)
+	}()
+
+	// Collect results
+	var allResources []types.Resource
+	var mu sync.Mutex
+	var authError error
+
+	for result := range resultsChan {
+		if result.err != nil {
+			// Return authentication errors immediately
+			if isAuthenticationError(result.err) {
+				authError = c.wrapAWSError(result.err, fmt.Sprintf("Authentication failed for %s service", result.serviceName))
+				continue
 			}
 
 			// Check for permission errors - continue with warning
-			if isPermissionError(err) {
-				fmt.Printf("Warning: Insufficient permissions for %s service: %v\n", service.name, err)
+			if isPermissionError(result.err) {
+				fmt.Printf("Warning: Insufficient permissions for %s service: %v\n", result.serviceName, result.err)
 				continue
 			}
 
 			// Check for rate limiting - continue with warning
-			if isRateLimitError(err) {
-				fmt.Printf("Warning: Rate limit exceeded for %s service: %v\n", service.name, err)
+			if isRateLimitError(result.err) {
+				fmt.Printf("Warning: Rate limit exceeded for %s service: %v\n", result.serviceName, result.err)
 				continue
 			}
 
 			// For other errors, log and continue
-			fmt.Printf("Warning: Failed to collect %s resources: %v\n", service.name, err)
+			fmt.Printf("Warning: Failed to collect %s resources: %v\n", result.serviceName, result.err)
 			continue
 		}
-		allResources = append(allResources, resources...)
+
+		// Append resources thread-safely
+		mu.Lock()
+		allResources = append(allResources, result.resources...)
+		mu.Unlock()
 	}
+
+	// Return authentication error if encountered
+	if authError != nil {
+		return nil, authError
+	}
+
+	fmt.Printf("Successfully collected %d resources from AWS\n", len(allResources))
 
 	// Create snapshot
 	snapshot := &types.Snapshot{
