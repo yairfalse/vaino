@@ -56,3 +56,30 @@ func (m *MockEC2Client) DescribeVpcAttribute(ctx context.Context, params *ec2.De
 	}
 	return args.Get(0).(*ec2.DescribeVpcAttributeOutput), args.Error(1)
 }
+
+// DescribeVolumes mocks the DescribeVolumes method
+func (m *MockEC2Client) DescribeVolumes(ctx context.Context, params *ec2.DescribeVolumesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeVolumesOutput, error) {
+	args := m.Called(ctx, params)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ec2.DescribeVolumesOutput), args.Error(1)
+}
+
+// DescribeSnapshots mocks the DescribeSnapshots method
+func (m *MockEC2Client) DescribeSnapshots(ctx context.Context, params *ec2.DescribeSnapshotsInput, optFns ...func(*ec2.Options)) (*ec2.DescribeSnapshotsOutput, error) {
+	args := m.Called(ctx, params)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ec2.DescribeSnapshotsOutput), args.Error(1)
+}
+
+// DescribeKeyPairs mocks the DescribeKeyPairs method
+func (m *MockEC2Client) DescribeKeyPairs(ctx context.Context, params *ec2.DescribeKeyPairsInput, optFns ...func(*ec2.Options)) (*ec2.DescribeKeyPairsOutput, error) {
+	args := m.Called(ctx, params)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*ec2.DescribeKeyPairsOutput), args.Error(1)
+}
