@@ -18,7 +18,9 @@ func TestMain(m *testing.M) {
 	// Build the binary before running tests
 	cmd := exec.Command("go", "build", "-o", wgoBinary, "../../cmd/vaino")
 	if err := cmd.Run(); err != nil {
-		panic("Failed to build vaino binary: " + err.Error())
+		// Use os.Exit with error code instead of panic
+		os.Stderr.WriteString("Failed to build vaino binary: " + err.Error() + "\n")
+		os.Exit(1)
 	}
 
 	// Run tests

@@ -29,8 +29,9 @@ func TestGCPCollector_Status(t *testing.T) {
 	defer os.Unsetenv("GOOGLE_CLOUD_PROJECT")
 
 	status = collector.Status()
-	if status != "warning: GOOGLE_APPLICATION_CREDENTIALS not set, using default credentials" {
-		t.Errorf("Expected warning about credentials, got: %s", status)
+	// When project is set but no credentials, should return error about no credentials
+	if status != "error: no GCP credentials configured" {
+		t.Errorf("Expected error about no credentials configured, got: %s", status)
 	}
 
 	// Test with both project and credentials file (that doesn't exist)

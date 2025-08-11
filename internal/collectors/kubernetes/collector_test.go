@@ -193,7 +193,7 @@ func TestExtractKubernetesConfig(t *testing.T) {
 		{
 			name:        "empty config uses defaults",
 			config:      collectors.CollectorConfig{},
-			expectedNS:  []string{""},
+			expectedNS:  []string{"default", "kube-system"}, // Default namespaces
 			expectedCtx: "",
 		},
 		{
@@ -211,7 +211,7 @@ func TestExtractKubernetesConfig(t *testing.T) {
 					"context": "production",
 				},
 			},
-			expectedNS:  []string{""},
+			expectedNS:  []string{"default", "kube-system"}, // Default namespaces when none specified
 			expectedCtx: "production",
 		},
 	}

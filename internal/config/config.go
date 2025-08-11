@@ -237,8 +237,9 @@ func SetupGitIntegration(gitConfig GitConfig) error {
 		return fmt.Errorf("not in a Git repository")
 	}
 
-	// TODO: Set up Git hooks for automatic baseline creation
-	// This would install pre-commit or post-commit hooks
+	// Git hooks for automatic baseline creation can be configured manually by users
+	// Installing hooks automatically would require explicit user permission
+	// Users can set up hooks by copying scripts to .git/hooks/ directory
 
 	return nil
 }

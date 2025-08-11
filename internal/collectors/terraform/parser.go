@@ -454,9 +454,6 @@ func (pp *ParallelStateParser) parseWithTimeout(ctx context.Context, filePath st
 
 // ValidateStateFiles validates multiple state files in parallel
 func (pp *ParallelStateParser) ValidateStateFiles(ctx context.Context, filePaths []string) ([]string, []error) {
-	var validFiles []string
-	var errors []error
-
 	// Create channels for validation
 	type validationResult struct {
 		filePath string
@@ -478,8 +475,14 @@ func (pp *ParallelStateParser) ValidateStateFiles(ctx context.Context, filePaths
 		go func() {
 			defer wg.Done()
 			for filePath := range jobs {
-				err := pp.streamParser.ValidateStateFile(filePath)
-				results <- validationResult{filePath: filePath, error: err}
+				select {
+				case <-ctx.Done():
+					results <- validationResult{filePath: filePath, error: ctx.Err()}
+					return
+				default:
+					err := pp.streamParser.ValidateStateFile(filePath)
+					results <- validationResult{filePath: filePath, error: err}
+				}
 			}
 		}()
 	}
@@ -501,6 +504,9 @@ func (pp *ParallelStateParser) ValidateStateFiles(ctx context.Context, filePaths
 		wg.Wait()
 		close(results)
 	}()
+
+	var validFiles []string
+	var errors []error
 
 	for result := range results {
 		if result.error != nil {
@@ -562,30 +568,38 @@ func NewOptimizedResourceExtractor() *OptimizedResourceExtractor {
 
 // ExtractResourcesFromResults extracts resources from multiple parse results
 func (ore *OptimizedResourceExtractor) ExtractResourcesFromResults(results []*ParseResult) ([]ExtractedResource, error) {
-	var allResources []ExtractedResource
-	var mu sync.Mutex
+	// Pre-allocate channels for collecting resources
+	resultsChan := make(chan []ExtractedResource, len(results))
 
 	// Process results in parallel
 	var wg sync.WaitGroup
+	validResults := 0
 
 	for _, result := range results {
 		if result.Error != nil || result.State == nil {
 			continue
 		}
 
+		validResults++
 		wg.Add(1)
 		go func(r *ParseResult) {
 			defer wg.Done()
-
 			resources := ore.extractFromState(r.State, r.FilePath)
-
-			mu.Lock()
-			allResources = append(allResources, resources...)
-			mu.Unlock()
+			resultsChan <- resources
 		}(result)
 	}
 
-	wg.Wait()
+	// Close channel when all workers are done
+	go func() {
+		wg.Wait()
+		close(resultsChan)
+	}()
+
+	// Collect all resources
+	var allResources []ExtractedResource
+	for resources := range resultsChan {
+		allResources = append(allResources, resources...)
+	}
 
 	return allResources, nil
 }

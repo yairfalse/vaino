@@ -102,18 +102,15 @@ func (k *KubernetesCollector) CollectResourcesInParallel(ctx context.Context, na
 		resourceTypes = GetAllSupportedResourceTypes()
 	}
 
-	stats := &ResourceCollectionStats{
-		ResourcesByType:      make(map[ResourceType]int),
-		ResourcesByGroup:     make(map[string]int),
-		ResourcesByNamespace: make(map[string]int),
-		CollectionErrors:     []ResourceCollectionError{},
+	// Create result channels to avoid race conditions
+	type namespaceResult struct {
+		namespace string
+		resources []types.Resource
+		errors    []ResourceCollectionError
 	}
 
-	var (
-		allResources []types.Resource
-		mu           sync.Mutex
-		wg           sync.WaitGroup
-	)
+	resultsChan := make(chan namespaceResult, len(namespaces))
+	var wg sync.WaitGroup
 
 	// Collect resources for each namespace in parallel
 	for _, namespace := range namespaces {
@@ -123,15 +120,35 @@ func (k *KubernetesCollector) CollectResourcesInParallel(ctx context.Context, na
 
 			nsResources, nsErrors := k.collectResourcesForNamespace(ctx, ns, resourceTypes)
 
-			mu.Lock()
-			allResources = append(allResources, nsResources...)
-			stats.CollectionErrors = append(stats.CollectionErrors, nsErrors...)
-			stats.ResourcesByNamespace[ns] = len(nsResources)
-			mu.Unlock()
+			resultsChan <- namespaceResult{
+				namespace: ns,
+				resources: nsResources,
+				errors:    nsErrors,
+			}
 		}(namespace)
 	}
 
-	wg.Wait()
+	// Close channel when all workers are done
+	go func() {
+		wg.Wait()
+		close(resultsChan)
+	}()
+
+	// Collect all results
+	stats := &ResourceCollectionStats{
+		ResourcesByType:      make(map[ResourceType]int),
+		ResourcesByGroup:     make(map[string]int),
+		ResourcesByNamespace: make(map[string]int),
+		CollectionErrors:     []ResourceCollectionError{},
+	}
+
+	var allResources []types.Resource
+
+	for result := range resultsChan {
+		allResources = append(allResources, result.resources...)
+		stats.CollectionErrors = append(stats.CollectionErrors, result.errors...)
+		stats.ResourcesByNamespace[result.namespace] = len(result.resources)
+	}
 
 	// Calculate statistics
 	stats.TotalResources = len(allResources)

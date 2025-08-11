@@ -14,13 +14,14 @@ const (
 
 // Change represents a specific configuration change
 type Change struct {
-	Field       string      `json:"field"`
-	OldValue    interface{} `json:"old_value"`
-	NewValue    interface{} `json:"new_value"`
-	Severity    string      `json:"severity"`
-	Path        string      `json:"path"`
-	Description string      `json:"description"`
-	ChangeType  ChangeType  `json:"change_type"`
+	Field        string      `json:"field"`
+	OldValue     interface{} `json:"old_value"`
+	NewValue     interface{} `json:"new_value"`
+	Severity     string      `json:"severity"`
+	Path         string      `json:"path"`
+	Description  string      `json:"description"`
+	ChangeType   string      `json:"change_type"`
+	ResourceType string      `json:"resource_type,omitempty"`
 }
 
 // DriftReport represents the result of comparing infrastructure states
@@ -52,6 +53,8 @@ type Analysis struct {
 	Insights        []Insight           `json:"insights"`
 	SecurityImpact  string              `json:"security_impact,omitempty"`
 	CostImpact      string              `json:"cost_impact,omitempty"`
+	CriticalChanges []Change            `json:"critical_changes,omitempty"`
+	Summary         string              `json:"summary"`
 }
 
 // Insight represents an AI-generated insight about infrastructure changes
