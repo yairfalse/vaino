@@ -7,15 +7,18 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/yairfalse/vaino/pkg/types"
 )
 
 type FileStorage struct {
-	dataDir string
+	dataDir    string
+	cache      *snapshotCache
+	workerPool *ioWorkerPool
 }
 
-// NewFileStorage creates a new file-based storage instance
+// NewFileStorage creates a new file-based storage instance with optimizations
 func NewFileStorage(dataDir string) (*FileStorage, error) {
 	// Create necessary directories
 	dirs := []string{
@@ -30,7 +33,11 @@ func NewFileStorage(dataDir string) (*FileStorage, error) {
 		}
 	}
 
-	return &FileStorage{dataDir: dataDir}, nil
+	return &FileStorage{
+		dataDir:    dataDir,
+		cache:      newSnapshotCache(50), // Cache up to 50 snapshots
+		workerPool: newIOWorkerPool(4),   // 4 concurrent I/O workers
+	}, nil
 }
 
 func (fs *FileStorage) SaveSnapshot(snapshot *types.Snapshot) error {
@@ -48,6 +55,11 @@ func (fs *FileStorage) SaveSnapshot(snapshot *types.Snapshot) error {
 }
 
 func (fs *FileStorage) LoadSnapshot(id string) (*types.Snapshot, error) {
+	// Check cache first
+	if snapshot := fs.cache.get(id); snapshot != nil {
+		return snapshot, nil
+	}
+
 	// Validate snapshot ID for security
 	if err := validateResourceID(id); err != nil {
 		return nil, fmt.Errorf("invalid snapshot ID: %w", err)
@@ -60,6 +72,10 @@ func (fs *FileStorage) LoadSnapshot(id string) (*types.Snapshot, error) {
 
 	var snapshot types.Snapshot
 	err := fs.loadJSON(filename, &snapshot)
+	if err == nil {
+		// Add to cache
+		fs.cache.put(id, &snapshot)
+	}
 	return &snapshot, err
 }
 
@@ -70,25 +86,61 @@ func (fs *FileStorage) ListSnapshots() ([]SnapshotInfo, error) {
 		return nil, err
 	}
 
-	var snapshots []SnapshotInfo
+	// Filter JSON files
+	var jsonFiles []os.DirEntry
 	for _, entry := range entries {
 		if !entry.IsDir() && filepath.Ext(entry.Name()) == ".json" {
-			id := entry.Name()[:len(entry.Name())-5] // Remove .json
+			jsonFiles = append(jsonFiles, entry)
+		}
+	}
+
+	// Load snapshots in parallel
+	type result struct {
+		info SnapshotInfo
+		err  error
+	}
+
+	resultsChan := make(chan result, len(jsonFiles))
+	var wg sync.WaitGroup
+
+	// Use worker pool for parallel loading
+	for _, entry := range jsonFiles {
+		wg.Add(1)
+		e := entry // Capture loop variable
+		fs.workerPool.submit(func() {
+			defer wg.Done()
+
+			id := e.Name()[:len(e.Name())-5] // Remove .json
 			snapshot, err := fs.LoadSnapshot(id)
 			if err != nil {
-				continue // Skip invalid files
+				resultsChan <- result{err: err}
+				return
 			}
 
-			stat, _ := entry.Info()
+			stat, _ := e.Info()
 			info := SnapshotInfo{
 				ID:            snapshot.ID,
 				Timestamp:     snapshot.Timestamp,
 				Provider:      snapshot.Provider,
 				ResourceCount: len(snapshot.Resources),
-				FilePath:      filepath.Join(fs.dataDir, "snapshots", entry.Name()),
+				FilePath:      filepath.Join(fs.dataDir, "snapshots", e.Name()),
 				FileSize:      stat.Size(),
 			}
-			snapshots = append(snapshots, info)
+			resultsChan <- result{info: info}
+		})
+	}
+
+	// Close channel when done
+	go func() {
+		wg.Wait()
+		close(resultsChan)
+	}()
+
+	// Collect results
+	var snapshots []SnapshotInfo
+	for res := range resultsChan {
+		if res.err == nil {
+			snapshots = append(snapshots, res.info)
 		}
 	}
 
@@ -392,4 +444,112 @@ func (l *limitedReader) Read(p []byte) (n int, err error) {
 	n, err = l.R.Read(p)
 	l.N -= int64(n)
 	return
+}
+
+// snapshotCache provides an LRU cache for frequently accessed snapshots
+type snapshotCache struct {
+	mu      sync.RWMutex
+	cache   map[string]*cacheEntry
+	order   []string
+	maxSize int
+}
+
+type cacheEntry struct {
+	snapshot    *types.Snapshot
+	accessCount int
+}
+
+func newSnapshotCache(maxSize int) *snapshotCache {
+	return &snapshotCache{
+		cache:   make(map[string]*cacheEntry),
+		order:   make([]string, 0, maxSize),
+		maxSize: maxSize,
+	}
+}
+
+func (c *snapshotCache) get(id string) *types.Snapshot {
+	c.mu.RLock()
+	entry, exists := c.cache[id]
+	c.mu.RUnlock()
+
+	if !exists {
+		return nil
+	}
+
+	c.mu.Lock()
+	entry.accessCount++
+	// Move to front of order
+	c.moveToFront(id)
+	c.mu.Unlock()
+
+	return entry.snapshot
+}
+
+func (c *snapshotCache) put(id string, snapshot *types.Snapshot) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, exists := c.cache[id]; exists {
+		c.cache[id].snapshot = snapshot
+		c.moveToFront(id)
+		return
+	}
+
+	// Add new entry
+	c.cache[id] = &cacheEntry{
+		snapshot:    snapshot,
+		accessCount: 1,
+	}
+	c.order = append([]string{id}, c.order...)
+
+	// Evict if over capacity
+	if len(c.order) > c.maxSize {
+		evictID := c.order[len(c.order)-1]
+		c.order = c.order[:len(c.order)-1]
+		delete(c.cache, evictID)
+	}
+}
+
+func (c *snapshotCache) moveToFront(id string) {
+	for i, oid := range c.order {
+		if oid == id {
+			c.order = append([]string{id}, append(c.order[:i], c.order[i+1:]...)...)
+			return
+		}
+	}
+}
+
+// ioWorkerPool manages a pool of workers for parallel I/O operations
+type ioWorkerPool struct {
+	workers int
+	tasks   chan func()
+	wg      sync.WaitGroup
+}
+
+func newIOWorkerPool(workers int) *ioWorkerPool {
+	pool := &ioWorkerPool{
+		workers: workers,
+		tasks:   make(chan func(), workers*2),
+	}
+
+	// Start workers
+	for i := 0; i < workers; i++ {
+		go pool.worker()
+	}
+
+	return pool
+}
+
+func (p *ioWorkerPool) worker() {
+	for task := range p.tasks {
+		task()
+	}
+}
+
+func (p *ioWorkerPool) submit(task func()) {
+	p.tasks <- task
+}
+
+func (p *ioWorkerPool) shutdown() {
+	close(p.tasks)
 }
