@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -265,22 +266,30 @@ func extractProviderFromFilename(filename string) string {
 }
 
 func getResourceCount(filepath string) int {
-	// This is a simplified version - in production would properly parse JSON
+	// Properly parse the JSON to get accurate resource count
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return 0
 	}
 
-	// Simple heuristic: count occurrences of "id" field
-	count := 0
-	searchStr := `"id":`
-	for i := 0; i < len(data)-len(searchStr); i++ {
-		if string(data[i:i+len(searchStr)]) == searchStr {
-			count++
-		}
+	// Parse JSON structure to count resources array
+	var snapshot struct {
+		Resources []interface{} `json:"resources"`
 	}
 
-	return count
+	if err := json.Unmarshal(data, &snapshot); err != nil {
+		// Fallback to counting "id" occurrences if parse fails
+		count := 0
+		searchStr := `"id":`
+		for i := 0; i < len(data)-len(searchStr); i++ {
+			if string(data[i:i+len(searchStr)]) == searchStr {
+				count++
+			}
+		}
+		return count
+	}
+
+	return len(snapshot.Resources)
 }
 
 func countFiles(dir, pattern string) int {

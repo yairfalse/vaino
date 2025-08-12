@@ -330,16 +330,54 @@ func runDiff(cmd *cobra.Command, args []string) error {
 				fmt.Fprintf(os.Stderr, "Comparing %s with %s\n", filepath.Base(from), filepath.Base(to))
 			}
 		} else if len(historyFiles) == 1 {
-			// Only one snapshot exists - nothing to compare against
-			return vainoerrors.New(vainoerrors.ErrorTypeValidation, vainoerrors.ProviderUnknown,
-				"Only one snapshot found - nothing to compare").
-				WithCause("Diff requires at least two snapshots for comparison").
-				WithSolutions(
-					"Run 'vaino scan' again to create a new snapshot for comparison",
-					"Wait for infrastructure changes, then scan again",
-					"Use 'vaino status' to check current state without comparison",
-				).
-				WithHelp("vaino scan --help")
+			// Only one snapshot exists - compare it with current state
+			from = historyFiles[0]
+
+			// Extract provider from the existing snapshot
+			var existingSnapshot types.Snapshot
+			data, err := os.ReadFile(from)
+			if err == nil {
+				json.Unmarshal(data, &existingSnapshot)
+			}
+			providerName := existingSnapshot.Provider
+			if providerName == "" {
+				providerName = "terraform" // Default to terraform
+			}
+
+			// Create temp file for new scan
+			tempFile, err := os.CreateTemp("", "vaino-scan-*.json")
+			if err != nil {
+				return fmt.Errorf("failed to create temp file: %w", err)
+			}
+			tempPath := tempFile.Name()
+			tempFile.Close()
+			defer os.Remove(tempPath)
+
+			// Run new scan to compare with
+			if !quiet {
+				fmt.Fprintf(os.Stderr, "Scanning current %s state for comparison...\n", providerName)
+			}
+
+			scanCmd := newScanCommand()
+			scanArgs := []string{"--provider", providerName, "--output-file", tempPath, "--quiet"}
+			if providerName == "terraform" {
+				scanArgs = append(scanArgs, "--auto-discover")
+			}
+			scanCmd.SetArgs(scanArgs)
+			scanCmd.SetOutput(io.Discard)
+
+			if err := scanCmd.Execute(); err != nil {
+				return vainoerrors.New(vainoerrors.ErrorTypeProvider, vainoerrors.Provider(providerName),
+					"Could not scan current state for comparison").
+					WithCause(err.Error()).
+					WithSolutions(
+						"Run 'vaino scan' manually to create a new snapshot",
+						"Check provider configuration with 'vaino check-config'",
+					).
+					WithHelp("vaino scan --help")
+			}
+
+			to = tempPath
 		} else {
 			// Fallback to last-scan files with auto-scanning
 			matches, _ := filepath.Glob(filepath.Join(vainoDir, "last-scan-*.json"))
