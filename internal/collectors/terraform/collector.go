@@ -21,6 +21,7 @@ type TerraformCollector struct {
 	normalizer        *ResourceNormalizer
 	remote            *RemoteStateHandler
 	resourceExtractor *OptimizedResourceExtractor
+	hclParser         *HCLParser
 	version           string
 }
 
@@ -33,6 +34,7 @@ func NewTerraformCollector() collectors.Collector {
 		normalizer:        NewResourceNormalizer(),
 		remote:            NewRemoteStateHandler(),
 		resourceExtractor: NewOptimizedResourceExtractor(),
+		hclParser:         NewHCLParser(),
 		version:           "1.0.0",
 	}
 }
@@ -75,6 +77,34 @@ func (c *TerraformCollector) Collect(ctx context.Context, config collectors.Coll
 	// Validate configuration
 	if err := c.Validate(config); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
+	}
+
+	// Check if we should scan .tf files when no state files are provided
+	if len(config.StatePaths) == 0 || (len(config.StatePaths) == 1 && config.StatePaths[0] == ".") {
+		// Try to scan .tf files first
+		tfResources, err := c.collectFromTerraformFiles(ctx, ".")
+		if err == nil && len(tfResources) > 0 {
+			// Found .tf files - create snapshot from them
+			metadata := types.SnapshotMetadata{
+				CollectorVersion: c.version,
+				CollectionTime:   time.Since(startTime),
+				ResourceCount:    len(tfResources),
+				Tags:             config.Tags,
+				AdditionalData: map[string]interface{}{
+					"source": "terraform_config_files",
+					"note":   "Resources from .tf files (planned infrastructure)",
+				},
+			}
+
+			return &types.Snapshot{
+				ID:        fmt.Sprintf("terraform-%d", time.Now().Unix()),
+				Timestamp: time.Now(),
+				Provider:  "terraform",
+				Resources: tfResources,
+				Metadata:  metadata,
+			}, nil
+		}
+		// If no .tf files found, continue with normal state file processing
 	}
 
 	// Separate local and remote state paths
@@ -521,7 +551,8 @@ func (c *TerraformCollector) findStateFilesInDirectory(dirPath string) ([]string
 // Validate checks if the collector configuration is valid
 func (c *TerraformCollector) Validate(config collectors.CollectorConfig) error {
 	if len(config.StatePaths) == 0 {
-		return fmt.Errorf("at least one state path must be specified")
+		// Allow empty state paths - we'll try to scan .tf files
+		return nil
 	}
 
 	for _, statePath := range config.StatePaths {
@@ -545,9 +576,24 @@ func (c *TerraformCollector) Validate(config collectors.CollectorConfig) error {
 	return nil
 }
 
-// AutoDiscover automatically discovers Terraform state files in the current directory
+// AutoDiscover automatically discovers Terraform state files or .tf files in the current directory
 func (c *TerraformCollector) AutoDiscover() (collectors.CollectorConfig, error) {
-	// Use the discovery service for intelligent state file discovery
+	// First, try to find .tf files in the current directory
+	tfFiles, _ := filepath.Glob("*.tf")
+	if len(tfFiles) > 0 {
+		// Found .tf files - use current directory for HCL parsing
+		return collectors.CollectorConfig{
+			StatePaths: []string{"."}, // Current directory marker for HCL parsing
+			Config: map[string]interface{}{
+				"auto_discovered":   true,
+				"source":            "terraform_config_files",
+				"tf_files_found":    len(tfFiles),
+				"discovery_details": "Found .tf files in current directory",
+			},
+		}, nil
+	}
+
+	// Otherwise, use the discovery service for intelligent state file discovery
 	discoveryService := discovery.NewTerraformDiscovery()
 
 	stateFiles, err := discoveryService.DiscoverStateFiles("")
@@ -556,7 +602,7 @@ func (c *TerraformCollector) AutoDiscover() (collectors.CollectorConfig, error) 
 	}
 
 	if len(stateFiles) == 0 {
-		return collectors.CollectorConfig{}, fmt.Errorf("no Terraform state files found")
+		return collectors.CollectorConfig{}, fmt.Errorf("no Terraform state files or .tf files found")
 	}
 
 	// Get the most relevant state files (limit to 10 to avoid overwhelming)
@@ -571,11 +617,27 @@ func (c *TerraformCollector) AutoDiscover() (collectors.CollectorConfig, error) 
 		StatePaths: statePaths,
 		Config: map[string]interface{}{
 			"auto_discovered":   true,
+			"source":            "terraform_state_files",
 			"total_files_found": len(stateFiles),
 			"files_selected":    len(statePaths),
 			"discovery_details": preferredFiles,
 		},
 	}, nil
+}
+
+// collectFromTerraformFiles collects resources from .tf files
+func (c *TerraformCollector) collectFromTerraformFiles(ctx context.Context, directory string) ([]types.Resource, error) {
+	// Use HCL parser to scan .tf files
+	resources, err := c.hclParser.ParseTerraformFiles(directory)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse terraform files: %w", err)
+	}
+
+	if len(resources) == 0 {
+		return nil, fmt.Errorf("no terraform resources found in .tf files")
+	}
+
+	return resources, nil
 }
 
 // SupportedRegions returns the regions supported by this collector

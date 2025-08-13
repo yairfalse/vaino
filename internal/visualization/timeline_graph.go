@@ -64,7 +64,7 @@ func (tg *TimelineGraph) SetChangeEvents(events []ChangeEvent) {
 	}
 }
 
-// Render generates the beautiful timeline graph
+// Render generates a clean, readable timeline
 func (tg *TimelineGraph) Render() string {
 	if len(tg.snapshots) == 0 && len(tg.changeEvents) == 0 {
 		return "No data to display"
@@ -80,137 +80,68 @@ func (tg *TimelineGraph) Render() string {
 		tg.endTime = tg.endTime.Add(duration / 2)
 	}
 
-	// Header with color
-	headerColor := color.New(color.FgWhite, color.Bold)
-	dateColor := color.New(color.FgCyan)
-	output.WriteString(headerColor.Sprint("Infrastructure Timeline "))
-	output.WriteString(fmt.Sprintf("(%s to %s)\n",
-		dateColor.Sprint(tg.startTime.Format("Jan 2")),
-		dateColor.Sprint(tg.endTime.Format("Jan 2"))))
+	// Header
+	output.WriteString("Infrastructure Timeline\n")
+	output.WriteString(fmt.Sprintf("%s to %s\n",
+		tg.startTime.Format("Jan 2, 2006"),
+		tg.endTime.Format("Jan 2, 2006")))
+	output.WriteString(strings.Repeat("-", 60) + "\n")
 
-	// Create the timeline line
-	timelineWidth := tg.width - 10 // leave space for margins
-	timeline := tg.renderTimelineLine(timelineWidth)
-	output.WriteString(timeline + "\n")
+	// Group snapshots by date
+	dateGroups := make(map[string][]storage.SnapshotInfo)
+	for _, snapshot := range tg.snapshots {
+		date := snapshot.Timestamp.Format("2006-01-02")
+		dateGroups[date] = append(dateGroups[date], snapshot)
+	}
 
-	// Add date labels
-	dateLabels := tg.renderDateLabels(timelineWidth)
-	output.WriteString(dateLabels + "\n")
+	// Sort dates
+	var dates []string
+	for date := range dateGroups {
+		dates = append(dates, date)
+	}
+	sort.Strings(dates)
 
-	// Add change summary
-	if len(tg.changeEvents) > 0 || len(tg.snapshots) > 0 {
-		output.WriteString("\n")
-		output.WriteString(headerColor.Sprint("Changes:") + "\n")
-		summary := tg.renderChangeSummary()
-		output.WriteString(summary)
+	// Display snapshots grouped by date
+	for _, date := range dates {
+		snapshots := dateGroups[date]
+		parsedDate, _ := time.Parse("2006-01-02", date)
+		output.WriteString(fmt.Sprintf("\n%s:\n", parsedDate.Format("Jan 2, 2006")))
+
+		for _, snapshot := range snapshots {
+			output.WriteString(fmt.Sprintf("  • %s - %s (%d resources)\n",
+				snapshot.Timestamp.Format("15:04"),
+				snapshot.Provider,
+				snapshot.ResourceCount))
+		}
+	}
+
+	// Add change events if any
+	if len(tg.changeEvents) > 0 {
+		output.WriteString("\nChange Events:\n")
+		for _, event := range tg.changeEvents {
+			output.WriteString(fmt.Sprintf("  %s - %s: %d changes\n",
+				event.Timestamp.Format("Jan 2 15:04"),
+				event.Provider,
+				event.ChangeCount))
+		}
 	}
 
 	return output.String()
 }
 
-// renderTimelineLine creates the beautiful ────•──────• timeline
+// renderTimelineLine creates a simple timeline visualization
 func (tg *TimelineGraph) renderTimelineLine(width int) string {
-	line := make([]rune, width)
-
-	// Fill with horizontal line characters
-	for i := range line {
-		line[i] = '─'
-	}
-
-	// Place markers for snapshots
-	for _, snapshot := range tg.snapshots {
-		pos := tg.calculatePosition(snapshot.Timestamp, width)
-		if pos >= 0 && pos < width {
-			line[pos] = '•'
-		}
-	}
-
-	// Place different markers for change events if no snapshots at that position
-	for _, event := range tg.changeEvents {
-		pos := tg.calculatePosition(event.Timestamp, width)
-		if pos >= 0 && pos < width && line[pos] == '─' {
-			// Use different marker based on change magnitude
-			if event.ChangeCount > 10 {
-				line[pos] = '●' // major change
-			} else if event.ChangeCount > 5 {
-				line[pos] = '◉' // medium change
-			} else {
-				line[pos] = '○' // minor change
-			}
-		}
-	}
-
-	return string(line)
+	// Simple approach - just show date range
+	return fmt.Sprintf("%s %s %s",
+		tg.startTime.Format("Jan 2"),
+		strings.Repeat("─", width-20),
+		tg.endTime.Format("Jan 2"))
 }
 
-// renderDateLabels creates date labels under the timeline
+// renderDateLabels creates date labels for the timeline
 func (tg *TimelineGraph) renderDateLabels(width int) string {
-	labels := make([]rune, width)
-	for i := range labels {
-		labels[i] = ' '
-	}
-
-	// Only show labels at the start, end, and where snapshots exist
-	labelPositions := []labelPosition{}
-
-	// Always show start and end
-	labelPositions = append(labelPositions, labelPosition{position: 0, priority: 100})
-	labelPositions = append(labelPositions, labelPosition{position: width - 1, priority: 100})
-
-	// Add positions for each unique day with snapshots
-	dayPositions := make(map[string]int)
-	for _, snapshot := range tg.snapshots {
-		day := snapshot.Timestamp.Format("Jan2")
-		pos := tg.calculatePosition(snapshot.Timestamp, width)
-		if pos >= 0 && pos < width {
-			if existingPos, exists := dayPositions[day]; !exists || pos < existingPos {
-				dayPositions[day] = pos
-			}
-		}
-	}
-
-	// Add unique day positions
-	for _, pos := range dayPositions {
-		if pos > 5 && pos < width-5 { // Avoid overlapping with start/end
-			labelPositions = append(labelPositions, labelPosition{position: pos, priority: 50})
-		}
-	}
-
-	// Place labels ensuring no overlap
-	placedLabels := make(map[int]bool)
-	for _, pos := range labelPositions {
-		timestamp := tg.calculateTimestamp(pos.position, width)
-		label := timestamp.Format("Jan2")
-
-		// Find a position that doesn't overlap
-		start := pos.position - len(label)/2
-		if start < 0 {
-			start = 0
-		}
-		if start+len(label) > width {
-			start = width - len(label)
-		}
-
-		// Check for overlap
-		canPlace := true
-		for i := start; i < start+len(label)+1 && i < width; i++ {
-			if placedLabels[i] {
-				canPlace = false
-				break
-			}
-		}
-
-		if canPlace {
-			for i, ch := range label {
-				if start+i < width {
-					labels[start+i] = ch
-					placedLabels[start+i] = true
-				}
-			}
-		}
-	}
-
-	return string(labels)
+	// Return empty - we're showing dates differently now
+	return ""
 }
 
 // renderChangeSummary creates the change details section

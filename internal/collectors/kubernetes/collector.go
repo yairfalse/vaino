@@ -170,15 +170,14 @@ func (k *KubernetesCollector) AutoDiscover() (collectors.CollectorConfig, error)
 		contexts = []string{} // Not critical if we can't get contexts
 	}
 
-	// Use very limited namespaces for auto-discovery to prevent timeouts
-	// Only scan the most common namespaces where user workloads are likely
-	relevantNamespaces := []string{"default", "test-workloads"}
-
-	// Try to get additional namespaces but with a timeout
-	if additionalNs, err := k.getRelevantNamespaces(); err == nil && len(additionalNs) <= 10 {
-		// Only add if we have a reasonable number of namespaces
-		relevantNamespaces = additionalNs
+	// Get all relevant namespaces including system ones
+	allNamespaces, err := k.getRelevantNamespaces()
+	if err != nil {
+		// Fallback to common namespaces if we can't list
+		allNamespaces = []string{"default", "kube-system", "kube-public"}
 	}
+
+	relevantNamespaces := allNamespaces
 
 	collectorConfig := collectors.CollectorConfig{
 		Namespaces: relevantNamespaces,
@@ -191,43 +190,37 @@ func (k *KubernetesCollector) AutoDiscover() (collectors.CollectorConfig, error)
 	return collectorConfig, nil
 }
 
-// getRelevantNamespaces returns a filtered list of namespaces that are likely to contain user workloads
+// getRelevantNamespaces returns all namespaces for comprehensive scanning
 func (k *KubernetesCollector) getRelevantNamespaces() ([]string, error) {
 	// Get all namespaces
 	allNamespaces, err := k.client.GetAvailableNamespaces()
 	if err != nil {
-		return []string{"default"}, err
+		// Return comprehensive fallback list
+		return []string{"default", "kube-system", "kube-public"}, err
 	}
 
-	// Filter out system namespaces that rarely contain user workloads
-	systemNamespaces := map[string]bool{
-		"kube-node-lease":    true,
-		"kube-public":        false, // Keep this one, sometimes has user resources
-		"local-path-storage": true,
-	}
-
+	// Include ALL namespaces for complete visibility
+	// The user wants to see everything in their cluster
 	var relevantNamespaces []string
+
+	// Prioritize user namespaces first
+	var systemNamespaces []string
 	for _, ns := range allNamespaces {
-		// Skip system namespaces that are unlikely to have user workloads
-		if skip, exists := systemNamespaces[ns]; exists && skip {
-			continue
-		}
-
-		// Always include default and kube-system as they're commonly used
-		if ns == "default" || ns == "kube-system" || ns == "kube-public" {
-			relevantNamespaces = append(relevantNamespaces, ns)
-			continue
-		}
-
-		// Include namespaces that don't start with "kube-" (likely user namespaces)
-		if !strings.HasPrefix(ns, "kube-") {
+		// System namespaces go at the end
+		if strings.HasPrefix(ns, "kube-") || ns == "local-path-storage" {
+			systemNamespaces = append(systemNamespaces, ns)
+		} else {
+			// User namespaces go first
 			relevantNamespaces = append(relevantNamespaces, ns)
 		}
 	}
 
-	// Ensure we always have at least default
+	// Add system namespaces at the end
+	relevantNamespaces = append(relevantNamespaces, systemNamespaces...)
+
+	// Ensure we always have at least the critical namespaces
 	if len(relevantNamespaces) == 0 {
-		relevantNamespaces = []string{"default"}
+		relevantNamespaces = []string{"default", "kube-system", "kube-public"}
 	}
 
 	return relevantNamespaces, nil
@@ -260,10 +253,15 @@ func (k *KubernetesCollector) extractKubernetesConfig(config collectors.Collecto
 		}
 	}
 
-	// Default to common application namespaces if none specified
-	// Avoid scanning ALL namespaces which can cause timeouts
+	// Default to scanning ALL namespaces for comprehensive visibility
 	if len(kubeConfig.Namespaces) == 0 {
-		kubeConfig.Namespaces = []string{"default", "kube-system"}
+		// Try to get all namespaces
+		if allNs, err := k.getRelevantNamespaces(); err == nil {
+			kubeConfig.Namespaces = allNs
+		} else {
+			// Fallback to essential namespaces
+			kubeConfig.Namespaces = []string{"default", "kube-system", "kube-public"}
+		}
 	}
 
 	return kubeConfig
